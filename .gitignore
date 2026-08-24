@@ -1,0 +1,12 @@
+# Python environment and bytecode
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local recordings may contain sensitive client audio
+recordings/
+
+# Local runtime and installer logs
+*.log
+*.out
+*.err

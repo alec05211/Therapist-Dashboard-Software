@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+python-multipart
+imageio-ffmpeg
+git+https://github.com/m-bain/whisperX.git

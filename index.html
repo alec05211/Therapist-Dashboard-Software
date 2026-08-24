@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice Note</title>
+    <style>
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        background: #f7f7f5;
+        color: #202020;
+        font: 16px/1.5 system-ui, sans-serif;
+      }
+      main { width: min(90vw, 480px); text-align: center; }
+      button {
+        width: 132px;
+        height: 132px;
+        border: 0;
+        border-radius: 50%;
+        background: #d83232;
+        color: white;
+        cursor: pointer;
+        font: 700 18px system-ui, sans-serif;
+      }
+      button.recording { background: #222; }
+      button:disabled { cursor: wait; opacity: .7; }
+      #status { min-height: 1.5em; margin: 24px 0 12px; }
+      #transcript {
+        min-height: 3em;
+        padding: 16px;
+        border-radius: 8px;
+        background: white;
+        text-align: left;
+        white-space: pre-wrap;
+      }
+      #recording { display: none; margin-top: 16px; width: 100%; }
+      #download { display: none; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <button id="recordButton" type="button" aria-pressed="false">Record</button>
+      <p id="status" aria-live="polite">Press record to begin.</p>
+      <div id="transcript" aria-live="polite"></div>
+      <audio id="recording" controls></audio>
+      <a id="download" download>Download recording</a>
+    </main>
+
+    <script>
+      const button = document.querySelector('#recordButton');
+      const status = document.querySelector('#status');
+      const transcript = document.querySelector('#transcript');
+      const recording = document.querySelector('#recording');
+      const download = document.querySelector('#download');
+      let recorder;
+      let stream;
+      let chunks = [];
+
+      button.addEventListener('click', async () => {
+        if (recorder?.state === 'recording') {
+          recorder.stop();
+          return;
+        }
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          chunks = [];
+          recorder = new MediaRecorder(stream);
+          recorder.addEventListener('dataavailable', event => chunks.push(event.data));
+          recorder.addEventListener('stop', sendRecording, { once: true });
+          recorder.start();
+          button.textContent = 'Stop';
+          button.classList.add('recording');
+          button.setAttribute('aria-pressed', 'true');
+          status.textContent = 'Recording… press Stop when finished.';
+        } catch (error) {
+          status.textContent = `Microphone unavailable: ${error.message}`;
+        }
+      });
+
+      async function sendRecording() {
+        stream?.getTracks().forEach(track => track.stop());
+        button.disabled = true;
+        button.classList.remove('recording');
+        button.setAttribute('aria-pressed', 'false');
+        status.textContent = 'Transcribing…';
+
+        try {
+          const audio = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+          const form = new FormData();
+          form.append('audio', audio, 'recording.webm');
+          const response = await fetch('/transcribe', { method: 'POST', body: form });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || 'Transcription failed.');
+          transcript.textContent = result.text || '(No speech detected.)';
+          recording.src = result.recording_url;
+          recording.style.display = 'block';
+          download.href = result.recording_url;
+          download.style.display = 'inline-block';
+          status.textContent = 'Done.';
+        } catch (error) {
+          status.textContent = `Could not transcribe: ${error.message}`;
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Record';
+        }
+      }
+    </script>
+  </body>
+</html>
