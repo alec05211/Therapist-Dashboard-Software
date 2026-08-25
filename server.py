@@ -1,6 +1,7 @@
 """Small local server for the microphone recorder."""
 import os
 import tempfile
+import json
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
@@ -67,11 +68,21 @@ async def transcribe(audio: UploadFile = File(...)):
         saved_path.write_bytes(Path(temp_path).read_bytes())
 
         result = get_model().transcribe(load_audio(str(saved_path)))
-        text = " ".join(segment["text"].strip() for segment in result["segments"]).strip()
-        return {"text": text, "recording_url": f"/recordings/{saved_name}"}
+        segments = [
+            {"start": segment["start"], "end": segment["end"], "text": segment["text"].strip()}
+            for segment in result["segments"]
+        ]
+        text = " ".join(segment["text"] for segment in segments).strip()
+        transcript_path = saved_path.with_suffix(".json")
+        transcript_path.write_text(
+            json.dumps({"recording": saved_name, "text": text, "segments": segments}, indent=2),
+            encoding="utf-8",
+        )
+        return {"text": text, "segments": segments, "recording_url": f"/recordings/{saved_name}"}
     except Exception as exc:
         if saved_path:
             saved_path.unlink(missing_ok=True)
+            saved_path.with_suffix(".json").unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         if temp_path and os.path.exists(temp_path):

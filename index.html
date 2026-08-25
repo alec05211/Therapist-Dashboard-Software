@@ -36,6 +36,9 @@
         text-align: left;
         white-space: pre-wrap;
       }
+      #timestamps { margin: 16px 0 0; padding: 0; list-style: none; text-align: left; }
+      #timestamps li { margin: 8px 0; }
+      #timestamps time { color: #666; font-variant-numeric: tabular-nums; }
       #recording { display: none; margin-top: 16px; width: 100%; }
       #download { display: none; margin-top: 8px; }
     </style>
@@ -45,6 +48,7 @@
       <button id="recordButton" type="button" aria-pressed="false">Record</button>
       <p id="status" aria-live="polite">Press record to begin.</p>
       <div id="transcript" aria-live="polite"></div>
+      <ul id="timestamps" aria-label="Timestamped transcript"></ul>
       <audio id="recording" controls></audio>
       <a id="download" download>Download recording</a>
     </main>
@@ -53,6 +57,7 @@
       const button = document.querySelector('#recordButton');
       const status = document.querySelector('#status');
       const transcript = document.querySelector('#transcript');
+      const timestamps = document.querySelector('#timestamps');
       const recording = document.querySelector('#recording');
       const download = document.querySelector('#download');
       let recorder;
@@ -96,6 +101,13 @@
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || 'Transcription failed.');
           transcript.textContent = result.text || '(No speech detected.)';
+          timestamps.replaceChildren(...result.segments.map(segment => {
+            const item = document.createElement('li');
+            const time = document.createElement('time');
+            time.textContent = `[${formatTime(segment.start)}] `;
+            item.append(time, segment.text.trim());
+            return item;
+          }));
           recording.src = result.recording_url;
           recording.style.display = 'block';
           download.href = result.recording_url;
@@ -107,6 +119,12 @@
           button.disabled = false;
           button.textContent = 'Record';
         }
+      }
+
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${remainingSeconds}`;
       }
     </script>
   </body>

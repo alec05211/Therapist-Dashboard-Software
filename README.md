@@ -22,7 +22,7 @@ This starter records from the browser microphone and sends the resulting file to
    ```
 4. Visit `http://127.0.0.1:8000`, allow microphone access, and click **Record**. The button changes to **Stop**; stopping it displays the transcript.
 
-Each recording is saved locally in the `recordings` folder and is available for playback or download after transcription. Treat this folder as sensitive client data and protect it accordingly.
+Each recording is saved locally in the `recordings` folder and is available for playback or download after transcription. A JSON file with the same name stores the full transcript and timestamped segments. Treat this folder as sensitive client data and protect it accordingly.
 
 By default it uses WhisperX's small `base` model on CPU. You can choose a model or GPU before starting the server, for example:
 
