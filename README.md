@@ -32,3 +32,22 @@ $env:WHISPERX_DEVICE = "cuda"
 $env:WHISPERX_COMPUTE_TYPE = "float16"
 uvicorn server:app --reload
 ```
+
+## Speaker diarization
+
+WhisperX can label each timestamped segment with a speaker ID. Create a Hugging Face read token and accept the access terms for the `pyannote/speaker-diarization-community-1` model, then set the token before starting the server:
+
+```powershell
+$env:HF_TOKEN = "your_hugging_face_token"
+$env:WHISPERX_DIARIZE = "true"
+uvicorn server:app --reload
+```
+
+When diarization is enabled, the app first creates word timestamps and then splits
+the transcript at every diarized speaker change. This makes each conversational
+turn individually clickable for playback, rather than showing Whisper's longer
+pause-based chunks. It assumes two speakers by default; for a group session set
+`WHISPERX_NUM_SPEAKERS` to the exact participant count, or set it to `0` to let
+pyannote infer the count.
+
+The app stores these labels in `transcript.json`; use the Saved transcripts viewer to rename them, for example to `Therapist` and `Client`.

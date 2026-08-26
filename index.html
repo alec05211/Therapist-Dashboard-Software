@@ -14,7 +14,16 @@
         color: #202020;
         font: 16px/1.5 system-ui, sans-serif;
       }
-      main { width: min(90vw, 480px); text-align: center; }
+      main { width: min(94vw, 920px); padding: 32px 0; text-align: center; }
+      .layout { display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: 24px; align-items: start; margin-top: 28px; text-align: left; }
+      .library, .viewer { padding: 20px; border-radius: 12px; background: white; }
+      .library h2, .viewer h2 { margin: 0 0 12px; font-size: 1.1rem; }
+      #transcriptList { display: grid; gap: 8px; max-height: 520px; overflow-y: auto; }
+      .transcript-item { width: 100%; height: auto; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #202020; text-align: left; font: inherit; }
+      .transcript-item:hover, .transcript-item:focus { border-color: #666; }
+      .transcript-item.active { border-color: #222; background: #f0f0ed; }
+      .transcript-item small { display: block; margin-top: 3px; color: #666; }
+      #emptyLibrary { color: #666; }
       button {
         width: 132px;
         height: 132px;
@@ -28,41 +37,67 @@
       button.recording { background: #222; }
       button:disabled { cursor: wait; opacity: .7; }
       #status { min-height: 1.5em; margin: 24px 0 12px; }
-      #transcript {
-        min-height: 3em;
-        padding: 16px;
-        border-radius: 8px;
-        background: white;
-        text-align: left;
-        white-space: pre-wrap;
-      }
       #timestamps { margin: 16px 0 0; padding: 0; list-style: none; text-align: left; }
       #timestamps li { margin: 8px 0; }
+      .segment { width: 100%; height: auto; padding: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; text-align: left; font: inherit; }
+      .segment:hover, .segment:focus { background: #f0f0ed; border-color: #ddd; }
+      .segment.active { background: #e4efe8; border-color: #8ab79a; }
+      .speaker-label { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 999px; background: #e7e7e3; color: #454545; font-size: .8em; font-weight: 700; }
+      #speakerControls { margin-top: 20px; padding-top: 16px; border-top: 1px solid #ddd; }
+      #speakerControls h3 { margin: 0 0 8px; font-size: 1rem; }
+      .speaker-name { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin: 8px 0; }
+      .speaker-name input { min-width: 0; padding: 6px 8px; border: 1px solid #bbb; border-radius: 5px; font: inherit; }
+      #saveSpeakerLabels { width: auto; height: auto; margin-top: 8px; padding: 8px 12px; border-radius: 6px; background: #222; font: 700 14px system-ui, sans-serif; }
       #timestamps time { color: #666; font-variant-numeric: tabular-nums; }
       #recording { display: none; margin-top: 16px; width: 100%; }
       #download { display: none; margin-top: 8px; }
+      @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
     <main>
       <button id="recordButton" type="button" aria-pressed="false">Record</button>
       <p id="status" aria-live="polite">Press record to begin.</p>
-      <div id="transcript" aria-live="polite"></div>
-      <ul id="timestamps" aria-label="Timestamped transcript"></ul>
-      <audio id="recording" controls></audio>
-      <a id="download" download>Download recording</a>
+      <div class="layout">
+        <aside class="library" aria-label="Saved transcripts">
+          <h2>Saved transcripts</h2>
+          <p id="emptyLibrary">No saved transcripts yet.</p>
+          <div id="transcriptList"></div>
+        </aside>
+        <section class="viewer" aria-label="Transcript viewer">
+          <h2>Transcript</h2>
+          <p id="transcriptStatus" aria-live="polite">Choose a saved transcript or make a new recording.</p>
+          <ul id="timestamps" aria-label="Timestamped transcript"></ul>
+          <audio id="recording" controls></audio>
+          <a id="download" download>Download recording</a>
+          <div id="speakerControls" hidden>
+            <h3>Speaker names</h3>
+            <div id="speakerNames"></div>
+            <button id="saveSpeakerLabels" type="button">Save names</button>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script>
       const button = document.querySelector('#recordButton');
       const status = document.querySelector('#status');
-      const transcript = document.querySelector('#transcript');
+      const transcriptStatus = document.querySelector('#transcriptStatus');
       const timestamps = document.querySelector('#timestamps');
       const recording = document.querySelector('#recording');
       const download = document.querySelector('#download');
+      const transcriptList = document.querySelector('#transcriptList');
+      const emptyLibrary = document.querySelector('#emptyLibrary');
+      const speakerControls = document.querySelector('#speakerControls');
+      const speakerNames = document.querySelector('#speakerNames');
+      const saveSpeakerLabels = document.querySelector('#saveSpeakerLabels');
       let recorder;
       let stream;
       let chunks = [];
+      let currentSegments = [];
+      let activeSegmentIndex = -1;
+      let currentTranscriptId = null;
+      let speakerLabels = {};
 
       button.addEventListener('click', async () => {
         if (recorder?.state === 'recording') {
@@ -100,18 +135,8 @@
           const response = await fetch('/transcribe', { method: 'POST', body: form });
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || 'Transcription failed.');
-          transcript.textContent = result.text || '(No speech detected.)';
-          timestamps.replaceChildren(...result.segments.map(segment => {
-            const item = document.createElement('li');
-            const time = document.createElement('time');
-            time.textContent = `[${formatTime(segment.start)}] `;
-            item.append(time, segment.text.trim());
-            return item;
-          }));
-          recording.src = result.recording_url;
-          recording.style.display = 'block';
-          download.href = result.recording_url;
-          download.style.display = 'inline-block';
+          displayTranscript(result, result.id);
+          await loadTranscriptLibrary();
           status.textContent = 'Done.';
         } catch (error) {
           status.textContent = `Could not transcribe: ${error.message}`;
@@ -126,6 +151,153 @@
         const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
         return `${minutes}:${remainingSeconds}`;
       }
+
+      function displayTranscript(data, transcriptId = data.id) {
+        const segments = data.segments || [];
+        currentSegments = segments;
+        currentTranscriptId = transcriptId;
+        speakerLabels = data.speakers || {};
+        activeSegmentIndex = -1;
+        transcriptStatus.textContent = segments.length
+          ? `${segments.length} timestamped segments.`
+          : '(No speech detected.)';
+        timestamps.replaceChildren(...segments.map((segment, index) => {
+          const item = document.createElement('li');
+          const segmentButton = document.createElement('button');
+          segmentButton.type = 'button';
+          segmentButton.className = 'segment';
+          const time = document.createElement('time');
+          time.textContent = `[${formatTime(segment.start)}] `;
+          segmentButton.append(time);
+          if (segment.speaker) {
+            const speaker = document.createElement('span');
+            speaker.className = 'speaker-label';
+            speaker.dataset.speaker = segment.speaker;
+            speaker.textContent = speakerLabels[segment.speaker] || segment.speaker;
+            segmentButton.append(speaker);
+          }
+          segmentButton.append(segment.text.trim());
+          segmentButton.addEventListener('click', () => playSegment(index));
+          item.append(segmentButton);
+          return item;
+        }));
+        if (data.recording_url) {
+          recording.src = data.recording_url;
+          recording.style.display = 'block';
+          download.href = data.recording_url;
+          download.style.display = 'inline-block';
+        } else {
+          recording.removeAttribute('src');
+          recording.style.display = 'none';
+          download.style.display = 'none';
+        }
+        renderSpeakerControls();
+      }
+
+      function renderSpeakerControls() {
+        const speakers = [...new Set(currentSegments.map(segment => segment.speaker).filter(Boolean))];
+        speakerControls.hidden = speakers.length === 0;
+        speakerNames.replaceChildren(...speakers.map(speakerId => {
+          const label = document.createElement('label');
+          label.className = 'speaker-name';
+          label.append(`${speakerId}:`);
+          const input = document.createElement('input');
+          input.value = speakerLabels[speakerId] || speakerId;
+          input.setAttribute('aria-label', `Name for ${speakerId}`);
+          input.addEventListener('input', () => {
+            speakerLabels[speakerId] = input.value.trim() || speakerId;
+            document.querySelectorAll(`.speaker-label[data-speaker="${speakerId}"]`).forEach(tag => {
+              tag.textContent = speakerLabels[speakerId];
+            });
+          });
+          label.append(input);
+          return label;
+        }));
+      }
+
+      function playSegment(index) {
+        if (!recording.src) {
+          status.textContent = 'Audio is not available for this transcript.';
+          return;
+        }
+        recording.currentTime = currentSegments[index].start;
+        recording.play().catch(() => {
+          status.textContent = 'Audio playback could not start.';
+        });
+        setActiveSegment(index);
+      }
+
+      function setActiveSegment(index) {
+        if (index === activeSegmentIndex) return;
+        activeSegmentIndex = index;
+        document.querySelectorAll('.segment').forEach((button, buttonIndex) => {
+          button.classList.toggle('active', buttonIndex === index);
+        });
+      }
+
+      recording.addEventListener('timeupdate', () => {
+        const index = currentSegments.findIndex(segment =>
+          recording.currentTime >= segment.start && recording.currentTime < segment.end
+        );
+        setActiveSegment(index);
+      });
+
+      saveSpeakerLabels.addEventListener('click', async () => {
+        if (!currentTranscriptId || currentTranscriptId === 'synthetic') return;
+        try {
+          const response = await fetch(`/transcripts/${encodeURIComponent(currentTranscriptId)}/speakers`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(speakerLabels),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || 'Could not save speaker names.');
+          speakerLabels = result.speakers;
+          status.textContent = 'Speaker names saved.';
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      });
+
+      async function loadTranscriptLibrary() {
+        try {
+          const response = await fetch('/transcripts');
+          if (!response.ok) throw new Error('Could not load saved transcripts.');
+          const saved = await response.json();
+          transcriptList.replaceChildren(...saved.map(item => {
+            const entry = document.createElement('button');
+            entry.type = 'button';
+            entry.className = 'transcript-item';
+            const title = document.createElement('strong');
+            title.textContent = item.label;
+            const date = document.createElement('small');
+            date.textContent = new Date(item.created_at).toLocaleString();
+            entry.append(title, date);
+            entry.addEventListener('click', () => openTranscript(item.id, entry));
+            return entry;
+          }));
+          emptyLibrary.hidden = saved.length > 0;
+        } catch (error) {
+          emptyLibrary.hidden = false;
+          emptyLibrary.textContent = error.message;
+        }
+      }
+
+      async function openTranscript(transcriptId, entry) {
+        try {
+          const response = await fetch(`/transcripts/${encodeURIComponent(transcriptId)}`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || 'Could not open transcript.');
+          displayTranscript(data, transcriptId);
+          document.querySelectorAll('.transcript-item').forEach(item => item.classList.remove('active'));
+          entry.classList.add('active');
+          status.textContent = 'Viewing saved transcript.';
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      }
+
+      loadTranscriptLibrary();
     </script>
   </body>
 </html>
