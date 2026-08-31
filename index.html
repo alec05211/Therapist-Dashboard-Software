@@ -38,6 +38,10 @@
       button:disabled { cursor: wait; opacity: .7; }
       #status { min-height: 1.5em; margin: 24px 0 12px; }
       #timestamps { margin: 16px 0 0; padding: 0; list-style: none; text-align: left; }
+      #clinicalNote { margin: 16px 0; padding: 14px; border-radius: 8px; background: #f5f7f4; text-align: left; }
+      #clinicalNote h3 { margin: 0 0 8px; font-size: 1rem; }
+      #clinicalNote h4 { margin: 12px 0 4px; font-size: .9rem; }
+      #clinicalNote ul { margin: 0; padding-left: 20px; }
       #timestamps li { margin: 8px 0; }
       .segment { width: 100%; height: auto; padding: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; text-align: left; font: inherit; }
       .segment:hover, .segment:focus { background: #f0f0ed; border-color: #ddd; }
@@ -67,6 +71,7 @@
         <section class="viewer" aria-label="Transcript viewer">
           <h2>Transcript</h2>
           <p id="transcriptStatus" aria-live="polite">Choose a saved transcript or make a new recording.</p>
+          <section id="clinicalNote" hidden aria-label="HealthScribe clinical note"></section>
           <ul id="timestamps" aria-label="Timestamped transcript"></ul>
           <audio id="recording" controls></audio>
           <a id="download" download>Download recording</a>
@@ -84,6 +89,7 @@
       const status = document.querySelector('#status');
       const transcriptStatus = document.querySelector('#transcriptStatus');
       const timestamps = document.querySelector('#timestamps');
+      const clinicalNote = document.querySelector('#clinicalNote');
       const recording = document.querySelector('#recording');
       const download = document.querySelector('#download');
       const transcriptList = document.querySelector('#transcriptList');
@@ -135,7 +141,12 @@
           const response = await fetch('/transcribe', { method: 'POST', body: form });
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || 'Transcription failed.');
-          displayTranscript(result, result.id);
+          status.textContent = 'HealthScribe is processing the recording…';
+          await waitForHealthScribe(result.id);
+          const transcriptResponse = await fetch(`/transcripts/${encodeURIComponent(result.id)}`);
+          const transcript = await transcriptResponse.json();
+          if (!transcriptResponse.ok) throw new Error(transcript.detail || 'Could not load the completed transcript.');
+          displayTranscript(transcript, result.id);
           await loadTranscriptLibrary();
           status.textContent = 'Done.';
         } catch (error) {
@@ -143,6 +154,18 @@
         } finally {
           button.disabled = false;
           button.textContent = 'Record';
+        }
+      }
+
+      async function waitForHealthScribe(transcriptId) {
+        while (true) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          const response = await fetch(`/transcripts/${encodeURIComponent(transcriptId)}/status`);
+          const job = await response.json();
+          if (!response.ok) throw new Error(job.detail || 'Could not check HealthScribe status.');
+          if (job.status === 'COMPLETED') return;
+          if (job.status === 'FAILED') throw new Error(job.detail || 'HealthScribe could not complete the recording.');
+          status.textContent = `HealthScribe status: ${job.status}…`;
         }
       }
 
@@ -181,6 +204,24 @@
           item.append(segmentButton);
           return item;
         }));
+        const sections = data.clinical_note || [];
+        clinicalNote.hidden = sections.length === 0;
+        clinicalNote.replaceChildren(...sections.flatMap(section => {
+          const heading = document.createElement('h4');
+          heading.textContent = section.name;
+          const list = document.createElement('ul');
+          list.replaceChildren(...(section.items || []).map(item => {
+            const entry = document.createElement('li');
+            entry.textContent = item;
+            return entry;
+          }));
+          return [heading, list];
+        }));
+        if (sections.length) {
+          const title = document.createElement('h3');
+          title.textContent = 'Draft clinical note — review before use';
+          clinicalNote.prepend(title);
+        }
         if (data.recording_url) {
           recording.src = data.recording_url;
           recording.style.display = 'block';
