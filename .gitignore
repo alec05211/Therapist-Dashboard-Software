@@ -28,3 +28,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Local Quarto render output for the HealthScribe reference; commit its Markdown source instead.
+docs/HEALTHSCRIBE.html
+docs/HEALTHSCRIBE_files/

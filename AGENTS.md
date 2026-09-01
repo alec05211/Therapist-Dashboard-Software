@@ -1,5 +1,12 @@
 # Repository agent instructions
 
+## Product direction
+
+Before proposing, planning, or implementing product features, read `docs/PROJECT_VISION.md`.
+Treat it as the source of truth for the product's long-term intent, strategic priorities, scope boundaries, and feature-fit decisions.
+
+Before proposing, planning, or implementing AI/ML, transcription, diarization, clinical-synthesis, or longitudinal-insight work, also read `docs/AI_ML_VISION.md`. For changes to the current Amazon HealthScribe integration or its AWS infrastructure, read `docs/HEALTHSCRIBE.md` as well.
+
 ## Backlog issues
 
 This repository uses GitHub Issues as the source of truth for agreed future work.
