@@ -9,11 +9,11 @@ type TranscriptLibraryProps = {
 
 export function TranscriptLibrary({ transcripts, activeId, error, onOpen }: TranscriptLibraryProps) {
   return (
-    <aside className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200" aria-label="Saved transcripts">
+    <aside className="min-w-0 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200" aria-label="Saved transcripts">
       <h2 className="text-lg font-semibold">Saved transcripts</h2>
       {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
       {!error && transcripts.length === 0 ? <p className="mt-3 text-sm text-stone-500">No saved transcripts yet.</p> : null}
-      <div className="mt-4 grid max-h-[32.5rem] gap-2 overflow-y-auto">
+      <div className="mt-4 grid max-h-[32.5rem] gap-2 overflow-x-hidden overflow-y-auto">
         {transcripts.map((transcript) => (
           <button
             key={transcript.id}
