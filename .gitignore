@@ -2,6 +2,11 @@
 .venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Local recordings may contain sensitive client audio
 recordings/
@@ -13,6 +18,9 @@ recordings/
 
 # Local credentials
 .env
+.env.*
+!.env.example
+!.env.*.example
 
 # Terraform local state, working files, plans, and potentially sensitive variables
 .terraform/
