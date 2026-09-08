@@ -2,6 +2,11 @@
 .venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Local recordings may contain sensitive client audio
 recordings/
@@ -13,3 +18,25 @@ recordings/
 
 # Local credentials
 .env
+.env.*
+!.env.example
+!.env.*.example
+
+# Terraform local state, working files, plans, and potentially sensitive variables
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local Quarto render output for the HealthScribe reference; commit its Markdown source instead.
+docs/HEALTHSCRIBE.html
+docs/HEALTHSCRIBE_files/

@@ -38,10 +38,19 @@
       button:disabled { cursor: wait; opacity: .7; }
       #status { min-height: 1.5em; margin: 24px 0 12px; }
       #timestamps { margin: 16px 0 0; padding: 0; list-style: none; text-align: left; }
+      #clinicalNote { margin: 16px 0; border-radius: 8px; background: #f5f7f4; text-align: left; overflow: hidden; }
+      .clinical-note-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; height: auto; padding: 12px 14px; border: 0; border-radius: 0; background: transparent; color: #202020; font: 700 1rem system-ui, sans-serif; text-align: left; }
+      .clinical-note-toggle:hover, .clinical-note-toggle:focus { background: #eaf0e8; }
+      .clinical-note-arrow { margin-left: 12px; color: #496d55; font-size: 1.2em; }
+      .clinical-note-preview { margin: 0; padding: 0 14px 12px; color: #4d594e; font-size: .9rem; }
+      .clinical-note-details { padding: 0 14px 14px; border-top: 1px solid #d6ded4; }
+      .clinical-note-details h4 { margin: 12px 0 4px; font-size: .9rem; }
+      .clinical-note-details ul { margin: 0; padding-left: 20px; }
       #timestamps li { margin: 8px 0; }
       .segment { width: 100%; height: auto; padding: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; text-align: left; font: inherit; }
       .segment:hover, .segment:focus { background: #f0f0ed; border-color: #ddd; }
       .segment.active { background: #e4efe8; border-color: #8ab79a; }
+      .segment-control { display: inline-block; width: 1.25em; margin-right: 4px; color: #496d55; font-size: .85em; text-align: center; }
       .speaker-label { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 999px; background: #e7e7e3; color: #454545; font-size: .8em; font-weight: 700; }
       #speakerControls { margin-top: 20px; padding-top: 16px; border-top: 1px solid #ddd; }
       #speakerControls h3 { margin: 0 0 8px; font-size: 1rem; }
@@ -67,6 +76,7 @@
         <section class="viewer" aria-label="Transcript viewer">
           <h2>Transcript</h2>
           <p id="transcriptStatus" aria-live="polite">Choose a saved transcript or make a new recording.</p>
+          <section id="clinicalNote" hidden aria-label="HealthScribe clinical note"></section>
           <ul id="timestamps" aria-label="Timestamped transcript"></ul>
           <audio id="recording" controls></audio>
           <a id="download" download>Download recording</a>
@@ -84,6 +94,7 @@
       const status = document.querySelector('#status');
       const transcriptStatus = document.querySelector('#transcriptStatus');
       const timestamps = document.querySelector('#timestamps');
+      const clinicalNote = document.querySelector('#clinicalNote');
       const recording = document.querySelector('#recording');
       const download = document.querySelector('#download');
       const transcriptList = document.querySelector('#transcriptList');
@@ -135,7 +146,12 @@
           const response = await fetch('/transcribe', { method: 'POST', body: form });
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || 'Transcription failed.');
-          displayTranscript(result, result.id);
+          status.textContent = 'HealthScribe is processing the recording…';
+          await waitForHealthScribe(result.id);
+          const transcriptResponse = await fetch(`/transcripts/${encodeURIComponent(result.id)}`);
+          const transcript = await transcriptResponse.json();
+          if (!transcriptResponse.ok) throw new Error(transcript.detail || 'Could not load the completed transcript.');
+          displayTranscript(transcript, result.id);
           await loadTranscriptLibrary();
           status.textContent = 'Done.';
         } catch (error) {
@@ -143,6 +159,18 @@
         } finally {
           button.disabled = false;
           button.textContent = 'Record';
+        }
+      }
+
+      async function waitForHealthScribe(transcriptId) {
+        while (true) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          const response = await fetch(`/transcripts/${encodeURIComponent(transcriptId)}/status`);
+          const job = await response.json();
+          if (!response.ok) throw new Error(job.detail || 'Could not check HealthScribe status.');
+          if (job.status === 'COMPLETED') return;
+          if (job.status === 'FAILED') throw new Error(job.detail || 'HealthScribe could not complete the recording.');
+          status.textContent = `HealthScribe status: ${job.status}…`;
         }
       }
 
@@ -166,6 +194,12 @@
           const segmentButton = document.createElement('button');
           segmentButton.type = 'button';
           segmentButton.className = 'segment';
+          segmentButton.dataset.segmentIndex = index;
+          const control = document.createElement('span');
+          control.className = 'segment-control';
+          control.setAttribute('aria-hidden', 'true');
+          control.textContent = '▶';
+          segmentButton.append(control);
           const time = document.createElement('time');
           time.textContent = `[${formatTime(segment.start)}] `;
           segmentButton.append(time);
@@ -181,6 +215,52 @@
           item.append(segmentButton);
           return item;
         }));
+        const sections = data.clinical_note || [];
+        clinicalNote.hidden = sections.length === 0;
+        const noteDetails = document.createElement('div');
+        noteDetails.className = 'clinical-note-details';
+        noteDetails.hidden = true;
+        noteDetails.replaceChildren(...sections.flatMap(section => {
+          const heading = document.createElement('h4');
+          heading.textContent = section.name;
+          const list = document.createElement('ul');
+          list.replaceChildren(...(section.items || []).map(item => {
+            const entry = document.createElement('li');
+            entry.textContent = item;
+            return entry;
+          }));
+          return [heading, list];
+        }));
+        if (sections.length) {
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'clinical-note-toggle';
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.append('Draft clinical note — review before use');
+          const arrow = document.createElement('span');
+          arrow.className = 'clinical-note-arrow';
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.textContent = '⌄';
+          toggle.append(arrow);
+
+          const preview = document.createElement('p');
+          preview.className = 'clinical-note-preview';
+          const highlights = sections
+            .flatMap(section => (section.items || []).map(item => `${section.name}: ${item}`))
+            .slice(0, 2);
+          preview.textContent = highlights.join(' · ') || 'No note details available.';
+
+          toggle.addEventListener('click', () => {
+            const expanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!expanded));
+            noteDetails.hidden = expanded;
+            preview.hidden = !expanded;
+            arrow.textContent = expanded ? '⌄' : '⌃';
+          });
+          clinicalNote.replaceChildren(toggle, preview, noteDetails);
+        } else {
+          clinicalNote.replaceChildren();
+        }
         if (data.recording_url) {
           recording.src = data.recording_url;
           recording.style.display = 'block';
@@ -220,6 +300,18 @@
           status.textContent = 'Audio is not available for this transcript.';
           return;
         }
+
+        if (index === activeSegmentIndex) {
+          if (recording.paused) {
+            recording.play().catch(() => {
+              status.textContent = 'Audio playback could not start.';
+            });
+          } else {
+            recording.pause();
+          }
+          return;
+        }
+
         recording.currentTime = currentSegments[index].start;
         recording.play().catch(() => {
           status.textContent = 'Audio playback could not start.';
@@ -228,10 +320,27 @@
       }
 
       function setActiveSegment(index) {
-        if (index === activeSegmentIndex) return;
+        if (index === activeSegmentIndex) {
+          updateSegmentControls();
+          return;
+        }
         activeSegmentIndex = index;
         document.querySelectorAll('.segment').forEach((button, buttonIndex) => {
           button.classList.toggle('active', buttonIndex === index);
+        });
+        updateSegmentControls();
+      }
+
+      function updateSegmentControls() {
+        document.querySelectorAll('.segment').forEach((button, buttonIndex) => {
+          const isActive = buttonIndex === activeSegmentIndex;
+          const isPlaying = isActive && !recording.paused;
+          const control = button.querySelector('.segment-control');
+          control.textContent = isPlaying ? '❚❚' : '▶';
+          button.setAttribute(
+            'aria-label',
+            `${isPlaying ? 'Pause' : 'Play'} segment at ${formatTime(currentSegments[buttonIndex].start)}`
+          );
         });
       }
 
@@ -241,6 +350,10 @@
         );
         setActiveSegment(index);
       });
+
+      recording.addEventListener('play', updateSegmentControls);
+      recording.addEventListener('pause', updateSegmentControls);
+      recording.addEventListener('ended', () => setActiveSegment(-1));
 
       saveSpeakerLabels.addEventListener('click', async () => {
         if (!currentTranscriptId || currentTranscriptId === 'synthetic') return;

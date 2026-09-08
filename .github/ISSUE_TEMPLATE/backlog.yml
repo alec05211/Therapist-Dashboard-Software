@@ -1,0 +1,63 @@
+name: Backlog item
+description: Propose an agreed improvement or future piece of work
+title: "[Backlog]: "
+labels:
+  - backlog
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for work that belongs in the project's backlog. Keep the request focused on the outcome.
+  - type: textarea
+    id: overview
+    attributes:
+      label: Overview
+      description: What will change and why?
+      placeholder: Describe the intended change and its value.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / opportunity
+      description: Who is affected, and what outcome do we want?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: State what is and is not included.
+      value: |
+        In scope:
+        -
+
+        Out of scope:
+        -
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Add independently testable conditions for completion.
+      placeholder: |
+        - [ ] First observable result
+        - [ ] Second observable result
+        - [ ] Regression coverage or validation is complete
+    validations:
+      required: true
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: Implementation notes
+      description: Optional technical context, constraints, or suggested approach.
+    validations:
+      required: false
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing / validation
+      description: How will we verify the work is complete?
+    validations:
+      required: true
