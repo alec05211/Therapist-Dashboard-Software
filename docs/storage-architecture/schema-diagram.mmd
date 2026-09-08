@@ -1,0 +1,41 @@
+erDiagram
+    ORGANIZATIONS { uuid id PK text name text status jsonb settings timestamptz created_at timestamptz updated_at timestamptz archived_at }
+    APPLICATION_USERS { uuid id PK text auth0_subject UK text email text display_name text status timestamptz created_at timestamptz updated_at timestamptz deactivated_at }
+    ORGANIZATION_MEMBERSHIPS { uuid id PK uuid organization_id FK uuid user_id FK text auth0_organization_id text role text status timestamptz starts_at timestamptz ends_at timestamptz created_at timestamptz updated_at }
+    ORGANIZATION_PRACTITIONERS { uuid id PK uuid organization_id FK uuid membership_id FK text professional_name text status timestamptz created_at timestamptz updated_at }
+    CLIENTS { uuid id PK uuid organization_id FK text status timestamptz created_at timestamptz updated_at timestamptz archived_at }
+    CLIENT_THERAPIST_ACCESS { uuid id PK uuid organization_id FK uuid client_id FK uuid practitioner_id FK text relationship_type boolean can_read_clinical boolean can_write_clinical boolean can_view_artifacts boolean can_manage_sessions boolean can_export boolean can_manage_client_access timestamptz effective_from timestamptz effective_until uuid granted_by_user_id FK text grant_reason timestamptz revoked_at uuid revoked_by_user_id FK text revocation_reason timestamptz created_at timestamptz updated_at }
+    APPOINTMENTS { uuid id PK uuid organization_id FK uuid client_id FK uuid primary_practitioner_id FK timestamptz starts_at timestamptz ends_at text status timestamptz created_at timestamptz updated_at }
+    SESSIONS { uuid id PK uuid organization_id FK uuid client_id FK uuid appointment_id FK text status timestamptz started_at timestamptz ended_at uuid created_by_user_id FK timestamptz created_at timestamptz updated_at }
+    SESSION_PRACTITIONER_PARTICIPANTS { uuid id PK uuid session_id FK uuid practitioner_id FK uuid client_therapist_access_id FK text participation_role timestamptz created_at }
+    CLINICAL_ARTIFACTS { uuid id PK uuid organization_id FK uuid client_id FK uuid session_id FK text artifact_type text source text storage_bucket text object_key text object_version_id text content_type bigint byte_size text sha256_checksum text encryption_key_reference text lifecycle_state timestamptz created_at timestamptz deleted_at }
+    TRANSCRIPT_VERSIONS { uuid id PK uuid organization_id FK uuid client_id FK uuid session_id FK uuid source_artifact_id FK uuid parent_version_id FK integer version_number text status text source_provider text source_provider_version uuid created_by_user_id FK uuid finalized_by_user_id FK timestamptz finalized_at timestamptz created_at }
+    TRANSCRIPT_SEGMENTS { uuid id PK uuid transcript_version_id FK integer sequence_number numeric starts_at_seconds numeric ends_at_seconds text speaker_label text content timestamptz created_at }
+    SYNTHESIS_VERSIONS { uuid id PK uuid organization_id FK uuid client_id FK uuid session_id FK uuid source_transcript_version_id FK uuid parent_version_id FK integer version_number text status text generator_name text generator_version jsonb content uuid created_by_user_id FK uuid reviewed_by_user_id FK timestamptz reviewed_at timestamptz created_at }
+    CONSENT_RECORDS { uuid id PK uuid organization_id FK uuid client_id FK uuid session_id FK text consent_type text status text policy_version timestamptz granted_at timestamptz withdrawn_at uuid recorded_by_user_id FK uuid evidence_artifact_id FK timestamptz created_at }
+    AUDIT_EVENTS { uuid id PK uuid organization_id FK uuid actor_user_id FK text action text target_type uuid target_id text outcome timestamptz occurred_at text request_id inet ip_address text user_agent jsonb metadata }
+
+    ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERSHIPS : has
+    APPLICATION_USERS ||--o{ ORGANIZATION_MEMBERSHIPS : joins
+    ORGANIZATION_MEMBERSHIPS ||--o| ORGANIZATION_PRACTITIONERS : enables
+    ORGANIZATIONS ||--o{ CLIENTS : contains
+    CLIENTS ||--o{ CLIENT_THERAPIST_ACCESS : approves
+    ORGANIZATION_PRACTITIONERS ||--o{ CLIENT_THERAPIST_ACCESS : receives
+    CLIENTS ||--o{ APPOINTMENTS : schedules
+    ORGANIZATION_PRACTITIONERS ||--o{ APPOINTMENTS : leads
+    CLIENTS ||--o{ SESSIONS : has
+    APPOINTMENTS ||--o| SESSIONS : becomes
+    SESSIONS ||--o{ SESSION_PRACTITIONER_PARTICIPANTS : includes
+    ORGANIZATION_PRACTITIONERS ||--o{ SESSION_PRACTITIONER_PARTICIPANTS : attends
+    CLIENT_THERAPIST_ACCESS ||--o{ SESSION_PRACTITIONER_PARTICIPANTS : authorizes
+    SESSIONS ||--o{ CLINICAL_ARTIFACTS : stores
+    SESSIONS ||--o{ TRANSCRIPT_VERSIONS : produces
+    CLINICAL_ARTIFACTS ||--o{ TRANSCRIPT_VERSIONS : sources
+    TRANSCRIPT_VERSIONS ||--o{ TRANSCRIPT_SEGMENTS : contains
+    TRANSCRIPT_VERSIONS ||--o{ SYNTHESIS_VERSIONS : grounds
+    SESSIONS ||--o{ SYNTHESIS_VERSIONS : produces
+    CLIENTS ||--o{ CONSENT_RECORDS : grants
+    SESSIONS ||--o{ CONSENT_RECORDS : scopes
+    CLINICAL_ARTIFACTS ||--o{ CONSENT_RECORDS : evidences
+    APPLICATION_USERS ||--o{ AUDIT_EVENTS : performs
+    ORGANIZATIONS ||--o{ AUDIT_EVENTS : records
