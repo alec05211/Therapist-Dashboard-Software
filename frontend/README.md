@@ -42,3 +42,19 @@ Never place sensitive credentials or HealthScribe configuration in a `NEXT_PUBLI
 npm run lint
 npm run build
 ```
+# Frontend
+
+## Auth0 development setup
+
+The therapist onboarding flow uses the official Auth0 Next.js SDK. Before testing
+sign-up locally, create a **Regular Web Application** in an Auth0 development
+tenant and copy `frontend/.env.example` to `frontend/.env.local`.
+
+Set the Auth0 application URLs to:
+
+- Allowed Callback URLs: `http://localhost:3000/auth/callback`
+- Allowed Logout URLs: `http://localhost:3000`
+
+Do not place clinical, client, or practice data in Auth0 metadata or tokens.
+Auth0 creates the account identity; the RDS-backed onboarding endpoint will
+create the organization, membership, and practitioner profile.

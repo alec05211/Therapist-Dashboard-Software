@@ -4,15 +4,21 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Body, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Body, FastAPI, File, Header, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
+from psycopg import Error as PsycopgError
+from psycopg.types.json import Json
+
+from database.auth import validate_access_token
+from database.connection import connect
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 load_dotenv(Path(__file__).with_name(".env"))
@@ -23,6 +29,13 @@ INPUT_BUCKET = os.getenv("HEALTHSCRIBE_INPUT_BUCKET")
 OUTPUT_BUCKET = os.getenv("HEALTHSCRIBE_OUTPUT_BUCKET")
 BATCH_ROLE_ARN = os.getenv("HEALTHSCRIBE_BATCH_DATA_ACCESS_ROLE_ARN")
 POLL_SECONDS = max(1, int(os.getenv("HEALTHSCRIBE_POLL_SECONDS", "5")))
+
+
+class TherapistOnboardingRequest(BaseModel):
+    organization_name: str = Field(min_length=1, max_length=200)
+    professional_name: str = Field(min_length=1, max_length=200)
+    practice_type: Literal["solo", "group"]
+    team_setup: Literal["later", "now"]
 
 
 def configuration() -> tuple[str, str, str]:
@@ -50,6 +63,147 @@ def status_path(session_id: str) -> Path:
 
 def write_json(path: Path, content: dict[str, Any]) -> None:
     path.write_text(json.dumps(content, indent=2), encoding="utf-8")
+
+
+@app.post("/onboarding/therapist", status_code=status.HTTP_201_CREATED)
+def onboard_therapist(
+    request: TherapistOnboardingRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Create the first organization and owner-practitioner membership."""
+    claims = validate_access_token(authorization)
+    auth0_subject = claims["sub"]
+
+    try:
+        with connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO app.application_users (auth0_subject, display_name)
+                    VALUES (%s, %s)
+                    ON CONFLICT (auth0_subject) DO UPDATE
+                      SET display_name = EXCLUDED.display_name,
+                          updated_at = CURRENT_TIMESTAMP
+                    RETURNING id
+                    """,
+                    (auth0_subject, request.professional_name.strip()),
+                )
+                user = cursor.fetchone()
+                if not user:
+                    raise RuntimeError("Could not create the application user.")
+
+                cursor.execute(
+                    """
+                    SELECT membership.organization_id, organization.name
+                    FROM app.organization_memberships AS membership
+                    JOIN app.organizations AS organization
+                      ON organization.id = membership.organization_id
+                    WHERE membership.user_id = %s
+                      AND membership.role = 'owner'
+                      AND membership.status = 'active'
+                    ORDER BY membership.created_at
+                    LIMIT 1
+                    """,
+                    (user["id"],),
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    return {
+                        "created": False,
+                        "organization_id": str(existing["organization_id"]),
+                        "organization_name": existing["name"],
+                    }
+
+                cursor.execute(
+                    """
+                    INSERT INTO app.organizations (name, settings)
+                    VALUES (%s, %s)
+                    RETURNING id, name
+                    """,
+                    (
+                        request.organization_name.strip(),
+                        Json({
+                            "practice_type": request.practice_type,
+                            "team_setup": request.team_setup,
+                        }),
+                    ),
+                )
+                organization = cursor.fetchone()
+                if not organization:
+                    raise RuntimeError("Could not create the organization.")
+
+                cursor.execute(
+                    """
+                    INSERT INTO app.organization_memberships (
+                      organization_id, user_id, role, status
+                    )
+                    VALUES (%s, %s, 'owner', 'active')
+                    RETURNING id
+                    """,
+                    (organization["id"], user["id"]),
+                )
+                membership = cursor.fetchone()
+                if not membership:
+                    raise RuntimeError("Could not create the organization membership.")
+
+                cursor.execute(
+                    """
+                    INSERT INTO app.organization_practitioners (
+                      organization_id, membership_id, professional_name, status
+                    )
+                    VALUES (%s, %s, %s, 'active')
+                    RETURNING id
+                    """,
+                    (
+                        organization["id"],
+                        membership["id"],
+                        request.professional_name.strip(),
+                    ),
+                )
+                practitioner = cursor.fetchone()
+                if not practitioner:
+                    raise RuntimeError("Could not create the practitioner profile.")
+
+                cursor.execute(
+                    """
+                    INSERT INTO app.audit_events (
+                      organization_id, actor_user_id, action, target_type,
+                      target_id, outcome, metadata
+                    )
+                    VALUES (%s, %s, 'organization.created', 'organization', %s,
+                            'allowed', %s)
+                    """,
+                    (
+                        organization["id"],
+                        user["id"],
+                        organization["id"],
+                        Json({
+                            "practice_type": request.practice_type,
+                            "team_setup": request.team_setup,
+                            "practitioner_id": str(practitioner["id"]),
+                        }),
+                    ),
+                )
+
+            connection.commit()
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except PsycopgError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The database is temporarily unavailable.",
+        ) from exc
+
+    return {
+        "created": True,
+        "organization_id": str(organization["id"]),
+        "organization_name": organization["name"],
+        "membership_id": str(membership["id"]),
+        "practitioner_id": str(practitioner["id"]),
+    }
 
 
 def s3_location(uri: str) -> tuple[str, str]:

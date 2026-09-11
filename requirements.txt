@@ -3,3 +3,5 @@ uvicorn[standard]
 python-multipart
 python-dotenv
 boto3
+psycopg[binary]
+PyJWT[crypto]

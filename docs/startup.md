@@ -2,7 +2,7 @@
 
 Run these commands from the repository root in PowerShell.
 
-## Terraform and AWS HealthScribe
+## Terraform, AWS HealthScribe, and RDS
 
 Configure the `terraform` AWS IAM Identity Center profile once on a new machine:
 
@@ -27,19 +27,55 @@ $env:AWS_PROFILE = "terraform"
 aws sts get-caller-identity
 ```
 
-The final command should print the AWS account and an `AWSReservedSSO_...` role
-ARN. Once it succeeds, Terraform can use the same temporary credentials:
+These three commands have distinct jobs:
+
+- `aws sso login --profile terraform` opens or refreshes the SSO session for
+  the named local AWS CLI profile.
+- `$env:AWS_PROFILE = "terraform"` selects that profile for the current
+  PowerShell session. Terraform uses the AWS SDK rather than an `--profile`
+  flag, so it needs this environment variable (or an equivalent default
+  profile selection) to know which credentials to use.
+- `aws sts get-caller-identity` is a read-only verification. It confirms that
+  the selected profile has usable, non-expired credentials and shows which AWS
+  account and IAM role Terraform will act as. It does not modify AWS resources.
+
+You can also verify without setting the session variable by spelling out the
+profile explicitly:
+
+```powershell
+aws sts get-caller-identity --profile terraform
+```
+
+The verification command should print the AWS account and an
+`AWSReservedSSO_...` role ARN. Once it succeeds, Terraform can use the same
+temporary credentials:
 
 ```powershell
 terraform init
 terraform plan
 ```
 
+The AWS CLI also needs a default Region for commands such as `aws ssm` and
+`aws secretsmanager`. Terraform's own `aws_region` variable does not configure
+the CLI. Set the profile once (the current stack uses `us-east-1`):
+
+```powershell
+aws configure set region us-east-1 --profile terraform
+```
+
+For an explicit current-shell override, use `$env:AWS_REGION = "us-east-1"`.
+
 Apply reviewed infrastructure changes:
 
 ```powershell
 terraform apply
 ```
+
+The plan now includes a private PostgreSQL RDS instance in a dedicated VPC. It
+is encrypted with a customer-managed KMS key, has automated backups and
+deletion protection, enforces TLS, exports operational PostgreSQL logs, and has
+no public ingress. Review the plan before applying because it creates billable
+AWS resources.
 
 Preview a teardown before removing infrastructure:
 
@@ -78,6 +114,20 @@ HEALTHSCRIBE_BATCH_DATA_ACCESS_ROLE_ARN=arn:aws:iam::123456789012:role/your-batc
 
 The server uses the temporary credentials from `AWS_PROFILE=terraform`; it does
 not need an AWS access key or secret in `.env`.
+
+## Initialize the database after RDS is applied
+
+The database is private by design. Run schema changes as an explicitly invoked
+Fargate task inside the VPC, rather than from a laptop or through an SSM tunnel.
+The task receives the RDS-managed secret directly from Secrets Manager and
+connects with verified TLS. Follow [the database migration guide](../database/README.md).
+
+## Configure Auth0 API access tokens
+
+Create the development Auth0 API and set the same `AUTH0_AUDIENCE` value in the
+root `.env` (FastAPI) and `frontend/.env.local` (Next.js). This makes the
+onboarding route verify Auth0-issued RS256 access tokens server-side. Follow
+[the Auth0 setup guide](AUTH0_SETUP.md) for the exact values.
 
 ## Local recorder application
 
