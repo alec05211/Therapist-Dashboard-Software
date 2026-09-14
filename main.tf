@@ -57,6 +57,47 @@ variable "enable_migration_network_diagnostics" {
   default     = false
 }
 
+variable "api_image_tag" {
+  description = "Immutable container-image tag for the therapist dashboard API."
+  type        = string
+  default     = "initial"
+}
+
+variable "enable_api_service" {
+  description = "Run the private Fargate API service. A public HTTPS entry point is configured separately after a domain is chosen."
+  type        = bool
+  default     = false
+}
+
+variable "enable_api_internet_egress" {
+  description = "Create highly available NAT egress for the private API. Required when enable_api_service is true so Auth0 validation can reach its public JWKS endpoint."
+  type        = bool
+  default     = false
+}
+
+variable "api_desired_count" {
+  description = "Number of private API tasks to run while the service is enabled."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.api_desired_count >= 1
+    error_message = "api_desired_count must be at least one."
+  }
+}
+
+variable "auth0_domain" {
+  description = "Auth0 tenant domain used by the deployed API to validate access tokens. This is not a secret."
+  type        = string
+  default     = ""
+}
+
+variable "auth0_audience" {
+  description = "Auth0 API identifier used by the deployed API to validate access tokens. This is not a secret."
+  type        = string
+  default     = ""
+}
+
 provider "aws" {
   region = var.aws_region
 
@@ -81,6 +122,7 @@ locals {
   healthscribe_bucket_name = "${var.project_name}-healthscribe-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
   healthscribe_input_bucket_name = "${var.project_name}-healthscribe-input-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
   database_identifier            = "${var.project_name}-postgres"
+  private_workload_network_enabled = var.enable_migration_task_network || var.enable_api_service
 }
 
 
@@ -102,6 +144,81 @@ resource "aws_subnet" "database_private" {
   tags = {
     Name = "${var.project_name}-database-private-${count.index + 1}"
   }
+}
+
+# Public subnets and NAT gateways are opt-in. API tasks always remain in the
+# private subnets; NAT permits outbound HTTPS to Auth0 and other public APIs
+# without making the tasks or RDS directly reachable from the internet.
+resource "aws_internet_gateway" "api" {
+  count = var.enable_api_internet_egress ? 1 : 0
+
+  vpc_id = aws_vpc.database.id
+}
+
+resource "aws_subnet" "api_public" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  vpc_id                  = aws_vpc.database.id
+  cidr_block              = cidrsubnet(var.database_vpc_cidr, 4, count.index + 2)
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project_name}-api-public-${count.index + 1}"
+  }
+}
+
+resource "aws_route_table" "api_public" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  vpc_id = aws_vpc.database.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.api[0].id
+  }
+}
+
+resource "aws_route_table_association" "api_public" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  subnet_id      = aws_subnet.api_public[count.index].id
+  route_table_id = aws_route_table.api_public[count.index].id
+}
+
+resource "aws_eip" "api_nat" {
+  count  = var.enable_api_internet_egress ? 2 : 0
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "api" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  allocation_id = aws_eip.api_nat[count.index].id
+  subnet_id     = aws_subnet.api_public[count.index].id
+
+  depends_on = [
+    aws_internet_gateway.api,
+    aws_route_table_association.api_public,
+  ]
+}
+
+resource "aws_route_table" "api_private" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  vpc_id = aws_vpc.database.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.api[count.index].id
+  }
+}
+
+resource "aws_route_table_association" "api_private" {
+  count = var.enable_api_internet_egress ? 2 : 0
+
+  subnet_id      = aws_subnet.database_private[count.index].id
+  route_table_id = aws_route_table.api_private[count.index].id
 }
 
 resource "aws_db_subnet_group" "database" {
@@ -315,7 +432,7 @@ resource "aws_security_group" "database_migration_task" {
 }
 
 resource "aws_security_group" "database_migration_endpoints" {
-  count = var.enable_migration_task_network ? 1 : 0
+  count = local.private_workload_network_enabled ? 1 : 0
 
   name        = "${var.project_name}-database-migration-endpoints"
   description = "Private AWS API endpoints for the one-off migration task."
@@ -407,7 +524,7 @@ resource "aws_vpc_security_group_egress_rule" "migration_task_dns_tcp" {
 }
 
 resource "aws_vpc_endpoint" "database_migration_apis" {
-  for_each = var.enable_migration_task_network ? toset(["ecr.api", "ecr.dkr", "logs", "secretsmanager", "kms"]) : toset([])
+  for_each = local.private_workload_network_enabled ? toset(["ecr.api", "ecr.dkr", "logs", "secretsmanager", "kms"]) : toset([])
 
   vpc_id              = aws_vpc.database.id
   service_name        = "com.amazonaws.${var.aws_region}.${each.value}"
@@ -425,12 +542,12 @@ data "aws_route_tables" "database" {
 }
 
 resource "aws_vpc_endpoint" "database_migration_s3" {
-  count = var.enable_migration_task_network ? 1 : 0
+  count = local.private_workload_network_enabled ? 1 : 0
 
   vpc_id            = aws_vpc.database.id
   service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids   = data.aws_route_tables.database.ids
+  route_table_ids   = var.enable_api_internet_egress ? aws_route_table.api_private[*].id : data.aws_route_tables.database.ids
 }
 
 data "aws_iam_policy_document" "migration_task_assume_role" {
@@ -512,6 +629,257 @@ resource "aws_ecs_task_definition" "database_migration" {
       }
     }
   }])
+}
+
+# The API is a distinct, long-running workload from the one-off migration
+# task. It is private by design: public HTTPS routing is added only after a
+# product domain and certificate strategy have been selected.
+resource "aws_ecr_repository" "api" {
+  name                 = "${var.project_name}-api"
+  image_tag_mutability = "IMMUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/${var.project_name}/api"
+  retention_in_days = 30
+}
+
+resource "aws_security_group" "api_task" {
+  name        = "${var.project_name}-api-task"
+  description = "No ingress; private Fargate API task."
+  vpc_id      = aws_vpc.database.id
+  egress      = []
+
+  # Individual rules below are the only permitted outbound paths.
+  lifecycle {
+    ignore_changes = [egress]
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "migration_endpoints_from_api" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id            = aws_security_group.database_migration_endpoints[0].id
+  referenced_security_group_id = aws_security_group.api_task.id
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  description                  = "Private AWS API calls from therapist dashboard API"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_to_endpoints" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id            = aws_security_group.api_task.id
+  referenced_security_group_id = aws_security_group.database_migration_endpoints[0].id
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  description                  = "AWS APIs through PrivateLink"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_to_s3" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id = aws_security_group.api_task.id
+  prefix_list_id    = data.aws_prefix_list.s3.id
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  description       = "Private S3 access for HealthScribe artifacts"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_to_database" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id            = aws_security_group.api_task.id
+  referenced_security_group_id = aws_security_group.database.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
+  description                  = "PostgreSQL application connection"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "database_from_api_task" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id            = aws_security_group.database.id
+  referenced_security_group_id = aws_security_group.api_task.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
+  description                  = "Private therapist dashboard API only"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_dns_udp" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id = aws_security_group.api_task.id
+  cidr_ipv4         = var.database_vpc_cidr
+  ip_protocol       = "udp"
+  from_port         = 53
+  to_port           = 53
+  description       = "Private VPC DNS"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_dns_tcp" {
+  count = var.enable_api_service ? 1 : 0
+
+  security_group_id = aws_security_group.api_task.id
+  cidr_ipv4         = var.database_vpc_cidr
+  ip_protocol       = "tcp"
+  from_port         = 53
+  to_port           = 53
+  description       = "Private VPC DNS"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_task_to_internet" {
+  count = var.enable_api_service && var.enable_api_internet_egress ? 1 : 0
+
+  security_group_id = aws_security_group.api_task.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  description       = "Outbound HTTPS for Auth0 token verification and approved public integrations"
+}
+
+data "aws_iam_policy_document" "api_task_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "api_task_execution" {
+  name               = "${var.project_name}-api-execution"
+  assume_role_policy = data.aws_iam_policy_document.api_task_assume_role.json
+}
+
+data "aws_iam_policy_document" "api_task_execution" {
+  statement {
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["ecr:BatchCheckLayerAvailability", "ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage"]
+    resources = [aws_ecr_repository.api.arn]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.api.arn}:*"]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_db_instance.database.master_user_secret[0].secret_arn]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.database.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "api_task_execution" {
+  name   = "api-execution"
+  role   = aws_iam_role.api_task_execution.id
+  policy = data.aws_iam_policy_document.api_task_execution.json
+}
+
+resource "aws_iam_role" "api_task" {
+  name               = "${var.project_name}-api"
+  assume_role_policy = data.aws_iam_policy_document.api_task_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "api_healthscribe" {
+  role       = aws_iam_role.api_task.name
+  policy_arn = aws_iam_policy.healthscribe_caller.arn
+}
+
+resource "aws_ecs_task_definition" "api" {
+  family                   = "${var.project_name}-api"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.api_task_execution.arn
+  task_role_arn            = aws_iam_role.api_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "api"
+    image     = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}"
+    essential = true
+    portMappings = [{
+      containerPort = 8000
+      hostPort      = 8000
+      protocol      = "tcp"
+    }]
+    healthCheck = {
+      command     = ["CMD-SHELL", "python -c \"from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/readyz', timeout=5).read()\""]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
+    environment = [
+      { name = "AWS_REGION", value = var.aws_region },
+      { name = "DATABASE_HOST", value = aws_db_instance.database.address },
+      { name = "DATABASE_NAME", value = var.database_name },
+      { name = "AUTH0_DOMAIN", value = var.auth0_domain },
+      { name = "AUTH0_AUDIENCE", value = var.auth0_audience },
+    ]
+    secrets = [
+      { name = "DATABASE_USERNAME", valueFrom = "${aws_db_instance.database.master_user_secret[0].secret_arn}:username::" },
+      { name = "DATABASE_PASSWORD", valueFrom = "${aws_db_instance.database.master_user_secret[0].secret_arn}:password::" },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.api.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "api"
+      }
+    }
+  }])
+}
+
+resource "aws_ecs_service" "api" {
+  count = var.enable_api_service ? 1 : 0
+
+  name            = "${var.project_name}-api"
+  cluster         = aws_ecs_cluster.database_migration.id
+  task_definition = aws_ecs_task_definition.api.arn
+  desired_count   = var.api_desired_count
+  launch_type     = "FARGATE"
+
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+
+  network_configuration {
+    subnets          = aws_subnet.database_private[*].id
+    security_groups  = [aws_security_group.api_task.id]
+    assign_public_ip = false
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_api_service || var.enable_api_internet_egress
+      error_message = "enable_api_internet_egress must be true when enable_api_service is true so Auth0 token validation can reach its public signing-key endpoint."
+    }
+  }
 }
 
 # HealthScribe batch jobs read source recordings from this bucket.
@@ -865,4 +1233,19 @@ output "database_private_subnet_id" {
 output "database_migration_flow_log_group_name" {
   description = "Temporary VPC Flow Logs group; null unless diagnostics are enabled."
   value       = try(aws_cloudwatch_log_group.database_migration_flow_logs[0].name, null)
+}
+
+output "api_repository_url" {
+  description = "Private ECR repository for the therapist dashboard API image."
+  value       = aws_ecr_repository.api.repository_url
+}
+
+output "api_cluster_name" {
+  description = "Existing ECS cluster that hosts the private API service."
+  value       = aws_ecs_cluster.database_migration.name
+}
+
+output "api_log_group_name" {
+  description = "CloudWatch log group for the private API service."
+  value       = aws_cloudwatch_log_group.api.name
 }

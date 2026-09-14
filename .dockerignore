@@ -1,0 +1,17 @@
+.env
+.env.*
+.git
+.terraform
+.venv
+__pycache__
+*.py[cod]
+*.tfstate
+*.tfstate.*
+recordings
+server.out
+server.err
+*.log
+*.out
+*.err
+frontend
+tools

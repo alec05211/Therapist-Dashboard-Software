@@ -38,6 +38,28 @@ class TherapistOnboardingRequest(BaseModel):
     team_setup: Literal["later", "now"]
 
 
+@app.get("/healthz")
+def healthz():
+    """Process health check; deliberately does not disclose dependencies."""
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz():
+    """Readiness check for private operational validation."""
+    try:
+        with connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The service is not ready.",
+        ) from exc
+    return {"status": "ready"}
+
+
 def configuration() -> tuple[str, str, str]:
     missing = [name for name, value in {
         "HEALTHSCRIBE_INPUT_BUCKET": INPUT_BUCKET,
