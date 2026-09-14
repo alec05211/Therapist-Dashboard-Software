@@ -10,15 +10,24 @@
   --color-foreground: var(--foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html[data-theme="dark"] {
+  --background: #171717;
+  --foreground: #f5f5f4;
+}
+
+html[data-theme="dark"] .bg-white { background-color: #1c1917; }
+html[data-theme="dark"] .bg-stone-50 { background-color: #292524; }
+html[data-theme="dark"] .bg-stone-100 { background-color: #292524; }
+html[data-theme="dark"] .bg-stone-200 { background-color: #44403c; }
+html[data-theme="dark"] .text-stone-900 { color: #fafaf9; }
+html[data-theme="dark"] .text-stone-800 { color: #e7e5e4; }
+html[data-theme="dark"] .text-stone-700 { color: #d6d3d1; }
+html[data-theme="dark"] .text-stone-600, html[data-theme="dark"] .text-stone-500 { color: #a8a29e; }
+html[data-theme="dark"] .border-stone-200, html[data-theme="dark"] .border-stone-300, html[data-theme="dark"] .border-stone-400 { border-color: #57534e; }
+html[data-theme="dark"] .bg-emerald-50 { background-color: #15352d; }
