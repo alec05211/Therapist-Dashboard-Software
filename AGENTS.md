@@ -7,6 +7,14 @@ Treat it as the source of truth for the product's long-term intent, strategic pr
 
 Before proposing, planning, or implementing AI/ML, transcription, diarization, clinical-synthesis, or longitudinal-insight work, also read `docs/AI_ML_VISION.md`. For changes to the current Amazon HealthScribe integration or its AWS infrastructure, read `docs/HEALTHSCRIBE.md` as well.
 
+## Interaction style
+
+The product owner prefers a grab-hand cursor for most directly manipulable or clickable interface elements. Use `cursor-grab` (and `active:cursor-grabbing`) by default for new interactive controls where it does not conflict with a more meaningful state such as disabled, waiting, or text entry.
+
+## Session workflow layouts
+
+Keep scheduled and completed sessions as separate UI components and workflows. `ScheduledSessionLayout` owns pre-session activity, including recording a new session and future preparation features. `CompletedSessionLayout` owns the review workflow for completed sessions: transcript, recording playback, speaker corrections, and draft-note review. Do not show the record-new-session control while a completed session is selected.
+
 ## Backlog issues
 
 This repository uses GitHub Issues as the source of truth for agreed future work.

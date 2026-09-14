@@ -1,15 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { chooseSessionCadence, readSessionCadence } from "@/lib/workspace-preferences";
 
-export function ClientCareSettings() {
-  const [isOpen, setIsOpen] = useState(false);
+type ClientCareSettingsProps = {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+};
+
+export function ClientCareSettings({ isOpen, onOpen, onClose }: ClientCareSettingsProps) {
   const [preferredName, setPreferredName] = useState("");
   const [canViewSummaries, setCanViewSummaries] = useState(false);
+  const [sessionCadence, setSessionCadence] = useState("Thursdays · 3:00 PM · 50 minutes");
   const [saved, setSaved] = useState(false);
 
   const close = () => {
-    setIsOpen(false);
+    onClose();
     setSaved(false);
   };
 
@@ -17,7 +24,7 @@ export function ClientCareSettings() {
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={() => { setSessionCadence(readSessionCadence()); onOpen(); }}
         className="inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3.5 py-2 text-sm font-semibold text-stone-700 shadow-sm hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
       >
         <span aria-hidden="true">⚙</span>
@@ -50,6 +57,17 @@ export function ClientCareSettings() {
                 <p className="mt-2 text-xs leading-5 text-stone-500">This will eventually be distinct from the legal name stored in the client record.</p>
               </fieldset>
 
+              <fieldset className="rounded-xl border border-stone-200 p-4" id="scheduling">
+                <legend className="px-1 text-sm font-semibold text-stone-900">Scheduling</legend>
+                <label className="mt-3 block text-sm font-medium text-stone-700" htmlFor="session-cadence">Usual session pattern</label>
+                <select id="session-cadence" value={sessionCadence} onChange={(event) => setSessionCadence(event.target.value)} className="mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100">
+                  <option>Thursdays · 3:00 PM · 50 minutes</option>
+                  <option>Tuesdays · 10:00 AM · 50 minutes</option>
+                  <option>Every other Monday · 4:00 PM · 50 minutes</option>
+                </select>
+                <p className="mt-2 text-xs leading-5 text-stone-500">This is a display preference for the session cards only. It does not create appointments or scheduling availability yet.</p>
+              </fieldset>
+
               <fieldset className="rounded-xl border border-stone-200 p-4">
                 <legend className="px-1 text-sm font-semibold text-stone-900">Client access</legend>
                 <label className="mt-3 flex cursor-pointer items-start gap-3">
@@ -57,6 +75,12 @@ export function ClientCareSettings() {
                   <span><span className="block text-sm font-medium text-stone-800">Allow client access to therapist-approved summaries</span><span className="mt-1 block text-xs leading-5 text-stone-500">Individual sessions still require review and explicit sharing before anything is visible to a client.</span></span>
                 </label>
               </fieldset>
+
+              <div className="rounded-xl border border-stone-200 p-4">
+                <h2 className="text-sm font-semibold text-stone-900">Speaker identity</h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">Speaker names and labels will be managed here in a future update, rather than from an individual completed-session review.</p>
+                <p className="mt-2 text-xs font-medium text-stone-500">Not configured yet</p>
+              </div>
 
               <div className="rounded-xl border border-stone-200 p-4">
                 <h2 className="text-sm font-semibold text-stone-900">Care coordination</h2>
@@ -69,7 +93,7 @@ export function ClientCareSettings() {
               <p className="text-xs text-stone-500">Initial UI only — saving is local to this browser session.</p>
               <div className="flex gap-3">
                 <button type="button" onClick={close} className="rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">Cancel</button>
-                <button type="button" onClick={() => setSaved(true)} className="rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Save changes</button>
+                <button type="button" onClick={() => { chooseSessionCadence(sessionCadence); setSaved(true); }} className="rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Save changes</button>
               </div>
             </div>
             {saved ? <p className="mt-3 text-right text-sm font-medium text-emerald-800" role="status">Changes saved for this browser session.</p> : null}
