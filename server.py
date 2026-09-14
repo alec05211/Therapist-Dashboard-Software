@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field
 app = FastAPI()
 load_dotenv(Path(__file__).with_name(".env"))
 RECORDINGS_DIRECTORY = Path(__file__).with_name("recordings")
-SYNTHETIC_TRANSCRIPT = Path(__file__).with_name("synthetic_conversation.json")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 INPUT_BUCKET = os.getenv("HEALTHSCRIBE_INPUT_BUCKET")
 OUTPUT_BUCKET = os.getenv("HEALTHSCRIBE_OUTPUT_BUCKET")
@@ -351,8 +350,6 @@ def transcripts():
 
 @app.get("/transcripts/{session_id}")
 def transcript(session_id: str):
-    if session_id == "synthetic":
-        return json.loads(SYNTHETIC_TRANSCRIPT.read_text(encoding="utf-8"))
     path = transcript_path(session_id)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Transcript not found.")

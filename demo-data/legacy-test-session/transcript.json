@@ -1,0 +1,547 @@
+{
+  "id": "session-20260914-142424-c0e98f6c",
+  "created_at": "2026-09-14T14:26:19-04:00",
+  "audio": {
+    "file": "recording.wav",
+    "mime_type": "audio/webm"
+  },
+  "speakers": {},
+  "text": "Hi, Maya, how has the past week been since we last met? Honestly, a little uneven. I felt organized at the beginning of the week, then work became busy and I started feeling behind. When did you first notice that shift Tuesday afternoon. My manager asked for an update in a meeting, and I had not finished the draft I wanted to show. What went through your mind in that moment, I thought. Everyone can tell I'm not keeping up. I felt my face get hot and I could not focus on the rest of the meeting. That sounds uncomfortable. What did you do after the meeting ended? I went back to my desk and tried to work faster, but I kept rereading the same email. Later I skipped my walk and worked through dinner. Did working longer make you feel more caught up? Not really. I finished a few small things, but then I was tired and more critical of myself. You are noticing that the pressure to catch up can sometimes make it harder to concentrate. Yes, it turns into this loop where I am anxious because I have work to do, and then I am slower because I am anxious. Let us slow down that moment in the meeting. What evidence did you have that people thought you were not keeping up? I did not have much evidence. My manager just asked a normal question. One co-worker even said the timeline looked reasonable. And what evidence pointed in a different direction? I had completed most of the research and I had already told my manager that the draft would be ready Wednesday. I guess I treated one question like proof that I was failing. That is a useful distinction. How did you respond to yourself later that evening? I was pretty harsh. I said I was lazy even though I had been working all day. If a friend described the same situation, what might you say to them? I would probably say that one delayed draft does not erase all the work they have done and that taking a break might help them finish it. How does it feel to apply that same response to yourself, a little strange but calmer. I do not fully believe it yet, but I can see it is more fair. That is enough for now. We are practicing a more balanced response, not forcing yourself to feel perfectly confident. Did you have any moments this week that felt restorative? On Saturday morning, I made coffee and sat outside before looking at my phone. It was only about 20 minutes, but I felt like myself again. What made that time different? There was no goal attached to it. I was not trying to improve anything or catch up. I was just paying attention to the weather and my dog running around. That sounds like a good example of intentional rest. Would it be realistic to build in another small window like that this week? Maybe. I could take 10 minutes outside after lunch on Tuesday and Thursday. I usually scrolled at my desk instead. What could make that plan easier to follow? I can put a reminder on my calendar and leave my headphones at my desk, so I do not turn the walk into another task. Good Earlier you mentioned skipping dinner. How has eating and sleep been this week? Sleep was OK most nights, around 7 hours. I ate regularly except Tuesday when I was too wound up to notice I was hungry. Were there any warning signs before you reached that point? My shoulders were tight. I was holding my breath, and I kept telling myself I could not stop until the draft was done. Could those be cues to pause for two minutes, drink water, or check whether you need food? Yes, I think that would help. It sounds simple, but I usually wait until I feel terrible. Many people do. The goal is to notice the earlier signals, not to respond perfectly every time. I like that. It feels less like another rule I can fail. Before we finish, let us summarize your plan for the week. When you notice the thought, Everyone can tell I am not keeping up, what will you try? I will ask what evidence I actually have and remind myself that a question is not proof that I am failing. And for rest, I will take a 10 minute walk after lunch Tuesday and Thursday without my phone. What is one small way to support yourself if work gets intense again? I will pause before working through dinner, check in with my body, and send a realistic update instead of silently panicking. That is a thoughtful plan. How are you feeling as we end today? More steady. I still expect work to be busy, but I have a few things to try instead of just pushing harder. I am glad we can review what you noticed next time and adjust the plan together.",
+  "segments": [
+    {
+      "start": 0.05,
+      "end": 4.119,
+      "text": "Hi, Maya, how has the past week been since we last met?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 4.61,
+      "end": 6.329,
+      "text": "Honestly, a little uneven.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 7.059,
+      "end": 11.96,
+      "text": "I felt organized at the beginning of the week, then work became busy and I started feeling behind.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 13.069,
+      "end": 15.26,
+      "text": "When did you first notice that shift",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 15.72,
+      "end": 16.84,
+      "text": "Tuesday afternoon.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 17.549,
+      "end": 22.409,
+      "text": "My manager asked for an update in a meeting, and I had not finished the draft I wanted to show.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 23.239,
+      "end": 25.659,
+      "text": "What went through your mind in that moment,",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 26.04,
+      "end": 26.659,
+      "text": "I thought.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 27.45,
+      "end": 29.629,
+      "text": "Everyone can tell I'm not keeping up.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 30.129,
+      "end": 33.63,
+      "text": "I felt my face get hot and I could not focus on the rest of the meeting.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 34.509,
+      "end": 35.9,
+      "text": "That sounds uncomfortable.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 36.669,
+      "end": 39.04,
+      "text": "What did you do after the meeting ended?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 39.349,
+      "end": 43.77,
+      "text": "I went back to my desk and tried to work faster, but I kept rereading the same email.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 44.63,
+      "end": 46.84,
+      "text": "Later I skipped my walk and worked through dinner.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 47.939,
+      "end": 50.639,
+      "text": "Did working longer make you feel more caught up?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 51.259,
+      "end": 52.159,
+      "text": "Not really.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 52.58,
+      "end": 57.279,
+      "text": "I finished a few small things, but then I was tired and more critical of myself.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 58.259,
+      "end": 63.479,
+      "text": "You are noticing that the pressure to catch up can sometimes make it harder to concentrate.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 64.18,
+      "end": 70.94,
+      "text": "Yes, it turns into this loop where I am anxious because I have work to do, and then I am slower because I am anxious.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 72.029,
+      "end": 74.75,
+      "text": "Let us slow down that moment in the meeting.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 75.16,
+      "end": 78.8,
+      "text": "What evidence did you have that people thought you were not keeping up?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 79.5,
+      "end": 80.97,
+      "text": "I did not have much evidence.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 81.379,
+      "end": 83.449,
+      "text": "My manager just asked a normal question.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 83.86,
+      "end": 86.559,
+      "text": "One co-worker even said the timeline looked reasonable.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 87.019,
+      "end": 89.639,
+      "text": "And what evidence pointed in a different direction?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 90.059,
+      "end": 95.0,
+      "text": "I had completed most of the research and I had already told my manager that the draft would be ready Wednesday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 95.849,
+      "end": 98.91,
+      "text": "I guess I treated one question like proof that I was failing.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 99.699,
+      "end": 101.569,
+      "text": "That is a useful distinction.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 102.11,
+      "end": 104.889,
+      "text": "How did you respond to yourself later that evening?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 105.23,
+      "end": 106.65,
+      "text": "I was pretty harsh.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 107.069,
+      "end": 110.139,
+      "text": "I said I was lazy even though I had been working all day.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 110.809,
+      "end": 115.669,
+      "text": "If a friend described the same situation, what might you say to them?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 116.01,
+      "end": 122.61,
+      "text": "I would probably say that one delayed draft does not erase all the work they have done and that taking a break might help them finish it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 123.44,
+      "end": 126.9,
+      "text": "How does it feel to apply that same response to yourself,",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 127.4,
+      "end": 129.46,
+      "text": "a little strange but calmer.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 129.91,
+      "end": 133.44,
+      "text": "I do not fully believe it yet, but I can see it is more fair.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 134.21,
+      "end": 135.72,
+      "text": "That is enough for now.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 136.039,
+      "end": 141.91,
+      "text": "We are practicing a more balanced response, not forcing yourself to feel perfectly confident.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 142.369,
+      "end": 145.669,
+      "text": "Did you have any moments this week that felt restorative?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 146.21,
+      "end": 150.19,
+      "text": "On Saturday morning, I made coffee and sat outside before looking at my phone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 150.97,
+      "end": 154.529,
+      "text": "It was only about 20 minutes, but I felt like myself again.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 155.399,
+      "end": 157.199,
+      "text": "What made that time different?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 157.52,
+      "end": 159.119,
+      "text": "There was no goal attached to it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 159.88,
+      "end": 162.58,
+      "text": "I was not trying to improve anything or catch up.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 163.0,
+      "end": 166.199,
+      "text": "I was just paying attention to the weather and my dog running around.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 167.36,
+      "end": 170.679,
+      "text": "That sounds like a good example of intentional rest.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 171.119,
+      "end": 175.38,
+      "text": "Would it be realistic to build in another small window like that this week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 176.039,
+      "end": 176.49,
+      "text": "Maybe.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 177.41,
+      "end": 180.91,
+      "text": "I could take 10 minutes outside after lunch on Tuesday and Thursday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 181.679,
+      "end": 183.66,
+      "text": "I usually scrolled at my desk instead.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 184.52,
+      "end": 187.059,
+      "text": "What could make that plan easier to follow?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 187.57,
+      "end": 193.029,
+      "text": "I can put a reminder on my calendar and leave my headphones at my desk, so I do not turn the walk into another task.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 193.919,
+      "end": 197.05,
+      "text": "Good Earlier you mentioned skipping dinner.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 197.63,
+      "end": 200.169,
+      "text": "How has eating and sleep been this week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 200.74,
+      "end": 203.57,
+      "text": "Sleep was OK most nights, around 7 hours.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 204.029,
+      "end": 207.69,
+      "text": "I ate regularly except Tuesday when I was too wound up to notice I was hungry.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 208.52,
+      "end": 211.46,
+      "text": "Were there any warning signs before you reached that point?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 212.149,
+      "end": 213.399,
+      "text": "My shoulders were tight.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 213.55,
+      "end": 218.369,
+      "text": "I was holding my breath, and I kept telling myself I could not stop until the draft was done.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 219.36,
+      "end": 225.13,
+      "text": "Could those be cues to pause for two minutes, drink water, or check whether you need food?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 225.86,
+      "end": 227.479,
+      "text": "Yes, I think that would help.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 228.059,
+      "end": 231.199,
+      "text": "It sounds simple, but I usually wait until I feel terrible.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 231.949,
+      "end": 233.229,
+      "text": "Many people do.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 233.55,
+      "end": 238.63,
+      "text": "The goal is to notice the earlier signals, not to respond perfectly every time.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 239.38,
+      "end": 240.13,
+      "text": "I like that.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 240.759,
+      "end": 243.32,
+      "text": "It feels less like another rule I can fail.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 244.41,
+      "end": 247.479,
+      "text": "Before we finish, let us summarize your plan for the week.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 247.839,
+      "end": 252.889,
+      "text": "When you notice the thought, Everyone can tell I am not keeping up, what will you try?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 253.619,
+      "end": 259.149,
+      "text": "I will ask what evidence I actually have and remind myself that a question is not proof that I am failing.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 259.929,
+      "end": 265.97,
+      "text": "And for rest, I will take a 10 minute walk after lunch Tuesday and Thursday without my phone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 267.029,
+      "end": 271.79,
+      "text": "What is one small way to support yourself if work gets intense again?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 272.859,
+      "end": 279.6,
+      "text": "I will pause before working through dinner, check in with my body, and send a realistic update instead of silently panicking.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 280.239,
+      "end": 281.95,
+      "text": "That is a thoughtful plan.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 282.399,
+      "end": 284.519,
+      "text": "How are you feeling as we end today?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 285.35,
+      "end": 286.41,
+      "text": "More steady.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 286.709,
+      "end": 291.489,
+      "text": "I still expect work to be busy, but I have a few things to try instead of just pushing harder.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 292.25,
+      "end": 297.239,
+      "text": "I am glad we can review what you noticed next time and adjust the plan together.",
+      "speaker": "CLINICIAN_0"
+    }
+  ],
+  "clinical_note": [
+    {
+      "name": "Chief Complaint",
+      "items": [
+        "Anxiety and work-related stress"
+      ]
+    },
+    {
+      "name": "History Of Present Illness",
+      "items": [
+        "The patient presents for follow-up regarding anxiety and work-related stress.",
+        "They report an uneven week, initially feeling organized but becoming overwhelmed when work became busy.\n",
+        "The patient describes a specific incident on Tuesday afternoon during a meeting when their manager asked for an update on a draft that was not yet finished.",
+        "This triggered feelings of inadequacy, with the patient thinking \"everyone can tell I'm not keeping up.\"",
+        "They experienced facial flushing and difficulty focusing during the meeting.",
+        "Afterward, the patient attempted to work faster but found themselves rereading the same email repeatedly.",
+        "They skipped their usual walk and worked through dinner, which did not make them feel more caught up and instead left them tired and more critical of themselves.\n",
+        "The patient describes a pattern where anxiety about work leads to decreased productivity, which in turn increases anxiety.",
+        "They acknowledge that the pressure to catch up makes it harder to concentrate.\n",
+        "When asked to examine the evidence for their belief that others noticed they were not keeping up, the patient realized they had little evidence \u2014 their manager had asked a normal question and a coworker had commented that the timeline looked reasonable.",
+        "They had completed most of the research and had already informed their manager the draft would be ready Wednesday.",
+        "The patient recognized they had treated one question as proof of failure.\n",
+        "Later that evening, the patient was self-critical, calling themselves \"lazy\" despite having worked all day.",
+        "When asked to apply the same compassion they would show a friend, the patient acknowledged this approach felt \"a little strange but calmer\" and more fair.\n",
+        "The patient reports a restorative experience on Saturday morning, spending 20 minutes outside with coffee and their dog without a goal or phone.",
+        "They felt \"like myself again\" during this time.\n",
+        "Regarding sleep, the patient reports it was \"ok most nights\" with approximately 7 hours of sleep.",
+        "They ate regularly except on Tuesday, when they were too wound up to notice hunger.",
+        "The patient identified early warning signs of stress including tight shoulders and holding their breath.\n"
+      ]
+    },
+    {
+      "name": "Review Of Systems",
+      "items": [
+        "Constitutional: Reports normal sleep (approximately 7 hours most nights)",
+        "Psychiatric: Reports anxiety, reports difficulty concentrating, reports self-critical thoughts"
+      ]
+    },
+    {
+      "name": "Past Social History",
+      "items": [
+        "Employed in a professional role with a manager and coworkers",
+        "Has a dog"
+      ]
+    },
+    {
+      "name": "Assessment",
+      "items": [
+        "1. Anxiety"
+      ]
+    },
+    {
+      "name": "Plan",
+      "items": [
+        "Anxiety:\n- Cognitive reframing: when experiencing the thought \"everyone can tell I'm not keeping up,\" patient will ask what evidence they actually have and remind themselves that a question is not proof of failure\n",
+        "- Self-compassion practice: applying the same understanding to self as would to a friend (e.g., recognizing that one delayed draft does not erase all work done)\n",
+        "- Intentional rest: scheduled 10-minute walks after lunch on Tuesdays and Thursdays without phone or headphones\n",
+        "- Early warning sign recognition: when noticing shoulder tension or holding breath, patient will pause for two minutes, drink water, and check in with body needs (hunger, hydration)\n",
+        "- Communication strategy: when work becomes intense, patient will pause before working through dinner, check in with body, and send a realistic update instead of silently panicking\n",
+        "- Discussed the concept of intentional rest and its benefits\n",
+        "- Explored the difference between productive work and counterproductive \"pushing harder\" when anxious\n",
+        "- Encouraged patient to notice early physical warning signs of stress rather than waiting until feeling \"terrible\"\n",
+        "- Reinforced that the goal is to notice signals and practice a more balanced response, not to respond perfectly every time\n",
+        "- Review patient's progress with new strategies at next session and adjust plan as needed\n"
+      ]
+    }
+  ],
+  "healthscribe": {
+    "job_name": "healthscribe-20260914142424-63ecc7e4",
+    "input_uri": "s3://therapist-dashboard-healthscribe-input-408009925213-us-east-1/recordings/session-20260914-142424-c0e98f6c/recording.wav",
+    "transcript_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-20260914142424-63ecc7e4/transcript.json",
+    "clinical_note_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-20260914142424-63ecc7e4/summary.json"
+  }
+}

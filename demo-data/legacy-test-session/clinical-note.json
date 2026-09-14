@@ -1,0 +1,411 @@
+{
+  "ClinicalDocumentation": {
+    "Sections": [
+      {
+        "SectionName": "CHIEF_COMPLAINT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6fadbc3c-03aa-4917-aa3d-e0dbc49fb2d1"
+              },
+              {
+                "SegmentId": "347942bb-189c-49bd-ba64-434ae61397da"
+              },
+              {
+                "SegmentId": "611f3848-2a6d-4b53-967a-c8f6edad1c10"
+              },
+              {
+                "SegmentId": "398c814a-a204-4838-bd1b-f48f4b90cf69"
+              },
+              {
+                "SegmentId": "b1e3fdf9-5b09-4d23-bac0-4aee0cce7fb7"
+              }
+            ],
+            "SummarizedSegment": "Anxiety and work-related stress"
+          }
+        ]
+      },
+      {
+        "SectionName": "HISTORY_OF_PRESENT_ILLNESS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "846688bb-791a-4179-920f-2c85e8a71c4a"
+              },
+              {
+                "SegmentId": "6fadbc3c-03aa-4917-aa3d-e0dbc49fb2d1"
+              },
+              {
+                "SegmentId": "347942bb-189c-49bd-ba64-434ae61397da"
+              }
+            ],
+            "SummarizedSegment": "The patient presents for follow-up regarding anxiety and work-related stress."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "846688bb-791a-4179-920f-2c85e8a71c4a"
+              },
+              {
+                "SegmentId": "6fadbc3c-03aa-4917-aa3d-e0dbc49fb2d1"
+              },
+              {
+                "SegmentId": "347942bb-189c-49bd-ba64-434ae61397da"
+              }
+            ],
+            "SummarizedSegment": "They report an uneven week, initially feeling organized but becoming overwhelmed when work became busy.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "611f3848-2a6d-4b53-967a-c8f6edad1c10"
+              },
+              {
+                "SegmentId": "398c814a-a204-4838-bd1b-f48f4b90cf69"
+              }
+            ],
+            "SummarizedSegment": "The patient describes a specific incident on Tuesday afternoon during a meeting when their manager asked for an update on a draft that was not yet finished."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "1daf909d-b01f-4d30-9b93-10198179640c"
+              },
+              {
+                "SegmentId": "b1e3fdf9-5b09-4d23-bac0-4aee0cce7fb7"
+              }
+            ],
+            "SummarizedSegment": "This triggered feelings of inadequacy, with the patient thinking \"everyone can tell I'm not keeping up.\""
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "752e02b7-e6f5-4b43-ac50-19d28f02a25d"
+              }
+            ],
+            "SummarizedSegment": "They experienced facial flushing and difficulty focusing during the meeting."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "631fdc12-d846-482a-ad6f-ce71ea41ffd1"
+              }
+            ],
+            "SummarizedSegment": "Afterward, the patient attempted to work faster but found themselves rereading the same email repeatedly."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b3db31e0-0da2-4bfa-926b-979c5e647b11"
+              }
+            ],
+            "SummarizedSegment": "They skipped their usual walk and worked through dinner, which did not make them feel more caught up and instead left them tired and more critical of themselves.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e0c63df6-f860-410b-8c31-a32ec0cdcea0"
+              }
+            ],
+            "SummarizedSegment": "The patient describes a pattern where anxiety about work leads to decreased productivity, which in turn increases anxiety."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "285d1c9b-32b6-4d51-9ea7-c808ae99ac90"
+              },
+              {
+                "SegmentId": "e0c63df6-f860-410b-8c31-a32ec0cdcea0"
+              }
+            ],
+            "SummarizedSegment": "They acknowledge that the pressure to catch up makes it harder to concentrate.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "dd711f93-9d13-44c0-88e0-1c0adaa59404"
+              },
+              {
+                "SegmentId": "efbed106-c914-4ac6-9227-6c776b4e8ff9"
+              },
+              {
+                "SegmentId": "a8ba0c4b-ebde-4e10-b898-bbbec38c8a50"
+              }
+            ],
+            "SummarizedSegment": "When asked to examine the evidence for their belief that others noticed they were not keeping up, the patient realized they had little evidence \u2014 their manager had asked a normal question and a coworker had commented that the timeline looked reasonable."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "09083ce2-38ec-400a-b125-a20ba3286b58"
+              }
+            ],
+            "SummarizedSegment": "They had completed most of the research and had already informed their manager the draft would be ready Wednesday."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6b9575b8-268d-49fd-a4a7-4fb6cf262732"
+              }
+            ],
+            "SummarizedSegment": "The patient recognized they had treated one question as proof of failure.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f5149501-18c6-4745-bc8e-662d2da476a9"
+              },
+              {
+                "SegmentId": "7b87191d-35f1-4bf7-b235-5bebb0bdcdcf"
+              }
+            ],
+            "SummarizedSegment": "Later that evening, the patient was self-critical, calling themselves \"lazy\" despite having worked all day."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3d276ac4-408b-4ced-b161-7f79a3757626"
+              },
+              {
+                "SegmentId": "219c90d0-80e6-4587-86f3-0acdfa362695"
+              }
+            ],
+            "SummarizedSegment": "When asked to apply the same compassion they would show a friend, the patient acknowledged this approach felt \"a little strange but calmer\" and more fair.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3aa7031d-f036-4de2-95d7-9cfa7ca299c3"
+              },
+              {
+                "SegmentId": "ae66cb63-59dc-46d4-97e5-64ccda12af33"
+              }
+            ],
+            "SummarizedSegment": "The patient reports a restorative experience on Saturday morning, spending 20 minutes outside with coffee and their dog without a goal or phone."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ae66cb63-59dc-46d4-97e5-64ccda12af33"
+              }
+            ],
+            "SummarizedSegment": "They felt \"like myself again\" during this time.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "97ec65d3-2cb4-4019-85e4-43c2ee778e75"
+              }
+            ],
+            "SummarizedSegment": "Regarding sleep, the patient reports it was \"ok most nights\" with approximately 7 hours of sleep."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f960c9a2-70f6-415f-bdc4-95922960bb4a"
+              }
+            ],
+            "SummarizedSegment": "They ate regularly except on Tuesday, when they were too wound up to notice hunger."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "46aabfa3-2efe-49be-8286-536668ec1a16"
+              },
+              {
+                "SegmentId": "e5fbf3fc-fc91-4741-b2f1-ab0f5d533964"
+              }
+            ],
+            "SummarizedSegment": "The patient identified early warning signs of stress including tight shoulders and holding their breath.\n"
+          }
+        ]
+      },
+      {
+        "SectionName": "REVIEW_OF_SYSTEMS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "97ec65d3-2cb4-4019-85e4-43c2ee778e75"
+              }
+            ],
+            "SummarizedSegment": "Constitutional: Reports normal sleep (approximately 7 hours most nights)"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b1e3fdf9-5b09-4d23-bac0-4aee0cce7fb7"
+              },
+              {
+                "SegmentId": "752e02b7-e6f5-4b43-ac50-19d28f02a25d"
+              },
+              {
+                "SegmentId": "631fdc12-d846-482a-ad6f-ce71ea41ffd1"
+              },
+              {
+                "SegmentId": "e0c63df6-f860-410b-8c31-a32ec0cdcea0"
+              },
+              {
+                "SegmentId": "f5149501-18c6-4745-bc8e-662d2da476a9"
+              },
+              {
+                "SegmentId": "7b87191d-35f1-4bf7-b235-5bebb0bdcdcf"
+              }
+            ],
+            "SummarizedSegment": "Psychiatric: Reports anxiety, reports difficulty concentrating, reports self-critical thoughts"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_MEDICAL_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_FAMILY_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_SOCIAL_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "398c814a-a204-4838-bd1b-f48f4b90cf69"
+              }
+            ],
+            "SummarizedSegment": "Employed in a professional role with a manager and coworkers"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "bc50e8a6-cfa1-4aff-9a6b-68f0f89753ae"
+              }
+            ],
+            "SummarizedSegment": "Has a dog"
+          }
+        ]
+      },
+      {
+        "SectionName": "PHYSICAL_EXAMINATION",
+        "Summary": []
+      },
+      {
+        "SectionName": "DIAGNOSTIC_TESTING",
+        "Summary": []
+      },
+      {
+        "SectionName": "ASSESSMENT",
+        "Summary": [
+          {
+            "EvidenceLinks": [],
+            "SummarizedSegment": "1. Anxiety"
+          }
+        ]
+      },
+      {
+        "SectionName": "PLAN",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b1e3fdf9-5b09-4d23-bac0-4aee0cce7fb7"
+              },
+              {
+                "SegmentId": "e0c63df6-f860-410b-8c31-a32ec0cdcea0"
+              }
+            ],
+            "SummarizedSegment": "Anxiety:\n- Cognitive reframing: when experiencing the thought \"everyone can tell I'm not keeping up,\" patient will ask what evidence they actually have and remind themselves that a question is not proof of failure\n"
+          },
+          {
+            "EvidenceLinks": [],
+            "SummarizedSegment": "- Self-compassion practice: applying the same understanding to self as would to a friend (e.g., recognizing that one delayed draft does not erase all work done)\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f46f7f66-73a1-49c9-b083-b9f7404a608c"
+              }
+            ],
+            "SummarizedSegment": "- Intentional rest: scheduled 10-minute walks after lunch on Tuesdays and Thursdays without phone or headphones\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f63bbc69-19cd-4e88-88be-2557c30416d6"
+              },
+              {
+                "SegmentId": "219c90d0-80e6-4587-86f3-0acdfa362695"
+              }
+            ],
+            "SummarizedSegment": "- Early warning sign recognition: when noticing shoulder tension or holding breath, patient will pause for two minutes, drink water, and check in with body needs (hunger, hydration)\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "9f355c88-7407-454b-8bad-4c1c6843eedc"
+              },
+              {
+                "SegmentId": "1254fefd-8a45-4600-b3c7-29390a04bb6c"
+              },
+              {
+                "SegmentId": "b899c219-1044-4346-9ee8-56600d0ce55f"
+              }
+            ],
+            "SummarizedSegment": "- Communication strategy: when work becomes intense, patient will pause before working through dinner, check in with body, and send a realistic update instead of silently panicking\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "998a24d2-9179-4449-be63-398e59b0aee7"
+              },
+              {
+                "SegmentId": "e097d0ee-2b4e-4f18-acb8-ece367409ac4"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the concept of intentional rest and its benefits\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b5224aa1-cd20-4a40-8065-cd65dbb7fdcc"
+              }
+            ],
+            "SummarizedSegment": "- Explored the difference between productive work and counterproductive \"pushing harder\" when anxious\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13e0b033-5771-47a2-964e-78a5f4b5430a"
+              }
+            ],
+            "SummarizedSegment": "- Encouraged patient to notice early physical warning signs of stress rather than waiting until feeling \"terrible\"\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "285d1c9b-32b6-4d51-9ea7-c808ae99ac90"
+              },
+              {
+                "SegmentId": "e0c63df6-f860-410b-8c31-a32ec0cdcea0"
+              }
+            ],
+            "SummarizedSegment": "- Reinforced that the goal is to notice signals and practice a more balanced response, not to respond perfectly every time\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6dd68170-9b13-4eb1-9987-0ff27c044b66"
+              },
+              {
+                "SegmentId": "23b754f1-b415-4cee-928c-c2087979ed05"
+              }
+            ],
+            "SummarizedSegment": "- Review patient's progress with new strategies at next session and adjust plan as needed\n"
+          }
+        ]
+      }
+    ]
+  }
+}

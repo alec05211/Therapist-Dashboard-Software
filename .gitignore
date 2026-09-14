@@ -8,9 +8,6 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Local recordings may contain sensitive client audio
-recordings/
-
 # Local runtime and installer logs
 *.log
 *.out
