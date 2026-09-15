@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* A quiet light-gray canvas keeps broad workspace sections from reading as blank white. */
+  --background: #eeedea;
+  --foreground: #292524;
+  --surface: #f6f6f4;
+  --surface-subtle: #fbfbfa;
+  --surface-inset: #e8e7e3;
+  --border: #c9c4bc;
+  --border-strong: #a9a299;
+  --text-muted: #6b665f;
+  --accent-text: #465c4b;
+  --accent-surface: #eaf2eb;
+  --accent-strong: #465c4b;
+  --accent-strong-hover: #36483a;
 }
 
 @theme inline {
@@ -21,32 +32,51 @@ html { scrollbar-gutter: stable; }
 html { scrollbar-gutter: stable; }
 
 html[data-theme="dark"] {
-  --background: #171717;
-  --foreground: #f5f5f4;
+  --background: #151412;
+  --foreground: #f5f2ed;
+  --surface: #211f1d;
+  --surface-subtle: #292724;
+  --surface-inset: #34312d;
+  --border: #625d57;
+  --border-strong: #827b73;
+  --text-muted: #c0bab3;
+  --accent-text: #c7ddca;
+  --accent-surface: #22372a;
+  /* Remains dark enough for the existing white primary-button labels. */
+  --accent-strong: #4e6b54;
+  --accent-strong-hover: #5c7a62;
 }
 
-html[data-theme="dark"] .bg-white { background-color: #1c1917; }
-html[data-theme="dark"] .bg-stone-50 { background-color: #292524; }
-html[data-theme="dark"] .bg-stone-100 { background-color: #292524; }
-html[data-theme="dark"] .bg-stone-200 { background-color: #44403c; }
+html[data-theme="light"] .bg-white { background-color: var(--surface); }
+html[data-theme="dark"] .bg-white { background-color: var(--surface); }
+html[data-theme="dark"] .bg-stone-50 { background-color: var(--surface-subtle); }
+html[data-theme="dark"] .bg-stone-100 { background-color: var(--surface-inset); }
+html[data-theme="dark"] .bg-stone-200 { background-color: #45413c; }
 html[data-theme="dark"] .text-stone-900 { color: #fafaf9; }
-html[data-theme="dark"] .text-stone-800 { color: #e7e5e4; }
-html[data-theme="dark"] .text-stone-700 { color: #d6d3d1; }
-html[data-theme="dark"] .text-stone-600, html[data-theme="dark"] .text-stone-500 { color: #a8a29e; }
-html[data-theme="dark"] .border-stone-200, html[data-theme="dark"] .border-stone-300, html[data-theme="dark"] .border-stone-400 { border-color: #57534e; }
-html[data-theme="dark"] .bg-emerald-50 { background-color: #15352d; }
+html[data-theme="dark"] .text-stone-800 { color: #e9e4de; }
+html[data-theme="dark"] .text-stone-700 { color: #d7d0c8; }
+html[data-theme="dark"] .text-stone-600 { color: var(--text-muted); }
+html[data-theme="dark"] .text-stone-500 { color: #aaa39c; }
+html[data-theme="dark"] .border-stone-200, html[data-theme="dark"] .border-stone-300, html[data-theme="dark"] .border-stone-400 { border-color: var(--border); }
+html[data-theme="dark"] .hover\:bg-stone-50:hover { background-color: #34312d; }
+html[data-theme="dark"] .hover\:bg-stone-100:hover { background-color: #3d3934; }
+html[data-theme="dark"] .hover\:bg-stone-200:hover { background-color: #45413c; }
 
-/* Temporary neutral development palette. Semantic accents can be restored once the product color system is defined. */
-.text-emerald-800, .text-emerald-700 { color: #44403c; }
-.bg-emerald-50 { background-color: #f5f5f4; }
-.bg-emerald-800 { background-color: #44403c; }
-.bg-emerald-900, .hover\:bg-emerald-900:hover { background-color: #292524; }
-.hover\:bg-emerald-50:hover { background-color: #e7e5e4; }
-.border-emerald-300 { border-color: #a8a29e; }
-.border-emerald-700 { border-color: #57534e; }
-.ring-emerald-700 { --tw-ring-color: #57534e; }
-.focus-visible\:outline-emerald-700:focus-visible { outline-color: #57534e; }
-.accent-emerald-700, .accent-emerald-800 { accent-color: #57534e; }
+/* Evergreen is reserved for selection, primary action, and focus. */
+.text-emerald-800, .text-emerald-700 { color: var(--accent-text); }
+.bg-emerald-50 { background-color: var(--accent-surface); }
+.bg-emerald-800 { background-color: var(--accent-strong); }
+.bg-emerald-900, .hover\:bg-emerald-900:hover { background-color: var(--accent-strong-hover); }
+.hover\:bg-emerald-50:hover { background-color: #dfeae0; }
+.border-emerald-300 { border-color: #a7c0ab; }
+.border-emerald-700 { border-color: var(--accent-strong); }
+.ring-emerald-700 { --tw-ring-color: var(--accent-strong); }
+.focus-visible\:outline-emerald-700:focus-visible { outline-color: var(--accent-strong); }
+.accent-emerald-700, .accent-emerald-800 { accent-color: var(--accent-strong); }
+
+html[data-theme="dark"] .hover\:bg-emerald-50:hover { background-color: #2b4533; }
+html[data-theme="dark"] .border-emerald-300 { border-color: #71977a; }
+html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
 
 .collapsed-content-preview {
   position: relative;
