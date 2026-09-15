@@ -48,29 +48,56 @@ html[data-theme="dark"] .bg-emerald-50 { background-color: #15352d; }
 .focus-visible\:outline-emerald-700:focus-visible { outline-color: #57534e; }
 .accent-emerald-700, .accent-emerald-800 { accent-color: #57534e; }
 
-.transcript-preview {
-  -webkit-mask-image: linear-gradient(to bottom, #000 30%, rgb(0 0 0 / 70%) 62%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 30%, rgb(0 0 0 / 70%) 62%, transparent 100%);
+.collapsed-content-preview {
+  position: relative;
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, rgb(0 0 0 / 72%) 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 30%, rgb(0 0 0 / 72%) 55%, transparent 100%);
 }
 
-.transcript-preview {
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+.collapsed-content-preview::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 58%;
+  content: "";
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 76%);
+  mask-image: linear-gradient(to bottom, transparent, #000 76%);
+  pointer-events: none;
 }
 
-@keyframes session-carousel-from-next {
-  from { opacity: 0.55; transform: translateX(10px); }
-  to { opacity: 1; transform: translateX(0); }
+.session-carousel-track {
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
-@keyframes session-carousel-from-previous {
-  from { opacity: 0.55; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
+.session-history-carousel::before,
+.session-history-carousel::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 44%;
+  content: "";
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
-.session-carousel-track[data-motion="next"] { animation: session-carousel-from-next 220ms cubic-bezier(0.22, 1, 0.36, 1); }
-.session-carousel-track[data-motion="previous"] { animation: session-carousel-from-previous 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.session-history-carousel::before {
+  left: 0;
+  -webkit-mask-image: linear-gradient(to right, #000, rgb(0 0 0 / 60%) 40%, transparent 100%);
+  mask-image: linear-gradient(to right, #000, rgb(0 0 0 / 60%) 40%, transparent 100%);
+}
+
+.session-history-carousel::after {
+  right: 0;
+  -webkit-mask-image: linear-gradient(to left, #000, rgb(0 0 0 / 60%) 40%, transparent 100%);
+  mask-image: linear-gradient(to left, #000, rgb(0 0 0 / 60%) 40%, transparent 100%);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .session-carousel-track[data-motion] { animation: none; }
+  .session-carousel-track { transition: none; }
 }

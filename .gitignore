@@ -13,6 +13,9 @@ htmlcov/
 *.out
 *.err
 
+# Temporary Microsoft Office lock files
+~$*.doc*
+
 # Local credentials
 .env
 .env.*

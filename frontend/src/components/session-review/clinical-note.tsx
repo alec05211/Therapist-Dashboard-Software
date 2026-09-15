@@ -5,7 +5,7 @@ export function ClinicalNote({ sections }: { sections: ClinicalNoteSection[] }) 
   const [expanded, setExpanded] = useState(false);
   if (!sections.length) return null;
 
-  const highlights = sections.flatMap((section) => section.items.map((item) => `${section.name}: ${item}`)).slice(0, 2);
+  const preview = sections.flatMap((section) => section.items.map((item) => `${section.name}: ${item}`)).join(" · ");
   const toggle = () => setExpanded((value) => !value);
   return (
     <section
@@ -25,7 +25,7 @@ export function ClinicalNote({ sections }: { sections: ClinicalNoteSection[] }) 
       <div className="p-4 text-left font-semibold">
         <span>Draft clinical note — review before use</span>
       </div>
-      {!expanded ? <p className="px-4 pb-8 text-sm text-stone-600">{highlights.join(" · ") || "No note details available."}</p> : null}
+      {!expanded ? <p className="collapsed-content-preview mx-4 mb-3 max-h-24 overflow-hidden text-sm leading-6 text-stone-600">{preview || "No note details available."}</p> : null}
       {expanded ? <div className="px-4 pb-4">{sections.map((section) => <div key={section.name}><h3 className="mt-4 text-sm font-semibold">{section.name}</h3><ul className="mt-1 list-disc pl-5 text-sm">{section.items.map((item) => <li key={item}>{item}</li>)}</ul></div>)}</div> : null}
       <span className={`absolute right-4 text-lg text-stone-600 ${expanded ? "top-3" : "bottom-2"}`} aria-hidden="true">{expanded ? "⌃" : "⌄"}</span>
     </section>

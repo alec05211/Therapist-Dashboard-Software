@@ -1,0 +1,786 @@
+{
+  "ClinicalDocumentation": {
+    "Sections": [
+      {
+        "SectionName": "CHIEF_COMPLAINT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "35233686-7220-48a5-a1ac-f840c73945d6"
+              },
+              {
+                "SegmentId": "92d9f5cd-d1ab-49fe-9d45-771cae90b2b6"
+              },
+              {
+                "SegmentId": "7a385968-6609-41a5-9749-a2201de7a94c"
+              },
+              {
+                "SegmentId": "69aeeef3-dcbf-4313-b216-d81b4fa8969b"
+              },
+              {
+                "SegmentId": "704479ba-38ed-499c-8697-86871483cf65"
+              }
+            ],
+            "SummarizedSegment": "Work-related stress and anxiety"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13919c46-dc48-4033-9d14-aef0d5ad8913"
+              },
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              },
+              {
+                "SegmentId": "5e0ead7c-0cc6-4bce-8e14-4c6cf5b67cb6"
+              },
+              {
+                "SegmentId": "e4af2678-3fc6-4da2-ab61-ec5a54814c11"
+              },
+              {
+                "SegmentId": "4a7f40ea-f312-4b26-83db-b4e9dba4e366"
+              }
+            ],
+            "SummarizedSegment": "Grief"
+          }
+        ]
+      },
+      {
+        "SectionName": "HISTORY_OF_PRESENT_ILLNESS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "35233686-7220-48a5-a1ac-f840c73945d6"
+              }
+            ],
+            "SummarizedSegment": "The patient presents for follow-up regarding work-related stress and anxiety."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0ac401e7-910f-468e-b9d9-f98e079a9407"
+              },
+              {
+                "SegmentId": "309d646a-104d-40df-9f2b-fcda89beed9c"
+              },
+              {
+                "SegmentId": "7a385968-6609-41a5-9749-a2201de7a94c"
+              },
+              {
+                "SegmentId": "f379707a-beb8-4bf2-8638-224cdd584ed2"
+              }
+            ],
+            "SummarizedSegment": "They report taking a scheduled break on Thursday, which they initially felt was \"irresponsible\" but ultimately found beneficial."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f379707a-beb8-4bf2-8638-224cdd584ed2"
+              },
+              {
+                "SegmentId": "997171c9-4bbe-429f-9725-e972afb6eddd"
+              },
+              {
+                "SegmentId": "9ee26962-95af-449b-a8ec-abc129249ae0"
+              }
+            ],
+            "SummarizedSegment": "The patient describes walking around the block for 10 minutes, returning to work less frantic, and completing a task they had been avoiding."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "1f35738c-9ad3-4527-9a9d-8b28ebb34150"
+              }
+            ],
+            "SummarizedSegment": "They note that these experiences feel \"ordinary\" rather than profound.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e905ea65-ad61-4285-a1a1-930432a7e158"
+              },
+              {
+                "SegmentId": "69aeeef3-dcbf-4313-b216-d81b4fa8969b"
+              }
+            ],
+            "SummarizedSegment": "On Friday, the patient experienced a more challenging situation with an upset client."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "69aeeef3-dcbf-4313-b216-d81b4fa8969b"
+              },
+              {
+                "SegmentId": "04cad02b-8de6-4f81-b362-a0e1e982e919"
+              },
+              {
+                "SegmentId": "cc79e04c-5617-4091-91ac-da43b4d0ee26"
+              },
+              {
+                "SegmentId": "d783dfde-d456-40ab-b6b8-f57bdd8b5166"
+              }
+            ],
+            "SummarizedSegment": "They initially wanted to stay at their desk until everything was solved, recognizing they were holding their breath and feeling that if they stopped paying attention, something bad would happen."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d783dfde-d456-40ab-b6b8-f57bdd8b5166"
+              },
+              {
+                "SegmentId": "1fbf7a9a-e315-46c5-ac54-4a0c6d804732"
+              },
+              {
+                "SegmentId": "ac787ad7-618c-45bc-8f9a-4b7508a82843"
+              },
+              {
+                "SegmentId": "e4676285-be6f-429b-a7fd-cdc48bd4ecfc"
+              },
+              {
+                "SegmentId": "5371fcee-83b3-40db-b3e5-1d179eefb6b7"
+              }
+            ],
+            "SummarizedSegment": "The patient was able to check the evidence for this thought, noting the client had been connected with the right person and they had done what they could that day."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0b06800e-947a-49bf-b273-66490acb276a"
+              }
+            ],
+            "SummarizedSegment": "They still felt worried but recognized that worrying was not the same as being needed at that exact moment.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13919c46-dc48-4033-9d14-aef0d5ad8913"
+              },
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              },
+              {
+                "SegmentId": "5e0ead7c-0cc6-4bce-8e14-4c6cf5b67cb6"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that their father's illness has contributed to their current patterns of behavior."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              },
+              {
+                "SegmentId": "5e0ead7c-0cc6-4bce-8e14-4c6cf5b67cb6"
+              }
+            ],
+            "SummarizedSegment": "They describe feeling that there was always one more call to make and that if they stopped paying attention, they would miss something important."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e4af2678-3fc6-4da2-ab61-ec5a54814c11"
+              },
+              {
+                "SegmentId": "4a7f40ea-f312-4b26-83db-b4e9dba4e366"
+              }
+            ],
+            "SummarizedSegment": "The patient associates their father's organization with love and felt that forgetting something meant failing him."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "8597cc33-6b38-443c-8181-b7dd74a122e3"
+              },
+              {
+                "SegmentId": "5f81adf1-ddd8-47f8-9d64-f1f230a5f4dc"
+              }
+            ],
+            "SummarizedSegment": "They recognize that staying vigilant has become their way of proving they care about their work."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "704479ba-38ed-499c-8697-86871483cf65"
+              },
+              {
+                "SegmentId": "fbea79aa-64c3-4482-ba7c-12c9ebdf239f"
+              },
+              {
+                "SegmentId": "f0dbf28b-6536-48df-a5b5-51d8ec2968be"
+              },
+              {
+                "SegmentId": "ee61663b-5b26-4e83-b4b3-11c6097f96ea"
+              }
+            ],
+            "SummarizedSegment": "The patient expresses being tired of making every task feel moral and wants to believe that leaving work on time does not mean they stopped caring.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ec227ce3-e76d-4872-8f5c-5d7e382d3e47"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that darker thoughts have not come up this week."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7e179a6d-7da4-4295-80f1-928e6419bed4"
+              },
+              {
+                "SegmentId": "89d4c569-1081-4d76-902f-236692c4b5cf"
+              }
+            ],
+            "SummarizedSegment": "They have had moments of feeling overwhelmed but did not feel like disappearing."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "684bb027-9f24-442f-9978-04188fe6550b"
+              },
+              {
+                "SegmentId": "af3ce355-7b6c-49f2-bb64-44ce84d7c609"
+              }
+            ],
+            "SummarizedSegment": "The patient denies any plan or intention to harm themselves today.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d6c3085b-3713-4aa0-bdd3-4b7352efae1a"
+              },
+              {
+                "SegmentId": "143f2b21-9136-4021-950e-b860d3809b27"
+              },
+              {
+                "SegmentId": "7011c617-e83b-4aca-b343-01738f878200"
+              },
+              {
+                "SegmentId": "773675a7-1601-4c06-86ee-1308dbde97df"
+              }
+            ],
+            "SummarizedSegment": "The patient reports an episode of grief on Thursday while organizing a file, triggered by a memory of their father's organization."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "773675a7-1601-4c06-86ee-1308dbde97df"
+              },
+              {
+                "SegmentId": "396b3845-db8b-4b8a-a354-73751e3bbaa8"
+              },
+              {
+                "SegmentId": "9cacd83f-7f80-4169-bc4e-4d1357b179d7"
+              },
+              {
+                "SegmentId": "b02c24a4-b7db-4d8c-a675-a96e8de18100"
+              }
+            ],
+            "SummarizedSegment": "They went to the bathroom and cried for a few minutes, then returned to work feeling calmer and less sharp."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "9cacd83f-7f80-4169-bc4e-4d1357b179d7"
+              },
+              {
+                "SegmentId": "b02c24a4-b7db-4d8c-a675-a96e8de18100"
+              }
+            ],
+            "SummarizedSegment": "The patient states they do not need to work faster after allowing themselves to feel the emotion.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "93aca600-addc-4e96-86c8-382a860cc8f0"
+              },
+              {
+                "SegmentId": "3b99aab6-8f6f-45a2-96c3-3db2dc338424"
+              },
+              {
+                "SegmentId": "323dd4a4-56ab-4354-9070-9c285649a3ba"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that their partner Nora noticed they seemed more present after they cooked dinner together on Wednesday and did not open their laptop afterward."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "eff632ce-f776-4d54-88f9-f917121bf4dc"
+              },
+              {
+                "SegmentId": "83572cf3-f499-4f8d-bfcf-399cb98a3496"
+              },
+              {
+                "SegmentId": "94ded941-bc0b-4b95-bf75-d1e736252c6a"
+              }
+            ],
+            "SummarizedSegment": "The patient felt nice but also sad, realizing how absent they had been."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "9c074d22-cb92-4ec4-9ffd-dbcf5de5c406"
+              }
+            ],
+            "SummarizedSegment": "Their first instinct was to apologize for every time they were in the room but not really there.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "03940868-bdf9-4452-ac2a-46266adabeaa"
+              },
+              {
+                "SegmentId": "e377ff47-fffb-47f2-af87-937326cefb94"
+              },
+              {
+                "SegmentId": "fbdffcc3-d0bc-4010-8720-f4024dadf6f4"
+              },
+              {
+                "SegmentId": "e87cd87c-df16-488c-839e-668bc0bb295b"
+              }
+            ],
+            "SummarizedSegment": "The patient attempted to leave work on time on Tuesday but was interrupted by an email from an upset client about a hearing date."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ebb6ba1c-1186-4155-b610-ac0477448311"
+              },
+              {
+                "SegmentId": "e706464c-0640-41e8-8a60-28adca4f3559"
+              }
+            ],
+            "SummarizedSegment": "They told themselves they would only respond for 5 minutes but ended up staying an hour longer."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "22d6addc-3afc-45d3-afb7-e9456fd03855"
+              },
+              {
+                "SegmentId": "811dcdcd-4cfb-4514-8739-777d2c339ad5"
+              },
+              {
+                "SegmentId": "1c3d2ad2-e924-4d15-be14-09b86c294159"
+              }
+            ],
+            "SummarizedSegment": "The patient felt that leaving would mean they did not care, and they researched everything again to try to make the fear go away for both themselves and the client."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e2eb8a44-1d9d-4f02-91c8-b1c19cdcb68f"
+              },
+              {
+                "SegmentId": "7094bbfc-06b3-4337-bd37-14ce7d87b885"
+              }
+            ],
+            "SummarizedSegment": "They sent a longer email and then worried they had said the wrong thing."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "37a7f574-9951-48bc-86eb-0dc9524a64b9"
+              },
+              {
+                "SegmentId": "6537d984-c958-4231-90f4-3d856e35f324"
+              },
+              {
+                "SegmentId": "1dbe9269-07a2-43da-b4c2-b09527385b05"
+              }
+            ],
+            "SummarizedSegment": "The patient recognizes they confuse being available with being helpful.\n"
+          }
+        ]
+      },
+      {
+        "SectionName": "REVIEW_OF_SYSTEMS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7e179a6d-7da4-4295-80f1-928e6419bed4"
+              }
+            ],
+            "SummarizedSegment": "Psychiatric: Reports moments of feeling overwhelmed"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ec227ce3-e76d-4872-8f5c-5d7e382d3e47"
+              }
+            ],
+            "SummarizedSegment": "Denies darker thoughts this week"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "684bb027-9f24-442f-9978-04188fe6550b"
+              },
+              {
+                "SegmentId": "af3ce355-7b6c-49f2-bb64-44ce84d7c609"
+              }
+            ],
+            "SummarizedSegment": "Denies suicidal ideation or plan"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_MEDICAL_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_FAMILY_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13919c46-dc48-4033-9d14-aef0d5ad8913"
+              },
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              }
+            ],
+            "SummarizedSegment": "Father: had a significant illness (deceased)"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_SOCIAL_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e905ea65-ad61-4285-a1a1-930432a7e158"
+              },
+              {
+                "SegmentId": "e4676285-be6f-429b-a7fd-cdc48bd4ecfc"
+              },
+              {
+                "SegmentId": "e87cd87c-df16-488c-839e-668bc0bb295b"
+              },
+              {
+                "SegmentId": "22d6addc-3afc-45d3-afb7-e9456fd03855"
+              }
+            ],
+            "SummarizedSegment": "Employed in a profession with client responsibilities"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "93aca600-addc-4e96-86c8-382a860cc8f0"
+              },
+              {
+                "SegmentId": "323dd4a4-56ab-4354-9070-9c285649a3ba"
+              },
+              {
+                "SegmentId": "d29c8cdc-8f4b-4ebd-806e-a19443df32db"
+              }
+            ],
+            "SummarizedSegment": "Has a partner named Nora"
+          }
+        ]
+      },
+      {
+        "SectionName": "PHYSICAL_EXAMINATION",
+        "Summary": []
+      },
+      {
+        "SectionName": "DIAGNOSTIC_TESTING",
+        "Summary": []
+      },
+      {
+        "SectionName": "ASSESSMENT",
+        "Summary": [
+          {
+            "EvidenceLinks": [],
+            "SummarizedSegment": "1. Work-related stress and anxiety"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "35233686-7220-48a5-a1ac-f840c73945d6"
+              },
+              {
+                "SegmentId": "92d9f5cd-d1ab-49fe-9d45-771cae90b2b6"
+              },
+              {
+                "SegmentId": "7a385968-6609-41a5-9749-a2201de7a94c"
+              },
+              {
+                "SegmentId": "69aeeef3-dcbf-4313-b216-d81b4fa8969b"
+              },
+              {
+                "SegmentId": "704479ba-38ed-499c-8697-86871483cf65"
+              }
+            ],
+            "SummarizedSegment": "2. Grief"
+          }
+        ]
+      },
+      {
+        "SectionName": "PLAN",
+        "Summary": [
+          {
+            "EvidenceLinks": [],
+            "SummarizedSegment": "Work-related stress and anxiety:\n- Continue to practice taking scheduled breaks during the workday\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13919c46-dc48-4033-9d14-aef0d5ad8913"
+              },
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              },
+              {
+                "SegmentId": "d6c3085b-3713-4aa0-bdd3-4b7352efae1a"
+              },
+              {
+                "SegmentId": "143f2b21-9136-4021-950e-b860d3809b27"
+              }
+            ],
+            "SummarizedSegment": "- Continue to practice leaving work on time, starting with Tuesday at 6 PM\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "35233686-7220-48a5-a1ac-f840c73945d6"
+              },
+              {
+                "SegmentId": "92d9f5cd-d1ab-49fe-9d45-771cae90b2b6"
+              },
+              {
+                "SegmentId": "7a385968-6609-41a5-9749-a2201de7a94c"
+              },
+              {
+                "SegmentId": "69aeeef3-dcbf-4313-b216-d81b4fa8969b"
+              },
+              {
+                "SegmentId": "704479ba-38ed-499c-8697-86871483cf65"
+              }
+            ],
+            "SummarizedSegment": "- Practice distinguishing between being available and being helpful\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0ac401e7-910f-468e-b9d9-f98e079a9407"
+              },
+              {
+                "SegmentId": "f379707a-beb8-4bf2-8638-224cdd584ed2"
+              },
+              {
+                "SegmentId": "4e08f889-2c9c-4f86-a815-e9ed72377a1f"
+              },
+              {
+                "SegmentId": "4fa20b05-8574-47fb-a7d1-56751f15fee8"
+              }
+            ],
+            "SummarizedSegment": "- Develop a standardized response for after-hours client communication: \"I received your message. I know this is stressful. I will review the details and call you tomorrow.\"\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4fa20b05-8574-47fb-a7d1-56751f15fee8"
+              },
+              {
+                "SegmentId": "b058762a-2ba4-46ce-bfe6-9c068620787e"
+              },
+              {
+                "SegmentId": "91f5826b-f3d3-44f8-a087-1a0f8219a8f6"
+              },
+              {
+                "SegmentId": "61692c5e-88b1-4f4d-bac0-3997ab16cda8"
+              }
+            ],
+            "SummarizedSegment": "- Acknowledge that caring about work does not require treating every unanswered message as a test of character\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "37a7f574-9951-48bc-86eb-0dc9524a64b9"
+              },
+              {
+                "SegmentId": "6537d984-c958-4231-90f4-3d856e35f324"
+              },
+              {
+                "SegmentId": "1dbe9269-07a2-43da-b4c2-b09527385b05"
+              }
+            ],
+            "SummarizedSegment": "- Remind self that leaving work on time does not mean stopped caring\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3b590799-d8d1-4932-b815-3aaa9ee98d81"
+              },
+              {
+                "SegmentId": "577b0d05-1df9-4d9f-b2ec-05b94eed5951"
+              },
+              {
+                "SegmentId": "1db2c92e-a57a-4e01-a065-e844ad2da351"
+              },
+              {
+                "SegmentId": "310176fc-0e0e-4340-8647-4e992070a2b9"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the distinction between being available (responding immediately) and being helpful (doing the next appropriate thing)\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3b590799-d8d1-4932-b815-3aaa9ee98d81"
+              },
+              {
+                "SegmentId": "577b0d05-1df9-4d9f-b2ec-05b94eed5951"
+              },
+              {
+                "SegmentId": "1db2c92e-a57a-4e01-a065-e844ad2da351"
+              },
+              {
+                "SegmentId": "310176fc-0e0e-4340-8647-4e992070a2b9"
+              }
+            ],
+            "SummarizedSegment": "- Explored the connection between current work patterns and childhood experiences with father's illness\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3b590799-d8d1-4932-b815-3aaa9ee98d81"
+              },
+              {
+                "SegmentId": "577b0d05-1df9-4d9f-b2ec-05b94eed5951"
+              },
+              {
+                "SegmentId": "1db2c92e-a57a-4e01-a065-e844ad2da351"
+              },
+              {
+                "SegmentId": "310176fc-0e0e-4340-8647-4e992070a2b9"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that caring deeply does not require becoming the whole system\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "8cc12e1e-ecd7-4028-a910-5286309d6601"
+              }
+            ],
+            "SummarizedSegment": "- Explored the concept of making room for both truths: having been strained and less available, while taking steps to reconnect\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d78f8457-c61d-4e69-bea5-9bcf4ad68265"
+              },
+              {
+                "SegmentId": "e1e4ab5c-31cd-4cc7-a579-f02366645873"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that letting grief exist does not make one incapable of continuing work\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6537d984-c958-4231-90f4-3d856e35f324"
+              },
+              {
+                "SegmentId": "1dbe9269-07a2-43da-b4c2-b09527385b05"
+              },
+              {
+                "SegmentId": "52f81101-125b-4085-97cc-e60a352f9a10"
+              }
+            ],
+            "SummarizedSegment": "- Continue to monitor for suicidal ideation and self-harm risk\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "13919c46-dc48-4033-9d14-aef0d5ad8913"
+              },
+              {
+                "SegmentId": "08c9b672-48f8-42f9-b50d-99da745a0dac"
+              },
+              {
+                "SegmentId": "5e0ead7c-0cc6-4bce-8e14-4c6cf5b67cb6"
+              },
+              {
+                "SegmentId": "e4af2678-3fc6-4da2-ab61-ec5a54814c11"
+              },
+              {
+                "SegmentId": "4a7f40ea-f312-4b26-83db-b4e9dba4e366"
+              }
+            ],
+            "SummarizedSegment": "- Review progress with boundary-setting and work-life balance at next session\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d29c8cdc-8f4b-4ebd-806e-a19443df32db"
+              },
+              {
+                "SegmentId": "668f7c18-13f5-4e4c-b61d-6f3638a94db6"
+              },
+              {
+                "SegmentId": "bba083b1-76f9-4208-b0f0-e0a194a0899e"
+              },
+              {
+                "SegmentId": "059ff380-0396-4eba-8fb4-e52321de7f46"
+              }
+            ],
+            "SummarizedSegment": "Grief:\n- Continue to allow grief to arise naturally without treating it as a problem to solve\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "eb21cb48-a17b-4c46-9e34-71675fc7636b"
+              },
+              {
+                "SegmentId": "eb5d7c49-0bf7-4a42-9fef-148202b60873"
+              },
+              {
+                "SegmentId": "f2128630-b95f-4127-8f3f-4aa45b082d17"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that letting the feeling exist did not make the patient incapable of continuing work\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89edae50-ab91-4f73-9d0d-c50bb2508077"
+              },
+              {
+                "SegmentId": "41ad0ffc-3102-4a6d-a00e-24a81fc9a97f"
+              },
+              {
+                "SegmentId": "72d9cb51-000b-44ff-9019-d6e7ff7fcccb"
+              }
+            ],
+            "SummarizedSegment": "- Explored the connection between father's organization and patient's current work patterns\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f1a88726-ac6c-4e29-a7e0-3b412c7f2f9a"
+              },
+              {
+                "SegmentId": "684bb027-9f24-442f-9978-04188fe6550b"
+              },
+              {
+                "SegmentId": "af3ce355-7b6c-49f2-bb64-44ce84d7c609"
+              },
+              {
+                "SegmentId": "9a8975e3-8ce9-479d-919b-b49dd8717876"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that staying vigilant is not the only way to show care\n"
+          }
+        ]
+      }
+    ]
+  }
+}

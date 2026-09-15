@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { TranscriptListItem } from "@/lib/types";
 
 type SessionCard = {
@@ -9,6 +9,26 @@ type SessionCard = {
   date: Date;
   isAvailable: boolean;
 };
+
+const completedSessionDates: Record<string, string> = {
+  "heartwell-sadic-session-01": "2026-08-10T15:00:00-04:00",
+  "heartwell-sadic-session-02": "2026-08-17T15:00:00-04:00",
+  "heartwell-sadic-session-03": "2026-08-24T15:00:00-04:00",
+  "heartwell-sadic-session-04": "2026-08-31T15:00:00-04:00",
+  "heartwell-sadic-session-05": "2026-09-07T15:00:00-04:00",
+  "heartwell-sadic-session-06": "2026-09-14T15:00:00-04:00",
+};
+
+const upcomingSessionDates = [
+  "2026-09-21T15:00:00-04:00",
+  "2026-09-28T15:00:00-04:00",
+  "2026-10-05T15:00:00-04:00",
+  "2026-10-12T15:00:00-04:00",
+  "2026-10-19T15:00:00-04:00",
+  "2026-10-26T15:00:00-04:00",
+  "2026-11-02T15:00:00-05:00",
+  "2026-11-09T15:00:00-05:00",
+];
 
 type Props = {
   transcripts: TranscriptListItem[];
@@ -23,16 +43,16 @@ function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
   const available = transcripts.map((transcript) => ({
     id: transcript.id,
     label: transcript.label,
-    date: transcript.created_at ? new Date(transcript.created_at) : new Date(),
+    date: new Date(completedSessionDates[transcript.id] ?? transcript.created_at ?? Date.now()),
     isAvailable: true,
   }));
-  const newestDate = available[0]?.date ?? new Date();
-  const placeholders = Array.from({ length: Math.max(9 - available.length, 0) }, (_, index) => {
-    const date = new Date(newestDate);
-    date.setDate(date.getDate() - (index + 1) * 7);
-    return { id: `planned-${index}`, label: "Planned session", date, isAvailable: false };
-  });
-  return [...available, ...placeholders].sort((a, b) => b.date.getTime() - a.date.getTime());
+  const placeholders = upcomingSessionDates.map((date, index) => ({
+    id: `planned-${index + 1}`,
+    label: "Elena Sadić · Jeremy Heartwell",
+    date: new Date(date),
+    isAvailable: false,
+  }));
+  return [...available, ...placeholders].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
@@ -41,49 +61,49 @@ export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSe
   const cards = useMemo(() => sessionCards(transcripts), [transcripts]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
-  const [motion, setMotion] = useState<"previous" | "next">("next");
-  const [motionKey, setMotionKey] = useState(0);
-
-  const visible = Array.from({ length: 5 }, (_, position) => {
-    const index = centerIndex + position - 2;
-    return { card: cards[index], index, position };
-  });
+  const viewport = useRef<HTMLDivElement>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  useEffect(() => {
+    const node = viewport.current;
+    if (!node) return;
+    const measure = () => setViewportWidth(node.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const cardGap = 12;
+  const cardWidth = Math.max(0, (viewportWidth - cardGap * 4) / 3.4);
+  const trackOffset = -((centerIndex - 2) * (cardWidth + cardGap) + cardWidth * 0.8);
   const move = (direction: -1 | 1) => {
     const nextIndex = Math.max(0, Math.min(cards.length - 1, centerIndex + direction));
-    if (nextIndex !== centerIndex) {
-      setMotion(direction === 1 ? "next" : "previous");
-      setMotionKey((current) => current + 1);
-      setCenterIndex(nextIndex);
-    }
+    setCenterIndex(nextIndex);
   };
   const selectCard = (index: number, card: SessionCard) => {
-    if (index !== centerIndex) {
-      setMotion(index > centerIndex ? "next" : "previous");
-      setMotionKey((current) => current + 1);
-      setCenterIndex(index);
-    }
+    setCenterIndex(index);
     if (card.isAvailable) onOpen(card.id);
     else onSelectScheduled();
   };
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Session history">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-stone-900">Session history</h2>
-        <button type="button" onClick={onEditSchedule} className="cursor-grab rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Edit schedule</button>
-      </div>
-      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
-      <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
-        <button type="button" onClick={() => move(-1)} disabled={centerIndex === 0} className="grid size-10 cursor-grab place-items-center rounded-full border border-stone-300 text-xl text-stone-700 hover:bg-stone-50 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show more recent sessions">‹</button>
-        <div key={`${centerIndex}-${motionKey}`} data-motion={motion} className="session-carousel-track grid min-w-0 grid-cols-5 gap-2 sm:gap-3">
-          {visible.map(({ card, index, position }) => card ? <button key={card.id} type="button" onClick={() => selectCard(index, card)} className={`min-w-0 cursor-grab rounded-xl border p-2 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:p-3 ${position === 2 ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400"} ${!card.isAvailable ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined}>
-            <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isAvailable ? "Completed" : "Scheduled"}</span>
-            <strong className="mt-1 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
-            <span className="mt-1 hidden text-xs text-stone-500 sm:block">3:00 PM</span>
-            <span className="mt-2 hidden truncate text-xs font-medium text-stone-600 md:block">{card.isAvailable ? card.label : "Session details pending"}</span>
-          </button> : <div key={`empty-${position}`} aria-hidden="true" />)}
+    <section className="session-history-carousel relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Session history">
+      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
+      <div className="relative -mx-5">
+        <div ref={viewport} className="session-carousel-viewport overflow-hidden">
+          <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset}px)` }}>
+            {cards.map((card, index) => <button key={card.id} type="button" onClick={() => selectCard(index, card)} style={{ flexBasis: `${cardWidth}px` }} className={`session-carousel-card min-h-28 shrink-0 cursor-grab rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined}>
+              <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isAvailable ? "Completed" : "Scheduled"}</span>
+              <strong className="mt-0.5 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
+              <span className="mt-2 block truncate text-xs font-medium text-stone-600">{card.isAvailable ? card.label : "Session details pending"}</span>
+            </button>)}
+          </div>
         </div>
-        <button type="button" onClick={() => move(1)} disabled={centerIndex === cards.length - 1} className="grid size-10 cursor-grab place-items-center rounded-full border border-stone-300 text-xl text-stone-700 hover:bg-stone-50 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show older sessions">›</button>
+        <button type="button" onClick={() => move(-1)} disabled={centerIndex === 0} className="absolute left-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-800 bg-stone-700 text-xl text-white shadow-md hover:bg-stone-800 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show older sessions">‹</button>
+        <button type="button" onClick={() => move(1)} disabled={centerIndex === cards.length - 1} className="absolute right-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-800 bg-stone-700 text-xl text-white shadow-md hover:bg-stone-800 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show more recent sessions">›</button>
+      </div>
+      <div className="absolute inset-x-5 top-3 z-10 flex items-start justify-between gap-4">
+        <h2 className="text-base font-bold tracking-tight text-stone-900">Session history</h2>
+        <button type="button" onClick={onEditSchedule} className="cursor-grab rounded-md bg-stone-700 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:bg-stone-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Edit schedule</button>
       </div>
     </section>
   );

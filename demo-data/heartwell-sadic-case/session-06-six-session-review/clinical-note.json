@@ -1,0 +1,519 @@
+{
+  "ClinicalDocumentation": {
+    "Sections": [
+      {
+        "SectionName": "CHIEF_COMPLAINT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b1f0d913-ea6d-42d6-9a08-6be2b77b5183"
+              },
+              {
+                "SegmentId": "124cf91d-9316-46d6-8801-1e9b3bc72a52"
+              }
+            ],
+            "SummarizedSegment": "Follow-up for anxiety and stress management"
+          }
+        ]
+      },
+      {
+        "SectionName": "HISTORY_OF_PRESENT_ILLNESS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b1f0d913-ea6d-42d6-9a08-6be2b77b5183"
+              },
+              {
+                "SegmentId": "124cf91d-9316-46d6-8801-1e9b3bc72a52"
+              },
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              }
+            ],
+            "SummarizedSegment": "The patient presents for their 6th session, reporting ongoing challenges with stress management and emotional regulation."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              },
+              {
+                "SegmentId": "9e833b7e-9e91-43df-99e3-2777ff1c93fd"
+              },
+              {
+                "SegmentId": "12eca88c-c2f6-42e1-8cbf-1889ecf62f7e"
+              }
+            ],
+            "SummarizedSegment": "They describe feeling overwhelmed more often than desired but note a growing ability to recognize patterns in their stress response."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "17aae959-6e16-4a73-a9ed-2d37ba6d80bc"
+              },
+              {
+                "SegmentId": "12eca88c-c2f6-42e1-8cbf-1889ecf62f7e"
+              },
+              {
+                "SegmentId": "519b4611-974d-452a-a99e-af032bb0beef"
+              }
+            ],
+            "SummarizedSegment": "Specifically, the patient identifies a cycle where they assume they have disappointed someone, leading to increased work and self-imposed pressure."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7b8dc503-1b32-46ac-a9fa-3abcd91d32c1"
+              },
+              {
+                "SegmentId": "640c86e9-fdaa-4036-8255-5d15ef70e8a9"
+              },
+              {
+                "SegmentId": "7c576cf0-5f8a-44f4-9603-ad8eccb18dae"
+              },
+              {
+                "SegmentId": "82246168-00bb-41ec-b603-f5928268a512"
+              }
+            ],
+            "SummarizedSegment": "They have begun to catch these patterns and implement coping strategies such as asking about priorities, communicating with their partner Nora about having a hard day, and leaving work on time occasionally."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e4c55605-a652-47b6-a938-1233ee23b376"
+              }
+            ],
+            "SummarizedSegment": "These interventions have reduced feelings of being trapped, though they do not provide immediate relief.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4cce5283-d5c1-4ec2-bbfa-80422bae65a6"
+              },
+              {
+                "SegmentId": "0e1552ee-1432-4d1f-ad87-63fbe5ae421c"
+              }
+            ],
+            "SummarizedSegment": "The patient reports a recent difficult period during a deadline week, which they managed by asking for help and communicating with Nora."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "1230924a-5500-435a-8bcf-a235bda92f6e"
+              },
+              {
+                "SegmentId": "6c35f2f6-60c3-4cd4-b54a-eea66bcb29f1"
+              },
+              {
+                "SegmentId": "01244d79-b131-46ed-b472-0d7d8e5678f0"
+              }
+            ],
+            "SummarizedSegment": "They used their support plan during this time and feel less ashamed about doing so."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "db9c3582-1767-45d8-a18c-ae496d249f19"
+              },
+              {
+                "SegmentId": "ab221d64-0849-4c7f-83aa-9653a60ccab5"
+              },
+              {
+                "SegmentId": "276fb57d-4b4b-4afd-a003-cd1d4df886e7"
+              }
+            ],
+            "SummarizedSegment": "Since the deadline week, the patient has not experienced thoughts of self-harm but continues to have anxious nights."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d6dbc402-b394-44fd-a61e-ea23a900ea12"
+              },
+              {
+                "SegmentId": "87b7a350-669a-4f12-9e7e-31d2c09358b6"
+              },
+              {
+                "SegmentId": "83aa691f-cad2-4fb3-aa33-c5958458cd1a"
+              }
+            ],
+            "SummarizedSegment": "They deny current suicidal ideation or intent and report feeling safe today.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7f3ea3f5-0390-4365-bc43-ab0e4f70b985"
+              },
+              {
+                "SegmentId": "9e5b6e01-3b8e-43cb-9faf-132a4949394f"
+              },
+              {
+                "SegmentId": "f65b3afd-a554-4655-b9ac-fa6910de32b6"
+              }
+            ],
+            "SummarizedSegment": "A project launch is scheduled for next month, which the patient is excited about but also nervous."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f005f582-8554-4e44-9bd5-d5b0939ab79f"
+              },
+              {
+                "SegmentId": "5d8bdcb8-5b0d-4015-a4da-ab0f1510b7d8"
+              },
+              {
+                "SegmentId": "3c7d0d60-d0b0-4605-b4c6-f834679710f8"
+              }
+            ],
+            "SummarizedSegment": "They recognize a tendency to say yes to every extra request and have identified the need to ask for priorities early, maintain adequate food and sleep, and communicate with Nora when struggling."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f5d4e3af-57ea-4651-be9a-4c3c42865045"
+              },
+              {
+                "SegmentId": "05c83959-e269-4b4d-b28d-f4fab3167102"
+              },
+              {
+                "SegmentId": "1081532b-f83a-4b51-8684-568b2ae02721"
+              }
+            ],
+            "SummarizedSegment": "The patient identifies asking for priorities as the most vulnerable and challenging part of their plan.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "de530392-f0bf-457a-ad25-a9e0cd06bad4"
+              },
+              {
+                "SegmentId": "33f0d021-c946-4995-98d8-efc3ba2ef2da"
+              }
+            ],
+            "SummarizedSegment": "The patient continues to struggle with feeling guilty when resting and difficulty accepting care from others without feeling obligated."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d771b508-517b-4115-a111-17528bb75313"
+              }
+            ],
+            "SummarizedSegment": "They express a desire to explore their relationship with their father, believing it contributed to their current patterns.\n"
+          }
+        ]
+      },
+      {
+        "SectionName": "REVIEW_OF_SYSTEMS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              },
+              {
+                "SegmentId": "db9c3582-1767-45d8-a18c-ae496d249f19"
+              },
+              {
+                "SegmentId": "ab221d64-0849-4c7f-83aa-9653a60ccab5"
+              },
+              {
+                "SegmentId": "276fb57d-4b4b-4afd-a003-cd1d4df886e7"
+              },
+              {
+                "SegmentId": "87b7a350-669a-4f12-9e7e-31d2c09358b6"
+              }
+            ],
+            "SummarizedSegment": "Psychiatric: Reports anxiety, reports stress, reports feeling overwhelmed, reports anxious nights, denies current suicidal ideation, denies current self-harm intent, denies current plan to harm self"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_MEDICAL_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_FAMILY_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_SOCIAL_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "8e7cf590-3806-49a3-b1d3-c5eb27ef8f81"
+              }
+            ],
+            "SummarizedSegment": "Employed in a professional role with a supervisor"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7c576cf0-5f8a-44f4-9603-ad8eccb18dae"
+              },
+              {
+                "SegmentId": "0e1552ee-1432-4d1f-ad87-63fbe5ae421c"
+              },
+              {
+                "SegmentId": "3c7d0d60-d0b0-4605-b4c6-f834679710f8"
+              }
+            ],
+            "SummarizedSegment": "In a relationship with Nora"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6bd47c14-821e-4d92-a0c4-5c6cfaf7c02a"
+              },
+              {
+                "SegmentId": "d771b508-517b-4115-a111-17528bb75313"
+              }
+            ],
+            "SummarizedSegment": "Has a sister"
+          }
+        ]
+      },
+      {
+        "SectionName": "PHYSICAL_EXAMINATION",
+        "Summary": []
+      },
+      {
+        "SectionName": "DIAGNOSTIC_TESTING",
+        "Summary": []
+      },
+      {
+        "SectionName": "ASSESSMENT",
+        "Summary": [
+          {
+            "EvidenceLinks": [],
+            "SummarizedSegment": "1. Anxiety and stress management"
+          }
+        ]
+      },
+      {
+        "SectionName": "PLAN",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "124cf91d-9316-46d6-8801-1e9b3bc72a52"
+              },
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              }
+            ],
+            "SummarizedSegment": "Anxiety and stress management:\n- Continue to monitor patient's stress levels and coping strategies, particularly during upcoming project launch\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "124cf91d-9316-46d6-8801-1e9b3bc72a52"
+              },
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              }
+            ],
+            "SummarizedSegment": "- Patient to implement concrete plan for first week of launch: block 2 lunches on calendar, send short update to supervisor at beginning of week, ask for priority when multiple urgent tasks arise\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f0c9d671-d55a-46e2-b19c-6843a590d916"
+              },
+              {
+                "SegmentId": "02b2b17d-292b-4c5f-be0d-ab843e4c0ab9"
+              },
+              {
+                "SegmentId": "7f3ea3f5-0390-4365-bc43-ab0e4f70b985"
+              }
+            ],
+            "SummarizedSegment": "- Patient to identify early warning signs of stress (shoulder tension, skipping meals, task switching without productivity, ignoring partner's texts, telling self \"just need to make it through one more night\")\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "27cbf296-607e-4fc2-bb41-c08fed4458ab"
+              },
+              {
+                "SegmentId": "8e7cf590-3806-49a3-b1d3-c5eb27ef8f81"
+              },
+              {
+                "SegmentId": "f2feb522-781a-4af2-ac80-8c40844f2c95"
+              }
+            ],
+            "SummarizedSegment": "- When warning signs are noticed, patient to stop for 2 minutes, breathe, and determine if they need food, a break, or a question answered\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "a06dcdd4-178a-47ae-92c2-8ba103dcf82c"
+              },
+              {
+                "SegmentId": "7aeb4184-42a1-4563-aa56-1df6ce81134e"
+              },
+              {
+                "SegmentId": "bd1c48f2-d99c-48e7-b241-302b9411b200"
+              },
+              {
+                "SegmentId": "6ca10994-1c2a-44ba-b44c-e52c90eec624"
+              }
+            ],
+            "SummarizedSegment": "- If having a particularly difficult moment, patient to reach out to partner or sister instead of pretending to be fine\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ef85e621-7b21-4141-9fd0-b0b1aadb4e21"
+              },
+              {
+                "SegmentId": "6ce84042-a520-415c-b3f3-0a54db6aac9a"
+              },
+              {
+                "SegmentId": "a19a7640-8c51-4dc5-9ef0-5ec051100a10"
+              }
+            ],
+            "SummarizedSegment": "- Patient to communicate launch dates to partner in advance and ask partner to check in once in the evening regarding need for company, quiet, or help disconnecting from work\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6bd47c14-821e-4d92-a0c4-5c6cfaf7c02a"
+              }
+            ],
+            "SummarizedSegment": "- If darker thoughts return during high-pressure periods, patient to tell partner directly and use support plan without waiting for symptoms to worsen\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "91a901c8-a305-450a-943f-adad6b9d6744"
+              },
+              {
+                "SegmentId": "6e223d3a-e454-4a52-bffa-65aa5facfaf8"
+              }
+            ],
+            "SummarizedSegment": "- Continue to explore relationship with father and its impact on current patterns in future sessions\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "dee3d79b-0b80-4b3f-8dbc-aa8de51ac814"
+              },
+              {
+                "SegmentId": "823e7f9a-979b-48af-a7b9-bf413dda49d4"
+              },
+              {
+                "SegmentId": "7aa38d81-6de8-4062-ad27-dbadb86441ef"
+              }
+            ],
+            "SummarizedSegment": "- Continue to monitor for suicidal ideation and self-harm risk, particularly during high-pressure periods\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d771b508-517b-4115-a111-17528bb75313"
+              },
+              {
+                "SegmentId": "8afe0fc4-b0e5-41dd-90d6-68005bea7a08"
+              }
+            ],
+            "SummarizedSegment": "- Discussed patient's progress in recognizing stress patterns and implementing coping strategies\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f0c9d671-d55a-46e2-b19c-6843a590d916"
+              },
+              {
+                "SegmentId": "923fdce2-1899-49f7-847e-7145d50b8414"
+              }
+            ],
+            "SummarizedSegment": "- Explored patient's fear of \"disappearing\" into work during the upcoming launch and developed a concrete plan to prevent this\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b0e6f7f2-509b-41f2-8272-80edf8a9e05b"
+              },
+              {
+                "SegmentId": "9e833b7e-9e91-43df-99e3-2777ff1c93fd"
+              },
+              {
+                "SegmentId": "7b8dc503-1b32-46ac-a9fa-3abcd91d32c1"
+              },
+              {
+                "SegmentId": "640c86e9-fdaa-4036-8255-5d15ef70e8a9"
+              },
+              {
+                "SegmentId": "7c576cf0-5f8a-44f4-9603-ad8eccb18dae"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the importance of asking for priorities early and communicating needs to partner\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "a582af85-760a-44db-b18b-45836edf7001"
+              },
+              {
+                "SegmentId": "c3c53b9b-9def-4a21-8835-c9dc4c308d06"
+              },
+              {
+                "SegmentId": "8b94e965-6953-4679-b738-c8923f8d8ae8"
+              },
+              {
+                "SegmentId": "765133b7-5a4a-4107-94b0-7ef08a7c3430"
+              },
+              {
+                "SegmentId": "c60c8fca-97bc-45dc-84b3-ad1f3ebe509d"
+              }
+            ],
+            "SummarizedSegment": "- Explored the concept of progress as recovery from difficult periods rather than a perfect upward trajectory\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f005f582-8554-4e44-9bd5-d5b0939ab79f"
+              },
+              {
+                "SegmentId": "05c83959-e269-4b4d-b28d-f4fab3167102"
+              },
+              {
+                "SegmentId": "1081532b-f83a-4b51-8684-568b2ae02721"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the goal of staying connected to support and self during difficult times rather than promising the absence of difficult thoughts\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3836711a-f52d-4eed-a238-88d398276602"
+              },
+              {
+                "SegmentId": "0c22f73c-7f12-4a13-bada-bcb204f5730e"
+              }
+            ],
+            "SummarizedSegment": "- Patient identified that asking for priorities is the most vulnerable part of their plan; discussed strategies for doing this (e.g., email, asking a coworker to review the list)\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "9f2fe066-c260-441e-b6a2-ef3a40d3e8b5"
+              },
+              {
+                "SegmentId": "d36a3303-e56b-4c5d-8e8a-20e016bc51b4"
+              },
+              {
+                "SegmentId": "42b68936-2ed7-4e2e-8b3e-8f2fdf56a06d"
+              },
+              {
+                "SegmentId": "e4f7f023-9f08-4b9d-ab3d-82f9fe27463a"
+              }
+            ],
+            "SummarizedSegment": "- Patient identified that they do not have to complete the next 2 months perfectly for the work to be meaningful\n"
+          }
+        ]
+      }
+    ]
+  }
+}

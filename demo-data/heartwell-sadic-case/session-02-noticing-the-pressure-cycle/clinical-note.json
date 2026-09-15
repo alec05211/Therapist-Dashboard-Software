@@ -1,0 +1,966 @@
+{
+  "ClinicalDocumentation": {
+    "Sections": [
+      {
+        "SectionName": "CHIEF_COMPLAINT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              },
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              },
+              {
+                "SegmentId": "9a3a863c-3a01-4069-8c65-8d1dcd39bd48"
+              }
+            ],
+            "SummarizedSegment": "Anxiety and work-related stress"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              },
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              },
+              {
+                "SegmentId": "9a3a863c-3a01-4069-8c65-8d1dcd39bd48"
+              }
+            ],
+            "SummarizedSegment": "Passive suicidal ideation"
+          }
+        ]
+      },
+      {
+        "SectionName": "HISTORY_OF_PRESENT_ILLNESS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e008cda2-d39b-4d37-a174-e55f1fc44279"
+              },
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              }
+            ],
+            "SummarizedSegment": "The patient presents for follow-up regarding anxiety and work-related stress."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e008cda2-d39b-4d37-a174-e55f1fc44279"
+              },
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              }
+            ],
+            "SummarizedSegment": "They report an uneven week since the last visit but have implemented some of the strategies discussed.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "83e21260-5676-4e52-9400-9e8c211b7519"
+              }
+            ],
+            "SummarizedSegment": "The patient describes a specific work-related incident on Tuesday where their supervisor asked for a clearer timeline on two cases."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              },
+              {
+                "SegmentId": "9a3a863c-3a01-4069-8c65-8d1dcd39bd48"
+              },
+              {
+                "SegmentId": "f3917f22-5f4c-4240-83cc-6c3397ec5cc3"
+              }
+            ],
+            "SummarizedSegment": "Initially, the patient felt their shoulders tense up and experienced chest tightness and held their breath."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              }
+            ],
+            "SummarizedSegment": "They had the thought that their supervisor could tell they had not been on top of the work."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "53aa5e88-5918-43b9-87c5-fb2382462735"
+              },
+              {
+                "SegmentId": "45f00d53-fa5e-4bc9-ab1a-99172bb4d596"
+              },
+              {
+                "SegmentId": "e7027508-8d8b-4580-8b71-e5f30bc622ca"
+              }
+            ],
+            "SummarizedSegment": "The patient almost said they could have everything done by the next morning but remembered to treat the moment as an observation rather than a test."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "53aa5e88-5918-43b9-87c5-fb2382462735"
+              },
+              {
+                "SegmentId": "45f00d53-fa5e-4bc9-ab1a-99172bb4d596"
+              },
+              {
+                "SegmentId": "e7027508-8d8b-4580-8b71-e5f30bc622ca"
+              }
+            ],
+            "SummarizedSegment": "They told the supervisor they would check the files and send a realistic timeline by the end of the day."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "06c1e290-f120-4b2a-8923-90bc12b80a2c"
+              },
+              {
+                "SegmentId": "719cc4a0-e772-4f7e-8e8b-a0582ae6336c"
+              }
+            ],
+            "SummarizedSegment": "The patient felt terrible for about 10 minutes after the interaction and still felt embarrassed, as if they had revealed they needed time."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e7027508-8d8b-4580-8b71-e5f30bc622ca"
+              },
+              {
+                "SegmentId": "06c1e290-f120-4b2a-8923-90bc12b80a2c"
+              },
+              {
+                "SegmentId": "75b6e2b1-72ac-4ff1-97bd-bdf1659ec7be"
+              },
+              {
+                "SegmentId": "f92c2e29-efa4-40e7-aba7-d581919622ac"
+              },
+              {
+                "SegmentId": "8dfd5913-a4b9-4059-85d8-73ce57f860d7"
+              }
+            ],
+            "SummarizedSegment": "However, the supervisor responded positively, and the patient sent the timeline with an extra day on one case without any negative consequences."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "258f9cff-0ecc-474d-b8ac-97659740b346"
+              },
+              {
+                "SegmentId": "74e2ea46-f8f6-44e2-9c7e-6874c7df9c1b"
+              },
+              {
+                "SegmentId": "8d877966-91ae-4435-9bc7-7c33d21b3d86"
+              }
+            ],
+            "SummarizedSegment": "The patient notes that asking for time did not make them look incapable, though they do not fully believe the opposite yet.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d173761b-6301-49ed-876e-c6fd7c0f2b35"
+              },
+              {
+                "SegmentId": "3ee8e2fa-f766-4240-9131-3c531bd56675"
+              },
+              {
+                "SegmentId": "f327357e-0cbb-429f-aee4-883cfc598d72"
+              }
+            ],
+            "SummarizedSegment": "The patient also completed the Saturday walk with Nora, walking by the river for about half an hour."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "29857add-71f2-4cde-b2c6-d4ae4df760fb"
+              }
+            ],
+            "SummarizedSegment": "Initially, they kept reaching for their phone but eventually left it in their pocket."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "fccc979d-c342-470f-87cb-2c2dd36b7079"
+              }
+            ],
+            "SummarizedSegment": "The patient felt calmer afterward but then felt guilty for enjoying the walk while work was waiting."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "51c24f48-f315-44e9-aa9c-c21cfbbed9c2"
+              },
+              {
+                "SegmentId": "7c952a1d-74c7-4a01-91bf-46a4353de920"
+              }
+            ],
+            "SummarizedSegment": "They describe a belief that rest only counts if everything is finished, which means it never counts because there is always something unfinished."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "e25c31d9-219d-45cc-86a8-d785e8ece6d5"
+              },
+              {
+                "SegmentId": "d1f50242-490b-45ef-a7cf-74d5d0af4910"
+              },
+              {
+                "SegmentId": "dde42d50-fa96-4b34-9667-89736081fd55"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that being hard on themselves has been a long-standing pattern since school, where they would work longer when worried."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "a7910e18-60d2-48c6-ad00-a753867a63ec"
+              }
+            ],
+            "SummarizedSegment": "This strategy previously paid off but no longer feels effective."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4d539942-b759-4166-9d44-31f84fa7fec4"
+              },
+              {
+                "SegmentId": "8f13bf75-9605-401f-9278-2b5ead8914b8"
+              }
+            ],
+            "SummarizedSegment": "The patient expresses concern about losing their sense of responsibility and caring about work if they stop being hard on themselves."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "83d3d849-a4e7-45fc-bf11-7acdbb3077b5"
+              },
+              {
+                "SegmentId": "ccc37034-1183-43fc-834b-fb16e7cff71d"
+              },
+              {
+                "SegmentId": "b7df0e48-746b-4942-a103-5f864237ab84"
+              }
+            ],
+            "SummarizedSegment": "They note that when they are not under pressure, they tend to overcorrect by answering messages too quickly and offering to take on tasks before being asked, but they do not trust themselves to stay responsible without the pressure.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "732e053d-da78-4ed1-9a37-912bb941afb3"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that dark thoughts have been less intense this week."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              },
+              {
+                "SegmentId": "0b092b7b-c1f9-414d-8b08-f338149e4210"
+              }
+            ],
+            "SummarizedSegment": "They experienced one episode after receiving a late-night work email, feeling like they wanted to disappear for a minute but did not feel like they would act on it."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              },
+              {
+                "SegmentId": "0b092b7b-c1f9-414d-8b08-f338149e4210"
+              }
+            ],
+            "SummarizedSegment": "The patient told Nora they were having a hard moment and they watched something together."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "fcedf57f-d866-4382-ba92-e3159fb51888"
+              },
+              {
+                "SegmentId": "6cdda9e2-ac53-41f1-bd1b-54f7950535e8"
+              },
+              {
+                "SegmentId": "b4d7b912-c8af-4b0f-b21b-fd25f368cf71"
+              }
+            ],
+            "SummarizedSegment": "They deny any plan or intention to harm themselves today."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "fcedf57f-d866-4382-ba92-e3159fb51888"
+              },
+              {
+                "SegmentId": "6cdda9e2-ac53-41f1-bd1b-54f7950535e8"
+              },
+              {
+                "SegmentId": "b4d7b912-c8af-4b0f-b21b-fd25f368cf71"
+              }
+            ],
+            "SummarizedSegment": "The patient reports feeling tired but not in danger.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "058754ca-3a1a-416e-a946-ba4ed8a5508d"
+              },
+              {
+                "SegmentId": "58a108d1-b92e-43d5-a58e-f579e7ea205d"
+              }
+            ],
+            "SummarizedSegment": "The patient also discussed their father's death and the role they took on during his illness, keeping a notebook of appointments and medications."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "073784f0-82a9-4f07-a564-1f5c28e7d9f7"
+              },
+              {
+                "SegmentId": "ff073335-5ccd-4095-b63a-0d602d5d07ce"
+              },
+              {
+                "SegmentId": "592c6d47-43f2-4ed3-bdfb-dc906e843837"
+              }
+            ],
+            "SummarizedSegment": "They describe feeling guilty about talking about their grief, noting that their father was the one who was sick."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "2915429a-69f3-4b38-b158-ab291eb3dde9"
+              },
+              {
+                "SegmentId": "7e426f6e-0d5d-4b38-8924-283a6a674973"
+              },
+              {
+                "SegmentId": "4130703a-b620-4b8e-8c71-d21372c765a9"
+              }
+            ],
+            "SummarizedSegment": "The patient reports missing their father most when something practical happens and wanting to call him."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "bf6b6fa0-7433-4102-b14e-6de836e75e60"
+              },
+              {
+                "SegmentId": "01103d59-d20f-4974-a909-eb3de9938bb3"
+              }
+            ],
+            "SummarizedSegment": "They typically push these feelings down and get busy with work.\n"
+          }
+        ]
+      },
+      {
+        "SectionName": "REVIEW_OF_SYSTEMS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              },
+              {
+                "SegmentId": "9a3a863c-3a01-4069-8c65-8d1dcd39bd48"
+              },
+              {
+                "SegmentId": "fccc979d-c342-470f-87cb-2c2dd36b7079"
+              },
+              {
+                "SegmentId": "732e053d-da78-4ed1-9a37-912bb941afb3"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "fcedf57f-d866-4382-ba92-e3159fb51888"
+              },
+              {
+                "SegmentId": "6cdda9e2-ac53-41f1-bd1b-54f7950535e8"
+              }
+            ],
+            "SummarizedSegment": "Psychiatric: Reports anxiety, reports stress, reports guilt, reports dark thoughts (less intense this week), denies current suicidal ideation, denies intent to harm self, reports feeling tired"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_MEDICAL_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_FAMILY_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              }
+            ],
+            "SummarizedSegment": "Father: died (patient reports father was sick prior to death)"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_SOCIAL_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3ee8e2fa-f766-4240-9131-3c531bd56675"
+              },
+              {
+                "SegmentId": "04eab441-adcc-4955-8d89-3ce57c334daf"
+              },
+              {
+                "SegmentId": "fc7fb747-91b1-4831-81d1-e388c5e973a0"
+              }
+            ],
+            "SummarizedSegment": "Has a partner named Nora"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "e7027508-8d8b-4580-8b71-e5f30bc622ca"
+              }
+            ],
+            "SummarizedSegment": "Employed in a professional role requiring case management and timeline reporting"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "058754ca-3a1a-416e-a946-ba4ed8a5508d"
+              },
+              {
+                "SegmentId": "58a108d1-b92e-43d5-a58e-f579e7ea205d"
+              },
+              {
+                "SegmentId": "2b287e07-25f7-420c-9667-42d35039ab44"
+              }
+            ],
+            "SummarizedSegment": "Father passed away; patient served as primary caregiver/organizer during father's illness"
+          }
+        ]
+      },
+      {
+        "SectionName": "PHYSICAL_EXAMINATION",
+        "Summary": []
+      },
+      {
+        "SectionName": "DIAGNOSTIC_TESTING",
+        "Summary": []
+      },
+      {
+        "SectionName": "ASSESSMENT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              },
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              }
+            ],
+            "SummarizedSegment": "1. Anxiety and work-related stress"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              },
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              },
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              }
+            ],
+            "SummarizedSegment": "2. Passive suicidal ideation"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c5a7e73d-9adc-4721-bdd2-5e34da5b2d25"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              }
+            ],
+            "SummarizedSegment": "3. Grief related to father's death"
+          }
+        ]
+      },
+      {
+        "SectionName": "PLAN",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c5a7e73d-9adc-4721-bdd2-5e34da5b2d25"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              }
+            ],
+            "SummarizedSegment": "Anxiety and work-related stress:\n- Continue to practice treating stressful moments as observations rather than tests\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "2915429a-69f3-4b38-b158-ab291eb3dde9"
+              },
+              {
+                "SegmentId": "4130703a-b620-4b8e-8c71-d21372c765a9"
+              }
+            ],
+            "SummarizedSegment": "- Continue to challenge the belief that asking for time or help indicates failure\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "2915429a-69f3-4b38-b158-ab291eb3dde9"
+              },
+              {
+                "SegmentId": "4130703a-b620-4b8e-8c71-d21372c765a9"
+              }
+            ],
+            "SummarizedSegment": "- Continue to practice self-compassion and recognize that being hard on oneself is not the only way to maintain responsibility\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f59236ee-88ad-4256-a53f-60efaf64877e"
+              },
+              {
+                "SegmentId": "9ac5c3e3-7412-49cb-be9d-7dea7e9007ac"
+              },
+              {
+                "SegmentId": "dd0698b8-a823-4fd1-b125-251035ae304b"
+              }
+            ],
+            "SummarizedSegment": "- Continue to practice mindfulness and grounding techniques during stressful work interactions\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "53aa5e88-5918-43b9-87c5-fb2382462735"
+              },
+              {
+                "SegmentId": "45f00d53-fa5e-4bc9-ab1a-99172bb4d596"
+              },
+              {
+                "SegmentId": "e7027508-8d8b-4580-8b71-e5f30bc622ca"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the pressure cycle: how a routine request becomes evidence of failure, leading to fear of being seen as inadequate, which makes it harder to think clearly\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "258f9cff-0ecc-474d-b8ac-97659740b346"
+              },
+              {
+                "SegmentId": "74e2ea46-f8f6-44e2-9c7e-6874c7df9c1b"
+              },
+              {
+                "SegmentId": "8d877966-91ae-4435-9bc7-7c33d21b3d86"
+              }
+            ],
+            "SummarizedSegment": "- Explored the belief that being hard on oneself is necessary for responsibility and the cost of using fear as a motivator\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6cc3153c-da66-4794-813c-c571a525d874"
+              },
+              {
+                "SegmentId": "fbf15d0b-d63c-499f-9c0d-64467c12d2f1"
+              },
+              {
+                "SegmentId": "d4948241-21ae-4d73-9b73-2e39654e6c3e"
+              },
+              {
+                "SegmentId": "cc4793f0-67b9-4081-9e54-d0794891d4a9"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the pattern of overcorrecting when not under pressure and the lack of self-trust that results\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b2b8d282-e53f-42b7-a01e-5cbacb612b1f"
+              },
+              {
+                "SegmentId": "9a3a863c-3a01-4069-8c65-8d1dcd39bd48"
+              },
+              {
+                "SegmentId": "f3917f22-5f4c-4240-83cc-6c3397ec5cc3"
+              }
+            ],
+            "SummarizedSegment": "- Explored the connection between current work patterns and the role the patient took on during father's illness\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f4b4186c-42c2-455a-880b-251c2b67e036"
+              },
+              {
+                "SegmentId": "72732700-5edf-4726-b846-5b6933a2cb51"
+              },
+              {
+                "SegmentId": "311f502c-65d8-4967-9012-77b864ddb949"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the concept of \"evidence for\" and \"evidence against\" the thought that asking for time makes one look incapable\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0114e32f-5a2e-4af5-9b9e-9bd6ee4623dd"
+              },
+              {
+                "SegmentId": "62411d45-501d-4ff3-bec5-a143f1dfa264"
+              },
+              {
+                "SegmentId": "18bf913a-57ad-4826-b340-8d002dd144d0"
+              },
+              {
+                "SegmentId": "14b18750-19a1-41ca-a9e4-d6b6b0a854d8"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the idea that rest does not need to be earned and that taking breaks is not the same as being careless\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "83d3d849-a4e7-45fc-bf11-7acdbb3077b5"
+              },
+              {
+                "SegmentId": "ccc37034-1183-43fc-834b-fb16e7cff71d"
+              },
+              {
+                "SegmentId": "b7df0e48-746b-4942-a103-5f864237ab84"
+              }
+            ],
+            "SummarizedSegment": "- Patient to write down evidence for and against the thought that they are falling behind when it arises this week\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "058754ca-3a1a-416e-a946-ba4ed8a5508d"
+              },
+              {
+                "SegmentId": "58a108d1-b92e-43d5-a58e-f579e7ea205d"
+              },
+              {
+                "SegmentId": "2b287e07-25f7-420c-9667-42d35039ab44"
+              }
+            ],
+            "SummarizedSegment": "- Patient to schedule one smaller moment of rest during the work week (e.g., 10-minute walk after lunch on Thursday)\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "258f9cff-0ecc-474d-b8ac-97659740b346"
+              },
+              {
+                "SegmentId": "74e2ea46-f8f6-44e2-9c7e-6874c7df9c1b"
+              },
+              {
+                "SegmentId": "8d877966-91ae-4435-9bc7-7c33d21b3d86"
+              },
+              {
+                "SegmentId": "ae64631d-4f00-4b29-a398-a4e4a035c7ef"
+              }
+            ],
+            "SummarizedSegment": "- Continue to monitor for dark thoughts and use support system as needed\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "51c24f48-f315-44e9-aa9c-c21cfbbed9c2"
+              },
+              {
+                "SegmentId": "7c952a1d-74c7-4a01-91bf-46a4353de920"
+              },
+              {
+                "SegmentId": "b338af66-fb6b-41ec-80cb-1e18666e39cc"
+              },
+              {
+                "SegmentId": "179c2826-f839-4552-bdc1-570086a1bd6c"
+              }
+            ],
+            "SummarizedSegment": "Passive suicidal ideation:\n- Continue to monitor for dark thoughts and suicidal ideation\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "052160e4-48b7-4eaa-b8a2-6e6d5c1688c3"
+              },
+              {
+                "SegmentId": "27430094-62f4-4786-8c39-4b4a83e80c07"
+              },
+              {
+                "SegmentId": "6276668a-1745-4bae-bc3a-a6df9ce0a364"
+              }
+            ],
+            "SummarizedSegment": "- Continue to use support system and safety plan as needed\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4324d845-d054-4ca4-9661-61168dec60e9"
+              },
+              {
+                "SegmentId": "7b28baa4-171a-4501-bf68-bc283dfcd994"
+              },
+              {
+                "SegmentId": "495d7c02-867d-4222-ac77-9df21d463f0d"
+              },
+              {
+                "SegmentId": "abdbf70f-507e-4b8c-9afd-ba39d04799b4"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the importance of recognizing dark thoughts early and using support rather than carrying it alone\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "732e053d-da78-4ed1-9a37-912bb941afb3"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              },
+              {
+                "SegmentId": "0b092b7b-c1f9-414d-8b08-f338149e4210"
+              }
+            ],
+            "SummarizedSegment": "- Validated the patient's experience and normalized the need for support without requiring a certain level of distress\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "732e053d-da78-4ed1-9a37-912bb941afb3"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              }
+            ],
+            "SummarizedSegment": "- Encouraged the patient to continue being open with Nora about their struggles\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "732e053d-da78-4ed1-9a37-912bb941afb3"
+              },
+              {
+                "SegmentId": "bf93373c-36f4-4c5c-902a-1cd77faa83f3"
+              },
+              {
+                "SegmentId": "7ecc2fd4-fb39-43ff-bec4-1ad9ed609c43"
+              }
+            ],
+            "SummarizedSegment": "- Safety plan available if anything changes or feels more urgent\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0b092b7b-c1f9-414d-8b08-f338149e4210"
+              },
+              {
+                "SegmentId": "f3d98d45-1ef6-45d6-a950-446bd31107c6"
+              }
+            ],
+            "SummarizedSegment": "Grief related to father's death:\n- Encouraged the patient to notice moments of grief without immediately turning away from them\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "0b092b7b-c1f9-414d-8b08-f338149e4210"
+              },
+              {
+                "SegmentId": "50826cae-4abb-4985-900e-2248ab931f58"
+              }
+            ],
+            "SummarizedSegment": "- Suggested naming the feeling (e.g., \"I miss my dad, and I'm trying to work through it\")\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6bfc8f90-0104-4402-b4c2-c13f2579edbe"
+              },
+              {
+                "SegmentId": "937b9c75-af63-4475-baea-bde8831eea66"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that the goal is not to force grief open but to give permission to recognize what is already there\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "04eab441-adcc-4955-8d89-3ce57c334daf"
+              },
+              {
+                "SegmentId": "c5a7e73d-9adc-4721-bdd2-5e34da5b2d25"
+              },
+              {
+                "SegmentId": "fc7fb747-91b1-4831-81d1-e388c5e973a0"
+              },
+              {
+                "SegmentId": "2f3e6218-e3f4-4707-9a21-f074ff4c4e81"
+              }
+            ],
+            "SummarizedSegment": "- Validated the patient's grief and normalized the experience of missing their father\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f3d98d45-1ef6-45d6-a950-446bd31107c6"
+              }
+            ],
+            "SummarizedSegment": "- Discussed that the patient does not have to compare their pain to their father's in order for their experience to matter\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "210767d7-23ae-4ba1-82b1-5eb43f453e36"
+              },
+              {
+                "SegmentId": "2915429a-69f3-4b38-b158-ab291eb3dde9"
+              },
+              {
+                "SegmentId": "4130703a-b620-4b8e-8c71-d21372c765a9"
+              }
+            ],
+            "SummarizedSegment": "- Explored the connection between the role the patient took on during father's illness and current work patterns\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "94ca9e1d-cf02-4b3a-9502-803d8c436408"
+              },
+              {
+                "SegmentId": "edeed386-2c1a-45b9-b00d-1a3e22a25e87"
+              },
+              {
+                "SegmentId": "2e049c95-52f9-4239-b60f-eee43736d877"
+              },
+              {
+                "SegmentId": "224328f5-adec-4c69-acee-d1603d05e8d5"
+              }
+            ],
+            "SummarizedSegment": "- Discussed how the guilt may be serving multiple purposes: pushing productivity and protecting from feelings that deserve care\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "94ca9e1d-cf02-4b3a-9502-803d8c436408"
+              },
+              {
+                "SegmentId": "edeed386-2c1a-45b9-b00d-1a3e22a25e87"
+              },
+              {
+                "SegmentId": "2e049c95-52f9-4239-b60f-eee43736d877"
+              },
+              {
+                "SegmentId": "224328f5-adec-4c69-acee-d1603d05e8d5"
+              }
+            ],
+            "SummarizedSegment": "- Patient to try writing down one moment of grief if it comes up this week\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "68432592-80c3-44c2-9bf5-e98e62672e83"
+              },
+              {
+                "SegmentId": "51f648da-1e1e-47b9-8be9-f29ff8c59722"
+              },
+              {
+                "SegmentId": "bd787a9c-b3a3-4ef1-a050-0ba5ae0a3f30"
+              }
+            ],
+            "SummarizedSegment": "- Continue to explore the connection between grief, work patterns, and self-criticism\n"
+          }
+        ]
+      }
+    ]
+  }
+}
