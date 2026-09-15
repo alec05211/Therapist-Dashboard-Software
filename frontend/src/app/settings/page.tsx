@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { chooseSessionView, readSessionView, subscribeToSessionView, type SessionView } from "@/lib/workspace-preferences";
 
 const sections = [
@@ -28,8 +29,10 @@ function chooseTheme(theme: Theme) {
   window.dispatchEvent(new Event(themeChanged));
 }
 
-export default function AccountSettingsPage() {
-  const [active, setActive] = useState("Profile");
+function AccountSettingsContent() {
+  const searchParams = useSearchParams();
+  const sectionFromUrl = sections.find(([title]) => title.toLowerCase() === searchParams.get("section")?.toLowerCase())?.[0] ?? "Profile";
+  const active = sectionFromUrl;
   const theme = useSyncExternalStore(subscribeToTheme, readTheme, () => "light");
   const sessionView = useSyncExternalStore(subscribeToSessionView, readSessionView, () => "cards");
 
@@ -45,7 +48,7 @@ export default function AccountSettingsPage() {
       <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600">Manage settings that belong to you, regardless of which client or session you are working with.</p>
       <div className="mt-8 grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
         <nav className="flex gap-1 overflow-x-auto md:block" aria-label="Account setting sections">
-          {sections.map(([title, description]) => <button key={title} type="button" onClick={() => setActive(title)} className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium ${active === title ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-stone-100"}`}><span className="block">{title}</span><span className="mt-0.5 hidden text-xs font-normal leading-4 text-stone-500 md:block">{description}</span></button>)}
+          {sections.map(([title, description]) => <button key={title} type="button" onClick={() => window.history.pushState(null, "", `/settings?section=${title.toLowerCase()}`)} className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium ${active === title ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-stone-100"}`}><span className="block">{title}</span><span className="mt-0.5 hidden text-xs font-normal leading-4 text-stone-500 md:block">{description}</span></button>)}
         </nav>
         <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-stone-900">{active}</h2>
@@ -62,4 +65,8 @@ export default function AccountSettingsPage() {
       </div>
     </main>
   );
+}
+
+export default function AccountSettingsPage() {
+  return <Suspense fallback={<main className="mx-auto w-[min(94vw,960px)] py-10" />}><AccountSettingsContent /></Suspense>;
 }

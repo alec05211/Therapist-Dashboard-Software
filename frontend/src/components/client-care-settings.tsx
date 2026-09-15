@@ -1,55 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { chooseSessionCadence, readSessionCadence } from "@/lib/workspace-preferences";
+import { chooseSessionCadence } from "@/lib/workspace-preferences";
 
 type ClientCareSettingsProps = {
-  isOpen: boolean;
-  onOpen: () => void;
-  onClose: () => void;
+  onReturnToWorkspace: () => void;
 };
 
-export function ClientCareSettings({ isOpen, onOpen, onClose }: ClientCareSettingsProps) {
+export function ClientCareSettings({ onReturnToWorkspace }: ClientCareSettingsProps) {
   const [preferredName, setPreferredName] = useState("");
   const [canViewSummaries, setCanViewSummaries] = useState(false);
   const [sessionCadence, setSessionCadence] = useState("Thursdays · 3:00 PM · 50 minutes");
   const [saved, setSaved] = useState(false);
 
-  const close = () => {
-    onClose();
-    setSaved(false);
-  };
-
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => { setSessionCadence(readSessionCadence()); onOpen(); }}
-        className="inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3.5 py-2 text-sm font-semibold text-stone-700 shadow-sm hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
-      >
-        <span aria-hidden="true">⚙</span>
-        Client care settings
-      </button>
+    <section className="rounded-2xl border border-stone-200 bg-white p-5 text-left shadow-sm sm:p-7" aria-labelledby="client-care-settings-title">
+      <div className="flex items-start justify-between gap-5">
+        <div>
+          <p className="text-sm font-medium text-emerald-800">Elena Sadić · Client settings</p>
+          <h2 id="client-care-settings-title" className="mt-1 text-xl font-semibold tracking-tight text-stone-900">Client care settings</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">Relationship-specific preferences, access, and care coordination. These are separate from your personal account settings and from controls on an individual session.</p>
+        </div>
+      </div>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/30 p-4 sm:items-center" role="presentation" onMouseDown={close}>
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="client-care-settings-title"
-            className="max-h-[min(760px,calc(100vh-2rem))] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-7"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="text-sm font-medium text-emerald-800">Client workspace</p>
-                <h1 id="client-care-settings-title" className="mt-1 text-xl font-semibold tracking-tight text-stone-900">Client care settings</h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-stone-600">Relationship-specific preferences, access, and care coordination. These are separate from your personal account settings and from controls on an individual session.</p>
-              </div>
-              <button type="button" onClick={close} className="rounded-md p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-emerald-700" aria-label="Close client care settings">×</button>
-            </div>
-
-            <div className="mt-6 grid gap-4">
+      <div className="mt-6 grid gap-4">
               <fieldset className="rounded-xl border border-stone-200 p-4">
                 <legend className="px-1 text-sm font-semibold text-stone-900">How this client is identified</legend>
                 <label className="mt-3 block text-sm font-medium text-stone-700" htmlFor="preferred-name">Preferred name</label>
@@ -87,19 +61,16 @@ export function ClientCareSettings({ isOpen, onOpen, onClose }: ClientCareSettin
                 <p className="mt-2 text-sm leading-6 text-stone-600">Therapist handoff, care-team access, consent, and retention controls will live here as those workflows are introduced.</p>
                 <p className="mt-2 text-xs font-medium text-stone-500">Not configured yet</p>
               </div>
-            </div>
+      </div>
 
-            <div className="mt-6 flex items-center justify-between gap-4 border-t border-stone-200 pt-5">
-              <p className="text-xs text-stone-500">Initial UI only — saving is local to this browser session.</p>
-              <div className="flex gap-3">
-                <button type="button" onClick={close} className="rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">Cancel</button>
-                <button type="button" onClick={() => { chooseSessionCadence(sessionCadence); setSaved(true); }} className="rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Save changes</button>
-              </div>
-            </div>
-            {saved ? <p className="mt-3 text-right text-sm font-medium text-emerald-800" role="status">Changes saved for this browser session.</p> : null}
-          </section>
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-stone-200 pt-5">
+        <p className="text-xs text-stone-500">Initial UI only — saving is local to this browser session.</p>
+        <div className="flex gap-3">
+          <button type="button" onClick={onReturnToWorkspace} className="cursor-grab rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">Return to workspace</button>
+          <button type="button" onClick={() => { chooseSessionCadence(sessionCadence); setSaved(true); }} className="cursor-grab rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">Save changes</button>
         </div>
-      ) : null}
-    </>
+      </div>
+      {saved ? <p className="mt-3 text-right text-sm font-medium text-emerald-800" role="status">Changes saved for this browser session.</p> : null}
+    </section>
   );
 }
