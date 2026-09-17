@@ -1,4 +1,4 @@
-import type { JobStatus, Transcript, TranscriptListItem } from "@/lib/types";
+import type { JobStatus, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, options);
@@ -25,6 +25,8 @@ export const api = {
   listTranscripts: () => request<TranscriptListItem[]>("/transcripts"),
   getTranscript: async (id: string) => normalizeTranscript(await request<Transcript>(`/transcripts/${encodeURIComponent(id)}`)),
   getJobStatus: (id: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status`),
+  getDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief"),
+  generateDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief/generate", { method: "POST" }),
   uploadRecording: (audio: Blob) => {
     const form = new FormData();
     form.append("audio", audio, "recording.webm");

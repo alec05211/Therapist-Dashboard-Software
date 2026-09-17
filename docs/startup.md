@@ -134,10 +134,24 @@ onboarding route verify Auth0-issued RS256 access tokens server-side. Follow
 Activate the local Python environment and start the development server:
 
 ```powershell
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn server:app --reload --port 8000
 ```
+
+For the Terraform demo environment, prefer the startup script. It clears a
+previous Python/Uvicorn process on the API port, checks whether Windows has
+reserved the port (a common cause of `WinError 10013`), and binds the API to
+loopback only:
+
+```powershell
+.\tools\start-demo-api.ps1
+```
+
+To use a different port, pass `-Port 8001` and set `API_ORIGIN` in
+`frontend/.env.local` to `http://127.0.0.1:8001` before starting Next.js.
 
 Open `http://127.0.0.1:8000` in a browser.
 

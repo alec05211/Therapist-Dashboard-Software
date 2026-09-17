@@ -30,3 +30,25 @@ export type JobStatus = {
   status: string;
   detail?: string;
 };
+
+export type BriefEvidence = {
+  evidence_id: string;
+  session_id: string;
+  session_label: string;
+  segment_index: number;
+  start: number;
+  end: number;
+  quote: string;
+};
+
+export type PreSessionBrief = {
+  status: string;
+  review_note: string;
+  sections: Array<{
+    title: string;
+    items: Array<{
+      text: string;
+      sources: BriefEvidence[];
+    }>;
+  }>;
+};

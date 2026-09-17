@@ -57,6 +57,14 @@ function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v3m10.5-3v3M4.5 9.75h15M5.63 4.5h12.74c.62 0 1.13.5 1.13 1.13v12.74c0 .62-.5 1.13-1.13 1.13H5.63c-.62 0-1.13-.5-1.13-1.13V5.63c0-.62.5-1.13 1.13-1.13Z" />
+    </svg>
+  );
+}
+
 export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSelectScheduled, onEditSchedule }: Props) {
   const cards = useMemo(() => sessionCards(transcripts), [transcripts]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
@@ -98,12 +106,12 @@ export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSe
             </button>)}
           </div>
         </div>
-        <button type="button" onClick={() => move(-1)} disabled={centerIndex === 0} className="absolute left-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-800 bg-stone-700 text-xl text-white shadow-md hover:bg-stone-800 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show older sessions">‹</button>
-        <button type="button" onClick={() => move(1)} disabled={centerIndex === cards.length - 1} className="absolute right-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-800 bg-stone-700 text-xl text-white shadow-md hover:bg-stone-800 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show more recent sessions">›</button>
+        <button type="button" onClick={() => move(-1)} disabled={centerIndex === 0} className="absolute left-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-300 bg-stone-100 text-xl text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show older sessions">‹</button>
+        <button type="button" onClick={() => move(1)} disabled={centerIndex === cards.length - 1} className="absolute right-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-300 bg-stone-100 text-xl text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show more recent sessions">›</button>
       </div>
       <div className="absolute inset-x-5 top-3 z-10 flex items-start justify-between gap-4">
-        <h2 className="text-base font-bold tracking-tight text-stone-900">Session history</h2>
-        <button type="button" onClick={onEditSchedule} className="cursor-grab rounded-md bg-stone-700 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:bg-stone-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Edit schedule</button>
+        <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
+        <button type="button" onClick={onEditSchedule} className="inline-flex cursor-grab items-center gap-1.5 rounded-md border border-stone-300 bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon />Edit schedule</button>
       </div>
     </section>
   );

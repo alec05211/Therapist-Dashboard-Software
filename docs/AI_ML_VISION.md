@@ -105,6 +105,25 @@ Building ML capability is also a deliberate learning path. The project should st
 - Maintain reproducible evaluation, versioning, documentation, monitoring, and rollback practices.
 - Keep models and data flows configurable enough to adapt as product requirements, policies, and evidence change.
 
+### Current direction: clinician preparation and clinical-journey review
+
+The first differentiated longitudinal capability should be an application-owned memory and retrieval layer, rather than a client-specific trained model. It should use therapist-finalized transcripts, speaker corrections, clinical-note revisions, and explicit clinician edits as the preferred source of truth.
+
+This layer serves two deliberately separate review experiences:
+
+| Experience | Purpose | Expected review time | Information density |
+| --- | --- | --- | --- |
+| **Pre-session brief** | Help a therapist orient before a particular upcoming session. | About five minutes | Concise, selective, and immediately actionable for review. |
+| **Clinical journey review** | Help a therapist inspect, correct, and understand the broader history over time. | Deliberate review, not time-boxed | Evidence-rich, chronological, and configurable. |
+
+The **pre-session brief** may include only the small amount of context most useful for the next conversation: since-last-session changes, active treatment focus, important trajectory, open loops or planned follow-ups, and older relevant history when it bears directly on the upcoming session. Each generated statement must identify its source session and offer a path to the supporting finalized note and, when applicable, the corrected transcript segment and synchronized audio.
+
+The **clinical journey review** is the system of record for deeper examination. It should expose the underlying session summaries, finalized notes, revisions, timeline, linked evidence, and clinician-curated items such as themes, goals, significant events, and stale or disputed information. A therapist must be able to correct, hide, delete, pin, or mark information as outdated; those decisions must affect future briefs.
+
+Generated patterns must be framed as review prompts (for example, "possible pattern to consider"), never as facts about the client. The system must not infer or determine diagnoses, risk, or treatment decisions. It may surface source-grounded material that a qualified clinician chooses to assess.
+
+Using a frontier model for synthesis can be a valid interim implementation, but removing obvious identifiers is not by itself a sufficient privacy or compliance control: clinical narratives can remain re-identifiable. Before production use, choose a provider and account configuration explicitly approved for the applicable sensitive-data workflow, with appropriate contractual, security, retention, access, and no-training protections. Keep the provider boundary modular so it can later be replaced or self-hosted if justified.
+
 ## 7. What “custom built” should mean
 
 Custom built does not automatically mean training a foundation model from zero. That path is expensive, data-intensive, and may not be the responsible or most useful choice.

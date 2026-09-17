@@ -18,6 +18,7 @@ from psycopg.types.json import Json
 
 from database.auth import validate_access_token
 from database.connection import connect
+from ai_harness.pre_session import build_pre_session_synthesis_request, generate_openai_pre_session_brief
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -149,6 +150,125 @@ def additional_demo_session_number(session_id: str) -> int | None:
         if session_id == f"heartwell-sadic-session-{session_number:02d}":
             return session_number
     return None
+
+
+def demo_brief_evidence(session_id: str, segment_text: str) -> dict[str, Any]:
+    """Resolve a deliberately selected synthetic-demo citation to a transcript segment.
+
+    This is the first deterministic evidence-retrieval seam for the harness demo.
+    It does not infer clinical meaning or call a model; production retrieval will
+    replace the selected text with versioned, authorized memory-item sources.
+    """
+    assets = demo_session_assets(session_id)
+    if assets is None:
+        raise HTTPException(status_code=404, detail="Unknown synthetic demo session.")
+    transcript = json.loads(assets[2].read_text(encoding="utf-8"))
+    for index, segment in enumerate(transcript.get("segments", [])):
+        if segment.get("text", "").strip() == segment_text:
+            return {
+                "evidence_id": f"{session_id}:segment:{index}",
+                "session_id": session_id,
+                "session_label": DEMO_SESSION_LABELS.get(additional_demo_session_number(session_id) or 0, "Synthetic · Elena Sadić"),
+                "segment_index": index,
+                "start": segment["start"],
+                "end": segment["end"],
+                "quote": segment["text"].strip(),
+            }
+    raise RuntimeError(f"Synthetic demo evidence was not found for {session_id}.")
+
+
+@app.get("/demo/heartwell-sadic/pre-session-brief")
+def demo_pre_session_brief():
+    """Return a cited, deterministic pre-session brief for synthetic demo data only.
+
+    This proves the harness contract—bounded sections, selected evidence, and
+    citations—without sending data to an external model or making clinical
+    inferences. It is not a production clinical brief generator.
+    """
+    session_id = "heartwell-sadic-session-06"
+    return {
+        "status": "DEMO DRAFT · deterministic evidence selection",
+        "review_note": "Review the cited source before relying on any item. This demo does not assess diagnosis, risk, or treatment.",
+        "sections": [
+            {
+                "title": "Since last session",
+                "items": [{
+                    "text": "A project launch is approaching; the client identified asking for priorities early as an important part of their plan.",
+                    "sources": [demo_brief_evidence(session_id, "I need to ask for priorities before I'm already overwhelmed.")],
+                }],
+            },
+            {
+                "title": "Important trajectory",
+                "items": [{
+                    "text": "Possible pattern to consider: the client described noticing the pressure sequence sooner and sometimes interrupting it.",
+                    "sources": [demo_brief_evidence(session_id, "Sometimes I catch it.")],
+                }],
+            },
+            {
+                "title": "Open loops",
+                "items": [
+                    {
+                        "text": "The client identified difficulty receiving care without feeling indebted.",
+                        "sources": [demo_brief_evidence(session_id, "I still do not know how to let people take care of me without feeling like I owe them something.")],
+                    },
+                    {
+                        "text": "The client asked to explore the relationship with their father further.",
+                        "sources": [demo_brief_evidence(session_id, "And I want to talk more about my dad because I think a lot of this started before my job got so busy.")],
+                    },
+                ],
+            },
+        ],
+    }
+
+
+@app.get("/demo/heartwell-sadic/pre-session-brief/request")
+def demo_pre_session_synthesis_request():
+    """Expose the model-ready synthetic bundle without contacting a provider."""
+    brief = demo_pre_session_brief()
+    evidence = [source for section in brief["sections"] for item in section["items"] for source in item["sources"]]
+    return build_pre_session_synthesis_request(
+        client_reference="synthetic-heartwell-sadic-client",
+        evidence=evidence,
+    )
+
+
+@app.post("/demo/heartwell-sadic/pre-session-brief/generate")
+def generate_demo_pre_session_brief():
+    """Generate a synthetic-only, cited draft through the configured OpenAI key."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="OPENAI_API_KEY is not configured.")
+    deterministic_brief = demo_pre_session_brief()
+    evidence = [source for section in deterministic_brief["sections"] for item in section["items"] for source in item["sources"]]
+    synthesis_request = build_pre_session_synthesis_request(
+        client_reference="synthetic-heartwell-sadic-client",
+        evidence=evidence,
+    )
+    try:
+        generated, metadata = generate_openai_pre_session_brief(
+            synthesis_request=synthesis_request,
+            api_key=api_key,
+            model=os.getenv("OPENAI_PRE_SESSION_MODEL", "gpt-5-mini"),
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    sources_by_id = {source["evidence_id"]: source for source in evidence}
+    return {
+        "status": f"OPENAI DRAFT · {metadata['model']}",
+        "review_note": "Synthetic demo only. Review cited sources before relying on an item; this draft does not assess diagnosis, risk, or treatment.",
+        "sections": [
+            {
+                "title": section["title"],
+                "items": [
+                    {"text": item["text"], "sources": [sources_by_id[evidence_id] for evidence_id in item["evidence_ids"]]}
+                    for item in section["items"]
+                ],
+            }
+            for section in generated["sections"]
+        ],
+        "generation": metadata,
+    }
 
 
 def write_json(path: Path, content: dict[str, Any]) -> None:
