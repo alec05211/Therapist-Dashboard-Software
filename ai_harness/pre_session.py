@@ -15,7 +15,7 @@ BRIEF_SECTIONS = (
 )
 
 
-def build_pre_session_synthesis_request(*, client_reference: str, evidence: Iterable[dict[str, Any]]) -> dict[str, Any]:
+def build_pre_session_synthesis_request(*, client_reference: str, evidence: Iterable[dict[str, Any]], context_packet: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build the complete, bounded model request from approved evidence only.
 
     The returned value is provider-neutral. A future provider adapter may convert
@@ -40,6 +40,10 @@ def build_pre_session_synthesis_request(*, client_reference: str, evidence: Iter
             "maximum_items_per_section": 3,
         },
         "evidence": selected_evidence,
+        # The application assembles this projection from its own record. The
+        # model may use it for orientation, but citations are still restricted
+        # to the approved evidence items above.
+        "context_packet": context_packet or {},
     }
 
 
@@ -129,6 +133,7 @@ def generate_openai_pre_session_brief(*, synthesis_request: dict[str, Any], api_
             "task": synthesis_request["task"],
             "client_reference": synthesis_request["client_reference"],
             "evidence": synthesis_request["evidence"],
+            "context_packet": synthesis_request.get("context_packet", {}),
         }),
         "text": {
             "format": {

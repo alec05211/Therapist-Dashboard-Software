@@ -44,6 +44,8 @@ DEMO_SESSION_SLUGS = {
     6: "six-session-review",
 }
 DEMO_SESSION_LABELS = {
+    1: "Synthetic · Elena Sadić · Session 01",
+    2: "Synthetic · Elena Sadić · Session 02",
     3: "Synthetic · Elena Sadić · Session 03",
     4: "Synthetic · Elena Sadić · Session 04",
     5: "Synthetic · Elena Sadić · Session 05",
@@ -152,6 +154,15 @@ def additional_demo_session_number(session_id: str) -> int | None:
     return None
 
 
+def demo_session_number(session_id: str) -> int | None:
+    """Return a synthetic session number for any session in the Heartwell case."""
+    try:
+        number = int(session_id.rsplit("-", maxsplit=1)[-1])
+    except ValueError:
+        return None
+    return number if number in DEMO_SESSION_LABELS else None
+
+
 def demo_brief_evidence(session_id: str, segment_text: str) -> dict[str, Any]:
     """Resolve a deliberately selected synthetic-demo citation to a transcript segment.
 
@@ -168,13 +179,94 @@ def demo_brief_evidence(session_id: str, segment_text: str) -> dict[str, Any]:
             return {
                 "evidence_id": f"{session_id}:segment:{index}",
                 "session_id": session_id,
-                "session_label": DEMO_SESSION_LABELS.get(additional_demo_session_number(session_id) or 0, "Synthetic · Elena Sadić"),
+                "session_label": DEMO_SESSION_LABELS.get(demo_session_number(session_id) or 0, "Synthetic · Elena Sadić"),
                 "segment_index": index,
                 "start": segment["start"],
                 "end": segment["end"],
                 "quote": segment["text"].strip(),
             }
     raise RuntimeError(f"Synthetic demo evidence was not found for {session_id}.")
+
+
+def demo_longitudinal_insights() -> dict[str, Any]:
+    """Return the evidence-led longitudinal workspace for the synthetic case.
+
+    This is deliberately an application-owned projection, not a model's hidden
+    memory. Every insight is a clinician-review prompt with transcript evidence;
+    the accompanying HealthScribe notes are marked generated until a therapist
+    revision workflow exists.
+    """
+    session_one = "heartwell-sadic-session-01"
+    session_two = "heartwell-sadic-session-02"
+    session_four = "heartwell-sadic-session-04"
+    session_five = "heartwell-sadic-session-05"
+    session_six = "heartwell-sadic-session-06"
+    evidence = {
+        "pressure_origin": demo_brief_evidence(session_one, "Lately, it feels like I am either working, thinking about working, or feeling guilty that I am not working."),
+        "role_history": demo_brief_evidence(session_one, "My family relied on me a lot when my dad got sick last year."),
+        "rest_rule": demo_brief_evidence(session_two, "Like if I'm not hard on myself, I will become careless."),
+        "setback": demo_brief_evidence(session_four, "I did not ask which case had priority."),
+        "request": demo_brief_evidence(session_five, "My heart was racing before I spoke, but I said, I can move both cases forward, and I need help deciding which one takes precedence today."),
+        "help_as_debt": demo_brief_evidence(session_five, "Someone helps me and then I feel like I have to repay them right away."),
+        "current_shift": demo_brief_evidence(session_six, "Sometimes I catch it."),
+        "launch": demo_brief_evidence(session_six, "I need to ask for priorities before I'm already overwhelmed."),
+        "care": demo_brief_evidence(session_six, "I still do not know how to let people take care of me without feeling like I owe them something."),
+        "father": demo_brief_evidence(session_six, "And I want to talk more about my dad because I think a lot of this started before my job got so busy."),
+    }
+    records = [
+        {"session_id": f"heartwell-sadic-session-{number:02d}", "session_label": DEMO_SESSION_LABELS[number], "note_status": "Generated HealthScribe note — not therapist-finalized", "included": True}
+        for number in range(1, 7)
+    ]
+    patterns = [
+        {
+            "id": "pressure-cycle",
+            "title": "Pressure, self-criticism, and overextension",
+            "summary": "Possible pattern to review: pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities. The latest session includes an earlier recognition of that sequence.",
+            "evidence": [evidence["pressure_origin"], evidence["setback"], evidence["current_shift"]],
+            "status": "Review prompt · supported across 3 sessions",
+        },
+        {
+            "id": "direct-requests",
+            "title": "Direct requests as a developing practice",
+            "summary": "Across recent sessions, direct requests to a supervisor and close supports appear to be a meaningful area of practice. This is not presented as a treatment conclusion; it is a source-grounded thread for therapist review.",
+            "evidence": [evidence["setback"], evidence["request"], evidence["launch"]],
+            "status": "Review prompt · supported across 3 sessions",
+        },
+        {
+            "id": "care-and-obligation",
+            "title": "Care, obligation, and family context",
+            "summary": "The record links early responsibility during the father's illness with a current difficulty accepting help without feeling indebted. This connection remains exploratory and should be held as a question, not a fact about the client.",
+            "evidence": [evidence["role_history"], evidence["help_as_debt"], evidence["care"]],
+            "status": "Review prompt · supported across 3 sessions",
+        },
+    ]
+    open_threads = [
+        {"text": "What feels important to understand about receiving care without turning it into obligation?", "evidence": [evidence["care"], evidence["help_as_debt"]]},
+        {"text": "What connection, if any, does the client want to explore between current pressure and the experience of the father's illness?", "evidence": [evidence["father"], evidence["role_history"]]},
+        {"text": "How is the approaching launch affecting the client's ability to use the priority question before pressure escalates?", "evidence": [evidence["launch"], evidence["request"]]},
+    ]
+    packet_items = [
+        {"kind": "last-session context", "text": "The upcoming launch and the client's own priority question.", "evidence": [evidence["launch"]]},
+        {"kind": "longitudinal review prompt", "text": "Pressure, self-criticism, and overextension across Sessions 01, 04, and 06.", "evidence": [evidence["pressure_origin"], evidence["setback"], evidence["current_shift"]]},
+        {"kind": "longitudinal review prompt", "text": "Direct requests across work and close relationships.", "evidence": [evidence["setback"], evidence["request"]]},
+        {"kind": "open thread", "text": "Care and obligation.", "evidence": [evidence["care"], evidence["help_as_debt"]]},
+        {"kind": "open thread", "text": "Family context and the father's illness.", "evidence": [evidence["father"], evidence["role_history"]]},
+    ]
+    return {
+        "status": "SYNTHETIC REVIEW WORKSPACE · updated after Session 06",
+        "review_note": "This workspace is a clinician-review aid. It does not diagnose, determine risk, or make treatment decisions.",
+        "records": records,
+        "narrative": "Across six sessions, the record describes a recurring pressure cycle involving anticipated disappointment, increased self-demand, and less room for rest or support. Recent sessions also show the client practicing more direct requests and sometimes recognizing the cycle earlier. The links between responsibility, care, and family experience remain important but unresolved.",
+        "patterns": patterns,
+        "open_threads": open_threads,
+        "context_packet": {
+            "purpose": "Bounded source packet for the next pre-session brief.",
+            "selection_policy": "Latest session context, cross-session review prompts, and explicit open threads; generated notes do not override therapist-finalized records.",
+            "items": packet_items,
+            "approved_evidence": list(evidence.values()),
+            "records": records,
+        },
+    }
 
 
 @app.get("/demo/heartwell-sadic/pre-session-brief")
@@ -193,14 +285,14 @@ def demo_pre_session_brief():
             {
                 "title": "Since last session",
                 "items": [{
-                    "text": "A project launch is approaching; the client identified asking for priorities early as an important part of their plan.",
+                    "text": "an approaching project launch and the vulnerability of asking for priorities before feeling overwhelmed.",
                     "sources": [demo_brief_evidence(session_id, "I need to ask for priorities before I'm already overwhelmed.")],
                 }],
             },
             {
                 "title": "Important trajectory",
                 "items": [{
-                    "text": "Possible pattern to consider: the client described noticing the pressure sequence sooner and sometimes interrupting it.",
+                    "text": "the client noticing the familiar pressure sequence sooner and sometimes interrupting it.",
                     "sources": [demo_brief_evidence(session_id, "Sometimes I catch it.")],
                 }],
             },
@@ -208,11 +300,11 @@ def demo_pre_session_brief():
                 "title": "Open loops",
                 "items": [
                     {
-                        "text": "The client identified difficulty receiving care without feeling indebted.",
+                        "text": "how to receive care without feeling indebted.",
                         "sources": [demo_brief_evidence(session_id, "I still do not know how to let people take care of me without feeling like I owe them something.")],
                     },
                     {
-                        "text": "The client asked to explore the relationship with their father further.",
+                        "text": "what may still need to be understood about the relationship with their father.",
                         "sources": [demo_brief_evidence(session_id, "And I want to talk more about my dad because I think a lot of this started before my job got so busy.")],
                     },
                 ],
@@ -224,12 +316,18 @@ def demo_pre_session_brief():
 @app.get("/demo/heartwell-sadic/pre-session-brief/request")
 def demo_pre_session_synthesis_request():
     """Expose the model-ready synthetic bundle without contacting a provider."""
-    brief = demo_pre_session_brief()
-    evidence = [source for section in brief["sections"] for item in section["items"] for source in item["sources"]]
+    insights = demo_longitudinal_insights()
     return build_pre_session_synthesis_request(
         client_reference="synthetic-heartwell-sadic-client",
-        evidence=evidence,
+        evidence=insights["context_packet"]["approved_evidence"],
+        context_packet=insights["context_packet"],
     )
+
+
+@app.get("/demo/heartwell-sadic/insights")
+def demo_client_insights():
+    """Return the synthetic, evidence-led clinical-insights workspace."""
+    return demo_longitudinal_insights()
 
 
 @app.post("/demo/heartwell-sadic/pre-session-brief/generate")
@@ -238,11 +336,12 @@ def generate_demo_pre_session_brief():
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="OPENAI_API_KEY is not configured.")
-    deterministic_brief = demo_pre_session_brief()
-    evidence = [source for section in deterministic_brief["sections"] for item in section["items"] for source in item["sources"]]
+    insights = demo_longitudinal_insights()
+    evidence = insights["context_packet"]["approved_evidence"]
     synthesis_request = build_pre_session_synthesis_request(
         client_reference="synthetic-heartwell-sadic-client",
         evidence=evidence,
+        context_packet=insights["context_packet"],
     )
     try:
         generated, metadata = generate_openai_pre_session_brief(

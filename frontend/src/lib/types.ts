@@ -52,3 +52,36 @@ export type PreSessionBrief = {
     }>;
   }>;
 };
+
+export type ClientInsights = {
+  status: string;
+  review_note: string;
+  narrative: string;
+  records: Array<{
+    session_id: string;
+    session_label: string;
+    note_status: string;
+    included: boolean;
+  }>;
+  patterns: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    evidence: BriefEvidence[];
+    status: string;
+  }>;
+  open_threads: Array<{
+    text: string;
+    evidence: BriefEvidence[];
+  }>;
+  context_packet: {
+    purpose: string;
+    selection_policy: string;
+    items: Array<{
+      kind: string;
+      text: string;
+      evidence: BriefEvidence[];
+    }>;
+    records: ClientInsights["records"];
+  };
+};
