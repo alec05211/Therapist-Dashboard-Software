@@ -85,3 +85,39 @@ export type ClientInsights = {
     records: ClientInsights["records"];
   };
 };
+
+export type LongitudinalRecordContext = {
+  organizationId: string;
+  clientId: string;
+};
+
+export type PersistedInsightEvidence = {
+  evidence_role: "supporting" | "contrasting" | "context";
+  transcript_segment_id?: string;
+  clinical_note_version_id?: string;
+  session_id?: string;
+  segment_index?: number;
+  start?: number;
+  end?: number;
+  quote?: string;
+};
+
+export type PersistedInsightSnapshot = {
+  id: string;
+  version: number;
+  status: "draft" | "reviewed" | "accepted" | "rejected" | "superseded";
+  generator_name: string;
+  generator_version?: string | null;
+  selection_policy_version: string;
+  content: Record<string, unknown>;
+  created_at: string;
+  reviewed_at?: string | null;
+  items: Array<{
+    id: string;
+    kind: "trajectory" | "theme" | "open_thread" | "relevant_history" | "client_context" | "therapist_curated";
+    review_state: "draft" | "accepted" | "hidden" | "stale" | "disputed";
+    display_order: number;
+    content: Record<string, unknown>;
+    evidence: PersistedInsightEvidence[];
+  }>;
+};

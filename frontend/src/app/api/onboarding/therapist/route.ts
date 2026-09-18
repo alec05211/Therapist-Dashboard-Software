@@ -22,6 +22,12 @@ export async function POST(request: Request) {
     });
 
     const body = await response.json().catch(() => ({ detail: "The API returned an invalid response." }));
+    if (process.env.NODE_ENV !== "production") {
+      const diagnostic = response.headers.get("X-Auth-Validation-Error");
+      if (diagnostic) {
+        body.diagnostic = diagnostic;
+      }
+    }
     return NextResponse.json(body, { status: response.status });
   } catch {
     return NextResponse.json(

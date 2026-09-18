@@ -35,7 +35,8 @@ export function TherapistOnboardingForm({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(body.detail || "Your practice could not be created. Please try again.");
+      const message = body.detail || "Your practice could not be created. Please try again.";
+      setError(body.diagnostic ? `${message} Local diagnostic: ${body.diagnostic}.` : message);
       return;
     }
 

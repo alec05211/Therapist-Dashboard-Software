@@ -1,4 +1,4 @@
-import type { ClientInsights, JobStatus, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
+import type { ClientInsights, JobStatus, PersistedInsightSnapshot, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, options);
@@ -28,6 +28,10 @@ export const api = {
   getDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief"),
   generateDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief/generate", { method: "POST" }),
   getDemoClientInsights: () => request<ClientInsights>("/demo/heartwell-sadic/insights"),
+  getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
+    request<PersistedInsightSnapshot>(
+      `/clinical-records/clients/${encodeURIComponent(clientId)}/insights/latest?organization_id=${encodeURIComponent(organizationId)}`,
+    ),
   uploadRecording: (audio: Blob) => {
     const form = new FormData();
     form.append("audio", audio, "recording.webm");

@@ -18,10 +18,13 @@ from psycopg.types.json import Json
 
 from database.auth import validate_access_token
 from database.connection import connect
+from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.pre_session import build_pre_session_synthesis_request, generate_openai_pre_session_brief
 from pydantic import BaseModel, Field
 
 app = FastAPI()
+# Kept explicit so Uvicorn's local reload watcher reloads the application
+# boundary when authentication behavior changes during development.
 load_dotenv(Path(__file__).with_name(".env"))
 RECORDINGS_DIRECTORY = Path(__file__).with_name("recordings")
 DEMO_DATA_DIRECTORY = Path(__file__).with_name("demo-data")
@@ -64,6 +67,88 @@ class TherapistOnboardingRequest(BaseModel):
     professional_name: str = Field(min_length=1, max_length=200)
     practice_type: Literal["solo", "group"]
     team_setup: Literal["later", "now"]
+
+
+class ClinicalNoteVersionRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    session_id: str = Field(min_length=1, max_length=64)
+    content: dict[str, Any]
+    status: Literal["draft", "reviewed", "finalized"] = "draft"
+    source_synthesis_version_id: str | None = Field(default=None, max_length=64)
+    parent_version_id: str | None = Field(default=None, max_length=64)
+
+
+class LongitudinalEvidenceRequest(BaseModel):
+    transcript_segment_id: str | None = Field(default=None, max_length=64)
+    clinical_note_version_id: str | None = Field(default=None, max_length=64)
+    evidence_role: Literal["supporting", "contrasting", "context"] = "supporting"
+
+
+class LongitudinalInsightItemRequest(BaseModel):
+    item_kind: Literal[
+        "trajectory", "theme", "open_thread", "relevant_history", "client_context", "therapist_curated"
+    ]
+    content: dict[str, Any]
+    evidence: list[LongitudinalEvidenceRequest]
+    review_state: Literal["draft", "accepted", "hidden", "stale", "disputed"] = "draft"
+    display_order: int = Field(default=0, ge=0)
+
+
+class LongitudinalInsightSnapshotRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    content: dict[str, Any]
+    items: list[LongitudinalInsightItemRequest]
+    generator_name: str = Field(min_length=1, max_length=120)
+    generator_version: str | None = Field(default=None, max_length=120)
+    selection_policy_version: str = Field(min_length=1, max_length=120)
+    source_cutoff_session_id: str | None = Field(default=None, max_length=64)
+    parent_snapshot_id: str | None = Field(default=None, max_length=64)
+
+
+def authorize_clinical_access(
+    connection: Any,
+    *,
+    authorization: str | None,
+    organization_id: str,
+    client_id: str,
+    require_write: bool,
+) -> str:
+    """Resolve a therapist's active, client-specific clinical permission."""
+    claims = validate_access_token(authorization)
+    permission = "access.can_write_clinical" if require_write else "access.can_read_clinical"
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            SELECT app_user.id
+            FROM app.application_users AS app_user
+            JOIN app.organization_memberships AS membership
+              ON membership.user_id = app_user.id
+            JOIN app.organization_practitioners AS practitioner
+              ON practitioner.membership_id = membership.id
+            JOIN app.client_therapist_access AS access
+              ON access.practitioner_id = practitioner.id
+             AND access.organization_id = membership.organization_id
+            WHERE app_user.auth0_subject = %s
+              AND app_user.status = 'active'
+              AND membership.organization_id = %s
+              AND membership.status = 'active'
+              AND practitioner.status = 'active'
+              AND access.client_id = %s
+              AND access.revoked_at IS NULL
+              AND access.effective_from <= CURRENT_TIMESTAMP
+              AND (access.effective_until IS NULL OR access.effective_until > CURRENT_TIMESTAMP)
+              AND {permission}
+            LIMIT 1
+            """,
+            (claims["sub"], organization_id, client_id),
+        )
+        user = cursor.fetchone()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have active clinical access to this client.",
+        )
+    return str(user["id"])
 
 
 @app.get("/healthz")
@@ -828,6 +913,159 @@ def onboard_therapist(
         "membership_id": str(membership["id"]),
         "practitioner_id": str(practitioner["id"]),
     }
+
+
+@app.post("/clinical-records/clients/{client_id}/note-versions", status_code=status.HTTP_201_CREATED)
+def create_clinical_note_version(
+    client_id: str,
+    request: ClinicalNoteVersionRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Append a therapist-owned note revision after client-specific authorization."""
+    try:
+        with connect() as connection:
+            actor_user_id = authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=request.organization_id,
+                client_id=client_id,
+                require_write=True,
+            )
+            record_id = LongitudinalRecordRepository(connection).create_clinical_note_version(
+                organization_id=request.organization_id,
+                client_id=client_id,
+                session_id=request.session_id,
+                content=request.content,
+                status=request.status,
+                actor_user_id=actor_user_id,
+                source_synthesis_version_id=request.source_synthesis_version_id,
+                parent_version_id=request.parent_version_id,
+            )
+            connection.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    return {"id": record_id, "status": request.status}
+
+
+@app.post("/clinical-records/clients/{client_id}/insight-snapshots", status_code=status.HTTP_201_CREATED)
+def create_longitudinal_insight_snapshot(
+    client_id: str,
+    request: LongitudinalInsightSnapshotRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Save an evidence-linked longitudinal draft for therapist review.
+
+    This endpoint never marks a generated item accepted. Acceptance remains a
+    separate clinician action that will be added with the review UI.
+    """
+    try:
+        items = tuple(
+            InsightItem(
+                item_kind=item.item_kind,
+                content=item.content,
+                evidence=tuple(
+                    InsightEvidence(
+                        transcript_segment_id=evidence.transcript_segment_id,
+                        clinical_note_version_id=evidence.clinical_note_version_id,
+                        evidence_role=evidence.evidence_role,
+                    )
+                    for evidence in item.evidence
+                ),
+                review_state=item.review_state,
+                display_order=item.display_order,
+            )
+            for item in request.items
+        )
+        with connect() as connection:
+            actor_user_id = authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=request.organization_id,
+                client_id=client_id,
+                require_write=True,
+            )
+            record_id = LongitudinalRecordRepository(connection).create_insight_snapshot(
+                organization_id=request.organization_id,
+                client_id=client_id,
+                content=request.content,
+                items=items,
+                generator_name=request.generator_name,
+                generator_version=request.generator_version,
+                selection_policy_version=request.selection_policy_version,
+                actor_user_id=actor_user_id,
+                source_cutoff_session_id=request.source_cutoff_session_id,
+                parent_snapshot_id=request.parent_snapshot_id,
+            )
+            connection.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    return {"id": record_id, "status": "draft"}
+
+
+@app.get("/clinical-records/clients/{client_id}/pre-session-context")
+def get_pre_session_context_packet(
+    client_id: str,
+    organization_id: str,
+    authorization: str | None = Header(default=None),
+):
+    """Return only accepted insight items for a bounded future brief packet."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=organization_id,
+                client_id=client_id,
+                require_write=False,
+            )
+            packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(
+                organization_id=organization_id,
+                client_id=client_id,
+            )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    if packet is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No accepted longitudinal context is available for this client.")
+    return packet
+
+
+@app.get("/clinical-records/clients/{client_id}/insight-snapshots/latest")
+def get_latest_longitudinal_insight_snapshot(
+    client_id: str,
+    organization_id: str,
+    authorization: str | None = Header(default=None),
+):
+    """Return the latest evidence-linked workspace for an authorized therapist."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=organization_id,
+                client_id=client_id,
+                require_write=False,
+            )
+            snapshot = LongitudinalRecordRepository(connection).get_latest_insight_snapshot(
+                organization_id=organization_id,
+                client_id=client_id,
+            )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    if snapshot is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No longitudinal workspace is available for this client.")
+    return snapshot
 
 
 def s3_location(uri: str) -> tuple[str, str]:
