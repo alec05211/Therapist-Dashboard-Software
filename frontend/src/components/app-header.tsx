@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { canUseFeature } from "@/lib/role-capabilities";
 import { useEffect, useId, useRef, useState } from "react";
 
 function GearIcon() {
@@ -70,6 +71,8 @@ function ReportsIcon() {
 
 export function AppHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [accountRole, setAccountRole] = useState<"therapist" | "client" | null>(null);
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +91,13 @@ export function AppHeader() {
       document.removeEventListener("mousedown", closeOnOutsideInteraction);
       document.removeEventListener("keydown", closeOnEscape);
     };
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/auth-status", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((body: { authenticated?: boolean }) => { setIsAuthenticated(Boolean(body.authenticated)); if (body.authenticated) void fetch("/api/identity/me", { cache: "no-store" }).then(response => response.json()).then(identity => { if (identity.role === "therapist" || identity.role === "client") setAccountRole(identity.role); }); })
+      .catch(() => setIsAuthenticated(false));
   }, []);
 
   return (
@@ -111,28 +121,23 @@ export function AppHeader() {
             </button>
             {isOpen && (
               <div id={menuId} className="absolute right-0 z-10 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg">
-                <Link
+                {isAuthenticated ? <><Link
                   className="flex w-full cursor-grab items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
                   href="/settings?section=profile"
                   onClick={() => setIsOpen(false)}
-                >
-                  <GearIcon />
-                  Account settings
-                </Link>
-                <div className="my-1 border-t border-stone-100" />
-                <a
+                ><GearIcon />Account settings</Link><div className="my-1 border-t border-stone-100" /><a
                   className="flex w-full cursor-grab items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
                   href="/auth/logout"
-                >
-                  <LogoutIcon />
-                  Log out
-                </a>
+                ><LogoutIcon />Log out</a></> : <a
+                  className="flex w-full cursor-grab items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
+                  href="/login"
+                ><UserIcon />Sign in</a>}
               </div>
             )}
           </div>
         </nav>
       </div>
-      <div className="border-t border-stone-100 bg-stone-50">
+      {isAuthenticated && accountRole && canUseFeature(accountRole, "practiceNavigation") && <div className="border-t border-stone-100 bg-stone-50">
         <nav className="mx-auto flex h-12 w-[min(94vw,1200px)] items-center justify-end gap-2" aria-label="Therapist workspace">
           <button
             aria-disabled="true"
@@ -192,7 +197,7 @@ export function AppHeader() {
             Settings
           </Link>
         </nav>
-      </div>
+      </div>}
     </header>
   );
 }

@@ -131,15 +131,38 @@ onboarding route verify Auth0-issued RS256 access tokens server-side. Follow
 
 ## Local recorder application
 
-Activate the local Python environment and start the development server:
+Open a new PowerShell window at the repository root. Windows commonly blocks
+`Activate.ps1` under its default execution policy. The following change applies
+only to the current PowerShell process; it does not change the machine or your
+user-level execution policy.
+
+Start the API with this sequence:
 
 ```powershell
-
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn server:app --reload --port 8000
 ```
+
+If you prefer not to activate the virtual environment, use its Python
+executable directly. This is equivalent and does not require an execution
+policy change:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn server:app --reload --port 8000
+```
+
+Start the frontend in a second PowerShell window:
+
+```powershell
+Set-Location frontend
+npm run dev
+```
+
+Then open `http://localhost:3000`. The frontend uses the API address in
+`frontend/.env.local` (normally `API_ORIGIN=http://127.0.0.1:8000`).
 
 For the Terraform demo environment, prefer the startup script. It clears a
 previous Python/Uvicorn process on the API port, checks whether Windows has
@@ -153,7 +176,7 @@ loopback only:
 To use a different port, pass `-Port 8001` and set `API_ORIGIN` in
 `frontend/.env.local` to `http://127.0.0.1:8001` before starting Next.js.
 
-Open `http://127.0.0.1:8000` in a browser.
+The API health endpoint remains available at `http://127.0.0.1:8000/healthz`.
 
 ## Test an existing audio file
 

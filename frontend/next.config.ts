@@ -1,10 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  async rewrites() {
-    const apiOrigin = process.env.API_ORIGIN ?? "http://127.0.0.1:8000";
-    return [{ source: "/api/:path*", destination: `${apiOrigin}/:path*` }];
-  },
-};
+// API requests must pass through the authenticated route handlers. A rewrite
+// runs before dynamic routes and would bypass the catch-all's bearer token.
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

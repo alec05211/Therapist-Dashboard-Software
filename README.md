@@ -23,9 +23,14 @@ folder under `recordings`.
 
    ```powershell
    py -m venv .venv
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
    .\.venv\Scripts\Activate.ps1
    pip install -r requirements.txt
    ```
+
+   The execution-policy command lasts only for the current PowerShell window.
+   You can also avoid activation entirely by using
+   `./.venv/Scripts/python.exe -m pip install -r requirements.txt`.
 
 4. Start the local server:
 

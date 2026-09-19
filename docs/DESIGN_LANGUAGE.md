@@ -41,6 +41,18 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 
 ## Interaction details
 
+- Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,
+  `TranscriptViewer`, and `ClinicalNote` in both roles. The viewer owns playback
+  when no controller is supplied and accepts explicit transcript/note visibility
+  flags. Supply authorized data and recording URLs; never fork the visuals to
+  enforce permissions. The server remains the authority for material access.
+
+- Therapist and client workspaces share `CareRelationshipHeader`: the other
+  person's avatar, name, available contact details, and relationship-specific
+  navigation. Omit unavailable contact fields and use initials when no photo is
+  supplied. Keep the same surfaces and selected state across roles; vary the
+  actions, not the component. Unimplemented actions are disabled and marked Soon.
+
 - Directly manipulable controls use `cursor-grab` with `active:cursor-grabbing`, unless the control is disabled, waiting, or accepts text input.
 - Provide a visible evergreen focus outline with an offset where space permits. Hover should add a small surface or border change, not a dramatic color shift.
 - Disabled controls retain their intent but lower contrast only enough to indicate their unavailable state; never make labels unreadable.

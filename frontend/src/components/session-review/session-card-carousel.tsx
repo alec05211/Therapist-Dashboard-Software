@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { TranscriptListItem } from "@/lib/types";
 
-type SessionCard = {
+export type SessionCard = {
   id: string;
   label: string;
   date: Date;
@@ -35,8 +35,8 @@ type Props = {
   activeId: string | null;
   error: string | null;
   onOpen: (id: string) => void;
-  onSelectScheduled: () => void;
-  onEditSchedule: () => void;
+  onSelectScheduled: (session: SessionCard) => void;
+  onEditSchedule?: () => void;
 };
 
 function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
@@ -55,6 +55,13 @@ function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
   return [...available, ...placeholders].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
+export function nextScheduledSession(transcripts: TranscriptListItem[]): SessionCard | null {
+  const cards = sessionCards(transcripts);
+  const completed = cards.filter(card => card.isAvailable);
+  const latest = completed.at(-1)?.date.getTime() ?? -Infinity;
+  return cards.find(card => !card.isAvailable && card.date.getTime() > latest) ?? null;
+}
+
 const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 
 function CalendarIcon() {
@@ -69,37 +76,28 @@ export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSe
   const cards = useMemo(() => sessionCards(transcripts), [transcripts]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
-  const viewport = useRef<HTMLDivElement>(null);
-  const [viewportWidth, setViewportWidth] = useState(0);
-  useEffect(() => {
-    const node = viewport.current;
-    if (!node) return;
-    const measure = () => setViewportWidth(node.clientWidth);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  const cardGap = 12;
-  const cardWidth = Math.max(0, (viewportWidth - cardGap * 4) / 3.4);
-  const trackOffset = -((centerIndex - 2) * (cardWidth + cardGap) + cardWidth * 0.8);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const cardWidth = "((100cqw - 48px) / 3.4)";
+  const trackOffset = `calc(50cqw - ${cardWidth} / 2 - ${centerIndex} * (${cardWidth} + 12px))`;
   const move = (direction: -1 | 1) => {
     const nextIndex = Math.max(0, Math.min(cards.length - 1, centerIndex + direction));
+    setHasInteracted(true);
     setCenterIndex(nextIndex);
   };
   const selectCard = (index: number, card: SessionCard) => {
+    setHasInteracted(true);
     setCenterIndex(index);
     if (card.isAvailable) onOpen(card.id);
-    else onSelectScheduled();
+    else onSelectScheduled(card);
   };
 
   return (
     <section className="session-history-carousel relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Session history">
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
       <div className="relative -mx-5">
-        <div ref={viewport} className="session-carousel-viewport overflow-hidden">
-          <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset}px)` }}>
-            {cards.map((card, index) => <button key={card.id} type="button" onClick={() => selectCard(index, card)} style={{ flexBasis: `${cardWidth}px` }} className={`session-carousel-card min-h-28 shrink-0 cursor-grab rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined}>
+        <div className="session-carousel-viewport overflow-hidden" style={{ containerType: "inline-size" }}>
+          <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset})`, transition: hasInteracted ? undefined : "none" }}>
+            {cards.map((card, index) => <button key={card.id} type="button" onClick={() => selectCard(index, card)} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card min-h-28 min-w-0 shrink-0 cursor-grab rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined}>
               <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isAvailable ? "Completed" : "Scheduled"}</span>
               <strong className="mt-0.5 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
               <span className="mt-2 block truncate text-xs font-medium text-stone-600">{card.isAvailable ? card.label : "Session details pending"}</span>
@@ -111,7 +109,7 @@ export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSe
       </div>
       <div className="absolute inset-x-5 top-3 z-10 flex items-start justify-between gap-4">
         <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
-        <button type="button" onClick={onEditSchedule} className="inline-flex cursor-grab items-center gap-1.5 rounded-md border border-stone-300 bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon />Edit schedule</button>
+        {onEditSchedule && <button type="button" onClick={onEditSchedule} className="inline-flex cursor-grab items-center gap-1.5 rounded-md border border-stone-300 bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon />Edit schedule</button>}
       </div>
     </section>
   );

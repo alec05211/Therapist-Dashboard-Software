@@ -1,6 +1,7 @@
 """Local recorder server backed by Amazon HealthScribe batch jobs."""
 import json
 import os
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -11,8 +12,8 @@ from uuid import uuid4
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Body, FastAPI, File, Header, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi import BackgroundTasks, Body, FastAPI, File, Header, HTTPException, UploadFile, Request, status
+from fastapi.responses import FileResponse, JSONResponse, Response
 from psycopg import Error as PsycopgError
 from psycopg.types.json import Json
 
@@ -20,7 +21,7 @@ from database.auth import validate_access_token
 from database.connection import connect
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.pre_session import build_pre_session_synthesis_request, generate_openai_pre_session_brief
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 app = FastAPI()
 # Kept explicit so Uvicorn's local reload watcher reloads the application
@@ -67,6 +68,380 @@ class TherapistOnboardingRequest(BaseModel):
     professional_name: str = Field(min_length=1, max_length=200)
     practice_type: Literal["solo", "group"]
     team_setup: Literal["later", "now"]
+
+
+class ClientPortalPermissionsRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    client_id: str = Field(min_length=1, max_length=64)
+    can_view_session_history: bool
+    can_view_shared_transcripts: bool
+    can_view_insights: bool
+    can_view_draft_notes: bool
+    can_view_approved_summaries: bool = False
+    can_play_shared_recordings: bool = False
+
+
+@app.get("/identity/me")
+def current_identity(authorization: str | None = Header(default=None)):
+    """Return the application's role binding for the authenticated identity."""
+    claims = validate_access_token(authorization)
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 'therapist' AS role, user_record.display_name
+            FROM app.application_users AS user_record
+            WHERE user_record.auth0_subject = %s AND user_record.status = 'active'
+            UNION ALL
+            SELECT 'client' AS role, portal.display_name
+            FROM app.client_portal_accounts AS portal
+            JOIN app.clients AS client ON client.id = portal.client_id
+            WHERE portal.auth0_subject = %s AND portal.status = 'active' AND client.status = 'active'
+            LIMIT 1
+        """, (claims["sub"], claims["sub"]))
+        identity = cursor.fetchone()
+    if not identity:
+        raise HTTPException(status_code=403, detail="Your authenticated account is not connected to this workspace.")
+    return {"role": identity["role"], "displayName": identity["display_name"] or "there"}
+
+
+PERMISSION_FIELDS = ("can_view_session_history", "can_view_shared_transcripts", "can_view_insights", "can_view_draft_notes", "can_play_shared_recordings")
+
+
+def read_portal_permissions(connection, context):
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT {', '.join(PERMISSION_FIELDS)} FROM app.client_portal_permissions WHERE organization_id=%s AND client_id=%s", (context["organization_id"], context["client_id"]))
+        row = cursor.fetchone()
+    return {key: bool(row and row[key]) for key in PERMISSION_FIELDS}
+
+
+def resolve_sharing_context(connection, authorization, *, therapist=False, write=False):
+    claims = validate_access_token(authorization)
+    with connection.cursor() as cursor:
+        if therapist:
+            cursor.execute("""SELECT DISTINCT client.id AS client_id, client.organization_id
+                FROM app.clients client
+                JOIN app.client_portal_accounts portal ON portal.client_id=client.id
+                JOIN app.client_therapist_access access ON access.client_id=client.id AND access.organization_id=client.organization_id
+                JOIN app.organization_practitioners practitioner ON practitioner.id=access.practitioner_id
+                JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id AND membership.organization_id=client.organization_id
+                JOIN app.application_users actor ON actor.id=membership.user_id
+                WHERE actor.auth0_subject=%s AND actor.status='active' AND membership.status='active'
+                AND practitioner.status='active' AND client.status='active' AND portal.status='active'
+                AND portal.synthetic_case_key='heartwell-sadic' AND access.revoked_at IS NULL
+                AND access.effective_from <= CURRENT_TIMESTAMP
+                AND (access.effective_until IS NULL OR access.effective_until > CURRENT_TIMESTAMP)
+                AND access.can_read_clinical AND (NOT %s OR access.can_write_clinical)""", (claims["sub"], write))
+        else:
+            cursor.execute("""SELECT client.id AS client_id, client.organization_id
+                FROM app.client_portal_accounts portal JOIN app.clients client ON client.id=portal.client_id
+                WHERE portal.auth0_subject=%s AND portal.status='active' AND client.status='active'
+                AND portal.synthetic_case_key='heartwell-sadic'""", (claims["sub"],))
+        rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=403, detail="No active linked client context is available.")
+    return {key: str(value) for key, value in rows[0].items()}
+
+
+class AccountProfileUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    email: str | None = Field(default=None, max_length=254)
+    phone: str | None = Field(default=None, max_length=40)
+    about_me: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("name", "email", "phone", "about_me")
+    @classmethod
+    def clean_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if any(ord(char) < 32 for char in value):
+            raise ValueError("Control characters are not allowed.")
+        return value or None
+
+    @field_validator("email")
+    @classmethod
+    def email_shape(cls, value: str | None) -> str | None:
+        if value and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
+            raise ValueError("Enter a valid contact email.")
+        return value
+
+
+def account_profile_target(connection, authorization):
+    claims = validate_access_token(authorization)
+    identity = current_identity(authorization)
+    role = identity["role"]
+    with connection.cursor() as cursor:
+        if role == "therapist":
+            cursor.execute("""SELECT DISTINCT practitioner.id, practitioner.professional_name AS name,
+                practitioner.contact_email AS email, practitioner.contact_phone AS phone
+                FROM app.application_users actor
+                JOIN app.organization_memberships membership ON membership.user_id=actor.id
+                JOIN app.organization_practitioners practitioner ON practitioner.membership_id=membership.id
+                WHERE actor.auth0_subject=%s AND actor.status='active'
+                  AND membership.status='active' AND membership.starts_at<=CURRENT_TIMESTAMP
+                  AND (membership.ends_at IS NULL OR membership.ends_at>CURRENT_TIMESTAMP)
+                  AND practitioner.status='active'""", (claims["sub"],))
+        else:
+            cursor.execute("""SELECT client.id, client.display_name AS name, client.email, client.phone
+                FROM app.client_portal_accounts portal JOIN app.clients client ON client.id=portal.client_id
+                WHERE portal.auth0_subject=%s AND portal.status='active' AND client.status='active'""",
+                (claims["sub"],))
+        rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=403, detail="An unambiguous active account profile is not available.")
+    return role, claims["sub"], rows[0]
+
+
+@app.get("/account/profile")
+def get_account_profile(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        role, subject, target = account_profile_target(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT about_me, photo IS NOT NULL AS has_photo FROM app.account_profiles WHERE auth0_subject=%s", (subject,))
+            extras = cursor.fetchone() or {}
+    return {"role": role, "name": target["name"] or "", "email": target["email"],
+            "phone": target["phone"], "aboutMe": extras.get("about_me") if role == "therapist" else None,
+            "photoUrl": "/api/account/profile/photo" if extras.get("has_photo") else None}
+
+
+@app.put("/account/profile")
+def update_account_profile(request: AccountProfileUpdate, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        role, subject, target = account_profile_target(connection, authorization)
+        if role == "client" and request.about_me is not None:
+            raise HTTPException(status_code=403, detail="About me is not enabled for client accounts.")
+        with connection.cursor() as cursor:
+            if role == "therapist":
+                cursor.execute("""UPDATE app.organization_practitioners
+                    SET professional_name=%s, contact_email=%s, contact_phone=%s
+                    WHERE id=%s""", (request.name, request.email, request.phone, target["id"]))
+            else:
+                cursor.execute("UPDATE app.clients SET display_name=%s, email=%s, phone=%s WHERE id=%s",
+                    (request.name, request.email, request.phone, target["id"]))
+                cursor.execute("UPDATE app.client_portal_accounts SET display_name=%s WHERE client_id=%s",
+                    (request.name, target["id"]))
+            if role == "therapist":
+                cursor.execute("""INSERT INTO app.account_profiles (auth0_subject, about_me) VALUES (%s,%s)
+                    ON CONFLICT (auth0_subject) DO UPDATE SET about_me=EXCLUDED.about_me""",
+                    (subject, request.about_me))
+    return get_account_profile(authorization)
+
+
+def valid_photo(data: bytes, mime: str) -> bool:
+    return (mime == "image/jpeg" and data.startswith(b"\xff\xd8\xff")) or \
+           (mime == "image/png" and data.startswith(b"\x89PNG\r\n\x1a\n")) or \
+           (mime == "image/webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+
+
+@app.put("/account/profile/photo")
+async def update_account_photo(photo: UploadFile = File(...), authorization: str | None = Header(default=None)):
+    mime = (photo.content_type or "").lower()
+    data = await photo.read(2 * 1024 * 1024 + 1)
+    if len(data) > 2 * 1024 * 1024 or not valid_photo(data, mime):
+        raise HTTPException(status_code=400, detail="Choose a JPEG, PNG, or WebP image under 2 MB.")
+    with connect() as connection:
+        _, subject, _ = account_profile_target(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("""INSERT INTO app.account_profiles (auth0_subject, photo, photo_mime) VALUES (%s,%s,%s)
+                ON CONFLICT (auth0_subject) DO UPDATE SET photo=EXCLUDED.photo, photo_mime=EXCLUDED.photo_mime""",
+                (subject, data, mime))
+    return {"photoUrl": "/api/account/profile/photo"}
+
+
+@app.delete("/account/profile/photo")
+def delete_account_photo(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        _, subject, _ = account_profile_target(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE app.account_profiles SET photo=NULL, photo_mime=NULL WHERE auth0_subject=%s", (subject,))
+    return {"photoUrl": None}
+
+
+@app.get("/account/profile/photo")
+def account_photo(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        _, subject, _ = account_profile_target(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT photo, photo_mime FROM app.account_profiles WHERE auth0_subject=%s", (subject,))
+            row = cursor.fetchone()
+    if not row or row["photo"] is None:
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    return Response(content=bytes(row["photo"]), media_type=row["photo_mime"], headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@app.get("/relationship-profile/photo")
+def relationship_photo(authorization: str | None = Header(default=None)):
+    identity = current_identity(authorization)
+    therapist = identity["role"] == "therapist"
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=therapist)
+        with connection.cursor() as cursor:
+            if therapist:
+                cursor.execute("""SELECT portal.auth0_subject FROM app.client_portal_accounts portal
+                    WHERE portal.client_id=%s AND portal.status='active'""", (context["client_id"],))
+            else:
+                cursor.execute("""SELECT DISTINCT actor.auth0_subject FROM app.client_therapist_access access
+                    JOIN app.organization_practitioners practitioner ON practitioner.id=access.practitioner_id
+                    JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id
+                    JOIN app.application_users actor ON actor.id=membership.user_id
+                    WHERE access.client_id=%s AND access.organization_id=%s AND access.revoked_at IS NULL
+                      AND access.effective_from<=CURRENT_TIMESTAMP
+                      AND (access.effective_until IS NULL OR access.effective_until>CURRENT_TIMESTAMP)
+                      AND access.can_read_clinical
+                      AND practitioner.status='active' AND membership.status='active' AND actor.status='active'""",
+                    (context["client_id"], context["organization_id"]))
+            rows = cursor.fetchall()
+            if len(rows) != 1:
+                raise HTTPException(status_code=403, detail="An unambiguous active care profile is not available.")
+            cursor.execute("SELECT photo, photo_mime FROM app.account_profiles WHERE auth0_subject=%s", (rows[0]["auth0_subject"],))
+            row = cursor.fetchone()
+    if not row or row["photo"] is None:
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    return Response(content=bytes(row["photo"]), media_type=row["photo_mime"], headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@app.get("/relationship-profile")
+def relationship_profile(authorization: str | None = Header(default=None)):
+    identity = current_identity(authorization)
+    therapist = identity["role"] == "therapist"
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=therapist)
+        with connection.cursor() as cursor:
+            if therapist:
+                cursor.execute("""SELECT client.display_name AS name, client.email, client.phone, portal.auth0_subject
+                    FROM app.clients client JOIN app.client_portal_accounts portal ON portal.client_id=client.id
+                    WHERE client.id=%s AND client.organization_id=%s AND client.status='active' AND portal.status='active'""",
+                    (context["client_id"], context["organization_id"]))
+            else:
+                cursor.execute("""SELECT DISTINCT practitioner.id, practitioner.professional_name AS name,
+                    practitioner.contact_email AS email, practitioner.contact_phone AS phone, actor.auth0_subject
+                    FROM app.client_therapist_access access
+                    JOIN app.organization_practitioners practitioner ON practitioner.id=access.practitioner_id
+                      AND practitioner.organization_id=access.organization_id
+                    JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id
+                      AND membership.organization_id=access.organization_id
+                    JOIN app.application_users actor ON actor.id=membership.user_id
+                    WHERE access.client_id=%s AND access.organization_id=%s
+                      AND access.revoked_at IS NULL AND access.effective_from<=CURRENT_TIMESTAMP
+                      AND (access.effective_until IS NULL OR access.effective_until>CURRENT_TIMESTAMP)
+                      AND access.can_read_clinical AND practitioner.status='active'
+                      AND membership.status='active' AND membership.starts_at<=CURRENT_TIMESTAMP
+                      AND (membership.ends_at IS NULL OR membership.ends_at>CURRENT_TIMESTAMP)
+                      AND actor.status='active'""", (context["client_id"], context["organization_id"]))
+            rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=403, detail="An unambiguous active care profile is not available.")
+    row = rows[0]
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT photo IS NOT NULL AS has_photo, about_me FROM app.account_profiles WHERE auth0_subject=%s", (row["auth0_subject"],))
+        extras = cursor.fetchone() or {}
+    role = "Client" if therapist else "Therapist"
+    name = row["name"] or role
+    return {"name": name, "role": role, "initials": "".join(part[0] for part in name.split()[:2]).upper(),
+            "email": row["email"], "phone": row["phone"],
+            "imageSrc": "/api/relationship-profile/photo" if extras.get("has_photo") else None,
+            "aboutMe": extras.get("about_me") if not therapist else None}
+
+
+@app.get("/client-portal-permissions")
+def get_client_portal_permissions(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=True)
+        return {**context, **read_portal_permissions(connection, context)}
+
+
+@app.put("/client-portal-permissions")
+def update_client_portal_permissions(request: ClientPortalPermissionsRequest, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=True, write=True)
+        if context != {"organization_id": request.organization_id, "client_id": request.client_id}:
+            raise HTTPException(status_code=403, detail="The requested client is not your linked client.")
+        actor = authorize_clinical_access(connection, authorization=authorization, **context, require_write=True)
+        columns = ', '.join(PERMISSION_FIELDS)
+        updates = ', '.join(f"{key}=EXCLUDED.{key}" for key in PERMISSION_FIELDS)
+        with connection.cursor() as cursor:
+            cursor.execute(f"""INSERT INTO app.client_portal_permissions
+                (organization_id, client_id, {columns}, updated_by_user_id)
+                VALUES ({", ".join(["%s"] * (len(PERMISSION_FIELDS) + 3))}) ON CONFLICT (client_id) DO UPDATE SET
+                {updates}, updated_by_user_id=EXCLUDED.updated_by_user_id
+                WHERE app.client_portal_permissions.organization_id=EXCLUDED.organization_id
+                RETURNING {columns}""", (request.organization_id, request.client_id, *(getattr(request, key) for key in PERMISSION_FIELDS), actor))
+            row = cursor.fetchone()
+            if not row:
+                raise HTTPException(status_code=409, detail="Client organization does not match.")
+        return {**context, **row}
+
+
+def shared_session_materials(permissions):
+    # Explicit allowlist: never include arbitrary runtime recordings or provider metadata.
+    materials = []
+    for number in range(1, 7):
+        session_id = f"heartwell-sadic-session-{number:02d}"
+        assets = demo_session_assets(session_id)
+        if not assets or not assets[2].is_file():
+            continue
+        data = json.loads(assets[2].read_text(encoding="utf-8"))
+        item = {"id": session_id, "label": DEMO_SESSION_LABELS[number]}
+        if permissions["can_view_session_history"]:
+            item["created_at"] = data.get("created_at", "")
+        if permissions["can_view_shared_transcripts"]:
+            item["segments"] = [{"speaker": data.get("speakers", {}).get(segment.get("speaker"), segment.get("speaker", "")), "text": segment.get("text", ""), "start": segment.get("start", 0), "end": segment.get("end", 0)} for segment in data.get("segments", [])]
+        if permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"] and assets[0].is_file():
+            item["recording_url"] = f"/client-portal/sessions/{session_id}/recording"
+        if permissions["can_view_draft_notes"]:
+            item["draft_note"] = data.get("clinical_note", [])
+        materials.append(item)
+    return materials
+
+
+@app.get("/client-portal")
+def client_portal(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization)
+        permissions = read_portal_permissions(connection, context)
+        result = {"permissions": permissions}
+        if any(permissions[key] for key in ("can_view_session_history", "can_view_shared_transcripts", "can_view_draft_notes")):
+            result["sessions"] = shared_session_materials(permissions)
+        if permissions["can_view_insights"]:
+            with connection.cursor() as cursor:
+                cursor.execute("""SELECT item.content->>'text' AS text FROM app.longitudinal_insight_items item
+                    JOIN app.longitudinal_insight_snapshots snapshot ON snapshot.id=item.snapshot_id
+                    WHERE snapshot.id=(SELECT id FROM app.longitudinal_insight_snapshots
+                        WHERE organization_id=%s AND client_id=%s ORDER BY version_number DESC LIMIT 1)
+                    AND snapshot.status='accepted' AND item.review_state='accepted'
+                    ORDER BY item.display_order""", (context["organization_id"], context["client_id"]))
+                result["insights"] = [row["text"] for row in cursor.fetchall() if row["text"]]
+        return result
+
+
+@app.get("/client-portal/sessions/{session_id}/recording")
+def shared_session_recording(session_id: str, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization)
+        permissions = read_portal_permissions(connection, context)
+        if not (permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"]):
+            raise HTTPException(status_code=403, detail="Recording playback is not shared.")
+    allowed = {f"heartwell-sadic-session-{number:02d}" for number in range(1, 7)}
+    if session_id not in allowed:
+        raise HTTPException(status_code=404, detail="Shared recording not found.")
+    assets = demo_session_assets(session_id)
+    if not assets or not assets[0].is_file():
+        raise HTTPException(status_code=404, detail="Shared recording not found.")
+    return FileResponse(assets[0], media_type="audio/wav", filename=f"{session_id}.wav", headers={"Cache-Control": "no-store"})
+
+
+@app.middleware("http")
+async def protect_legacy_clinical_routes(request: Request, call_next):
+    # The old filesystem API is therapist-only, including direct backend requests.
+    path = request.url.path
+    if path.startswith(("/transcripts", "/recordings", "/demo/")) or path == "/transcribe":
+        try:
+            with connect() as connection:
+                resolve_sharing_context(connection, request.headers.get("authorization"), therapist=True, write=request.method not in ("GET", "HEAD"))
+        except HTTPException as exc:
+            return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers={"Cache-Control": "no-store"})
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 class ClinicalNoteVersionRequest(BaseModel):
