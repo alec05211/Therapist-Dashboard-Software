@@ -23,6 +23,13 @@ with connect() as connection:
     with connection.transaction():
         with patch.object(server, 'connect', existing_connection), patch.object(server, 'validate_access_token', side_effect=lambda token: {'sub': identities['therapist_subject' if token == 'therapist' else 'client_subject']}):
             context = server.get_client_portal_permissions('therapist')
+            clients = server.therapist_clients('therapist')['clients']
+            assert any(client['id'] == context['client_id'] for client in clients)
+            try:
+                server.therapist_clients('client')
+                raise AssertionError('Client accessed therapist client list')
+            except server.HTTPException as error:
+                assert error.status_code == 403
             for token, expected_role in [('therapist', 'Client'), ('client', 'Therapist')]:
                 profile = server.relationship_profile(token)
                 assert profile['role'] == expected_role
@@ -47,6 +54,7 @@ with connect() as connection:
                 assert error.status_code == 403
             with connection.cursor() as cursor:
                 cursor.execute('UPDATE app.client_therapist_access SET revoked_at=CURRENT_TIMESTAMP WHERE client_id=%s', (context['client_id'],))
+            assert all(client['id'] != context['client_id'] for client in server.therapist_clients('therapist')['clients'])
             try:
                 server.get_client_portal_permissions('therapist')
                 raise AssertionError('Revoked relationship remained accessible')

@@ -39,6 +39,11 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 - Use backdrop blur only to soften a deliberate transition between visible and concealed content, such as collapsed previews and carousel edges. Pair it with a gradient mask, keep it subtle (`3–5px`), and never blur information that must be read or acted upon.
 - Avoid decorative entrance animations, continuous motion, and glass effects. The product should feel composed rather than attention-seeking.
 
+## Interface copy
+
+- Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
+- Search fields use a concise placeholder and an accessible name; do not add a redundant visible label or helper sentence.
+
 ## Interaction details
 
 - Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,
@@ -54,7 +59,8 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
   actions, not the component. Unimplemented actions are disabled and marked Soon.
 
 - Directly manipulable controls use `cursor-grab` with `active:cursor-grabbing`, unless the control is disabled, waiting, or accepts text input.
-- Provide a visible evergreen focus outline with an offset where space permits. Hover should add a small surface or border change, not a dramatic color shift.
+- Search fields do not show an outer focus outline, ring, glow, or focus shadow when clicked or focused. Keep the existing field boundary and caret; use a restrained change to the existing border for focus visibility, rather than an additional surrounding highlight. In Tailwind, use `focus:outline-none focus-visible:border-stone-500` without ring or outline utilities. Text inputs can match `:focus-visible` even when clicked, so that selector alone does not suppress a click outline.
+- For other controls, provide a visible evergreen focus outline with an offset where space permits. Hover should add a small surface or border change, not a dramatic color shift.
 - Disabled controls retain their intent but lower contrast only enough to indicate their unavailable state; never make labels unreadable.
 
 ## Refinement checklist

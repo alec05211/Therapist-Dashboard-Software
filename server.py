@@ -106,6 +106,36 @@ def current_identity(authorization: str | None = Header(default=None)):
 PERMISSION_FIELDS = ("can_view_session_history", "can_view_shared_transcripts", "can_view_insights", "can_view_draft_notes", "can_play_shared_recordings")
 
 
+@app.get("/therapist/clients")
+def therapist_clients(authorization: str | None = Header(default=None)):
+    """List clients through the signed-in practitioner's current access grants."""
+    claims = validate_access_token(authorization)
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("""SELECT id FROM app.application_users
+            WHERE auth0_subject=%s AND status='active'""", (claims["sub"],))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=403, detail="A therapist account is required.")
+        cursor.execute("""SELECT DISTINCT client.id, client.organization_id,
+                client.display_name AS name, client.email, client.phone, client.status
+            FROM app.clients client
+            JOIN app.client_therapist_access access
+                ON access.client_id=client.id AND access.organization_id=client.organization_id
+            JOIN app.organization_practitioners practitioner
+                ON practitioner.id=access.practitioner_id AND practitioner.organization_id=client.organization_id
+            JOIN app.organization_memberships membership
+                ON membership.id=practitioner.membership_id AND membership.organization_id=client.organization_id
+            JOIN app.application_users actor ON actor.id=membership.user_id
+            WHERE actor.auth0_subject=%s AND actor.status='active'
+                AND membership.status='active' AND practitioner.status='active'
+                AND client.status <> 'archived' AND client.archived_at IS NULL
+                AND access.revoked_at IS NULL AND access.can_read_clinical
+                AND access.effective_from <= CURRENT_TIMESTAMP
+                AND (access.effective_until IS NULL OR access.effective_until > CURRENT_TIMESTAMP)
+            ORDER BY client.display_name NULLS LAST, client.id""", (claims["sub"],))
+        rows = cursor.fetchall()
+    return {"clients": [{**row, "id": str(row["id"]), "organization_id": str(row["organization_id"])} for row in rows]}
+
+
 def read_portal_permissions(connection, context):
     with connection.cursor() as cursor:
         cursor.execute(f"SELECT {', '.join(PERMISSION_FIELDS)} FROM app.client_portal_permissions WHERE organization_id=%s AND client_id=%s", (context["organization_id"], context["client_id"]))
@@ -300,11 +330,15 @@ def relationship_photo(authorization: str | None = Header(default=None)):
 
 
 @app.get("/relationship-profile")
-def relationship_profile(authorization: str | None = Header(default=None)):
+def relationship_profile(authorization: str | None = Header(default=None), client_id: str | None = None):
     identity = current_identity(authorization)
     therapist = identity["role"] == "therapist"
     with connect() as connection:
         context = resolve_sharing_context(connection, authorization, therapist=therapist)
+        # Existing session and insight APIs are bound to the linked demo case.
+        # Never render that workspace under a different client's URL.
+        if client_id is not None and (not therapist or client_id != context["client_id"]):
+            raise HTTPException(status_code=403, detail="This client workspace is not available for your account.")
         with connection.cursor() as cursor:
             if therapist:
                 cursor.execute("""SELECT client.display_name AS name, client.email, client.phone, portal.auth0_subject

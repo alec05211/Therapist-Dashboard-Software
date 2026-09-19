@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { TranscriptLibrary } from "@/components/session-review/transcript-library";
 import { SessionCardCarousel, nextScheduledSession } from "@/components/session-review/session-card-carousel";
@@ -47,6 +48,7 @@ export function SessionWorkspace({ profile }: { profile: CareProfile }) {
 
   return (
     <main className="mx-auto w-[min(92vw,1080px)] py-8 text-center">
+      <div className="mb-4 text-left"><Link href="/clients" prefetch={false} className="inline-flex cursor-grab items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">Back to client list</Link></div>
       <CareRelationshipHeader profile={profile} activeAction={activeClientView} actions={[
         { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: openClinicalWorkspace },
         { id: "billing", label: "Billing", icon: "billing", comingSoon: true },

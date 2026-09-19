@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { canUseFeature } from "@/lib/role-capabilities";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -70,6 +71,7 @@ function ReportsIcon() {
 }
 
 export function AppHeader() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [accountRole, setAccountRole] = useState<"therapist" | "client" | null>(null);
@@ -138,7 +140,7 @@ export function AppHeader() {
         </nav>
       </div>
       {isAuthenticated && accountRole && canUseFeature(accountRole, "practiceNavigation") && <div className="border-t border-stone-100 bg-stone-50">
-        <nav className="mx-auto flex h-12 w-[min(94vw,1200px)] items-center justify-end gap-2" aria-label="Therapist workspace">
+        <nav className="mx-auto flex min-h-12 w-[min(94vw,1200px)] flex-wrap items-center justify-end gap-2 py-1" aria-label="Therapist workspace">
           <button
             aria-disabled="true"
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
@@ -149,16 +151,14 @@ export function AppHeader() {
             Calendar
             <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
           </button>
-          <button
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Client list is coming soon"
-            type="button"
+          <Link
+            href="/clients"
+            aria-current={pathname.startsWith("/clients") ? "page" : undefined}
+            className={`inline-flex cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/clients") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
           >
             <ClientsIcon />
             Client list
-            <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
-          </button>
+          </Link>
           <button
             aria-disabled="true"
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
