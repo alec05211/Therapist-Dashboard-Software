@@ -34,7 +34,7 @@ export const api = {
     ),
   uploadRecording: (audio: Blob) => {
     const form = new FormData();
-    form.append("audio", audio, "recording.webm");
+    form.append("audio", audio, audio instanceof File ? audio.name : "recording.webm");
     return request<{ id: string }>("/transcribe", { method: "POST", body: form });
   },
   saveSpeakerLabels: (id: string, labels: Record<string, string>) =>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RecordingControls } from "@/components/session-review/recording-controls";
+import { AudioUploadButton } from "@/components/session-review/audio-upload-button";
 import { api } from "@/lib/api";
 import type { BriefEvidence, PreSessionBrief } from "@/lib/types";
 
@@ -9,6 +10,7 @@ type ScheduledSessionLayoutProps = {
   isRecording: boolean;
   isBusy: boolean;
   onToggleRecording: () => void;
+  onUploadAudio: (file: File) => void;
   onViewEvidence: (source: BriefEvidence) => void;
 };
 
@@ -50,7 +52,7 @@ function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onV
   </>;
 }
 
-export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording, onViewEvidence }: ScheduledSessionLayoutProps) {
+export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording, onUploadAudio, onViewEvidence }: ScheduledSessionLayoutProps) {
   const [brief, setBrief] = useState<PreSessionBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -100,7 +102,7 @@ export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording,
         </> : null}
       </section>
 
-      <div className="mt-5"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div>
+      <div className="mt-5 flex items-center gap-3"><div className="flex-1"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div><AudioUploadButton disabled={isRecording || isBusy} onUpload={onUploadAudio} /></div>
     </section>
   );
 }

@@ -51,6 +51,10 @@ The UI-ready `transcript.json` retains each transcript segment's start time, end
 
 ### 1. Upload and job creation
 
+The scheduled-session recording controls include an icon-only **Upload audio recording** button for externally recorded audio, including synthetic test audio. Selecting a file starts the same authenticated `/transcribe` batch workflow as microphone recording. The UI shows upload/processing status and opens the completed transcript for review; failures remain visible. Upload is disabled while recording or processing.
+
+The application accepts WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, and AMR files up to 100 MB. Empty files, unsupported extensions, and oversized files are rejected before AWS submission. HealthScribe validates the actual audio encoding. The file extension is preserved, and playback uses its corresponding media type. These imports currently use the existing local synthetic-case session store, not persisted database session records.
+
 When `/transcribe` receives an audio file, the server:
 
 1. Creates a unique local session directory.

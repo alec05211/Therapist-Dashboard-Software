@@ -56,6 +56,12 @@ DEMO_SESSION_LABELS = {
     6: "Synthetic · Elena Sadić · Session 06",
 }
 MAX_DEMO_AUDIO_BYTES = 100 * 1024 * 1024
+MAX_AUDIO_UPLOAD_BYTES = 100 * 1024 * 1024
+AUDIO_MIME_TYPES = {
+    ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4",
+    ".mp4": "audio/mp4", ".flac": "audio/flac", ".ogg": "audio/ogg",
+    ".webm": "audio/webm", ".amr": "audio/amr",
+}
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 INPUT_BUCKET = os.getenv("HEALTHSCRIBE_INPUT_BUCKET")
 OUTPUT_BUCKET = os.getenv("HEALTHSCRIBE_OUTPUT_BUCKET")
@@ -1556,7 +1562,7 @@ def process_job(session_id: str, job_name: str, input_key: str) -> None:
         write_json(transcript_path(session_id), {
             "id": session_id,
             "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "audio": {"file": recording.name, "mime_type": "audio/webm"},
+            "audio": {"file": recording.name, "mime_type": AUDIO_MIME_TYPES.get(recording.suffix.lower(), "application/octet-stream")},
             "speakers": {},
             "text": " ".join(segment["text"] for segment in segments),
             "segments": segments,
@@ -1583,7 +1589,7 @@ def session_recording(session_id: str, filename: str):
     path = session_directory(session_id) / Path(filename).name
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Recording not found.")
-    return FileResponse(path, media_type="audio/webm", filename=path.name)
+    return FileResponse(path, media_type=AUDIO_MIME_TYPES.get(path.suffix.lower(), "application/octet-stream"), filename=path.name)
 
 
 @app.get("/demo/heartwell-sadic/session-01/recording")
@@ -1696,11 +1702,20 @@ def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...)):
 
 @app.post("/transcribe", status_code=202)
 async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File(...)):
+    suffix = Path(audio.filename or "recording.webm").suffix.lower()
+    if suffix not in AUDIO_MIME_TYPES:
+        raise HTTPException(status_code=415, detail="Choose a WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, or AMR audio file.")
+    if audio.size is not None and audio.size > MAX_AUDIO_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Audio files must be 100 MB or smaller.")
+    content = await audio.read(MAX_AUDIO_UPLOAD_BYTES + 1)
+    if len(content) > MAX_AUDIO_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Audio files must be 100 MB or smaller.")
+    if not content:
+        raise HTTPException(status_code=400, detail="The audio file is empty.")
     try:
         input_bucket, output_bucket, data_role = configuration()
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    suffix = Path(audio.filename or "recording.webm").suffix or ".webm"
     session_id = f"session-{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:8]}"
     job_name = f"healthscribe-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
     directory = session_directory(session_id)
@@ -1708,7 +1723,7 @@ async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File
     try:
         directory.mkdir(parents=True)
         recording = directory / f"recording{suffix}"
-        recording.write_bytes(await audio.read())
+        recording.write_bytes(content)
         boto3.client("s3", region_name=AWS_REGION).upload_file(str(recording), input_bucket, input_key)
         boto3.client("transcribe", region_name=AWS_REGION).start_medical_scribe_job(
             MedicalScribeJobName=job_name,
