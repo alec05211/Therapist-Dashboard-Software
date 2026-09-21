@@ -36,7 +36,8 @@ export function TranscriptViewer({ transcript, readOnly = false, showTranscript 
 
   useEffect(() => {
     if (activeSegment < 0) return;
-    setExpanded(true);
+    const frame = window.requestAnimationFrame(() => setExpanded(true));
+    return () => window.cancelAnimationFrame(frame);
   }, [activeSegment]);
 
   useEffect(() => {

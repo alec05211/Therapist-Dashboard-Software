@@ -175,6 +175,7 @@ For every proposed AI/ML feature, experiment, or integration, document:
 ### Current decisions
 
 - Amazon HealthScribe is the early-development provider for batch transcription, diarization, and generated clinical documentation.
+- Source-linked HealthScribe note excerpts may be proposed as client-journey entries; only therapist-accepted entries can enter the current pre-session brief. This is current product work and does not treat provider output as a finalized clinical conclusion.
 - The current system is a baseline to learn from, not the final ML architecture.
 - Transcript review and therapist control are core product requirements.
 - Longitudinal insight is a major long-term direction, not a near-term excuse to collect or infer indiscriminately.

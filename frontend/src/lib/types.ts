@@ -35,10 +35,10 @@ export type BriefEvidence = {
   evidence_id: string;
   session_id: string;
   session_label: string;
-  segment_index: number;
-  start: number;
-  end: number;
-  quote: string;
+  segment_index?: number;
+  start?: number;
+  end?: number;
+  quote?: string;
 };
 
 export type PreSessionBrief = {
@@ -91,11 +91,23 @@ export type LongitudinalRecordContext = {
   clientId: string;
 };
 
+export type ClientJourneyEntry = {
+  id: string;
+  session_id: string;
+  source_provider: string;
+  category: "context" | "theme" | "important_quote" | "resolution" | "breakthrough" | "open_thread";
+  text: string;
+  status: "proposed" | "accepted" | "rejected" | "hidden" | "stale" | "disputed";
+  created_at: string;
+  evidence: BriefEvidence[];
+};
+
 export type PersistedInsightEvidence = {
   evidence_role: "supporting" | "contrasting" | "context";
   transcript_segment_id?: string;
   clinical_note_version_id?: string;
   session_id?: string;
+  session_label?: string;
   segment_index?: number;
   start?: number;
   end?: number;

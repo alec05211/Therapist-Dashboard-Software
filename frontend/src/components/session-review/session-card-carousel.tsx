@@ -10,15 +10,6 @@ export type SessionCard = {
   isAvailable: boolean;
 };
 
-const completedSessionDates: Record<string, string> = {
-  "heartwell-sadic-session-01": "2026-08-10T15:00:00-04:00",
-  "heartwell-sadic-session-02": "2026-08-17T15:00:00-04:00",
-  "heartwell-sadic-session-03": "2026-08-24T15:00:00-04:00",
-  "heartwell-sadic-session-04": "2026-08-31T15:00:00-04:00",
-  "heartwell-sadic-session-05": "2026-09-07T15:00:00-04:00",
-  "heartwell-sadic-session-06": "2026-09-14T15:00:00-04:00",
-};
-
 const upcomingSessionDates = [
   "2026-09-21T15:00:00-04:00",
   "2026-09-28T15:00:00-04:00",
@@ -43,7 +34,7 @@ function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
   const available = transcripts.map((transcript) => ({
     id: transcript.id,
     label: transcript.label,
-    date: new Date(completedSessionDates[transcript.id] ?? transcript.created_at ?? Date.now()),
+    date: new Date(transcript.created_at ?? Date.now()),
     isAvailable: true,
   }));
   const placeholders = upcomingSessionDates.map((date, index) => ({

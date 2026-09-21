@@ -19,43 +19,18 @@ from psycopg.types.json import Json
 
 from database.auth import validate_access_token
 from database.connection import connect
+from database import organization_storage
+from database import client_journey
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
-from ai_harness.pre_session import build_pre_session_synthesis_request, generate_openai_pre_session_brief
+from ai_harness.brief_projection import project_accepted_insights
 from pydantic import BaseModel, Field, field_validator
 
 app = FastAPI()
 # Kept explicit so Uvicorn's local reload watcher reloads the application
 # boundary when authentication behavior changes during development.
 load_dotenv(Path(__file__).with_name(".env"))
+# ORGANIZATION_STORAGE_ENABLED switches new uploads after verified provisioning.
 RECORDINGS_DIRECTORY = Path(__file__).with_name("recordings")
-DEMO_DATA_DIRECTORY = Path(__file__).with_name("demo-data")
-DEMO_SESSION_ONE_RELATIVE_DIRECTORY = Path("demo-data") / "heartwell-sadic-case" / "session-01-intake-and-stabilization"
-DEMO_SESSION_ONE_DIRECTORY = Path(__file__).parent / DEMO_SESSION_ONE_RELATIVE_DIRECTORY
-DEMO_SESSION_ONE_RECORDING = DEMO_SESSION_ONE_DIRECTORY / "recording.wav"
-DEMO_SESSION_ONE_STATUS = DEMO_SESSION_ONE_DIRECTORY / "healthscribe-status.json"
-DEMO_SESSION_ONE_ID = "heartwell-sadic-session-01"
-DEMO_SESSION_ONE_TRANSCRIPT = DEMO_SESSION_ONE_DIRECTORY / "transcript.json"
-DEMO_SESSION_TWO_RELATIVE_DIRECTORY = Path("demo-data") / "heartwell-sadic-case" / "session-02-noticing-the-pressure-cycle"
-DEMO_SESSION_TWO_DIRECTORY = Path(__file__).parent / DEMO_SESSION_TWO_RELATIVE_DIRECTORY
-DEMO_SESSION_TWO_RECORDING = DEMO_SESSION_TWO_DIRECTORY / "recording.wav"
-DEMO_SESSION_TWO_STATUS = DEMO_SESSION_TWO_DIRECTORY / "healthscribe-status.json"
-DEMO_SESSION_TWO_ID = "heartwell-sadic-session-02"
-DEMO_SESSION_TWO_TRANSCRIPT = DEMO_SESSION_TWO_DIRECTORY / "transcript.json"
-DEMO_SESSION_SLUGS = {
-    3: "making-room-for-rest",
-    4: "the-deadline-setback",
-    5: "practicing-clear-requests",
-    6: "six-session-review",
-}
-DEMO_SESSION_LABELS = {
-    1: "Synthetic · Elena Sadić · Session 01",
-    2: "Synthetic · Elena Sadić · Session 02",
-    3: "Synthetic · Elena Sadić · Session 03",
-    4: "Synthetic · Elena Sadić · Session 04",
-    5: "Synthetic · Elena Sadić · Session 05",
-    6: "Synthetic · Elena Sadić · Session 06",
-}
-MAX_DEMO_AUDIO_BYTES = 100 * 1024 * 1024
 MAX_AUDIO_UPLOAD_BYTES = 100 * 1024 * 1024
 AUDIO_MIME_TYPES = {
     ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4",
@@ -347,7 +322,7 @@ def relationship_profile(authorization: str | None = Header(default=None), clien
             raise HTTPException(status_code=403, detail="This client workspace is not available for your account.")
         with connection.cursor() as cursor:
             if therapist:
-                cursor.execute("""SELECT client.display_name AS name, client.email, client.phone, portal.auth0_subject
+                cursor.execute("""SELECT client.display_name AS name, client.email, client.phone, portal.auth0_subject, portal.synthetic_case_key
                     FROM app.clients client JOIN app.client_portal_accounts portal ON portal.client_id=client.id
                     WHERE client.id=%s AND client.organization_id=%s AND client.status='active' AND portal.status='active'""",
                     (context["client_id"], context["organization_id"]))
@@ -376,10 +351,14 @@ def relationship_profile(authorization: str | None = Header(default=None), clien
         extras = cursor.fetchone() or {}
     role = "Client" if therapist else "Therapist"
     name = row["name"] or role
-    return {"name": name, "role": role, "initials": "".join(part[0] for part in name.split()[:2]).upper(),
+    profile = {"name": name, "role": role, "initials": "".join(part[0] for part in name.split()[:2]).upper(),
             "email": row["email"], "phone": row["phone"],
             "imageSrc": "/api/relationship-profile/photo" if extras.get("has_photo") else None,
             "aboutMe": extras.get("about_me") if not therapist else None}
+    if therapist:
+        profile.update(organizationId=context["organization_id"], clientId=context["client_id"],
+                       syntheticCase=row.get("synthetic_case_key") == "heartwell-sadic")
+    return profile
 
 
 @app.get("/client-portal-permissions")
@@ -411,21 +390,20 @@ def update_client_portal_permissions(request: ClientPortalPermissionsRequest, au
         return {**context, **row}
 
 
-def shared_session_materials(permissions):
+def shared_session_materials(context, permissions):
     # Explicit allowlist: never include arbitrary runtime recordings or provider metadata.
     materials = []
-    for number in range(1, 7):
-        session_id = f"heartwell-sadic-session-{number:02d}"
-        assets = demo_session_assets(session_id)
-        if not assets or not assets[2].is_file():
+    for job in organization_storage.completed_job_records(context):
+        data = organization_storage.session_review.read_result(job["storage"])
+        if not data:
             continue
-        data = json.loads(assets[2].read_text(encoding="utf-8"))
-        item = {"id": session_id, "label": DEMO_SESSION_LABELS[number]}
+        session_id = job["runtime_id"]
+        item = {"id": session_id, "label": job["label"]}
         if permissions["can_view_session_history"]:
-            item["created_at"] = data.get("created_at", "")
+            item["created_at"] = job["created_at"].isoformat()
         if permissions["can_view_shared_transcripts"]:
             item["segments"] = [{"speaker": data.get("speakers", {}).get(segment.get("speaker"), segment.get("speaker", "")), "text": segment.get("text", ""), "start": segment.get("start", 0), "end": segment.get("end", 0)} for segment in data.get("segments", [])]
-        if permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"] and assets[0].is_file():
+        if permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"]:
             item["recording_url"] = f"/client-portal/sessions/{session_id}/recording"
         if permissions["can_view_draft_notes"]:
             item["draft_note"] = data.get("clinical_note", [])
@@ -440,7 +418,7 @@ def client_portal(authorization: str | None = Header(default=None)):
         permissions = read_portal_permissions(connection, context)
         result = {"permissions": permissions}
         if any(permissions[key] for key in ("can_view_session_history", "can_view_shared_transcripts", "can_view_draft_notes")):
-            result["sessions"] = shared_session_materials(permissions)
+            result["sessions"] = shared_session_materials(context, permissions)
         if permissions["can_view_insights"]:
             with connection.cursor() as cursor:
                 cursor.execute("""SELECT item.content->>'text' AS text FROM app.longitudinal_insight_items item
@@ -460,23 +438,32 @@ def shared_session_recording(session_id: str, authorization: str | None = Header
         permissions = read_portal_permissions(connection, context)
         if not (permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"]):
             raise HTTPException(status_code=403, detail="Recording playback is not shared.")
-    allowed = {f"heartwell-sadic-session-{number:02d}" for number in range(1, 7)}
-    if session_id not in allowed:
+    job = organization_storage.find_job(context, session_id)
+    if not job or job["status"] != "COMPLETED":
         raise HTTPException(status_code=404, detail="Shared recording not found.")
-    assets = demo_session_assets(session_id)
-    if not assets or not assets[0].is_file():
-        raise HTTPException(status_code=404, detail="Shared recording not found.")
-    return FileResponse(assets[0], media_type="audio/wav", filename=f"{session_id}.wav", headers={"Cache-Control": "no-store"})
+    filename = Path(job["storage"]["audio_key"]).name
+    try:
+        path = organization_storage.restore_artifact(job["storage"], filename, session_directory(session_id))
+    except (FileNotFoundError, BotoCoreError, ClientError) as exc:
+        raise HTTPException(status_code=404, detail="Shared recording not found.") from exc
+    return FileResponse(path, media_type=AUDIO_MIME_TYPES.get(path.suffix.lower(), "application/octet-stream"), filename=filename, headers={"Cache-Control": "no-store"})
 
 
 @app.middleware("http")
 async def protect_legacy_clinical_routes(request: Request, call_next):
     # The old filesystem API is therapist-only, including direct backend requests.
-    path = request.url.path
-    if path.startswith(("/transcripts", "/recordings", "/demo/")) or path == "/transcribe":
+    path = request.scope["path"]
+    if path.startswith(("/transcripts", "/recordings")) or path == "/transcribe":
         try:
             with connect() as connection:
-                resolve_sharing_context(connection, request.headers.get("authorization"), therapist=True, write=request.method not in ("GET", "HEAD"))
+                context = resolve_sharing_context(connection, request.headers.get("authorization"), therapist=True, write=request.method not in ("GET", "HEAD"))
+                request.state.care_context = context
+            parts = path.strip("/").split("/")
+            if len(parts) > 1 and parts[0] in ("transcripts", "recordings") and re.fullmatch(r"session-[0-9a-f-]{36}", parts[1], re.IGNORECASE):
+                job = organization_storage.find_job(context, parts[1].lower())
+                if not job:
+                    raise HTTPException(status_code=404, detail="Session not found.")
+                request.state.storage_job = job
         except HTTPException as exc:
             return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers={"Cache-Control": "no-store"})
     response = await call_next(request)
@@ -518,6 +505,13 @@ class LongitudinalInsightSnapshotRequest(BaseModel):
     selection_policy_version: str = Field(min_length=1, max_length=120)
     source_cutoff_session_id: str | None = Field(default=None, max_length=64)
     parent_snapshot_id: str | None = Field(default=None, max_length=64)
+
+
+class JourneyReviewRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    category: Literal['context', 'theme', 'important_quote', 'resolution', 'breakthrough', 'open_thread']
+    text: str = Field(min_length=1, max_length=4000)
+    status: Literal['accepted', 'rejected', 'hidden', 'stale', 'disputed']
 
 
 def authorize_clinical_access(
@@ -611,582 +605,8 @@ def status_path(session_id: str) -> Path:
     return session_directory(session_id) / "healthscribe-status.json"
 
 
-def is_demo_session_one(session_id: str) -> bool:
-    return session_id == DEMO_SESSION_ONE_ID
-
-
-def is_demo_session_two(session_id: str) -> bool:
-    return session_id == DEMO_SESSION_TWO_ID
-
-
-def demo_session_assets(session_id: str) -> tuple[Path, Path, Path] | None:
-    if is_demo_session_one(session_id):
-        return DEMO_SESSION_ONE_RECORDING, DEMO_SESSION_ONE_STATUS, DEMO_SESSION_ONE_TRANSCRIPT
-    if is_demo_session_two(session_id):
-        return DEMO_SESSION_TWO_RECORDING, DEMO_SESSION_TWO_STATUS, DEMO_SESSION_TWO_TRANSCRIPT
-    session_number = additional_demo_session_number(session_id)
-    if session_number is not None:
-        recording, job_status, transcript, _, _ = additional_demo_session_assets(session_number)
-        return recording, job_status, transcript
-    return None
-
-
-def additional_demo_session_assets(session_number: int) -> tuple[Path, Path, Path, str, str]:
-    """Return the data-closet paths and UI metadata for Sessions 03 through 06."""
-    slug = DEMO_SESSION_SLUGS.get(session_number)
-    label = DEMO_SESSION_LABELS.get(session_number)
-    if not slug or not label:
-        raise HTTPException(status_code=404, detail="Unknown synthetic demo session.")
-    directory = DEMO_DATA_DIRECTORY / "heartwell-sadic-case" / f"session-{session_number:02d}-{slug}"
-    return (
-        directory / "recording.wav",
-        directory / "healthscribe-status.json",
-        directory / "transcript.json",
-        f"heartwell-sadic-session-{session_number:02d}",
-        label,
-    )
-
-
-def additional_demo_session_number(session_id: str) -> int | None:
-    for session_number in DEMO_SESSION_SLUGS:
-        if session_id == f"heartwell-sadic-session-{session_number:02d}":
-            return session_number
-    return None
-
-
-def demo_session_number(session_id: str) -> int | None:
-    """Return a synthetic session number for any session in the Heartwell case."""
-    try:
-        number = int(session_id.rsplit("-", maxsplit=1)[-1])
-    except ValueError:
-        return None
-    return number if number in DEMO_SESSION_LABELS else None
-
-
-def demo_brief_evidence(session_id: str, segment_text: str) -> dict[str, Any]:
-    """Resolve a deliberately selected synthetic-demo citation to a transcript segment.
-
-    This is the first deterministic evidence-retrieval seam for the harness demo.
-    It does not infer clinical meaning or call a model; production retrieval will
-    replace the selected text with versioned, authorized memory-item sources.
-    """
-    assets = demo_session_assets(session_id)
-    if assets is None:
-        raise HTTPException(status_code=404, detail="Unknown synthetic demo session.")
-    transcript = json.loads(assets[2].read_text(encoding="utf-8"))
-    for index, segment in enumerate(transcript.get("segments", [])):
-        if segment.get("text", "").strip() == segment_text:
-            return {
-                "evidence_id": f"{session_id}:segment:{index}",
-                "session_id": session_id,
-                "session_label": DEMO_SESSION_LABELS.get(demo_session_number(session_id) or 0, "Synthetic · Elena Sadić"),
-                "segment_index": index,
-                "start": segment["start"],
-                "end": segment["end"],
-                "quote": segment["text"].strip(),
-            }
-    raise RuntimeError(f"Synthetic demo evidence was not found for {session_id}.")
-
-
-def demo_longitudinal_insights() -> dict[str, Any]:
-    """Return the evidence-led longitudinal workspace for the synthetic case.
-
-    This is deliberately an application-owned projection, not a model's hidden
-    memory. Every insight is a clinician-review prompt with transcript evidence;
-    the accompanying HealthScribe notes are marked generated until a therapist
-    revision workflow exists.
-    """
-    session_one = "heartwell-sadic-session-01"
-    session_two = "heartwell-sadic-session-02"
-    session_four = "heartwell-sadic-session-04"
-    session_five = "heartwell-sadic-session-05"
-    session_six = "heartwell-sadic-session-06"
-    evidence = {
-        "pressure_origin": demo_brief_evidence(session_one, "Lately, it feels like I am either working, thinking about working, or feeling guilty that I am not working."),
-        "role_history": demo_brief_evidence(session_one, "My family relied on me a lot when my dad got sick last year."),
-        "rest_rule": demo_brief_evidence(session_two, "Like if I'm not hard on myself, I will become careless."),
-        "setback": demo_brief_evidence(session_four, "I did not ask which case had priority."),
-        "request": demo_brief_evidence(session_five, "My heart was racing before I spoke, but I said, I can move both cases forward, and I need help deciding which one takes precedence today."),
-        "help_as_debt": demo_brief_evidence(session_five, "Someone helps me and then I feel like I have to repay them right away."),
-        "current_shift": demo_brief_evidence(session_six, "Sometimes I catch it."),
-        "launch": demo_brief_evidence(session_six, "I need to ask for priorities before I'm already overwhelmed."),
-        "care": demo_brief_evidence(session_six, "I still do not know how to let people take care of me without feeling like I owe them something."),
-        "father": demo_brief_evidence(session_six, "And I want to talk more about my dad because I think a lot of this started before my job got so busy."),
-    }
-    records = [
-        {"session_id": f"heartwell-sadic-session-{number:02d}", "session_label": DEMO_SESSION_LABELS[number], "note_status": "Generated HealthScribe note — not therapist-finalized", "included": True}
-        for number in range(1, 7)
-    ]
-    patterns = [
-        {
-            "id": "pressure-cycle",
-            "title": "Pressure, self-criticism, and overextension",
-            "summary": "Possible pattern to review: pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities. The latest session includes an earlier recognition of that sequence.",
-            "evidence": [evidence["pressure_origin"], evidence["setback"], evidence["current_shift"]],
-            "status": "Review prompt · supported across 3 sessions",
-        },
-        {
-            "id": "direct-requests",
-            "title": "Direct requests as a developing practice",
-            "summary": "Across recent sessions, direct requests to a supervisor and close supports appear to be a meaningful area of practice. This is not presented as a treatment conclusion; it is a source-grounded thread for therapist review.",
-            "evidence": [evidence["setback"], evidence["request"], evidence["launch"]],
-            "status": "Review prompt · supported across 3 sessions",
-        },
-        {
-            "id": "care-and-obligation",
-            "title": "Care, obligation, and family context",
-            "summary": "The record links early responsibility during the father's illness with a current difficulty accepting help without feeling indebted. This connection remains exploratory and should be held as a question, not a fact about the client.",
-            "evidence": [evidence["role_history"], evidence["help_as_debt"], evidence["care"]],
-            "status": "Review prompt · supported across 3 sessions",
-        },
-    ]
-    open_threads = [
-        {"text": "What feels important to understand about receiving care without turning it into obligation?", "evidence": [evidence["care"], evidence["help_as_debt"]]},
-        {"text": "What connection, if any, does the client want to explore between current pressure and the experience of the father's illness?", "evidence": [evidence["father"], evidence["role_history"]]},
-        {"text": "How is the approaching launch affecting the client's ability to use the priority question before pressure escalates?", "evidence": [evidence["launch"], evidence["request"]]},
-    ]
-    packet_items = [
-        {"kind": "last-session context", "text": "The upcoming launch and the client's own priority question.", "evidence": [evidence["launch"]]},
-        {"kind": "longitudinal review prompt", "text": "Pressure, self-criticism, and overextension across Sessions 01, 04, and 06.", "evidence": [evidence["pressure_origin"], evidence["setback"], evidence["current_shift"]]},
-        {"kind": "longitudinal review prompt", "text": "Direct requests across work and close relationships.", "evidence": [evidence["setback"], evidence["request"]]},
-        {"kind": "open thread", "text": "Care and obligation.", "evidence": [evidence["care"], evidence["help_as_debt"]]},
-        {"kind": "open thread", "text": "Family context and the father's illness.", "evidence": [evidence["father"], evidence["role_history"]]},
-    ]
-    return {
-        "status": "SYNTHETIC REVIEW WORKSPACE · updated after Session 06",
-        "review_note": "This workspace is a clinician-review aid. It does not diagnose, determine risk, or make treatment decisions.",
-        "records": records,
-        "narrative": "Across six sessions, the record describes a recurring pressure cycle involving anticipated disappointment, increased self-demand, and less room for rest or support. Recent sessions also show the client practicing more direct requests and sometimes recognizing the cycle earlier. The links between responsibility, care, and family experience remain important but unresolved.",
-        "patterns": patterns,
-        "open_threads": open_threads,
-        "context_packet": {
-            "purpose": "Bounded source packet for the next pre-session brief.",
-            "selection_policy": "Latest session context, cross-session review prompts, and explicit open threads; generated notes do not override therapist-finalized records.",
-            "items": packet_items,
-            "approved_evidence": list(evidence.values()),
-            "records": records,
-        },
-    }
-
-
-@app.get("/demo/heartwell-sadic/pre-session-brief")
-def demo_pre_session_brief():
-    """Return a cited, deterministic pre-session brief for synthetic demo data only.
-
-    This proves the harness contract—bounded sections, selected evidence, and
-    citations—without sending data to an external model or making clinical
-    inferences. It is not a production clinical brief generator.
-    """
-    session_id = "heartwell-sadic-session-06"
-    return {
-        "status": "DEMO DRAFT · deterministic evidence selection",
-        "review_note": "Review the cited source before relying on any item. This demo does not assess diagnosis, risk, or treatment.",
-        "sections": [
-            {
-                "title": "Since last session",
-                "items": [{
-                    "text": "an approaching project launch and the vulnerability of asking for priorities before feeling overwhelmed.",
-                    "sources": [demo_brief_evidence(session_id, "I need to ask for priorities before I'm already overwhelmed.")],
-                }],
-            },
-            {
-                "title": "Important trajectory",
-                "items": [{
-                    "text": "the client noticing the familiar pressure sequence sooner and sometimes interrupting it.",
-                    "sources": [demo_brief_evidence(session_id, "Sometimes I catch it.")],
-                }],
-            },
-            {
-                "title": "Open loops",
-                "items": [
-                    {
-                        "text": "how to receive care without feeling indebted.",
-                        "sources": [demo_brief_evidence(session_id, "I still do not know how to let people take care of me without feeling like I owe them something.")],
-                    },
-                    {
-                        "text": "what may still need to be understood about the relationship with their father.",
-                        "sources": [demo_brief_evidence(session_id, "And I want to talk more about my dad because I think a lot of this started before my job got so busy.")],
-                    },
-                ],
-            },
-        ],
-    }
-
-
-@app.get("/demo/heartwell-sadic/pre-session-brief/request")
-def demo_pre_session_synthesis_request():
-    """Expose the model-ready synthetic bundle without contacting a provider."""
-    insights = demo_longitudinal_insights()
-    return build_pre_session_synthesis_request(
-        client_reference="synthetic-heartwell-sadic-client",
-        evidence=insights["context_packet"]["approved_evidence"],
-        context_packet=insights["context_packet"],
-    )
-
-
-@app.get("/demo/heartwell-sadic/insights")
-def demo_client_insights():
-    """Return the synthetic, evidence-led clinical-insights workspace."""
-    return demo_longitudinal_insights()
-
-
-@app.post("/demo/heartwell-sadic/pre-session-brief/generate")
-def generate_demo_pre_session_brief():
-    """Generate a synthetic-only, cited draft through the configured OpenAI key."""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="OPENAI_API_KEY is not configured.")
-    insights = demo_longitudinal_insights()
-    evidence = insights["context_packet"]["approved_evidence"]
-    synthesis_request = build_pre_session_synthesis_request(
-        client_reference="synthetic-heartwell-sadic-client",
-        evidence=evidence,
-        context_packet=insights["context_packet"],
-    )
-    try:
-        generated, metadata = generate_openai_pre_session_brief(
-            synthesis_request=synthesis_request,
-            api_key=api_key,
-            model=os.getenv("OPENAI_PRE_SESSION_MODEL", "gpt-5-mini"),
-        )
-    except RuntimeError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
-    sources_by_id = {source["evidence_id"]: source for source in evidence}
-    return {
-        "status": f"OPENAI DRAFT · {metadata['model']}",
-        "review_note": "Synthetic demo only. Review cited sources before relying on an item; this draft does not assess diagnosis, risk, or treatment.",
-        "sections": [
-            {
-                "title": section["title"],
-                "items": [
-                    {"text": item["text"], "sources": [sources_by_id[evidence_id] for evidence_id in item["evidence_ids"]]}
-                    for item in section["items"]
-                ],
-            }
-            for section in generated["sections"]
-        ],
-        "generation": metadata,
-    }
-
-
 def write_json(path: Path, content: dict[str, Any]) -> None:
     path.write_text(json.dumps(content, indent=2), encoding="utf-8")
-
-
-@app.post("/demo/heartwell-sadic/session-01/audio", status_code=status.HTTP_201_CREATED)
-async def upload_demo_session_one_audio(audio: UploadFile = File(...)):
-    """Store one explicitly synthetic WAV file in the versioned demo-data closet.
-
-    This intentionally does not start a HealthScribe job or write to the normal
-    runtime recordings directory. It exists solely to stage Elena and Jeremy's
-    first synthetic session before it is submitted through the normal pipeline.
-    """
-    filename = audio.filename or ""
-    if Path(filename).suffix.lower() != ".wav":
-        raise HTTPException(status_code=415, detail="The session-one demo upload must be a WAV file.")
-    if DEMO_SESSION_ONE_RECORDING.exists():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A session-one demo recording already exists. Remove it deliberately before replacing it.",
-        )
-
-    contents = await audio.read(MAX_DEMO_AUDIO_BYTES + 1)
-    if len(contents) > MAX_DEMO_AUDIO_BYTES:
-        raise HTTPException(status_code=413, detail="The demo recording exceeds the 100 MB limit.")
-    if len(contents) < 12 or contents[:4] != b"RIFF" or contents[8:12] != b"WAVE":
-        raise HTTPException(status_code=415, detail="The uploaded file is not a valid WAV container.")
-
-    try:
-        DEMO_SESSION_ONE_DIRECTORY.mkdir(parents=True, exist_ok=True)
-        DEMO_SESSION_ONE_RECORDING.write_bytes(contents)
-    except OSError as exc:
-        raise HTTPException(status_code=500, detail="Could not store the demo recording.") from exc
-
-    return {
-        "stored": True,
-        "session": "heartwell-sadic/session-01",
-        "path": str(DEMO_SESSION_ONE_RELATIVE_DIRECTORY / "recording.wav"),
-        "bytes": len(contents),
-    }
-
-
-def process_demo_session_one_job(job_name: str, input_key: str) -> None:
-    """Persist HealthScribe artifacts beside the explicitly synthetic source WAV."""
-    try:
-        input_bucket, _, _ = configuration()
-        transcribe = boto3.client("transcribe", region_name=AWS_REGION)
-        s3 = boto3.client("s3", region_name=AWS_REGION)
-        while True:
-            job = transcribe.get_medical_scribe_job(MedicalScribeJobName=job_name)["MedicalScribeJob"]
-            state = job["MedicalScribeJobStatus"]
-            if state in {"COMPLETED", "FAILED"}:
-                break
-            write_json(DEMO_SESSION_ONE_STATUS, {"id": DEMO_SESSION_ONE_ID, "status": state, "job_name": job_name})
-            time.sleep(POLL_SECONDS)
-        if state == "FAILED":
-            raise RuntimeError(job.get("FailureReason", "HealthScribe did not complete the job."))
-
-        outputs = job["MedicalScribeOutput"]
-        transcript_bucket, transcript_key = s3_location(outputs["TranscriptFileUri"])
-        note_bucket, note_key = s3_location(outputs["ClinicalDocumentUri"])
-        raw_transcript = json.loads(s3.get_object(Bucket=transcript_bucket, Key=transcript_key)["Body"].read())
-        raw_note = json.loads(s3.get_object(Bucket=note_bucket, Key=note_key)["Body"].read())
-        write_json(DEMO_SESSION_ONE_DIRECTORY / "healthscribe-transcript.json", raw_transcript)
-        write_json(DEMO_SESSION_ONE_DIRECTORY / "clinical-note.json", raw_note)
-        segments = segments_from_healthscribe(raw_transcript)
-        write_json(DEMO_SESSION_ONE_DIRECTORY / "transcript.json", {
-            "id": DEMO_SESSION_ONE_ID,
-            "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "audio": {"file": DEMO_SESSION_ONE_RECORDING.name, "mime_type": "audio/wav"},
-            "speakers": {},
-            "text": " ".join(segment["text"] for segment in segments),
-            "segments": segments,
-            "clinical_note": summary_from_healthscribe(raw_note),
-            "healthscribe": {
-                "job_name": job_name,
-                "input_uri": f"s3://{input_bucket}/{input_key}",
-                "transcript_uri": outputs["TranscriptFileUri"],
-                "clinical_note_uri": outputs["ClinicalDocumentUri"],
-            },
-        })
-        write_json(DEMO_SESSION_ONE_STATUS, {"id": DEMO_SESSION_ONE_ID, "status": "COMPLETED", "job_name": job_name})
-    except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError) as exc:
-        write_json(DEMO_SESSION_ONE_STATUS, {"id": DEMO_SESSION_ONE_ID, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
-
-
-@app.post("/demo/heartwell-sadic/session-01/process", status_code=status.HTTP_202_ACCEPTED)
-def process_demo_session_one(background_tasks: BackgroundTasks):
-    """Submit the staged synthetic Session 01 WAV to HealthScribe for processing."""
-    if not DEMO_SESSION_ONE_RECORDING.is_file():
-        raise HTTPException(status_code=404, detail="Upload the Session 01 demo WAV before processing it.")
-    if DEMO_SESSION_ONE_STATUS.is_file():
-        try:
-            previous_status = json.loads(DEMO_SESSION_ONE_STATUS.read_text(encoding="utf-8")).get("status")
-        except (OSError, json.JSONDecodeError):
-            previous_status = None
-        if previous_status in {"IN_PROGRESS", "COMPLETED"}:
-            raise HTTPException(status_code=409, detail=f"Session 01 HealthScribe processing is already {previous_status.lower()}.")
-    try:
-        input_bucket, output_bucket, data_role = configuration()
-        job_name = f"healthscribe-demo-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
-        input_key = "demo-data/heartwell-sadic/session-01/recording.wav"
-        boto3.client("s3", region_name=AWS_REGION).upload_file(str(DEMO_SESSION_ONE_RECORDING), input_bucket, input_key)
-        boto3.client("transcribe", region_name=AWS_REGION).start_medical_scribe_job(
-            MedicalScribeJobName=job_name,
-            Media={"MediaFileUri": f"s3://{input_bucket}/{input_key}"},
-            OutputBucketName=output_bucket,
-            DataAccessRoleArn=data_role,
-            Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 2},
-        )
-        write_json(DEMO_SESSION_ONE_STATUS, {"id": DEMO_SESSION_ONE_ID, "status": "IN_PROGRESS", "job_name": job_name})
-        background_tasks.add_task(process_demo_session_one_job, job_name, input_key)
-        return {"id": DEMO_SESSION_ONE_ID, "status": "IN_PROGRESS", "job_name": job_name}
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise HTTPException(status_code=500, detail=f"Could not start the Session 01 HealthScribe job: {exc}") from exc
-
-
-@app.post("/demo/heartwell-sadic/session-02/audio", status_code=status.HTTP_201_CREATED)
-async def upload_demo_session_two_audio(audio: UploadFile = File(...)):
-    """Store the explicitly synthetic Session 02 WAV with its demo case artifacts."""
-    filename = audio.filename or ""
-    if Path(filename).suffix.lower() != ".wav":
-        raise HTTPException(status_code=415, detail="The session-two demo upload must be a WAV file.")
-    if DEMO_SESSION_TWO_RECORDING.exists():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A session-two demo recording already exists. Remove it deliberately before replacing it.",
-        )
-
-    contents = await audio.read(MAX_DEMO_AUDIO_BYTES + 1)
-    if len(contents) > MAX_DEMO_AUDIO_BYTES:
-        raise HTTPException(status_code=413, detail="The demo recording exceeds the 100 MB limit.")
-    if len(contents) < 12 or contents[:4] != b"RIFF" or contents[8:12] != b"WAVE":
-        raise HTTPException(status_code=415, detail="The uploaded file is not a valid WAV container.")
-
-    try:
-        DEMO_SESSION_TWO_DIRECTORY.mkdir(parents=True, exist_ok=True)
-        DEMO_SESSION_TWO_RECORDING.write_bytes(contents)
-    except OSError as exc:
-        raise HTTPException(status_code=500, detail="Could not store the demo recording.") from exc
-
-    return {
-        "stored": True,
-        "session": "heartwell-sadic/session-02",
-        "path": str(DEMO_SESSION_TWO_RELATIVE_DIRECTORY / "recording.wav"),
-        "bytes": len(contents),
-    }
-
-
-def process_demo_session_two_job(job_name: str, input_key: str) -> None:
-    """Persist Session 02 HealthScribe output beside its synthetic source WAV."""
-    try:
-        input_bucket, _, _ = configuration()
-        transcribe = boto3.client("transcribe", region_name=AWS_REGION)
-        s3 = boto3.client("s3", region_name=AWS_REGION)
-        while True:
-            job = transcribe.get_medical_scribe_job(MedicalScribeJobName=job_name)["MedicalScribeJob"]
-            state = job["MedicalScribeJobStatus"]
-            if state in {"COMPLETED", "FAILED"}:
-                break
-            write_json(DEMO_SESSION_TWO_STATUS, {"id": DEMO_SESSION_TWO_ID, "status": state, "job_name": job_name})
-            time.sleep(POLL_SECONDS)
-        if state == "FAILED":
-            raise RuntimeError(job.get("FailureReason", "HealthScribe did not complete the job."))
-
-        outputs = job["MedicalScribeOutput"]
-        transcript_bucket, transcript_key = s3_location(outputs["TranscriptFileUri"])
-        note_bucket, note_key = s3_location(outputs["ClinicalDocumentUri"])
-        raw_transcript = json.loads(s3.get_object(Bucket=transcript_bucket, Key=transcript_key)["Body"].read())
-        raw_note = json.loads(s3.get_object(Bucket=note_bucket, Key=note_key)["Body"].read())
-        write_json(DEMO_SESSION_TWO_DIRECTORY / "healthscribe-transcript.json", raw_transcript)
-        write_json(DEMO_SESSION_TWO_DIRECTORY / "clinical-note.json", raw_note)
-        segments = segments_from_healthscribe(raw_transcript)
-        write_json(DEMO_SESSION_TWO_TRANSCRIPT, {
-            "id": DEMO_SESSION_TWO_ID,
-            "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "audio": {"file": DEMO_SESSION_TWO_RECORDING.name, "mime_type": "audio/wav"},
-            "speakers": {},
-            "text": " ".join(segment["text"] for segment in segments),
-            "segments": segments,
-            "clinical_note": summary_from_healthscribe(raw_note),
-            "healthscribe": {
-                "job_name": job_name,
-                "input_uri": f"s3://{input_bucket}/{input_key}",
-                "transcript_uri": outputs["TranscriptFileUri"],
-                "clinical_note_uri": outputs["ClinicalDocumentUri"],
-            },
-        })
-        write_json(DEMO_SESSION_TWO_STATUS, {"id": DEMO_SESSION_TWO_ID, "status": "COMPLETED", "job_name": job_name})
-    except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError) as exc:
-        write_json(DEMO_SESSION_TWO_STATUS, {"id": DEMO_SESSION_TWO_ID, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
-
-
-@app.post("/demo/heartwell-sadic/session-02/process", status_code=status.HTTP_202_ACCEPTED)
-def process_demo_session_two(background_tasks: BackgroundTasks):
-    """Submit the staged synthetic Session 02 WAV to HealthScribe for processing."""
-    if not DEMO_SESSION_TWO_RECORDING.is_file():
-        raise HTTPException(status_code=404, detail="Upload the Session 02 demo WAV before processing it.")
-    if DEMO_SESSION_TWO_STATUS.is_file():
-        try:
-            previous_status = json.loads(DEMO_SESSION_TWO_STATUS.read_text(encoding="utf-8")).get("status")
-        except (OSError, json.JSONDecodeError):
-            previous_status = None
-        if previous_status == "IN_PROGRESS":
-            job_name = json.loads(DEMO_SESSION_TWO_STATUS.read_text(encoding="utf-8"))["job_name"]
-            input_key = "demo-data/heartwell-sadic/session-02/recording.wav"
-            background_tasks.add_task(process_demo_session_two_job, job_name, input_key)
-            return {"id": DEMO_SESSION_TWO_ID, "status": "IN_PROGRESS", "job_name": job_name}
-        if previous_status == "COMPLETED":
-            raise HTTPException(status_code=409, detail="Session 02 HealthScribe processing is already completed.")
-    try:
-        input_bucket, output_bucket, data_role = configuration()
-        job_name = f"healthscribe-demo-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
-        input_key = "demo-data/heartwell-sadic/session-02/recording.wav"
-        boto3.client("s3", region_name=AWS_REGION).upload_file(str(DEMO_SESSION_TWO_RECORDING), input_bucket, input_key)
-        boto3.client("transcribe", region_name=AWS_REGION).start_medical_scribe_job(
-            MedicalScribeJobName=job_name,
-            Media={"MediaFileUri": f"s3://{input_bucket}/{input_key}"},
-            OutputBucketName=output_bucket,
-            DataAccessRoleArn=data_role,
-            Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 2},
-        )
-        write_json(DEMO_SESSION_TWO_STATUS, {"id": DEMO_SESSION_TWO_ID, "status": "IN_PROGRESS", "job_name": job_name})
-        background_tasks.add_task(process_demo_session_two_job, job_name, input_key)
-        return {"id": DEMO_SESSION_TWO_ID, "status": "IN_PROGRESS", "job_name": job_name}
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise HTTPException(status_code=500, detail=f"Could not start the Session 02 HealthScribe job: {exc}") from exc
-
-
-@app.post("/demo/heartwell-sadic/session-{session_number}/audio", status_code=status.HTTP_201_CREATED)
-async def upload_additional_demo_audio(session_number: int, audio: UploadFile = File(...)):
-    """Stage a synthetic Session 03–06 WAV without using runtime recordings."""
-    recording, _, _, _, _ = additional_demo_session_assets(session_number)
-    if Path(audio.filename or "").suffix.lower() != ".wav":
-        raise HTTPException(status_code=415, detail="The synthetic demo upload must be a WAV file.")
-    if recording.exists():
-        raise HTTPException(status_code=409, detail="A demo recording already exists. Remove it deliberately before replacing it.")
-    contents = await audio.read(MAX_DEMO_AUDIO_BYTES + 1)
-    if len(contents) > MAX_DEMO_AUDIO_BYTES:
-        raise HTTPException(status_code=413, detail="The demo recording exceeds the 100 MB limit.")
-    if len(contents) < 12 or contents[:4] != b"RIFF" or contents[8:12] != b"WAVE":
-        raise HTTPException(status_code=415, detail="The uploaded file is not a valid WAV container.")
-    try:
-        recording.parent.mkdir(parents=True, exist_ok=True)
-        recording.write_bytes(contents)
-    except OSError as exc:
-        raise HTTPException(status_code=500, detail="Could not store the demo recording.") from exc
-    return {"stored": True, "session": f"heartwell-sadic/session-{session_number:02d}", "path": str(recording.relative_to(Path(__file__).parent)), "bytes": len(contents)}
-
-
-def process_additional_demo_session_job(session_number: int, job_name: str, input_key: str) -> None:
-    """Download and normalize HealthScribe artifacts for synthetic Sessions 03–06."""
-    recording, job_status, transcript_path, session_id, _ = additional_demo_session_assets(session_number)
-    try:
-        input_bucket, _, _ = configuration()
-        transcribe = boto3.client("transcribe", region_name=AWS_REGION)
-        s3 = boto3.client("s3", region_name=AWS_REGION)
-        while True:
-            job = transcribe.get_medical_scribe_job(MedicalScribeJobName=job_name)["MedicalScribeJob"]
-            state = job["MedicalScribeJobStatus"]
-            if state in {"COMPLETED", "FAILED"}:
-                break
-            write_json(job_status, {"id": session_id, "status": state, "job_name": job_name})
-            time.sleep(POLL_SECONDS)
-        if state == "FAILED":
-            raise RuntimeError(job.get("FailureReason", "HealthScribe did not complete the job."))
-        outputs = job["MedicalScribeOutput"]
-        transcript_bucket, transcript_key = s3_location(outputs["TranscriptFileUri"])
-        note_bucket, note_key = s3_location(outputs["ClinicalDocumentUri"])
-        raw_transcript = json.loads(s3.get_object(Bucket=transcript_bucket, Key=transcript_key)["Body"].read())
-        raw_note = json.loads(s3.get_object(Bucket=note_bucket, Key=note_key)["Body"].read())
-        write_json(recording.parent / "healthscribe-transcript.json", raw_transcript)
-        write_json(recording.parent / "clinical-note.json", raw_note)
-        segments = segments_from_healthscribe(raw_transcript)
-        write_json(transcript_path, {
-            "id": session_id,
-            "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "audio": {"file": recording.name, "mime_type": "audio/wav"},
-            "speakers": {},
-            "text": " ".join(segment["text"] for segment in segments),
-            "segments": segments,
-            "clinical_note": summary_from_healthscribe(raw_note),
-            "healthscribe": {"job_name": job_name, "input_uri": f"s3://{input_bucket}/{input_key}", "transcript_uri": outputs["TranscriptFileUri"], "clinical_note_uri": outputs["ClinicalDocumentUri"]},
-        })
-        write_json(job_status, {"id": session_id, "status": "COMPLETED", "job_name": job_name})
-    except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError) as exc:
-        write_json(job_status, {"id": session_id, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
-
-
-@app.post("/demo/heartwell-sadic/session-{session_number}/process", status_code=status.HTTP_202_ACCEPTED)
-def process_additional_demo_session(session_number: int, background_tasks: BackgroundTasks):
-    """Submit or resume one staged synthetic Session 03–06 HealthScribe job."""
-    recording, job_status, _, session_id, _ = additional_demo_session_assets(session_number)
-    if not recording.is_file():
-        raise HTTPException(status_code=404, detail="Upload the synthetic session WAV before processing it.")
-    input_key = f"demo-data/heartwell-sadic/session-{session_number:02d}/recording.wav"
-    if job_status.is_file():
-        try:
-            previous = json.loads(job_status.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            previous = {}
-        if previous.get("status") == "IN_PROGRESS" and previous.get("job_name"):
-            background_tasks.add_task(process_additional_demo_session_job, session_number, previous["job_name"], input_key)
-            return {"id": session_id, "status": "IN_PROGRESS", "job_name": previous["job_name"]}
-        if previous.get("status") == "COMPLETED":
-            raise HTTPException(status_code=409, detail="HealthScribe processing is already completed for this synthetic session.")
-    try:
-        input_bucket, output_bucket, data_role = configuration()
-        job_name = f"healthscribe-demo-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
-        boto3.client("s3", region_name=AWS_REGION).upload_file(str(recording), input_bucket, input_key)
-        boto3.client("transcribe", region_name=AWS_REGION).start_medical_scribe_job(
-            MedicalScribeJobName=job_name, Media={"MediaFileUri": f"s3://{input_bucket}/{input_key}"}, OutputBucketName=output_bucket, DataAccessRoleArn=data_role, Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 2},
-        )
-        write_json(job_status, {"id": session_id, "status": "IN_PROGRESS", "job_name": job_name})
-        background_tasks.add_task(process_additional_demo_session_job, session_number, job_name, input_key)
-        return {"id": session_id, "status": "IN_PROGRESS", "job_name": job_name}
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise HTTPException(status_code=500, detail=f"Could not start the synthetic HealthScribe job: {exc}") from exc
 
 
 @app.post("/onboarding/therapist", status_code=status.HTTP_201_CREATED)
@@ -1425,6 +845,39 @@ def create_longitudinal_insight_snapshot(
     return {"id": record_id, "status": "draft"}
 
 
+@app.get('/clinical-records/clients/{client_id}/journey-entries')
+def get_client_journey_entries(client_id: str, organization_id: str, authorization: str | None = Header(default=None)):
+    """Read source-linked model proposals and therapist decisions for one client."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(connection, authorization=authorization,
+                                      organization_id=organization_id, client_id=client_id, require_write=False)
+            return {'entries': client_journey.list_entries(connection, organization_id, client_id)}
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
+
+
+@app.put('/clinical-records/clients/{client_id}/journey-entries/{entry_id}')
+def review_client_journey_entry(client_id: str, entry_id: str, request: JourneyReviewRequest,
+                                authorization: str | None = Header(default=None)):
+    """A therapist's explicit review decision controls future brief inclusion."""
+    try:
+        with connect() as connection:
+            actor = authorize_clinical_access(connection, authorization=authorization,
+                                              organization_id=request.organization_id, client_id=client_id,
+                                              require_write=True)
+            found = client_journey.review_entry(connection, organization_id=request.organization_id,
+                                                client_id=client_id, entry_id=entry_id, category=request.category,
+                                                content=request.text, state=request.status, actor_user_id=actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
+    if not found:
+        raise HTTPException(status_code=404, detail='Journey entry not found for this client.')
+    return {'id': entry_id, 'status': request.status}
+
+
 @app.get("/clinical-records/clients/{client_id}/pre-session-context")
 def get_pre_session_context_packet(
     client_id: str,
@@ -1452,6 +905,27 @@ def get_pre_session_context_packet(
     if packet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No accepted longitudinal context is available for this client.")
     return packet
+
+
+@app.get("/clinical-records/clients/{client_id}/pre-session-brief")
+def get_current_pre_session_brief(
+    client_id: str,
+    organization_id: str,
+    authorization: str | None = Header(default=None),
+):
+    """Read the latest accepted client history as a cited, current review draft."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(connection, authorization=authorization,
+                                      organization_id=organization_id, client_id=client_id, require_write=False)
+            packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(
+                organization_id=organization_id, client_id=client_id)
+            journey = client_journey.list_entries(connection, organization_id, client_id, status='accepted')
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
+    if not packet and not journey:
+        raise HTTPException(status_code=404, detail='No therapist-approved insight history is available for this client.')
+    return project_accepted_insights(packet, journey)
 
 
 @app.get("/clinical-records/clients/{client_id}/insight-snapshots/latest")
@@ -1533,13 +1007,14 @@ def summary_from_healthscribe(document: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def process_job(session_id: str, job_name: str, input_key: str) -> None:
+def process_job(session_id: str, job_name: str, input_key: str, storage: dict | None = None) -> None:
     """Download completed HealthScribe JSON files to the local session folder."""
     directory = session_directory(session_id)
     try:
-        input_bucket, _, _ = configuration()
-        transcribe = boto3.client("transcribe", region_name=AWS_REGION)
-        s3 = boto3.client("s3", region_name=AWS_REGION)
+        input_bucket = storage['bucket'] if storage else configuration()[0]
+        region = storage['region'] if storage else AWS_REGION
+        transcribe = boto3.client("transcribe", region_name=region)
+        s3 = boto3.client("s3", region_name=region)
         while True:
             job = transcribe.get_medical_scribe_job(MedicalScribeJobName=job_name)["MedicalScribeJob"]
             state = job["MedicalScribeJobStatus"]
@@ -1553,12 +1028,15 @@ def process_job(session_id: str, job_name: str, input_key: str) -> None:
         outputs = job["MedicalScribeOutput"]
         transcript_bucket, transcript_key = s3_location(outputs["TranscriptFileUri"])
         note_bucket, note_key = s3_location(outputs["ClinicalDocumentUri"])
+        if storage and (transcript_bucket != storage['bucket'] or note_bucket != storage['bucket']):
+            raise RuntimeError("HealthScribe results are outside the organization bucket.")
         raw_transcript = json.loads(s3.get_object(Bucket=transcript_bucket, Key=transcript_key)["Body"].read())
         raw_note = json.loads(s3.get_object(Bucket=note_bucket, Key=note_key)["Body"].read())
         write_json(directory / "healthscribe-transcript.json", raw_transcript)
         write_json(directory / "clinical-note.json", raw_note)
         segments = segments_from_healthscribe(raw_transcript)
         recording = next(directory.glob("recording.*"))
+        clinical_note = summary_from_healthscribe(raw_note)
         write_json(transcript_path(session_id), {
             "id": session_id,
             "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -1566,7 +1044,7 @@ def process_job(session_id: str, job_name: str, input_key: str) -> None:
             "speakers": {},
             "text": " ".join(segment["text"] for segment in segments),
             "segments": segments,
-            "clinical_note": summary_from_healthscribe(raw_note),
+            "clinical_note": clinical_note,
             "healthscribe": {
                 "job_name": job_name,
                 "input_uri": f"s3://{input_bucket}/{input_key}",
@@ -1574,9 +1052,13 @@ def process_job(session_id: str, job_name: str, input_key: str) -> None:
                 "clinical_note_uri": outputs["ClinicalDocumentUri"],
             },
         })
+        if storage:
+            organization_storage.publish_results(storage, directory, segments, clinical_note, raw_transcript, raw_note)
         write_json(status_path(session_id), {"id": session_id, "status": "COMPLETED", "job_name": job_name})
-    except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError) as exc:
+    except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError, PsycopgError) as exc:
         write_json(status_path(session_id), {"id": session_id, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
+        if storage:
+            organization_storage.set_job_status(storage, 'FAILED', 'Session processing failed. Please contact support before retrying.')
 
 
 @app.get("/")
@@ -1585,113 +1067,81 @@ def page():
 
 
 @app.get("/recordings/{session_id}/{filename}")
-def session_recording(session_id: str, filename: str):
+def session_recording(session_id: str, filename: str, request: Request = None):
+    job = getattr(request.state, 'storage_job', None) if request else None
+    if job:
+        try:
+            organization_storage.restore_artifact(job['storage'], filename, session_directory(session_id))
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Recording not found.") from exc
     path = session_directory(session_id) / Path(filename).name
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Recording not found.")
     return FileResponse(path, media_type=AUDIO_MIME_TYPES.get(path.suffix.lower(), "application/octet-stream"), filename=path.name)
 
 
-@app.get("/demo/heartwell-sadic/session-01/recording")
-def demo_session_one_recording():
-    """Serve the synthetic Session 01 WAV for existing transcript playback UI."""
-    if not DEMO_SESSION_ONE_RECORDING.is_file():
-        raise HTTPException(status_code=404, detail="Session 01 demo recording not found.")
-    return FileResponse(DEMO_SESSION_ONE_RECORDING, media_type="audio/wav", filename=DEMO_SESSION_ONE_RECORDING.name)
-
-
-@app.get("/demo/heartwell-sadic/session-02/recording")
-def demo_session_two_recording():
-    """Serve the synthetic Session 02 WAV for existing transcript playback UI."""
-    if not DEMO_SESSION_TWO_RECORDING.is_file():
-        raise HTTPException(status_code=404, detail="Session 02 demo recording not found.")
-    return FileResponse(DEMO_SESSION_TWO_RECORDING, media_type="audio/wav", filename=DEMO_SESSION_TWO_RECORDING.name)
-
-
-@app.get("/demo/heartwell-sadic/session-{session_number}/recording")
-def additional_demo_session_recording(session_number: int):
-    """Serve a synthetic Session 03–06 WAV for transcript playback."""
-    recording, _, _, _, _ = additional_demo_session_assets(session_number)
-    if not recording.is_file():
-        raise HTTPException(status_code=404, detail="Synthetic demo recording not found.")
-    return FileResponse(recording, media_type="audio/wav", filename=recording.name)
-
-
 @app.get("/transcripts")
-def transcripts():
+def transcripts(request: Request = None):
+    if request and os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
+        return organization_storage.completed_jobs(request.state.care_context)
     items = []
     for path in RECORDINGS_DIRECTORY.glob("*/transcript.json") if RECORDINGS_DIRECTORY.exists() else []:
+        if re.fullmatch(r"session-[0-9a-f-]{36}", path.parent.name):
+            continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             items.append({"id": path.parent.name, "label": path.parent.name, "text": data.get("text", ""), "created_at": data.get("created_at", "")})
-        except (OSError, json.JSONDecodeError):
-            continue
-    if DEMO_SESSION_ONE_TRANSCRIPT.is_file():
-        try:
-            data = json.loads(DEMO_SESSION_ONE_TRANSCRIPT.read_text(encoding="utf-8"))
-            items.append({
-                "id": DEMO_SESSION_ONE_ID,
-                "label": "Synthetic · Elena Sadić · Session 01",
-                "text": data.get("text", ""),
-                "created_at": data.get("created_at", ""),
-            })
-        except (OSError, json.JSONDecodeError):
-            pass
-    if DEMO_SESSION_TWO_TRANSCRIPT.is_file():
-        try:
-            data = json.loads(DEMO_SESSION_TWO_TRANSCRIPT.read_text(encoding="utf-8"))
-            items.append({
-                "id": DEMO_SESSION_TWO_ID,
-                "label": "Synthetic · Elena Sadić · Session 02",
-                "text": data.get("text", ""),
-                "created_at": data.get("created_at", ""),
-            })
-        except (OSError, json.JSONDecodeError):
-            pass
-    for session_number in DEMO_SESSION_SLUGS:
-        _, _, path, session_id, label = additional_demo_session_assets(session_number)
-        if not path.is_file():
-            continue
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            items.append({"id": session_id, "label": label, "text": data.get("text", ""), "created_at": data.get("created_at", "")})
         except (OSError, json.JSONDecodeError):
             continue
     return sorted(items, key=lambda item: item["created_at"], reverse=True)
 
 
 @app.get("/transcripts/{session_id}")
-def transcript(session_id: str):
-    demo_assets = demo_session_assets(session_id)
-    path = demo_assets[2] if demo_assets else transcript_path(session_id)
+def transcript(session_id: str, request: Request = None):
+    job = getattr(request.state, 'storage_job', None) if request else None
+    if job:
+        data = organization_storage.session_review.read_result(job['storage'])
+        if not data:
+            raise HTTPException(status_code=404, detail="Transcript not found.")
+        return data
+    if os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
+        raise HTTPException(status_code=404, detail="Transcript not found.")
+    path = transcript_path(session_id)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Transcript not found.")
     data = json.loads(path.read_text(encoding="utf-8"))
-    additional_number = additional_demo_session_number(session_id)
-    if is_demo_session_one(session_id):
-        data["recording_url"] = "/demo/heartwell-sadic/session-01/recording"
-    elif is_demo_session_two(session_id):
-        data["recording_url"] = "/demo/heartwell-sadic/session-02/recording"
-    elif additional_number is not None:
-        data["recording_url"] = f"/demo/heartwell-sadic/session-{additional_number:02d}/recording"
-    else:
-        data["recording_url"] = f"/recordings/{session_id}/{data['audio']['file']}"
+    data["recording_url"] = f"/recordings/{session_id}/{data['audio']['file']}"
     return data
 
 
 @app.get("/transcripts/{session_id}/status")
-def job_status(session_id: str):
-    demo_assets = demo_session_assets(session_id)
-    path = demo_assets[1] if demo_assets else status_path(session_id)
+def job_status(session_id: str, request: Request = None):
+    job = getattr(request.state, 'storage_job', None) if request else None
+    if job:
+        return {'id': session_id, 'status': job['status'], 'detail': job['detail']}
+    if os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
+        raise HTTPException(status_code=404, detail="Processing status not found.")
+    path = status_path(session_id)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Processing status not found.")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 @app.put("/transcripts/{session_id}/speakers")
-def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...)):
-    demo_assets = demo_session_assets(session_id)
-    path = demo_assets[2] if demo_assets else transcript_path(session_id)
+def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...), request: Request = None):
+    job = getattr(request.state, 'storage_job', None) if request else None
+    if job:
+        actor = validate_access_token(request.headers.get('authorization'))
+        try:
+            speakers = organization_storage.session_review.save_speaker_labels(job['storage'], labels, actor['sub'])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if speakers is None:
+            raise HTTPException(status_code=404, detail="Transcript not found.")
+        return {'speakers': speakers}
+    if os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
+        raise HTTPException(status_code=404, detail="Transcript not found.")
+    path = transcript_path(session_id)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Transcript not found.")
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -1701,7 +1151,7 @@ def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...)):
 
 
 @app.post("/transcribe", status_code=202)
-async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File(...)):
+async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File(...), request: Request = None):
     suffix = Path(audio.filename or "recording.webm").suffix.lower()
     if suffix not in AUDIO_MIME_TYPES:
         raise HTTPException(status_code=415, detail="Choose a WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, or AMR audio file.")
@@ -1712,28 +1162,48 @@ async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File
         raise HTTPException(status_code=413, detail="Audio files must be 100 MB or smaller.")
     if not content:
         raise HTTPException(status_code=400, detail="The audio file is empty.")
+    storage = None
     try:
-        input_bucket, output_bucket, data_role = configuration()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    session_id = f"session-{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:8]}"
-    job_name = f"healthscribe-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
+        if request is not None and os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
+            actor = validate_access_token(request.headers.get('authorization'))
+            storage = organization_storage.create_upload(request.state.care_context, suffix, actor['sub'])
+            input_bucket = output_bucket = storage['bucket']
+            data_role = storage['healthscribe_role_arn']
+        else:
+            input_bucket, output_bucket, data_role = configuration()
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="Organization storage is unavailable.") from exc
+    session_id = storage['runtime_id'] if storage else f"session-{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:8]}"
+    job_name = storage['job_name'] if storage else f"healthscribe-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
     directory = session_directory(session_id)
-    input_key = f"recordings/{session_id}/recording{suffix}"
+    input_key = storage['audio_key'] if storage else f"recordings/{session_id}/recording{suffix}"
     try:
         directory.mkdir(parents=True)
         recording = directory / f"recording{suffix}"
         recording.write_bytes(content)
-        boto3.client("s3", region_name=AWS_REGION).upload_file(str(recording), input_bucket, input_key)
-        boto3.client("transcribe", region_name=AWS_REGION).start_medical_scribe_job(
+        if storage:
+            organization_storage.put_artifact(storage, recording, 'audio_recording', input_key, AUDIO_MIME_TYPES[suffix], 'user_upload')
+        else:
+            boto3.client("s3", region_name=AWS_REGION).upload_file(str(recording), input_bucket, input_key)
+        encryption = {'OutputEncryptionKMSKeyId': storage['kms_key_arn']} if storage else {}
+        boto3.client("transcribe", region_name=storage['region'] if storage else AWS_REGION).start_medical_scribe_job(
             MedicalScribeJobName=job_name,
             Media={"MediaFileUri": f"s3://{input_bucket}/{input_key}"},
             OutputBucketName=output_bucket,
             DataAccessRoleArn=data_role,
             Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 2},
+            **encryption,
         )
+        if storage:
+            organization_storage.set_job_status(storage, 'IN_PROGRESS')
         write_json(status_path(session_id), {"id": session_id, "status": "IN_PROGRESS", "job_name": job_name})
-        background_tasks.add_task(process_job, session_id, job_name, input_key)
+        if storage:
+            background_tasks.add_task(process_job, session_id, job_name, input_key, storage)
+        else:
+            background_tasks.add_task(process_job, session_id, job_name, input_key)
         return {"id": session_id, "status": "IN_PROGRESS"}
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise HTTPException(status_code=500, detail=f"Could not start HealthScribe job: {exc}") from exc
+    except (BotoCoreError, ClientError, OSError, PsycopgError) as exc:
+        if storage:
+            organization_storage.set_job_status(storage, 'FAILED', 'Audio upload or job submission failed.')
+        raise HTTPException(status_code=500, detail="Could not start the audio processing job.") from exc
+

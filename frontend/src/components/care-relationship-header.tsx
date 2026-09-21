@@ -11,6 +11,9 @@ export type CareProfile = {
   phone?: string | null;
   imageSrc?: string;
   aboutMe?: string | null;
+  organizationId?: string | null;
+  clientId?: string | null;
+  syntheticCase?: boolean;
 };
 
 export type CareAction = {

@@ -17,6 +17,33 @@ It is effective enough for early development because it lets the project test th
 
 ## What the local application does today
 
+Organization storage is available through [the organization stack](../terraform/organizations/README.md).
+When `ORGANIZATION_STORAGE_ENABLED=true`, new uploads create a database session,
+resolve its organization's private bucket, and use client/session prefixes for
+audio and canonical result artifacts. The catalog records object versions and
+checksums. Completed jobs save timed, speaker-labelled passages in PostgreSQL
+`app.transcript_segments`, and the generated clinical draft in
+`app.synthesis_versions`. Review reads those database records, while speaker-name
+corrections live in `app.transcript_speaker_labels`. Original HealthScribe JSON
+and a normalized export remain in S3; playback restores catalogued audio.
+The job is marked complete only after its review records commit. The synthetic
+Heartwell/Sadić case has been imported through
+`tools/migrate_heartwell_case.py`: its six recordings and provider outputs are
+catalogued in the organization bucket, while review and longitudinal data are
+stored in PostgreSQL. With organization storage enabled, normal therapist and
+client-portal routes no longer read that case from local fixture files. The
+legacy diagram below still describes deployments where the new storage mode has
+not been enabled; other old files are not migrated implicitly.
+The source-linked HealthScribe note excerpts also become proposed client-journey
+entries. They stay out of the pre-session brief until a therapist reviews and
+accepts them in Insights. Rejected, hidden, stale, and disputed entries are
+excluded. The original note and transcript remain available for inspection.
+Apply migrations `010_transcript_speaker_labels.sql` and
+`011_client_journey_entries.sql` before processing new
+organization-stored uploads. Local AWS-secret setups can run
+`.venv/Scripts/python.exe -m tools.apply_session_review_migration` after the
+configured AWS profile is available.
+
 The local FastAPI application in `server.py` uses **asynchronous batch Medical Scribe jobs**—not the streaming API—for the browser-recorded workflow.
 
 ```text
@@ -53,7 +80,7 @@ The UI-ready `transcript.json` retains each transcript segment's start time, end
 
 The scheduled-session recording controls include an icon-only **Upload audio recording** button for externally recorded audio, including synthetic test audio. Selecting a file starts the same authenticated `/transcribe` batch workflow as microphone recording. The UI shows upload/processing status and opens the completed transcript for review; failures remain visible. Upload is disabled while recording or processing.
 
-The application accepts WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, and AMR files up to 100 MB. Empty files, unsupported extensions, and oversized files are rejected before AWS submission. HealthScribe validates the actual audio encoding. The file extension is preserved, and playback uses its corresponding media type. These imports currently use the existing local synthetic-case session store, not persisted database session records.
+The application accepts WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, and AMR files up to 100 MB. Empty files, unsupported extensions, and oversized files are rejected before AWS submission. HealthScribe validates the actual audio encoding. The file extension is preserved, and playback uses its corresponding media type. With organization storage enabled, imports use persisted database session/artifact records; the UI remains scoped to the synthetic care relationship.
 
 When `/transcribe` receives an audio file, the server:
 
@@ -79,7 +106,7 @@ The application downloads both raw artifacts from S3. It then normalizes transcr
 ### Current implementation constraints
 
 - The job request currently sets a maximum of two speaker labels. Supporting sessions with more participants will require an intentional change to this configuration and UI/data-model review.
-- The application reads HealthScribe's reported participant roles as provided; therapists can save local speaker-label overrides in the session transcript.
+- The application reads HealthScribe's reported participant roles as provided; organization-stored sessions save therapist speaker-name overrides in PostgreSQL. Legacy sessions still save them in local transcript JSON.
 - Processing occurs after upload rather than live during a session.
 - Audio files and outputs are also written to the local `recordings/` directory. That directory contains sensitive session data and requires the same care as cloud-stored artifacts.
 - The Terraform configuration includes a resource-access role for streaming use, but the current local recording flow uses batch jobs.

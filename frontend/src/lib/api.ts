@@ -1,11 +1,15 @@
-import type { ClientInsights, JobStatus, PersistedInsightSnapshot, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
+import type { ClientJourneyEntry, JobStatus, PersistedInsightSnapshot, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) { super(message); }
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, options);
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.detail || "The request could not be completed.");
+    throw new ApiError(data.detail || "The request could not be completed.", response.status);
   }
 
   return data as T;
@@ -25,13 +29,19 @@ export const api = {
   listTranscripts: () => request<TranscriptListItem[]>("/transcripts"),
   getTranscript: async (id: string) => normalizeTranscript(await request<Transcript>(`/transcripts/${encodeURIComponent(id)}`)),
   getJobStatus: (id: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status`),
-  getDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief"),
-  generateDemoPreSessionBrief: () => request<PreSessionBrief>("/demo/heartwell-sadic/pre-session-brief/generate", { method: "POST" }),
-  getDemoClientInsights: () => request<ClientInsights>("/demo/heartwell-sadic/insights"),
+  getCurrentPreSessionBrief: (organizationId: string, clientId: string) =>
+    request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
     request<PersistedInsightSnapshot>(
       `/clinical-records/clients/${encodeURIComponent(clientId)}/insights/latest?organization_id=${encodeURIComponent(organizationId)}`,
     ),
+  getClientJourney: (organizationId: string, clientId: string) =>
+    request<{ entries: ClientJourneyEntry[] }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries?organization_id=${encodeURIComponent(organizationId)}`),
+  reviewClientJourneyEntry: (organizationId: string, clientId: string, entryId: string, update: Pick<ClientJourneyEntry, "category" | "text"> & { status: "accepted" | "rejected" | "hidden" | "stale" | "disputed" }) =>
+    request<{ id: string; status: string }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries/${encodeURIComponent(entryId)}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization_id: organizationId, ...update }),
+    }),
   uploadRecording: (audio: Blob) => {
     const form = new FormData();
     form.append("audio", audio, audio instanceof File ? audio.name : "recording.webm");

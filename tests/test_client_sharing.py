@@ -1,6 +1,7 @@
 import asyncio
 import itertools
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from starlette.requests import Request
@@ -9,11 +10,18 @@ import server
 
 class SharingTests(unittest.TestCase):
     def test_all_permission_combinations_do_not_leak_other_categories(self):
+        jobs = [{
+            'runtime_id': f'session-00000000-0000-0000-0000-00000000000{number}',
+            'label': f'Session {number}', 'created_at': MagicMock(), 'storage': {'session': number},
+        } for number in range(1, 7)]
+        for job in jobs:
+            job['created_at'].isoformat.return_value = f'2026-08-{job["storage"]["session"]:02d}T15:00:00-04:00'
+        review = {'speakers': {'spk_0': 'Therapist'}, 'segments': [{'speaker': 'spk_0', 'text': 'Review text', 'start': 0, 'end': 1}], 'clinical_note': [{'name': 'Draft', 'items': ['Review item']}]}
         for flags in itertools.product((False, True), repeat=5):
             permissions = dict(zip(server.PERMISSION_FIELDS, flags))
             connection = MagicMock()
             connection.cursor.return_value.__enter__.return_value.fetchall.return_value = []
-            with patch.object(server, 'connect') as connect, patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(server, 'read_portal_permissions', return_value=permissions):
+            with patch.object(server, 'connect') as connect, patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(server, 'read_portal_permissions', return_value=permissions), patch.object(server.organization_storage, 'completed_job_records', return_value=jobs), patch.object(server.organization_storage.session_review, 'read_result', return_value=review):
                 connect.return_value.__enter__.return_value = connection
                 result = server.client_portal('Bearer client')
             self.assertEqual('insights' in result, flags[2])
@@ -24,24 +32,26 @@ class SharingTests(unittest.TestCase):
                 self.assertEqual('draft_note' in session, flags[3])
                 self.assertEqual('recording_url' in session, flags[1] and flags[4])
                 self.assertNotIn('healthscribe', session)
-                self.assertTrue(session['id'].startswith('heartwell-sadic-session-'))
+                self.assertTrue(session['id'].startswith('session-'))
             if 'sessions' in result:
                 self.assertEqual(len(result['sessions']), 6)
 
     def test_audio_requires_both_sharing_permissions_and_bound_session(self):
+        session_id = 'session-00000000-0000-0000-0000-000000000001'
+        job = {'status': 'COMPLETED', 'storage': {'audio_key': 'client/session/audio/recording.wav'}}
         for transcript, audio in itertools.product((False, True), repeat=2):
             permissions = dict.fromkeys(server.PERMISSION_FIELDS, False)
             permissions.update(can_view_shared_transcripts=transcript, can_play_shared_recordings=audio)
-            with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={}), patch.object(server, 'read_portal_permissions', return_value=permissions):
+            with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={}), patch.object(server, 'read_portal_permissions', return_value=permissions), patch.object(server.organization_storage, 'find_job', side_effect=lambda context, requested: job if requested == session_id else None), patch.object(server.organization_storage, 'restore_artifact', return_value=Path('recording.wav')):
                 if transcript and audio:
-                    response = server.shared_session_recording('heartwell-sadic-session-01', 'Bearer client')
+                    response = server.shared_session_recording(session_id, 'Bearer client')
                     self.assertEqual(response.media_type, 'audio/wav')
                     with self.assertRaises(HTTPException) as error:
                         server.shared_session_recording('another-client-session', 'Bearer client')
                     self.assertEqual(error.exception.status_code, 404)
                 else:
                     with self.assertRaises(HTTPException) as error:
-                        server.shared_session_recording('heartwell-sadic-session-01', 'Bearer client')
+                        server.shared_session_recording(session_id, 'Bearer client')
                     self.assertEqual(error.exception.status_code, 403)
 
     def test_relationship_profile_returns_only_database_contact_fields(self):
@@ -53,7 +63,10 @@ class SharingTests(unittest.TestCase):
             with patch.object(server, 'connect') as connect, patch.object(server, 'current_identity', return_value={'role': role}), patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'o', 'client_id': 'c'}) as resolve:
                 connect.return_value.__enter__.return_value = connection
                 result = server.relationship_profile('Bearer identity')
-                self.assertEqual(result, {'name': 'Database Person', 'email': 'care@example.com', 'phone': None, 'initials': 'DP', 'role': 'Therapist' if role == 'client' else 'Client', 'imageSrc': None, 'aboutMe': None})
+                expected = {'name': 'Database Person', 'email': 'care@example.com', 'phone': None, 'initials': 'DP', 'role': 'Therapist' if role == 'client' else 'Client', 'imageSrc': None, 'aboutMe': None}
+                if role == 'therapist':
+                    expected.update(organizationId='o', clientId='c', syntheticCase=False)
+                self.assertEqual(result, expected)
                 resolve.assert_called_once_with(connection, 'Bearer identity', therapist=role == 'therapist')
                 if role == 'client':
                     self.assertIn('practitioner.contact_email', cursor.execute.call_args_list[-2].args[0])
@@ -104,7 +117,7 @@ class SharingTests(unittest.TestCase):
 
     def test_legacy_routes_block_client_before_reading_files(self):
         async def run():
-            for path in ('/transcripts', '/transcripts/heartwell-sadic-session-01', '/recordings/session/transcript.json', '/demo/heartwell-sadic/insights', '/transcribe'):
+            for path in ('/transcripts', '/transcripts/session-00000000-0000-0000-0000-000000000001', '/recordings/session/transcript.json', '/transcribe'):
                 request = Request({'type': 'http', 'path': path, 'method': 'GET', 'headers': []})
                 with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', side_effect=HTTPException(403, 'Denied')):
                     response = await server.protect_legacy_clinical_routes(request, MagicMock(side_effect=AssertionError('Must not reach handler')))

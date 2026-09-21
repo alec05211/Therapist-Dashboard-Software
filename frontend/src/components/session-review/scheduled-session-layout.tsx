@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RecordingControls } from "@/components/session-review/recording-controls";
 import { AudioUploadButton } from "@/components/session-review/audio-upload-button";
-import { api } from "@/lib/api";
-import type { BriefEvidence, PreSessionBrief } from "@/lib/types";
+import { ApiError, api } from "@/lib/api";
+import type { BriefEvidence, LongitudinalRecordContext, PreSessionBrief } from "@/lib/types";
 
 type ScheduledSessionLayoutProps = {
   isRecording: boolean;
@@ -12,6 +12,7 @@ type ScheduledSessionLayoutProps = {
   onToggleRecording: () => void;
   onUploadAudio: (file: File) => void;
   onViewEvidence: (source: BriefEvidence) => void;
+  recordContext?: LongitudinalRecordContext;
 };
 
 type BriefItem = PreSessionBrief["sections"][number]["items"][number];
@@ -52,28 +53,42 @@ function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onV
   </>;
 }
 
-export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording, onUploadAudio, onViewEvidence }: ScheduledSessionLayoutProps) {
+export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording, onUploadAudio, onViewEvidence, recordContext }: ScheduledSessionLayoutProps) {
   const [brief, setBrief] = useState<PreSessionBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const organizationId = recordContext?.organizationId;
+  const clientId = recordContext?.clientId;
+
+  const loadBrief = useCallback(async () => {
+    if (!organizationId || !clientId) return { result: { status: "AWAITING CLIENT CONTEXT", review_note: "Open this session from an authorized client workspace.", sections: [] } as PreSessionBrief, source: "empty" as const };
+    try {
+      const result = await api.getCurrentPreSessionBrief(organizationId, clientId);
+      return { result, source: "saved" as const };
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 404) throw error;
+      return { result: { status: "AWAITING APPROVED INSIGHTS", review_note: "The brief will draw from therapist-approved client journey entries when available.", sections: [] } as PreSessionBrief, source: "empty" as const };
+    }
+  }, [organizationId, clientId]);
 
   useEffect(() => {
     let cancelled = false;
-    void api.getDemoPreSessionBrief()
-      .then((result) => { if (!cancelled) setBrief(result); })
+    void loadBrief()
+      .then(({ result }) => { if (!cancelled) setBrief(result); })
       .catch((error: unknown) => { if (!cancelled) setBriefError(error instanceof Error ? error.message : "Could not load the pre-session brief."); });
     return () => { cancelled = true; };
-  }, []);
+  }, [loadBrief]);
 
-  const generateWithOpenAI = async () => {
-    setIsGenerating(true);
+  const refreshBrief = async () => {
+    setIsRefreshing(true);
     setBriefError(null);
     try {
-      setBrief(await api.generateDemoPreSessionBrief());
+      const { result } = await loadBrief();
+      setBrief(result);
     } catch (error) {
-      setBriefError(error instanceof Error ? error.message : "Could not generate the OpenAI demo brief.");
+      setBriefError(error instanceof Error ? error.message : "Could not refresh the pre-session brief.");
     } finally {
-      setIsGenerating(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -81,17 +96,13 @@ export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording,
     <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Scheduled session preparation">
       <p className="text-sm font-medium text-emerald-800">Scheduled session</p>
       <h2 className="mt-1 text-lg font-semibold text-stone-900">Prepare for this session</h2>
-      <p className="mt-2 text-sm leading-6 text-stone-600">A short orientation from the client’s finalized record.</p>
 
       <section className="mt-5 border-y border-stone-200 py-4" aria-label="Pre-session brief">
         <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-2">
-          <div>
-            <h3 className="text-base font-semibold text-stone-900">Before this session</h3>
-            <p className="mt-1 text-xs leading-5 text-stone-600">Underlined text opens the exact cited transcript moment.</p>
-          </div>
+          <h3 className="text-base font-semibold text-stone-900">Before this session</h3>
           <div className="flex items-center gap-3 pt-0.5">
             {brief ? <span className="text-xs font-medium text-emerald-800">{brief.status}</span> : null}
-            <button type="button" onClick={() => void generateWithOpenAI()} disabled={isGenerating} className="cursor-grab text-xs font-medium text-emerald-800 underline underline-offset-2 transition hover:text-emerald-950 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">{isGenerating ? "Generating…" : "Refresh draft"}</button>
+            <button type="button" onClick={() => void refreshBrief()} disabled={isRefreshing} className="cursor-grab text-xs font-medium text-emerald-800 underline underline-offset-2 transition hover:text-emerald-950 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">{isRefreshing ? "Refreshing…" : "Refresh brief"}</button>
           </div>
         </div>
         {briefError ? <p className="mt-4 text-sm text-red-700">{briefError}</p> : null}

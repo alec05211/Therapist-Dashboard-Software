@@ -296,13 +296,15 @@ class LongitudinalRecordRepository:
                        evidence.evidence_role, segment.id AS transcript_segment_id,
                        segment.sequence_number, segment.starts_at_seconds,
                        segment.ends_at_seconds, segment.content AS transcript_quote,
-                       session.id AS session_id, session.started_at,
+                       COALESCE(session.id, note.session_id) AS session_id, session.started_at,
+                       COALESCE(job.storage->>'label', 'Completed session') AS session_label,
                        note.id AS clinical_note_version_id
                 FROM selected_items AS item
                 LEFT JOIN app.longitudinal_insight_evidence AS evidence ON evidence.insight_item_id = item.id
                 LEFT JOIN app.transcript_segments AS segment ON segment.id = evidence.transcript_segment_id
                 LEFT JOIN app.transcript_versions AS transcript ON transcript.id = segment.transcript_version_id
                 LEFT JOIN app.sessions AS session ON session.id = transcript.session_id
+                LEFT JOIN app.session_storage_jobs AS job ON job.session_id = session.id
                 LEFT JOIN app.clinical_note_versions AS note ON note.id = evidence.clinical_note_version_id
                 ORDER BY item.display_order, item.id, evidence.created_at
                 """,
@@ -321,6 +323,7 @@ class LongitudinalRecordRepository:
                     "evidence_role": row["evidence_role"],
                     "transcript_segment_id": str(row["transcript_segment_id"]),
                     "session_id": str(row["session_id"]),
+                    "session_label": row["session_label"],
                     "segment_index": row["sequence_number"],
                     "start": float(row["starts_at_seconds"]),
                     "end": float(row["ends_at_seconds"]),
@@ -330,6 +333,7 @@ class LongitudinalRecordRepository:
                 item["evidence"].append({
                     "evidence_role": row["evidence_role"],
                     "clinical_note_version_id": str(row["clinical_note_version_id"]),
+                    "session_id": str(row["session_id"]),
                 })
 
         return {
@@ -364,7 +368,9 @@ class LongitudinalRecordRepository:
                        segment.id AS transcript_segment_id, segment.sequence_number,
                        segment.starts_at_seconds, segment.ends_at_seconds,
                        segment.content AS transcript_quote, session.id AS session_id,
-                       session.started_at, note.id AS clinical_note_version_id
+                       session.started_at,
+                       COALESCE(job.storage->>'label', 'Completed session') AS session_label,
+                       note.id AS clinical_note_version_id
                 FROM app.longitudinal_insight_items AS item
                 LEFT JOIN app.longitudinal_insight_evidence AS evidence
                   ON evidence.insight_item_id = item.id
@@ -373,6 +379,7 @@ class LongitudinalRecordRepository:
                 LEFT JOIN app.transcript_versions AS transcript
                   ON transcript.id = segment.transcript_version_id
                 LEFT JOIN app.sessions AS session ON session.id = transcript.session_id
+                LEFT JOIN app.session_storage_jobs AS job ON job.session_id = session.id
                 LEFT JOIN app.clinical_note_versions AS note
                   ON note.id = evidence.clinical_note_version_id
                 WHERE item.snapshot_id = %s
@@ -398,6 +405,7 @@ class LongitudinalRecordRepository:
                     "evidence_role": row["evidence_role"],
                     "transcript_segment_id": str(row["transcript_segment_id"]),
                     "session_id": str(row["session_id"]),
+                    "session_label": row["session_label"],
                     "segment_index": row["sequence_number"],
                     "start": float(row["starts_at_seconds"]),
                     "end": float(row["ends_at_seconds"]),
