@@ -2,10 +2,10 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Image from "next/image";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { settingsFieldClass } from "@/components/settings-layout";
 import { canUseFeature, type AccountRole } from "@/lib/role-capabilities";
 
-type Profile = { role: AccountRole; name: string; email: string | null; phone: string | null; aboutMe: string | null; photoUrl: string | null };
-const fieldClass = "mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700";
+type Profile = { role: AccountRole; name: string; pronouns: string | null; email: string | null; phone: string | null; aboutMe: string | null; photoUrl: string | null };
 
 export function AccountProfileForm() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -23,12 +23,12 @@ export function AccountProfileForm() {
     }).catch((reason: Error) => { if (active) setError(reason.message); });
     return () => { active = false; };
   }, []);
-  const update = (key: "name" | "email" | "phone" | "aboutMe", value: string) => { setSaved(false); setDraft(current => current && ({ ...current, [key]: value })); };
+  const update = (key: "name" | "pronouns" | "email" | "phone" | "aboutMe", value: string) => { setSaved(false); setDraft(current => current && ({ ...current, [key]: value })); };
   const save = async (event: FormEvent) => {
     event.preventDefault(); if (!draft || busy) return;
     setBusy(true); setError(null); setSaved(false);
     try {
-      const response = await fetch("/api/account/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.name, email: draft.email || null, phone: draft.phone || null, about_me: canUseFeature(draft.role, "aboutMe") ? draft.aboutMe || null : null }) });
+      const response = await fetch("/api/account/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: draft.name, pronouns: draft.pronouns || null, email: draft.email || null, phone: draft.phone || null, about_me: canUseFeature(draft.role, "aboutMe") ? draft.aboutMe || null : null }) });
       const body = await response.json(); if (!response.ok) throw new Error(body.detail || "Could not save your profile.");
       setProfile(body); setDraft(body); setSaved(true);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save your profile."); }
@@ -65,10 +65,11 @@ export function AccountProfileForm() {
         {profile?.photoUrl && <button type="button" onClick={() => void removePhoto()} disabled={busy} className="ml-2 cursor-grab rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 active:cursor-grabbing">Remove</button>}
         <p className="mt-1 text-xs text-stone-500">JPEG, PNG, or WebP · up to 2 MB</p></div>
     </div>
-    <label className="block text-sm font-semibold text-stone-800">{draft.role === "therapist" ? "Professional name" : "Display name"}<input required maxLength={200} value={draft.name} onChange={event => update("name", event.target.value)} className={fieldClass} /></label>
-    <label className="block text-sm font-semibold text-stone-800">Contact email<input type="email" maxLength={254} value={draft.email ?? ""} onChange={event => update("email", event.target.value)} className={fieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">Shown to people connected to your care profile. Your sign-in email is managed separately.</span></label>
-    <label className="block text-sm font-semibold text-stone-800">Contact phone<input type="tel" maxLength={40} value={draft.phone ?? ""} onChange={event => update("phone", event.target.value)} className={fieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">Optional; leave blank to hide it from your profile.</span></label>
-    {canUseFeature(draft.role, "aboutMe") && <label className="block text-sm font-semibold text-stone-800">About me<textarea maxLength={2000} rows={5} value={draft.aboutMe ?? ""} onChange={event => update("aboutMe", event.target.value)} className={fieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">A short introduction clients can read on your care profile.</span></label>}
+    <label className="block text-sm font-semibold text-stone-800">{draft.role === "therapist" ? "Professional name" : "Display name"}<input required maxLength={200} value={draft.name} onChange={event => update("name", event.target.value)} className={settingsFieldClass} /></label>
+    <label className="block max-w-48 text-sm font-semibold text-stone-800">Pronouns<input maxLength={80} placeholder="e.g. she/her" value={draft.pronouns ?? ""} onChange={event => update("pronouns", event.target.value)} className={settingsFieldClass} /></label>
+    <label className="block text-sm font-semibold text-stone-800">Contact email<input type="email" maxLength={254} value={draft.email ?? ""} onChange={event => update("email", event.target.value)} className={settingsFieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">Shown to people connected to your care profile. Your sign-in email is managed separately.</span></label>
+    <label className="block text-sm font-semibold text-stone-800">Contact phone<input type="tel" maxLength={40} value={draft.phone ?? ""} onChange={event => update("phone", event.target.value)} className={settingsFieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">Optional; leave blank to hide it from your profile.</span></label>
+    {canUseFeature(draft.role, "aboutMe") && <label className="block text-sm font-semibold text-stone-800">About me<textarea maxLength={2000} rows={5} value={draft.aboutMe ?? ""} onChange={event => update("aboutMe", event.target.value)} className={settingsFieldClass} /><span className="mt-1 block text-xs font-normal text-stone-500">A short introduction clients can read on your care profile.</span></label>}
     <div className="flex items-center gap-3 border-t border-stone-200 pt-5"><button disabled={busy} type="submit" className="cursor-grab rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-wait active:cursor-grabbing">{busy ? "Saving…" : "Save profile"}</button>{saved && <p role="status" className="text-sm font-medium text-emerald-800">Profile saved.</p>}</div>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
   </form>;

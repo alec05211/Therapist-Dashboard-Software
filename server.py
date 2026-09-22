@@ -21,6 +21,7 @@ from database.auth import validate_access_token
 from database.connection import connect
 from database import organization_storage
 from database import client_journey
+from database import client_documents
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights
 from pydantic import BaseModel, Field, field_validator
@@ -60,6 +61,24 @@ class ClientPortalPermissionsRequest(BaseModel):
     can_view_draft_notes: bool
     can_view_approved_summaries: bool = False
     can_play_shared_recordings: bool = False
+
+
+class ParticipantIdentificationRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+
+    @field_validator("name")
+    @classmethod
+    def clean_identification_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value or any(ord(char) < 32 for char in value):
+            raise ValueError("Control characters are not allowed.")
+        return value
+
+class ClientIdentificationRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    client_id: str = Field(min_length=1, max_length=64)
+    client: ParticipantIdentificationRequest
+    therapist: ParticipantIdentificationRequest
 
 
 @app.get("/identity/me")
@@ -154,11 +173,12 @@ def resolve_sharing_context(connection, authorization, *, therapist=False, write
 
 class AccountProfileUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    pronouns: str | None = Field(default=None, max_length=80)
     email: str | None = Field(default=None, max_length=254)
     phone: str | None = Field(default=None, max_length=40)
     about_me: str | None = Field(default=None, max_length=2000)
 
-    @field_validator("name", "email", "phone", "about_me")
+    @field_validator("name", "pronouns", "email", "phone", "about_me")
     @classmethod
     def clean_text(cls, value: str | None) -> str | None:
         if value is None:
@@ -207,9 +227,9 @@ def get_account_profile(authorization: str | None = Header(default=None)):
     with connect() as connection:
         role, subject, target = account_profile_target(connection, authorization)
         with connection.cursor() as cursor:
-            cursor.execute("SELECT about_me, photo IS NOT NULL AS has_photo FROM app.account_profiles WHERE auth0_subject=%s", (subject,))
+            cursor.execute("SELECT pronouns, about_me, photo IS NOT NULL AS has_photo FROM app.account_profiles WHERE auth0_subject=%s", (subject,))
             extras = cursor.fetchone() or {}
-    return {"role": role, "name": target["name"] or "", "email": target["email"],
+    return {"role": role, "name": target["name"] or "", "pronouns": extras.get("pronouns"), "email": target["email"],
             "phone": target["phone"], "aboutMe": extras.get("about_me") if role == "therapist" else None,
             "photoUrl": "/api/account/profile/photo" if extras.get("has_photo") else None}
 
@@ -230,10 +250,10 @@ def update_account_profile(request: AccountProfileUpdate, authorization: str | N
                     (request.name, request.email, request.phone, target["id"]))
                 cursor.execute("UPDATE app.client_portal_accounts SET display_name=%s WHERE client_id=%s",
                     (request.name, target["id"]))
-            if role == "therapist":
-                cursor.execute("""INSERT INTO app.account_profiles (auth0_subject, about_me) VALUES (%s,%s)
-                    ON CONFLICT (auth0_subject) DO UPDATE SET about_me=EXCLUDED.about_me""",
-                    (subject, request.about_me))
+            cursor.execute("""INSERT INTO app.account_profiles (auth0_subject, pronouns, about_me) VALUES (%s,%s,%s)
+                ON CONFLICT (auth0_subject) DO UPDATE SET
+                  pronouns=EXCLUDED.pronouns, about_me=EXCLUDED.about_me""",
+                (subject, request.pronouns, request.about_me if role == "therapist" else None))
     return get_account_profile(authorization)
 
 
@@ -388,6 +408,98 @@ def update_client_portal_permissions(request: ClientPortalPermissionsRequest, au
             if not row:
                 raise HTTPException(status_code=409, detail="Client organization does not match.")
         return {**context, **row}
+
+
+def identification_sample(cursor, context, display_name, speaker_prefix):
+    """Find a brief review excerpt without creating or comparing voiceprints."""
+    cursor.execute("""SELECT job.runtime_id, job.storage->>'audio_key' AS audio_key,
+            segment.starts_at_seconds, segment.ends_at_seconds
+        FROM app.session_storage_jobs job
+        JOIN app.sessions session ON session.id=job.session_id
+        JOIN app.transcript_versions transcript
+          ON transcript.session_id=session.id AND transcript.organization_id=session.organization_id
+          AND transcript.client_id=session.client_id AND transcript.status <> 'superseded'
+        JOIN app.transcript_segments segment ON segment.transcript_version_id=transcript.id
+        LEFT JOIN app.transcript_speaker_labels label
+          ON label.transcript_version_id=transcript.id AND label.source_label=segment.speaker_label
+        WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
+          AND segment.ends_at_seconds-segment.starts_at_seconds >= 0.5
+          AND (lower(trim(label.display_label))=lower(trim(%s))
+               OR (label.display_label IS NULL AND segment.speaker_label LIKE %s))
+          AND NOT EXISTS (
+            SELECT 1 FROM app.transcript_versions newer
+            WHERE newer.session_id=transcript.session_id
+              AND newer.version_number>transcript.version_number
+              AND newer.status <> 'superseded')
+        ORDER BY CASE WHEN label.display_label IS NOT NULL THEN 0 ELSE 1 END,
+          COALESCE(session.started_at, job.created_at) DESC,
+          segment.ends_at_seconds-segment.starts_at_seconds DESC
+        LIMIT 1""", (context["organization_id"], context["client_id"], display_name, f"{speaker_prefix}%"))
+    row = cursor.fetchone()
+    if not row or not row["audio_key"]:
+        return None
+    start = float(row["starts_at_seconds"])
+    end = min(float(row["ends_at_seconds"]), start + 6.0)
+    return {"recordingUrl": f"/api/recordings/{row['runtime_id']}/{Path(row['audio_key']).name}",
+            "start": start, "end": end}
+
+
+def read_client_identification(connection, context, actor_user_id):
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT client.display_name AS client_name,
+                practitioner.professional_name AS therapist_name
+            FROM app.clients client
+            JOIN app.client_therapist_access access
+              ON access.client_id=client.id AND access.organization_id=client.organization_id
+            JOIN app.organization_practitioners practitioner ON practitioner.id=access.practitioner_id
+            JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id
+            WHERE client.id=%s AND client.organization_id=%s AND membership.user_id=%s
+              AND access.revoked_at IS NULL AND practitioner.status='active'
+            LIMIT 1""", (context["client_id"], context["organization_id"], actor_user_id))
+        relationship = cursor.fetchone()
+        if not relationship:
+            raise HTTPException(status_code=404, detail="Client identification is unavailable.")
+        cursor.execute("""SELECT participant_role, display_name
+            FROM app.client_identification_profiles
+            WHERE organization_id=%s AND client_id=%s""",
+            (context["organization_id"], context["client_id"]))
+        saved = {row["participant_role"]: row for row in cursor.fetchall()}
+        client_name = saved.get("client", {}).get("display_name") or relationship["client_name"] or "Client"
+        therapist_name = saved.get("therapist", {}).get("display_name") or relationship["therapist_name"] or "Therapist"
+        client_sample = identification_sample(cursor, context, client_name, "PATIENT")
+        therapist_sample = identification_sample(cursor, context, therapist_name, "CLINICIAN")
+    return {**context,
+        "client": {"name": client_name, "sample": client_sample},
+        "therapist": {"name": therapist_name, "sample": therapist_sample}}
+
+
+@app.get("/client-identification")
+def get_client_identification(authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=True)
+        actor = authorize_clinical_access(connection, authorization=authorization, **context, require_write=False)
+        return read_client_identification(connection, context, actor)
+
+
+@app.put("/client-identification")
+def update_client_identification(request: ClientIdentificationRequest, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization, therapist=True, write=True)
+        if context != {"organization_id": request.organization_id, "client_id": request.client_id}:
+            raise HTTPException(status_code=403, detail="The requested client is not your linked client.")
+        actor = authorize_clinical_access(connection, authorization=authorization, **context, require_write=True)
+        with connection.cursor() as cursor:
+            for role, participant in (("client", request.client), ("therapist", request.therapist)):
+                cursor.execute("""INSERT INTO app.client_identification_profiles
+                    (organization_id, client_id, participant_role, display_name, updated_by_user_id)
+                    VALUES (%s,%s,%s,%s,%s)
+                    ON CONFLICT (client_id, participant_role) DO UPDATE SET
+                      organization_id=EXCLUDED.organization_id,
+                      display_name=EXCLUDED.display_name,
+                      updated_by_user_id=EXCLUDED.updated_by_user_id,
+                      updated_at=CURRENT_TIMESTAMP""",
+                    (context["organization_id"], context["client_id"], role, participant.name, actor))
+        return read_client_identification(connection, context, actor)
 
 
 def shared_session_materials(context, permissions):
@@ -876,6 +988,103 @@ def review_client_journey_entry(client_id: str, entry_id: str, request: JourneyR
     if not found:
         raise HTTPException(status_code=404, detail='Journey entry not found for this client.')
     return {'id': entry_id, 'status': request.status}
+
+
+@app.get("/clinical-records/clients/{client_id}/documents")
+def get_client_documents(client_id: str, organization_id: str, authorization: str | None = Header(default=None)):
+    """List active document metadata without exposing storage locations."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(connection, authorization=authorization,
+                                      organization_id=organization_id, client_id=client_id,
+                                      require_write=False)
+            rows = client_documents.list_documents(connection, organization_id, client_id)
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
+    return {"documents": [{
+        "id": str(row["id"]), "title": row["title"], "documentType": row["document_type"],
+        "filename": row["source_filename"], "version": row["version_number"],
+        "createdAt": row["created_at"].isoformat(), "contentType": row["content_type"],
+        "byteSize": row["byte_size"], "workflowStatus": row["workflow_status"],
+        "pageCount": row["page_count"],
+        "contentUrl": f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/content?organization_id={organization_id}",
+        "thumbnailUrl": f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/thumbnail?organization_id={organization_id}" if row["has_thumbnail"] else None,
+        "pageUrls": [f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/pages/{page_number}?organization_id={organization_id}"
+                     for page_number in range(1, row["page_count"] + 1)],
+    } for row in rows]}
+
+
+def _document_artifact_response(artifact, request: Request, *, download_name: str | None = None):
+    arguments = {"Bucket": artifact["storage_bucket"], "Key": artifact["object_key"]}
+    if artifact["object_version_id"]:
+        arguments["VersionId"] = artifact["object_version_id"]
+    range_header = request.headers.get("range")
+    if range_header:
+        if not re.fullmatch(r"bytes=\d*-\d*", range_header):
+            raise HTTPException(status_code=416, detail="Invalid document byte range.")
+        arguments["Range"] = range_header
+    result = boto3.client("s3", region_name=artifact["region"]).get_object(**arguments)
+    body = result["Body"].read()
+    headers = {"Cache-Control": "no-store", "Accept-Ranges": result.get("AcceptRanges", "bytes"),
+               "X-Content-Type-Options": "nosniff"}
+    if result.get("ContentRange"):
+        headers["Content-Range"] = result["ContentRange"]
+    if result.get("ContentLength") is not None:
+        headers["Content-Length"] = str(result["ContentLength"])
+    if download_name:
+        filename = Path(download_name).name.replace('"', "")
+        headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    return Response(content=body, status_code=206 if result.get("ContentRange") else 200,
+                    media_type=artifact["content_type"], headers=headers)
+
+
+@app.get("/clinical-records/clients/{client_id}/documents/{document_id}/{asset}")
+def get_client_document_asset(client_id: str, document_id: str, asset: Literal["content", "thumbnail"],
+                              organization_id: str, request: Request,
+                              authorization: str | None = Header(default=None)):
+    """Proxy one authorized, version-pinned document object from private S3."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(connection, authorization=authorization,
+                                      organization_id=organization_id, client_id=client_id,
+                                      require_write=False)
+            artifact = client_documents.get_document_artifact(
+                connection, organization_id, client_id, document_id, asset)
+        if not artifact:
+            raise HTTPException(status_code=404, detail="Document not found.")
+        return _document_artifact_response(
+            artifact, request, download_name=artifact["source_filename"] if asset == "content" else None)
+    except HTTPException:
+        raise
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
+    except (BotoCoreError, ClientError) as exc:
+        raise HTTPException(status_code=404, detail="Document file not found.") from exc
+
+
+@app.get("/clinical-records/clients/{client_id}/documents/{document_id}/pages/{page_number}")
+def get_client_document_page(client_id: str, document_id: str, page_number: int,
+                             organization_id: str, request: Request,
+                             authorization: str | None = Header(default=None)):
+    """Return one authorized rendered page for the application document viewer."""
+    if page_number < 1:
+        raise HTTPException(status_code=404, detail="Document page not found.")
+    try:
+        with connect() as connection:
+            authorize_clinical_access(connection, authorization=authorization,
+                                      organization_id=organization_id, client_id=client_id,
+                                      require_write=False)
+            artifact = client_documents.get_document_page_artifact(
+                connection, organization_id, client_id, document_id, page_number)
+        if not artifact:
+            raise HTTPException(status_code=404, detail="Document page not found.")
+        return _document_artifact_response(artifact, request)
+    except HTTPException:
+        raise
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
+    except (BotoCoreError, ClientError) as exc:
+        raise HTTPException(status_code=404, detail="Document page not found.") from exc
 
 
 @app.get("/clinical-records/clients/{client_id}/pre-session-context")

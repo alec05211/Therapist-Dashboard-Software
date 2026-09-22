@@ -62,10 +62,11 @@ function BillingIcon() {
   );
 }
 
-function ReportsIcon() {
+function DocumentsIcon() {
   return (
     <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5V10.88c0-.62.5-1.13 1.13-1.13h1.74c.62 0 1.13.5 1.13 1.13v8.62m0 0h3V5.63c0-.62.5-1.13 1.13-1.13h1.74c.62 0 1.13.5 1.13 1.13V19.5m0 0h3v-5.62c0-.62.5-1.13 1.13-1.13h.24c.62 0 1.13.5 1.13 1.13v5.62M3 19.5h18" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3.75h7.5l3 3v13.5H6.75V3.75Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 3.75v3h3M9 11.25h6m-6 3h6m-6 3h3.75" />
     </svg>
   );
 }
@@ -182,11 +183,11 @@ export function AppHeader() {
           <button
             aria-disabled="true"
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Reports are coming soon"
+            title="Documents are coming soon"
             type="button"
           >
-            <ReportsIcon />
-            Reports
+            <DocumentsIcon />
+            Documents
             <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
           </button>
           <Link
