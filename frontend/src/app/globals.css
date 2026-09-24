@@ -109,11 +109,11 @@ html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
   z-index: 1;
   top: 0;
   bottom: 0;
-  width: 44%;
+  width: 12%;
   content: "";
   pointer-events: none;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 
 .session-history-carousel::before {
@@ -131,3 +131,12 @@ html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
 @media (prefers-reduced-motion: reduce) {
   .session-carousel-track { transition: none; }
 }
+
+/* Keep document actions legible above light PDF thumbnails in either theme. */
+.document-download {
+  background-color: #292524;
+  color: #fff;
+  border-color: #57534e;
+}
+.document-download:hover,
+.document-download:focus-visible { background-color: #151412; color: #fff; }

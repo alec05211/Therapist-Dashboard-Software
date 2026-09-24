@@ -21,12 +21,14 @@ from database.auth import validate_access_token
 from database.connection import connect
 from database import organization_storage
 from database import client_journey
-from database import client_documents
+from database import document_workflow
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights
+from ai_harness.clinician_context import with_clinician_guidance
 from pydantic import BaseModel, Field, field_validator
 
 app = FastAPI()
+app.include_router(document_workflow.router)
 # Kept explicit so Uvicorn's local reload watcher reloads the application
 # boundary when authentication behavior changes during development.
 load_dotenv(Path(__file__).with_name(".env"))
@@ -990,110 +992,13 @@ def review_client_journey_entry(client_id: str, entry_id: str, request: JourneyR
     return {'id': entry_id, 'status': request.status}
 
 
-@app.get("/clinical-records/clients/{client_id}/documents")
-def get_client_documents(client_id: str, organization_id: str, authorization: str | None = Header(default=None)):
-    """List active document metadata without exposing storage locations."""
-    try:
-        with connect() as connection:
-            authorize_clinical_access(connection, authorization=authorization,
-                                      organization_id=organization_id, client_id=client_id,
-                                      require_write=False)
-            rows = client_documents.list_documents(connection, organization_id, client_id)
-    except (RuntimeError, PsycopgError) as exc:
-        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
-    return {"documents": [{
-        "id": str(row["id"]), "title": row["title"], "documentType": row["document_type"],
-        "filename": row["source_filename"], "version": row["version_number"],
-        "createdAt": row["created_at"].isoformat(), "contentType": row["content_type"],
-        "byteSize": row["byte_size"], "workflowStatus": row["workflow_status"],
-        "pageCount": row["page_count"],
-        "contentUrl": f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/content?organization_id={organization_id}",
-        "thumbnailUrl": f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/thumbnail?organization_id={organization_id}" if row["has_thumbnail"] else None,
-        "pageUrls": [f"/api/clinical-records/clients/{client_id}/documents/{row['id']}/pages/{page_number}?organization_id={organization_id}"
-                     for page_number in range(1, row["page_count"] + 1)],
-    } for row in rows]}
-
-
-def _document_artifact_response(artifact, request: Request, *, download_name: str | None = None):
-    arguments = {"Bucket": artifact["storage_bucket"], "Key": artifact["object_key"]}
-    if artifact["object_version_id"]:
-        arguments["VersionId"] = artifact["object_version_id"]
-    range_header = request.headers.get("range")
-    if range_header:
-        if not re.fullmatch(r"bytes=\d*-\d*", range_header):
-            raise HTTPException(status_code=416, detail="Invalid document byte range.")
-        arguments["Range"] = range_header
-    result = boto3.client("s3", region_name=artifact["region"]).get_object(**arguments)
-    body = result["Body"].read()
-    headers = {"Cache-Control": "no-store", "Accept-Ranges": result.get("AcceptRanges", "bytes"),
-               "X-Content-Type-Options": "nosniff"}
-    if result.get("ContentRange"):
-        headers["Content-Range"] = result["ContentRange"]
-    if result.get("ContentLength") is not None:
-        headers["Content-Length"] = str(result["ContentLength"])
-    if download_name:
-        filename = Path(download_name).name.replace('"', "")
-        headers["Content-Disposition"] = f'inline; filename="{filename}"'
-    return Response(content=body, status_code=206 if result.get("ContentRange") else 200,
-                    media_type=artifact["content_type"], headers=headers)
-
-
-@app.get("/clinical-records/clients/{client_id}/documents/{document_id}/{asset}")
-def get_client_document_asset(client_id: str, document_id: str, asset: Literal["content", "thumbnail"],
-                              organization_id: str, request: Request,
-                              authorization: str | None = Header(default=None)):
-    """Proxy one authorized, version-pinned document object from private S3."""
-    try:
-        with connect() as connection:
-            authorize_clinical_access(connection, authorization=authorization,
-                                      organization_id=organization_id, client_id=client_id,
-                                      require_write=False)
-            artifact = client_documents.get_document_artifact(
-                connection, organization_id, client_id, document_id, asset)
-        if not artifact:
-            raise HTTPException(status_code=404, detail="Document not found.")
-        return _document_artifact_response(
-            artifact, request, download_name=artifact["source_filename"] if asset == "content" else None)
-    except HTTPException:
-        raise
-    except (RuntimeError, PsycopgError) as exc:
-        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
-    except (BotoCoreError, ClientError) as exc:
-        raise HTTPException(status_code=404, detail="Document file not found.") from exc
-
-
-@app.get("/clinical-records/clients/{client_id}/documents/{document_id}/pages/{page_number}")
-def get_client_document_page(client_id: str, document_id: str, page_number: int,
-                             organization_id: str, request: Request,
-                             authorization: str | None = Header(default=None)):
-    """Return one authorized rendered page for the application document viewer."""
-    if page_number < 1:
-        raise HTTPException(status_code=404, detail="Document page not found.")
-    try:
-        with connect() as connection:
-            authorize_clinical_access(connection, authorization=authorization,
-                                      organization_id=organization_id, client_id=client_id,
-                                      require_write=False)
-            artifact = client_documents.get_document_page_artifact(
-                connection, organization_id, client_id, document_id, page_number)
-        if not artifact:
-            raise HTTPException(status_code=404, detail="Document page not found.")
-        return _document_artifact_response(artifact, request)
-    except HTTPException:
-        raise
-    except (RuntimeError, PsycopgError) as exc:
-        raise HTTPException(status_code=503, detail="The document catalog is temporarily unavailable.") from exc
-    except (BotoCoreError, ClientError) as exc:
-        raise HTTPException(status_code=404, detail="Document page not found.") from exc
-
-
 @app.get("/clinical-records/clients/{client_id}/pre-session-context")
 def get_pre_session_context_packet(
     client_id: str,
     organization_id: str,
     authorization: str | None = Header(default=None),
 ):
-    """Return only accepted insight items for a bounded future brief packet."""
+    """Return accepted insights and source-linked clinician guidance for synthesis."""
     try:
         with connect() as connection:
             authorize_clinical_access(
@@ -1107,6 +1012,8 @@ def get_pre_session_context_packet(
                 organization_id=organization_id,
                 client_id=client_id,
             )
+            packet = with_clinician_guidance(packet, client_journey.list_entries(
+                connection, organization_id, client_id, status='accepted'))
     except RuntimeError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
     except PsycopgError as exc:

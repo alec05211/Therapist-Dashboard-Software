@@ -15,7 +15,7 @@ async function forward(request: NextRequest) {
     }
     const response = await fetch(url, { method: request.method, headers, cache: "no-store", body: ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer() });
     const outgoing = new Headers({ "Cache-Control": "no-store" });
-    for (const key of ["content-type", "content-length", "content-range", "accept-ranges"]) {
+    for (const key of ["content-type", "content-length", "content-range", "accept-ranges", "content-disposition", "x-content-type-options"]) {
       const value = response.headers.get(key);
       if (value) outgoing.set(key, value);
     }

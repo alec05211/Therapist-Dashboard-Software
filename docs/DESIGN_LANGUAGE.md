@@ -41,10 +41,37 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 
 ## Interface copy
 
+- Use one meaningful heading per panel. Omit redundant context labels such as “Scheduled session” above a preparation heading, and avoid stacked headings that describe the same content.
+- The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
 - Search fields use a concise placeholder and an accessible name; do not add a redundant visible label or helper sentence.
 
+## Reusable content panels
+
+Use `CollapsibleContentPanel` for a compact text teaser that expands into richer
+content. Draft clinical notes and transcripts share this exact shell: title,
+optional summary, a 96px faded preview, and a disclosure button. Pass text as
+`preview` and expanded content as children; use `expanded` and
+`onExpandedChange` when a parent needs to open it, such as transcript playback.
+Only the header toggles an open panel so controls and text inside remain usable.
+
+The session carousel uses symmetrical 2px blur over the outer 12% on each side,
+keeping adjacent session labels sharp. Its schedule action is a calendar/edit
+icon with an accessible label and hover description.
+
+Document grids begin with an upload tile, when authorized, matching the document
+preview ratio and footer height. Download controls use a persistent charcoal
+surface with white icons so PDF previews cannot obscure the action.
+
 ## Interaction details
+
+- Pre-session briefs use a short opening paragraph, visible follow-up bullets,
+  and a separate supporting-context list. Keep source links small and adjacent
+  to the statement rather than underlining whole paragraphs.
+- Suggested transcript passages use an underline and an explicit suggestion
+  label. Selecting the words opens clinician guidance inline; audio playback
+  remains a separate control. Saved quotes and longer journey lists start
+  collapsed in Insights.
 
 - Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,
   `TranscriptViewer`, and `ClinicalNote` in both roles. The viewer owns playback

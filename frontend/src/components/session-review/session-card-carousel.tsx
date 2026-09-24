@@ -57,8 +57,8 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: "sh
 
 function CalendarIcon() {
   return (
-    <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v3m10.5-3v3M4.5 9.75h15M5.63 4.5h12.74c.62 0 1.13.5 1.13 1.13v12.74c0 .62-.5 1.13-1.13 1.13H5.63c-.62 0-1.13-.5-1.13-1.13V5.63c0-.62.5-1.13 1.13-1.13Z" />
+    <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v4m8-4v4M4 10h14M10 20H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v5m-4 9 1-4 5-5 3 3-5 5-4 1Zm4-7 3 3" />
     </svg>
   );
 }
@@ -100,7 +100,7 @@ export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSe
       </div>
       <div className="absolute inset-x-5 top-3 z-10 flex items-start justify-between gap-4">
         <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
-        {onEditSchedule && <button type="button" onClick={onEditSchedule} className="inline-flex cursor-grab items-center gap-1.5 rounded-md border border-stone-300 bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon />Edit schedule</button>}
+        {onEditSchedule && <button type="button" onClick={onEditSchedule} aria-label="Edit session schedule" title="Edit session dates and recurring schedule" className="inline-flex size-9 cursor-grab items-center justify-center rounded-xl border border-stone-300 bg-stone-100 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon /></button>}
       </div>
     </section>
   );

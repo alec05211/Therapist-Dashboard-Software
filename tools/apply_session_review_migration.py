@@ -15,7 +15,7 @@ def main():
     load_dotenv(ROOT / '.env')
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', ('session-review-migration',))
-        for name in ('010_transcript_speaker_labels.sql', '011_client_journey_entries.sql', '012_client_identification.sql', '013_account_pronouns.sql', '014_client_documents.sql', '015_client_document_workflow.sql'):
+        for name in ('010_transcript_speaker_labels.sql', '011_client_journey_entries.sql', '012_client_identification.sql', '013_account_pronouns.sql', '014_client_documents.sql', '015_client_document_workflow.sql', '016_relationship_documents.sql'):
             migration = ROOT / 'database/migrations' / name
             digest = hashlib.sha256(migration.read_bytes()).hexdigest()
             cursor.execute('SELECT checksum FROM app.schema_migrations WHERE name=%s', (migration.name,))

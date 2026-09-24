@@ -32,7 +32,7 @@ function PhoneIcon() {
   return <svg aria-hidden="true" className="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M6.62 3.75h2.2c.5 0 .94.33 1.08.8l.88 3.07a1.13 1.13 0 0 1-.52 1.29L8.7 9.8a12.04 12.04 0 0 0 5.5 5.5l.9-1.55a1.13 1.13 0 0 1 1.29-.52l3.07.88c.47.14.8.58.8 1.08v2.2c0 .62-.5 1.13-1.13 1.13C10.55 18.52 5.48 13.45 5.48 4.88c0-.62.5-1.13 1.13-1.13Z" /></svg>;
 }
 
-function ChatIcon() {
+export function ChatIcon() {
   return <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 18.75 3.75 20.25l1.5-3.75a7.5 7.5 0 1 1 2.25 2.25Z" /><path strokeLinecap="round" d="M8.25 12h.01m3.74 0H12m3.74 0h.01" /></svg>;
 }
 

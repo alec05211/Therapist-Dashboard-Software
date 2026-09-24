@@ -44,5 +44,5 @@ class BriefProjectionTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, 404)
 
     def test_synthetic_fixture_routes_are_not_registered(self):
-        paths = {route.path for route in server.app.routes}
+        paths = server.app.openapi()['paths']
         self.assertFalse(any(path.startswith('/demo/heartwell-sadic') for path in paths))

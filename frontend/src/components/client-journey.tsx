@@ -64,11 +64,20 @@ export function ClientJourney({ recordContext, onViewEvidence }: Props) {
   }, [recordContext.organizationId, recordContext.clientId]);
   const proposed = entries?.filter(entry => entry.status === "proposed") ?? [];
   const accepted = entries?.filter(entry => entry.status === "accepted") ?? [];
+  const quotes = accepted.filter(entry => entry.category === "important_quote");
+  const history = accepted.filter(entry => entry.category !== "important_quote");
   return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Client journey review">
     <h2 className="text-lg font-semibold text-stone-900">Client journey</h2>
     {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <p className="mt-4 text-sm text-stone-600">Loading journey entries…</p> : <div className="mt-5 grid gap-6">
-      <div><h3 className="text-sm font-semibold text-stone-900">Proposed for review · {proposed.length}</h3>{proposed.length ? <div className="mt-3 grid gap-3">{proposed.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">New source-linked proposals appear after a HealthScribe session finishes.</p>}</div>
-      <div><h3 className="text-sm font-semibold text-stone-900">Accepted history · {accepted.length}</h3>{accepted.length ? <div className="mt-3 grid gap-3">{accepted.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">Accepted entries will inform the pre-session brief.</p>}</div>
+      <details className="rounded-xl border border-stone-300 bg-stone-50 p-4">
+        <summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Saved quotes · {quotes.length}</summary>
+        {quotes.length ? <div className="mt-4 grid gap-4">{quotes.map(entry => <article key={entry.id}>
+          {entry.evidence.map(source => <button key={source.evidence_id} type="button" onClick={() => onViewEvidence(source)} className="mb-2 block cursor-grab text-left text-sm leading-6 text-stone-800 underline decoration-stone-400 underline-offset-4 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">“{source.quote}” <span className="text-xs text-stone-500">{source.session_label}</span></button>)}
+          <JourneyCard entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />
+        </article>)}</div> : <p className="mt-3 text-sm text-stone-600">Review an underlined passage in a completed transcript to save an important statement.</p>}
+      </details>
+      <details className="rounded-xl border border-stone-300 p-4"><summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Other proposals · {proposed.length}</summary>{proposed.length ? <div className="mt-3 grid gap-3">{proposed.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">No passages await review.</p>}</details>
+      <details className="rounded-xl border border-stone-300 p-4"><summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Accepted history · {history.length}</summary>{history.length ? <div className="mt-3 grid gap-3">{history.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">Accepted entries will inform the pre-session brief.</p>}</details>
     </div>}
   </section>;
 }

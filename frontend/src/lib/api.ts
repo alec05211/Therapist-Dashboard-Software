@@ -33,7 +33,7 @@ export const api = {
     request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
     request<PersistedInsightSnapshot>(
-      `/clinical-records/clients/${encodeURIComponent(clientId)}/insights/latest?organization_id=${encodeURIComponent(organizationId)}`,
+      `/clinical-records/clients/${encodeURIComponent(clientId)}/insight-snapshots/latest?organization_id=${encodeURIComponent(organizationId)}`,
     ),
   getClientJourney: (organizationId: string, clientId: string) =>
     request<{ entries: ClientJourneyEntry[] }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries?organization_id=${encodeURIComponent(organizationId)}`),

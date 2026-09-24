@@ -4,6 +4,8 @@ import { CareRelationshipHeader, type CareProfile } from "@/components/care-rela
 import { SessionCardCarousel, nextScheduledSession, type SessionCard } from "@/components/session-review/session-card-carousel";
 import { CompletedSessionLayout } from "@/components/session-review/completed-session-layout";
 import { TranscriptViewer } from "@/components/session-review/transcript-viewer";
+import { ClientDocumentRelationships } from "@/components/client-document-relationships";
+import { CareChat } from "@/components/care-chat";
 import { LoadingSpinner } from "@/components/loading-spinner";
 
 type Portal = {
@@ -13,6 +15,7 @@ type Portal = {
 };
 
 export function ClientPortal({ name, profile }: { name: string; profile: CareProfile }) {
+  const [activeView, setActiveView] = useState("clinical-workspace");
   const [portal, setPortal] = useState<Portal | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [workspaceVisit, setWorkspaceVisit] = useState(0);
@@ -43,12 +46,13 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     ? scheduled ? [] : selectedSession ? [selectedSession] : []
     : portal?.sessions ?? [];
   return <main className="mx-auto w-[min(92vw,1080px)] py-8 text-stone-900">
-    <CareRelationshipHeader profile={profile} activeAction="clinical-workspace" actions={[
-      { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: () => { setSelectedId(null); setScheduled(null); setWorkspaceVisit(value => value + 1); document.getElementById("client-clinical-workspace")?.focus(); } },
-      { id: "chat", label: "Chat", icon: "chat", comingSoon: true },
+    <CareRelationshipHeader profile={profile} activeAction={activeView} actions={[
+      { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: () => { setActiveView("clinical-workspace"); setSelectedId(null); setScheduled(null); setWorkspaceVisit(value => value + 1); document.getElementById("client-clinical-workspace")?.focus(); } },
+      { id: "documents", label: "Documents", icon: "documents", onSelect: () => setActiveView("documents") },
+      { id: "chat", label: "Chat", icon: "chat", onSelect: () => setActiveView("chat") },
       { id: "prescriptions", label: "Prescriptions", icon: "prescriptions", comingSoon: true },
     ]} />
-    <section id="client-clinical-workspace" tabIndex={-1} className="outline-none">
+    {activeView === "documents" ? <ClientDocumentRelationships /> : activeView === "chat" ? <CareChat partnerName={profile.name} /> : <section id="client-clinical-workspace" tabIndex={-1} className="outline-none">
     <p className="sr-only">{name}’s clinical workspace</p>
     {error && <p role="alert" className="mt-5">{error}</p>}{!portal && !error && <LoadingSpinner label="Loading shared materials…" />}
     {portal && <>
@@ -77,5 +81,5 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
       {portal.permissions.can_view_insights && <section className="mt-7"><h2 className="text-xl font-semibold">Therapist-approved insights</h2><p className="mt-2 text-sm text-stone-600">Reflections for discussion with your therapist.</p>{portal.insights?.length ? portal.insights.map((text, index) => <p key={index} className="mt-3 leading-6">{text}</p>) : <p className="mt-3">No therapist-approved insights have been shared yet.</p>}</section>}
 
     </>}
-  </section></main>;
+  </section>}</main>;
 }
