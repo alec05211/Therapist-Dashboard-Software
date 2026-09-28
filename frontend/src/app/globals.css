@@ -14,6 +14,10 @@
   --accent-surface: #eaf2eb;
   --accent-strong: #465c4b;
   --accent-strong-hover: #36483a;
+  --document-action-bg: #57534e;
+  --document-action-bg-hover: #44403c;
+  --document-action-icon: #e7e5e4;
+  --document-action-border: #78716c;
 }
 
 @theme inline {
@@ -45,6 +49,10 @@ html[data-theme="dark"] {
   /* Remains dark enough for the existing white primary-button labels. */
   --accent-strong: #4e6b54;
   --accent-strong-hover: #5c7a62;
+  --document-action-bg: #44403c;
+  --document-action-bg-hover: #57534e;
+  --document-action-icon: #f5f5f4;
+  --document-action-border: #78716c;
 }
 
 html[data-theme="light"] .bg-white { background-color: var(--surface); }
@@ -128,15 +136,81 @@ html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
   mask-image: linear-gradient(to left, #000, rgb(0 0 0 / 60%) 40%, transparent 100%);
 }
 
+.calendar-scroll-fade {
+  background: linear-gradient(to bottom, var(--surface-subtle), transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+
+.calendar-scroll-surface {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.calendar-scroll-surface::-webkit-scrollbar {
+  display: none;
+}
+
+.calendar-shell {
+  --calendar-base-width: min(94vw, 1280px);
+  width: var(--calendar-base-width);
+}
+
+.calendar-day-agenda--closed {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .calendar-shell--agenda {
+    width: calc(var(--calendar-base-width) + 320px);
+  }
+
+  .calendar-month-layout--agenda {
+    grid-template-columns: var(--calendar-base-width) 0;
+    transition: grid-template-columns 200ms ease-out;
+  }
+
+  .calendar-month-layout--agenda-open {
+    grid-template-columns: var(--calendar-base-width) 320px;
+  }
+
+  .calendar-day-agenda {
+    height: max(520px, 72vh);
+    width: 320px;
+    overflow-y: auto;
+    transition: opacity 200ms ease-out, transform 200ms ease-out, visibility 0s linear 0s;
+  }
+
+  .calendar-day-agenda--closed {
+    display: block;
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 200ms ease-out, transform 200ms ease-out, visibility 0s linear 200ms;
+  }
+
+  .calendar-day-agenda--open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .session-carousel-track { transition: none; }
+  .scroll-smooth { scroll-behavior: auto; }
+  .calendar-month-layout--agenda,
+  .calendar-day-agenda { transition: none; }
 }
 
 /* Keep document actions legible above light PDF thumbnails in either theme. */
 .document-download {
-  background-color: #292524;
-  color: #fff;
-  border-color: #57534e;
+  background-color: var(--document-action-bg);
+  color: var(--document-action-icon);
+  border-color: var(--document-action-border);
 }
 .document-download:hover,
-.document-download:focus-visible { background-color: #151412; color: #fff; }
+.document-download:focus-visible { background-color: var(--document-action-bg-hover); color: var(--document-action-icon); }

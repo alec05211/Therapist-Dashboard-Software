@@ -25,7 +25,10 @@ checksums. Completed jobs save timed, speaker-labelled passages in PostgreSQL
 `app.transcript_segments`, and the generated clinical draft in
 `app.synthesis_versions`. Review reads those database records, while speaker-name
 corrections live in `app.transcript_speaker_labels`. Original HealthScribe JSON
-and a normalized export remain in S3; playback restores catalogued audio.
+and a normalized export remain in S3; playback restores catalogued audio. One
+stable, bounded source-audio pointer for every diarized speaker is stored in
+`app.transcript_speaker_samples`; the sample remains part of the original encrypted
+S3 recording rather than becoming a duplicate audio blob in PostgreSQL.
 The job is marked complete only after its review records commit. The synthetic
 Heartwell/Sadić case has been imported through
 `tools/migrate_heartwell_case.py`: its six recordings and provider outputs are
@@ -38,8 +41,8 @@ The source-linked HealthScribe note excerpts also become proposed client-journey
 entries. They stay out of the pre-session brief until a therapist reviews and
 accepts them in Insights. Rejected, hidden, stale, and disputed entries are
 excluded. The original note and transcript remain available for inspection.
-Apply migrations `010_transcript_speaker_labels.sql` and
-`011_client_journey_entries.sql` before processing new
+Apply the additive session-review migrations through
+`019_transcript_speaker_samples.sql` before processing new
 organization-stored uploads. Local AWS-secret setups can run
 `.venv/Scripts/python.exe -m tools.apply_session_review_migration` after the
 configured AWS profile is available.
@@ -92,7 +95,7 @@ When `/transcribe` receives an audio file, the server:
    - the output bucket name;
    - the Terraform-provisioned batch data-access role;
    - `ShowSpeakerLabels: true`;
-   - `MaxSpeakerLabels: 2`.
+   - `MaxSpeakerLabels: 6` by default, configurable with `HEALTHSCRIBE_MAX_SPEAKERS` from 3–30.
 
 ### 2. Processing and results
 
@@ -105,8 +108,8 @@ The application downloads both raw artifacts from S3. It then normalizes transcr
 
 ### Current implementation constraints
 
-- The job request currently sets a maximum of two speaker labels. Supporting sessions with more participants will require an intentional change to this configuration and UI/data-model review.
-- The application reads HealthScribe's reported participant roles as provided; organization-stored sessions save therapist speaker-name overrides in PostgreSQL. Legacy sessions still save them in local transcript JSON.
+- The application reads HealthScribe's reported participant roles as provided. HealthScribe can return numbered roles such as `PATIENT_1` or `CLINICIAN_1`; every distinct label is stored, but remains unverified until a therapist names or confirms it.
+- Organization-stored sessions save therapist speaker-name overrides and durable sample pointers in PostgreSQL. The encrypted source audio remains in S3. Legacy sessions still save speaker names in local transcript JSON.
 - Processing occurs after upload rather than live during a session.
 - Audio files and outputs are also written to the local `recordings/` directory. That directory contains sensitive session data and requires the same care as cloud-stored artifacts.
 - The Terraform configuration includes a resource-access role for streaming use, but the current local recording flow uses batch jobs.

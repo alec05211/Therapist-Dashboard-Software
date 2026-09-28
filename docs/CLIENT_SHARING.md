@@ -10,7 +10,9 @@ Migration `007_relationship_contact_profiles.sql` seeds only the existing
 synthetic case's former presentation values; it leaves therapist phone blank.
 
 Jeremy's Client care settings → Permissions controls persist in
-`app.client_portal_permissions`. The API resolves his active membership,
+`app.client_portal_permissions`. Schedule, Documents, and Chat remain available
+to the client and are omitted from the permissions form; therapists can control completed-session labels, transcripts,
+recordings, draft clinical notes, approved insights, and Prescriptions. The API resolves his active membership,
 practitioner record, and client-specific access grant before reading or saving.
 Writes require clinical write access and reject mismatched client/organization
 IDs. Missing permission rows deny every category.

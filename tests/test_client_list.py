@@ -7,7 +7,7 @@ import server
 
 class ClientListTests(unittest.TestCase):
     def test_workspace_rejects_a_different_client_before_loading_profile(self):
-        with patch.object(server, 'current_identity', return_value={'role': 'therapist'}), patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={'client_id': 'linked', 'organization_id': 'org'}):
+        with patch.object(server, 'current_identity', return_value={'role': 'therapist'}), patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context', side_effect=server.HTTPException(403, 'This client workspace is not available for your account.')):
             with self.assertRaises(server.HTTPException) as error:
                 server.relationship_profile('Bearer therapist', client_id='another-client')
             self.assertEqual(error.exception.status_code, 403)

@@ -41,6 +41,7 @@ class AudioUploadTests(unittest.TestCase):
                 self.assertEqual(server.session_recording(result['id'], recording.name).media_type, server.AUDIO_MIME_TYPES[extension.lower()])
                 args = aws.return_value.start_medical_scribe_job.call_args.kwargs
                 self.assertTrue(args['Media']['MediaFileUri'].endswith(extension.lower()))
+                self.assertEqual(args['Settings']['MaxSpeakerLabels'], server.HEALTHSCRIBE_MAX_SPEAKERS)
                 self.assertEqual(result['status'], 'IN_PROGRESS')
                 self.assertEqual(len(tasks.tasks), 1)
                 self.assertIs(tasks.tasks[0].func, server.process_job)

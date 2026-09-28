@@ -53,11 +53,13 @@ class SessionReviewTests(unittest.TestCase):
         cursor = connection.__enter__.return_value.cursor.return_value.__enter__.return_value
         cursor.fetchone.side_effect = [
             {'id': uuid4(), 'created_at': datetime(2026, 9, 20, tzinfo=timezone.utc)},
-            {'content': {'clinical_note': [{'name': 'History', 'items': ['Draft.']}]}}
+            {'content': {'clinical_note': [{'name': 'History', 'items': ['Draft.']}] }},
+            {'client_name': 'Default client', 'therapist_name': 'Default therapist'}
         ]
         cursor.fetchall.side_effect = [
             [{'starts_at_seconds': Decimal('0.100'), 'ends_at_seconds': Decimal('1.200'), 'speaker_label': 'PATIENT', 'content': 'Hello.'}],
-            [{'source_label': 'PATIENT', 'display_label': 'Client'}]
+            [{'source_label': 'PATIENT', 'display_label': 'Client'}],
+            [{'participant_role': 'client', 'display_name': 'Configured client'}]
         ]
         with patch.object(session_review, 'connect', return_value=connection):
             result = session_review.read_result(self.storage)

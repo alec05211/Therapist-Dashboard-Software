@@ -38,6 +38,9 @@ def create_upload(context, suffix, actor_subject):
         cursor.execute("SELECT to_regclass('app.client_journey_entries') AS relation")
         if not cursor.fetchone()['relation']:
             raise RuntimeError('Client journey database migration has not been applied.')
+        cursor.execute("SELECT to_regclass('app.transcript_speaker_samples') AS relation")
+        if not cursor.fetchone()['relation']:
+            raise RuntimeError('Speaker sample database migration has not been applied.')
         prefix = session_prefix(context['client_id'], session_id)
         storage = {key: str(binding[key]) for key in ('bucket', 'region', 'kms_key_arn', 'healthscribe_role_arn')}
         storage.update(organization_id=context['organization_id'], client_id=context['client_id'],

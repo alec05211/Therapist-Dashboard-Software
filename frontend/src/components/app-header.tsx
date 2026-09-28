@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { canUseFeature } from "@/lib/role-capabilities";
 import { useEffect, useId, useRef, useState } from "react";
@@ -76,6 +77,7 @@ export function AppHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [accountRole, setAccountRole] = useState<"therapist" | "client" | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +105,29 @@ export function AppHeader() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let controller: AbortController;
+    const refreshPhoto = () => {
+      controller?.abort();
+      controller = new AbortController();
+      const signal = controller.signal;
+      void fetch("/api/account/profile", { cache: "no-store", signal })
+        .then(async response => {
+          if (!response.ok) throw new Error("Profile unavailable");
+          const profile = await response.json();
+          if (!signal.aborted) setPhotoUrl(profile.photoUrl ? `${profile.photoUrl}?v=${Date.now()}` : null);
+        })
+        .catch(() => { if (!signal.aborted) setPhotoUrl(null); });
+    };
+    refreshPhoto();
+    window.addEventListener("account-photo-changed", refreshPhoto);
+    return () => {
+      controller.abort();
+      window.removeEventListener("account-photo-changed", refreshPhoto);
+    };
+  }, [isAuthenticated]);
+
   return (
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex h-16 w-[min(94vw,1200px)] items-center justify-between">
@@ -115,12 +140,12 @@ export function AppHeader() {
               aria-controls={menuId}
               aria-expanded={isOpen}
               aria-haspopup="menu"
-              className="inline-flex size-10 cursor-grab items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 shadow-sm hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
+              className="relative inline-flex size-10 cursor-grab items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 shadow-sm hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
               onClick={() => setIsOpen((open) => !open)}
               type="button"
             >
               <span className="sr-only">Open account menu</span>
-              <UserIcon />
+              {isAuthenticated && photoUrl ? <Image key={photoUrl} src={photoUrl} alt="" fill sizes="40px" unoptimized className="rounded-full object-cover" onError={() => setPhotoUrl(null)} /> : <UserIcon />}
             </button>
             {isOpen && (
               <div id={menuId} className="absolute right-0 z-10 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg">
@@ -142,16 +167,14 @@ export function AppHeader() {
       </div>
       {isAuthenticated && accountRole && canUseFeature(accountRole, "practiceNavigation") && <div className="border-t border-stone-100 bg-stone-50">
         <nav className="mx-auto flex min-h-12 w-[min(94vw,1200px)] flex-wrap items-center justify-end gap-2 py-1" aria-label="Therapist workspace">
-          <button
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Calendar is coming soon"
-            type="button"
+          <Link
+            href="/calendar"
+            aria-current={pathname.startsWith("/calendar") ? "page" : undefined}
+            className={`inline-flex cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/calendar") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
           >
             <CalendarIcon />
             Calendar
-            <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
-          </button>
+          </Link>
           <Link
             href="/clients"
             aria-current={pathname.startsWith("/clients") ? "page" : undefined}

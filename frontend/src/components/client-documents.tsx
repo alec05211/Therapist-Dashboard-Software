@@ -25,17 +25,17 @@ function Thumbnail({ document, sizes }: { document: DocumentRecord; sizes: strin
 }
 
 function DownloadLink({ document }: { document: DocumentRecord }) {
-  return <a href={document.signedUrl ?? document.contentUrl} download={`${document.signedUrl ? "signed-" : ""}${document.filename}`} onClick={event => event.stopPropagation()} title={`Download ${document.title}`} className="document-download absolute right-3 top-3 z-20 grid size-9 cursor-grab place-items-center rounded-lg border opacity-100 shadow-sm transition-[background-color,box-shadow] duration-200 group-hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><span className="sr-only">Download {document.title}</span><DownloadIcon /></a>;
+  return <a href={document.signedUrl ?? document.contentUrl} download={`${document.signedUrl ? "signed-" : ""}${document.filename}`} onClick={event => event.stopPropagation()} title={`Download ${document.title}`} className="document-download absolute right-2.5 top-2.5 z-20 grid size-8 cursor-grab place-items-center rounded-lg border opacity-0 shadow-sm transition-[background-color,box-shadow,opacity] duration-200 group-hover:opacity-100 group-focus-within:opacity-100 hover:shadow-md focus:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><span className="sr-only">Download {document.title}</span><DownloadIcon /></a>;
 }
 
 function UploadDocumentCard({ view, disabled, expanded, onClick }: { view: "grid" | "list"; disabled: boolean; expanded: boolean; onClick: () => void }) {
-  return <button type="button" disabled={disabled} onClick={onClick} aria-expanded={expanded} aria-controls="document-upload-form" className={`group cursor-grab overflow-hidden rounded-xl border border-stone-300 bg-white text-left shadow-sm transition duration-200 ease-out hover:border-emerald-700 hover:shadow-md active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${view === "list" ? "flex min-h-[122px] items-center gap-4 p-3" : "w-full"}`}>
+  return <button type="button" disabled={disabled} onClick={onClick} aria-expanded={expanded} aria-controls="document-upload-form" className={`group cursor-grab overflow-hidden rounded-xl border border-stone-300 bg-white text-left shadow-sm transition duration-200 ease-out hover:border-emerald-700 hover:shadow-md active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${view === "list" ? "flex min-h-[112px] items-center gap-3 p-3" : "w-full"}`}>
     <span className={`grid place-items-center bg-stone-100 transition-colors duration-200 group-hover:bg-emerald-50 ${view === "grid" ? "aspect-[8.5/11] w-full" : "h-24 w-[74px] shrink-0 rounded-md"}`}>
-      <span className="grid size-16 place-items-center rounded-full border border-stone-300 bg-white text-emerald-800 shadow-sm transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none">
-        <svg aria-hidden="true" className="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5" /></svg>
+      <span className="grid size-14 place-items-center rounded-full border border-stone-300 bg-white text-emerald-800 shadow-sm transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none">
+        <svg aria-hidden="true" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5" /></svg>
       </span>
     </span>
-    <span className={`block text-sm font-semibold text-stone-900 ${view === "grid" ? "h-24 border-t border-stone-200 p-4" : ""}`}>Upload Document</span>
+    <span className={`block text-sm font-semibold text-stone-900 ${view === "grid" ? "h-20 border-t border-stone-200 p-3.5" : ""}`}>Upload Document</span>
   </button>;
 }
 
@@ -129,12 +129,12 @@ function DocumentSpace({ recordContext }: { recordContext: RecordContext }) {
         <div className="flex gap-2"><button className={control} disabled={busy}>{busy ? "Uploading..." : "Upload and share"}</button><button type="button" className={control} disabled={busy} onClick={() => setUploadOpen(false)}>Cancel</button></div>
       </form>}
 
-      {loading ? <LoadingSpinner label="Loading documents…" /> : error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : documents.length === 0 && !canUpload ? <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-600">No documents have been added.</div> : view === "grid" ? <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(min(100%,250px),310px))] gap-5">
+      {loading ? <LoadingSpinner label="Loading documents…" /> : error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : documents.length === 0 && !canUpload ? <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-600">No documents have been added.</div> : view === "grid" ? <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(min(100%,220px),270px))] gap-4">
         {canUpload && <UploadDocumentCard view={view} disabled={busy} expanded={uploadOpen} onClick={() => { setUploadOpen(value => !value); setActionError(null); }} />}
         {documents.map(document => <article key={document.id} className="group relative overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm transition-colors duration-200 hover:border-stone-300">
           <button type="button" onClick={() => { setActionError(null); setShowSigned(Boolean(document.signedUrl)); setSelected(document); }} className="relative z-0 block w-full cursor-grab text-left active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700">
             <div className="relative aspect-[8.5/11] overflow-hidden bg-stone-100"><Thumbnail document={document} sizes="310px" /></div>
-            <div className="h-24 border-t border-stone-200 p-4"><h3 className="line-clamp-2 text-sm font-semibold text-stone-900">{document.title}</h3><p className="mt-1 text-xs capitalize text-stone-500">{labelFor(document.documentType)} · {statusFor(document.workflowStatus)} · PDF · {sizeFor(document.byteSize)}</p></div>
+            <div className="h-20 border-t border-stone-200 p-3.5"><h3 className="line-clamp-2 text-sm font-semibold text-stone-900">{document.title}</h3><p className="mt-1 text-xs capitalize text-stone-500">{labelFor(document.documentType)} · {statusFor(document.workflowStatus)} · PDF · {sizeFor(document.byteSize)}</p></div>
           </button><span aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 bg-emerald-800/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100" /><DownloadLink document={document} />
         </article>)}
       </div> : <div className="mt-5 grid gap-2">

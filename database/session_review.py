@@ -7,6 +7,7 @@ from psycopg.types.json import Json
 
 from database.connection import connect
 from database import client_journey
+from database import speaker_identification
 
 
 def _timing(value):
@@ -63,6 +64,9 @@ def persist_result(storage, segments, clinical_note, source_artifact_id, raw_tra
                  Json({'clinical_note': clinical_note})))
             if raw_transcript is not None and raw_note is not None:
                 client_journey.propose_from_healthscribe(cursor, storage, raw_transcript, raw_note, version_id)
+        else:
+            version_id = existing['id']
+        speaker_identification.store_samples(cursor, storage, version_id)
         cursor.execute("""UPDATE app.session_storage_jobs
             SET status='COMPLETED', detail=NULL, updated_at=CURRENT_TIMESTAMP
             WHERE runtime_id=%s AND session_id=%s AND organization_id=%s AND client_id=%s""",
@@ -104,6 +108,9 @@ def read_result(storage):
             ORDER BY version_number DESC LIMIT 1""",
             (storage['session_id'], storage['organization_id'], storage['client_id']))
         draft = cursor.fetchone()
+        speakers = speaker_identification.resolve_names(
+            {segment['speaker'] for segment in segments if segment.get('speaker')}, speakers,
+            speaker_identification.read_defaults(cursor, storage))
     recording_name = Path(storage['audio_key']).name
     return dict(id=storage['runtime_id'], created_at=version['created_at'].isoformat(),
                 audio={'file': recording_name}, speakers=speakers,

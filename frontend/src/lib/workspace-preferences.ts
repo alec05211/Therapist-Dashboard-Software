@@ -5,6 +5,23 @@ export const sessionViewChanged = "therapist-dashboard-session-view-changed";
 const sessionCadenceKey = "therapist-dashboard-session-cadence";
 export const sessionCadenceChanged = "therapist-dashboard-session-cadence-changed";
 
+export type ClinicalSessionSelection = { id: string; type: "completed" | "scheduled" };
+
+function clinicalSessionKey(clientId: string) {
+  return `therapist-dashboard-clinical-session:${clientId}`;
+}
+
+export function readClinicalSession(clientId: string): ClinicalSessionSelection | null {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(clinicalSessionKey(clientId)) ?? "null") as Partial<ClinicalSessionSelection> | null;
+    return value && typeof value.id === "string" && (value.type === "completed" || value.type === "scheduled") ? value as ClinicalSessionSelection : null;
+  } catch { return null; }
+}
+
+export function rememberClinicalSession(clientId: string, selection: ClinicalSessionSelection) {
+  window.localStorage.setItem(clinicalSessionKey(clientId), JSON.stringify(selection));
+}
+
 export function readSessionView(): SessionView {
   return window.localStorage.getItem(sessionViewKey) === "legacy" ? "legacy" : "cards";
 }

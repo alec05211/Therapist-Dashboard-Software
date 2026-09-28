@@ -14,6 +14,7 @@ export type CareProfile = {
   organizationId?: string | null;
   clientId?: string | null;
   syntheticCase?: boolean;
+  needsSetup?: boolean;
 };
 
 export type CareAction = {
@@ -87,13 +88,13 @@ export function CareRelationshipHeader({ profile, actions, activeAction }: {
         {profile.role === "Therapist" && profile.aboutMe && <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-stone-600">{profile.aboutMe}</p>}
       </div>
     </div>
-    <nav className="flex gap-1 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2" aria-label={`${profile.name} care navigation`}>
+    {actions.length > 0 && <nav className="flex gap-1 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2" aria-label={`${profile.name} care navigation`}>
       {actions.map(action => <button key={action.id} type="button" disabled={action.comingSoon} onClick={action.onSelect}
         title={action.comingSoon ? `${action.label} is coming soon` : undefined}
         aria-current={activeAction === action.id ? "page" : undefined}
         className={`inline-flex min-w-fit flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors duration-200 ease-out motion-reduce:transition-none ${action.comingSoon ? "cursor-not-allowed font-medium text-stone-500" : `cursor-grab font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${activeAction === action.id ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-stone-100"}`}`}>
         {icons[action.icon]}{action.label}{action.comingSoon && <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>}
       </button>)}
-    </nav>
+    </nav>}
   </section>;
 }

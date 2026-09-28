@@ -14,8 +14,8 @@ import { CareChat } from "@/components/care-chat";
 import { CareRelationshipHeader, type CareProfile } from "@/components/care-relationship-header";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { api } from "@/lib/api";
-import type { BriefEvidence, Transcript, TranscriptListItem } from "@/lib/types";
-import { readSessionView, subscribeToSessionView } from "@/lib/workspace-preferences";
+import type { Appointment, BriefEvidence, Transcript, TranscriptListItem } from "@/lib/types";
+import { readClinicalSession, readSessionView, rememberClinicalSession, subscribeToSessionView } from "@/lib/workspace-preferences";
 
 const pause = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
@@ -26,14 +26,24 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   const recordContext = useMemo(() => profile.organizationId && profile.clientId
     ? { organizationId: profile.organizationId, clientId: profile.clientId }
     : undefined, [profile.organizationId, profile.clientId]);
+  const [newClientSetup, setNewClientSetup] = useState(Boolean(profile.needsSetup));
+  const [configuringSessions, setConfiguringSessions] = useState(false);
+  const setupAppointments = useMemo<Appointment[]>(() => [1, 8, 15].map((offset, index) => {
+    const startsAt = new Date(); startsAt.setDate(startsAt.getDate() + offset); startsAt.setHours(10 + index, 0, 0, 0);
+    return { id: `setup-${index}`, organization_id: profile.organizationId || "", client_id: profile.clientId || "", client_name: profile.name, starts_at: startsAt.toISOString(), ends_at: new Date(startsAt.getTime() + 50 * 60_000).toISOString(), status: "scheduled", appointment_type: "recurring", meeting_mode: "in_person" };
+  }), [profile.clientId, profile.name, profile.organizationId]);
   const [transcripts, setTranscripts] = useState<TranscriptListItem[]>([]); const [transcript, setTranscript] = useState<Transcript | null>(null); const [activeId, setActiveId] = useState<string | null>(null); const [activeSessionType, setActiveSessionType] = useState<"scheduled" | "completed">("scheduled"); const [activeSegment, setActiveSegment] = useState(-1); const [isPlaying, setIsPlaying] = useState(false); const [isRecording, setIsRecording] = useState(false); const [isBusy, setIsBusy] = useState(false); const [, setStatus] = useState("Press record to begin."); const [libraryError, setLibraryError] = useState<string | null>(null); const [activeClientView, setActiveClientView] = useState<"clinical-workspace" | "documents" | "care-settings" | "insights" | "chat">(initialView); const [workspaceVisit, setWorkspaceVisit] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(!profile.needsSetup);
+  const [careSettingsSection, setCareSettingsSection] = useState<"identification" | "scheduling">("identification");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const uploadInFlight = useRef(false);
-  const [libraryLoading, setLibraryLoading] = useState(true);
+  const [libraryLoading, setLibraryLoading] = useState(!profile.needsSetup);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
   const transcriptRequest = useRef(0);
+  const restoredSelection = useRef(false);
   const recorder = useRef<MediaRecorder | null>(null); const stream = useRef<MediaStream | null>(null); const chunks = useRef<Blob[]>([]); const audio = useRef<HTMLAudioElement | null>(null);
   const sessionView = useSyncExternalStore(subscribeToSessionView, readSessionView, () => "cards");
   const selectClientView = (view: "clinical-workspace" | "documents" | "care-settings" | "insights" | "chat") => {
@@ -44,8 +54,13 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   };
   const loadLibrary = useCallback(async () => { try { setLibraryError(null); setTranscripts(await api.listTranscripts()); } catch (error) { setLibraryError(error instanceof Error ? error.message : "Could not load saved transcripts."); } finally { setLibraryLoading(false); } }, []);
-  useEffect(() => { void Promise.resolve().then(loadLibrary); }, [loadLibrary]); useEffect(() => () => stream.current?.getTracks().forEach((track) => track.stop()), []);
+  const loadAppointments = useCallback(async () => { try { const response = await fetch(`/api/client-scheduling${profile.clientId ? `?client_id=${encodeURIComponent(profile.clientId)}` : ""}`, { cache: "no-store" }); if (!response.ok) return; const body = await response.json(); setAppointments(body.appointments || []); } catch { /* The transcript library remains usable while scheduling is unavailable. */ } finally { setAppointmentsLoading(false); } }, [profile.clientId]);
+  useEffect(() => {
+    if (profile.needsSetup) return;
+    void Promise.resolve().then(() => { void loadLibrary(); void loadAppointments(); });
+  }, [loadLibrary, loadAppointments, profile.needsSetup]); useEffect(() => () => stream.current?.getTracks().forEach((track) => track.stop()), []);
   const openTranscript = async (id: string, message = "Viewing saved transcript.", evidenceSegmentIndex?: number) => {
+    if (profile.clientId) rememberClinicalSession(profile.clientId, { id, type: "completed" });
     const request = ++transcriptRequest.current;
     setActiveId(id); setActiveSessionType("completed"); setActiveSegment(evidenceSegmentIndex ?? -1);
     setTranscript(null); setTranscriptLoading(true); setTranscriptError(null);
@@ -53,8 +68,13 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
     catch (error) { if (request === transcriptRequest.current) setTranscriptError(error instanceof Error ? error.message : "Could not open transcript."); }
     finally { if (request === transcriptRequest.current) setTranscriptLoading(false); }
   };
-  const selectScheduled = (id: string | null) => { transcriptRequest.current++; audio.current?.pause(); setActiveId(id); setTranscript(null); setActiveSegment(-1); setTranscriptLoading(false); setActiveSessionType("scheduled"); };
-  const openClinicalWorkspace = () => { selectScheduled(nextScheduledSession(transcripts)?.id ?? null); selectClientView("clinical-workspace"); setWorkspaceVisit(visit => visit + 1); };
+  const selectScheduled = (id: string | null) => { transcriptRequest.current++; audio.current?.pause(); setActiveId(id); setTranscript(null); setActiveSegment(-1); setTranscriptLoading(false); setActiveSessionType("scheduled"); if (id && profile.clientId) rememberClinicalSession(profile.clientId, { id, type: "scheduled" }); };
+  const openClinicalWorkspace = () => {
+    const upcoming = nextScheduledSession(transcripts, appointments);
+    if (activeSessionType === "scheduled" && activeId !== upcoming?.id) selectScheduled(upcoming?.id ?? null);
+    selectClientView("clinical-workspace");
+    setWorkspaceVisit(visit => visit + 1);
+  };
   const waitForCompletion = async (id: string) => { while (true) { await pause(5000); const job = await api.getJobStatus(id); if (job.status === "COMPLETED") return; if (job.status === "FAILED") throw new Error(job.detail || "HealthScribe could not complete the recording."); setStatus(`HealthScribe status: ${job.status}…`); } };
   const sendRecording = async () => { stream.current?.getTracks().forEach((track) => track.stop()); setIsRecording(false); setIsBusy(true); setStatus("Transcribing…"); try { const blob = new Blob(chunks.current, { type: recorder.current?.mimeType || "audio/webm" }); const job = await api.uploadRecording(blob); setStatus("HealthScribe is processing the recording…"); await waitForCompletion(job.id); await openTranscript(job.id, "Done."); await loadLibrary(); } catch (error) { setStatus(error instanceof Error ? `Could not transcribe: ${error.message}` : "Could not transcribe the recording."); } finally { setIsBusy(false); } };
   const uploadAudio = async (file: File) => {
@@ -83,9 +103,33 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   };
   const toggleRecording = async () => { if (recorder.current?.state === "recording") { recorder.current.stop(); return; } try { stream.current = await navigator.mediaDevices.getUserMedia({ audio: true }); chunks.current = []; const nextRecorder = new MediaRecorder(stream.current); recorder.current = nextRecorder; nextRecorder.addEventListener("dataavailable", (event) => chunks.current.push(event.data)); nextRecorder.addEventListener("stop", () => void sendRecording(), { once: true }); nextRecorder.start(); setIsRecording(true); setStatus("Recording… press Stop when finished."); } catch (error) { setStatus(error instanceof Error ? `Microphone unavailable: ${error.message}` : "Microphone unavailable."); } };
   const playSegment = (index: number) => { const player = audio.current; if (!player || !transcript?.recording_url) { setStatus("Audio is not available for this transcript."); return; } if (index === activeSegment) { if (player.paused) void player.play().catch(() => setStatus("Audio playback could not start.")); else player.pause(); return; } player.currentTime = transcript.segments[index].start; setActiveSegment(index); void player.play().catch(() => setStatus("Audio playback could not start.")); };
+  useEffect(() => {
+    if (libraryLoading || appointmentsLoading || restoredSelection.current) return;
+    const upcoming = nextScheduledSession(transcripts, appointments);
+    const saved = profile.clientId ? readClinicalSession(profile.clientId) : null;
+    const frame = window.requestAnimationFrame(() => {
+      if (restoredSelection.current) return;
+      restoredSelection.current = true;
+      if (saved?.type === "completed" && transcripts.some(item => item.id === saved.id)) void openTranscript(saved.id);
+      else selectScheduled(saved?.type === "scheduled" && saved.id === upcoming?.id ? saved.id : upcoming?.id ?? null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  // Restore exactly once after this client's session library is available.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libraryLoading, appointmentsLoading, profile.clientId, transcripts, appointments]);
   const transcriptViewer = transcriptLoading ? <LoadingSpinner label="Loading transcript…" /> : transcriptError ? <p role="alert" className="p-5 text-sm text-red-700">{transcriptError}</p> : <TranscriptViewer key={activeId} transcript={transcript} recordContext={recordContext} sessionId={activeId ?? undefined} activeSegment={activeSegment} isPlaying={isPlaying} onPlaySegment={playSegment} onAudioTimeUpdate={(event) => setActiveSegment(transcript?.segments.findIndex((segment) => event.currentTarget.currentTime >= segment.start && event.currentTarget.currentTime < segment.end) ?? -1)} onAudioPlay={() => setIsPlaying(true)} onAudioPause={() => setIsPlaying(false)} onAudioEnded={() => { setIsPlaying(false); setActiveSegment(-1); }} />;
   const activeSessionLabel = transcripts.find((savedTranscript) => savedTranscript.id === activeId)?.label || activeId || "Session";
-  const activeSessionLayout = activeSessionType === "scheduled" ? <ScheduledSessionLayout isRecording={isRecording} isBusy={isBusy} onToggleRecording={() => void toggleRecording()} onUploadAudio={file => void uploadAudio(file)} onViewEvidence={(source: BriefEvidence) => void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index)} recordContext={recordContext} /> : <CompletedSessionLayout sessionId={activeSessionLabel}>{transcriptViewer}</CompletedSessionLayout>;
+  const upcomingId = nextScheduledSession(transcripts, appointments)?.id;
+  const showPreparation = Boolean(upcomingId && activeId === upcomingId);
+  const activeSessionLayout = activeSessionType === "scheduled" ? showPreparation ? <ScheduledSessionLayout isRecording={isRecording} isBusy={isBusy} onToggleRecording={() => void toggleRecording()} onUploadAudio={file => void uploadAudio(file)} onViewEvidence={(source: BriefEvidence) => void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index)} recordContext={recordContext} /> : null : <CompletedSessionLayout sessionId={activeSessionLabel}>{transcriptViewer}</CompletedSessionLayout>;
+
+  if (newClientSetup) return <main className="mx-auto w-[min(92vw,1080px)] pt-3 pb-8 text-center">
+    <CareRelationshipHeader profile={profile} actions={[]} activeAction="" />
+    {configuringSessions ? <ClientCareSettings initialSection="scheduling" clientId={profile.clientId || undefined} expandRecurring onScheduleChanged={() => { void loadAppointments(); setNewClientSetup(false); }} /> : <section className="relative" aria-label="Configure this client's sessions">
+      <div aria-hidden="true" className="pointer-events-none select-none blur-[7px] opacity-55"><SessionCardCarousel transcripts={[]} appointments={setupAppointments} activeId={setupAppointments[0]?.id || null} error={null} onOpen={() => {}} onSelectScheduled={() => {}} /></div>
+      <div className="absolute inset-0 z-20 grid place-items-center"><button type="button" onClick={() => setConfiguringSessions(true)} className="cursor-grab rounded-xl border border-emerald-900 bg-emerald-800 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-colors duration-200 hover:bg-emerald-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Configure sessions</button></div>
+    </section>}
+  </main>;
 
 
   return (
@@ -95,13 +139,13 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
         { id: "billing", label: "Billing", icon: "billing", comingSoon: true },
         { id: "documents", label: "Documents", icon: "documents", onSelect: () => selectClientView("documents") },
         { id: "insights", label: "Insights", icon: "insights", onSelect: () => selectClientView("insights") },
-        { id: "care-settings", label: "Client care settings", icon: "settings", onSelect: () => selectClientView("care-settings") },
+        { id: "care-settings", label: "Client care settings", icon: "settings", onSelect: () => { setCareSettingsSection("identification"); selectClientView("care-settings"); } },
         { id: "chat", label: "Chat", icon: "chat", onSelect: () => selectClientView("chat") },
       ]} />
       {uploadStatus && <LoadingSpinner label={uploadStatus} />}
       {uploadError && <p role="alert" className="mb-4 rounded-xl border border-stone-200 bg-white p-4 text-left text-sm text-red-700">{uploadError}</p>}
       <div id="clinical-workspace" className="scroll-mt-6">
-        {activeClientView === "chat" ? <CareChat partnerName={profile.name} /> : activeClientView === "insights" ? <><ClientInsights recordContext={recordContext} onViewEvidence={(source) => { setActiveClientView("clinical-workspace"); void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index); }} />{recordContext && <ClientJourney recordContext={recordContext} onViewEvidence={(source) => { setActiveClientView("clinical-workspace"); void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index); }} />}</> : activeClientView === "documents" ? recordContext ? <ClientDocuments recordContext={recordContext} /> : <p role="alert" className="text-sm text-red-700">This client document library is unavailable.</p> : activeClientView === "care-settings" ? <ClientCareSettings onReturnToWorkspace={openClinicalWorkspace} />  : libraryLoading ? <LoadingSpinner label="Loading sessions…" /> : sessionView === "cards" ? <><SessionCardCarousel key={workspaceVisit} transcripts={transcripts} activeId={activeId ?? nextScheduledSession(transcripts)?.id ?? null} error={libraryError} onOpen={(id) => void openTranscript(id)} onSelectScheduled={session => selectScheduled(session.id)} onEditSchedule={() => setActiveClientView("care-settings")} /><div className="mt-6 text-left" ref={(node) => { audio.current = node?.querySelector("audio") ?? null; }}>{activeSessionLayout}</div></> : <div className="mt-6 grid items-start gap-6 text-left md:grid-cols-[minmax(380px,440px)_minmax(0,1fr)]"><TranscriptLibrary transcripts={transcripts} activeId={activeId} error={libraryError} onOpen={(id) => void openTranscript(id)} /><div className="min-w-0" ref={(node) => { audio.current = node?.querySelector("audio") ?? null; }}>{activeSessionLayout}</div></div>}
+        {activeClientView === "chat" ? <CareChat partnerName={profile.name} /> : activeClientView === "insights" ? <><ClientInsights recordContext={recordContext} onViewEvidence={(source) => { setActiveClientView("clinical-workspace"); void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index); }} />{recordContext && <ClientJourney recordContext={recordContext} onViewEvidence={(source) => { setActiveClientView("clinical-workspace"); void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index); }} />}</> : activeClientView === "documents" ? recordContext ? <ClientDocuments recordContext={recordContext} /> : <p role="alert" className="text-sm text-red-700">This client document library is unavailable.</p> : activeClientView === "care-settings" ? <ClientCareSettings initialSection={careSettingsSection} onScheduleChanged={() => void loadAppointments()} />  : libraryLoading ? <LoadingSpinner label="Loading sessions…" /> : sessionView === "cards" ? <><SessionCardCarousel key={workspaceVisit} transcripts={transcripts} appointments={appointments} activeId={activeId ?? nextScheduledSession(transcripts, appointments)?.id ?? null} error={libraryError} onOpen={(id) => void openTranscript(id)} onSelectScheduled={session => selectScheduled(session.id)} onEditSchedule={() => { setCareSettingsSection("scheduling"); setActiveClientView("care-settings"); }} /><div className="mt-6 text-left" ref={(node) => { audio.current = node?.querySelector("audio") ?? null; }}>{activeSessionLayout}</div></> : <div className="mt-6 grid items-start gap-6 text-left md:grid-cols-[minmax(380px,440px)_minmax(0,1fr)]"><TranscriptLibrary transcripts={transcripts} activeId={activeId} error={libraryError} onOpen={(id) => void openTranscript(id)} /><div className="min-w-0" ref={(node) => { audio.current = node?.querySelector("audio") ?? null; }}>{activeSessionLayout}</div></div>}
       </div>
     </main>
   );

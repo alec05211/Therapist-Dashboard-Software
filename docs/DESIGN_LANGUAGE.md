@@ -45,32 +45,101 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 - The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
 - Search fields use a concise placeholder and an accessible name; do not add a redundant visible label or helper sentence.
+- Client permissions show one left-aligned list of editable choices using native checkbox inputs with switch semantics. Fixed Schedule, Documents, and Chat access is not repeated in the form.
+- Relationship identification uses one compact row each for Client and Therapist: role, name, optional pronouns, and a brief audio sample. Keep provider codenames in an info tooltip rather than the persistent label.
 
 ## Reusable content panels
 
 Use `CollapsibleContentPanel` for a compact text teaser that expands into richer
-content. Draft clinical notes and transcripts share this exact shell: title,
+content. Clinical notes and transcripts share this exact shell: title,
 optional summary, a 96px faded preview, and a disclosure button. Pass text as
 `preview` and expanded content as children; use `expanded` and
 `onExpandedChange` when a parent needs to open it, such as transcript playback.
-Only the header toggles an open panel so controls and text inside remain usable.
+The entire collapsed card is one disclosure button, with a visible SVG down-chevron
+  overlay above its faded preview. Once expanded, only the header toggles the
+  panel so controls and text inside remain usable.
+Transcripts and clinical notes supply `previewContent` using the same content
+rendering as their expanded view, clipped to the preview height and inert while collapsed. Playback labels
+and dialogue share the same first-line baseline, including wrapped segments.
 
 The session carousel uses symmetrical 2px blur over the outer 12% on each side,
 keeping adjacent session labels sharp. Its schedule action is a calendar/edit
 icon with an accessible label and hover description.
 
-Document grids begin with an upload tile, when authorized, matching the document
-preview ratio and footer height. Download controls use a persistent charcoal
-surface with white icons so PDF previews cannot obscure the action.
+Document grids begin with a slightly compact upload tile, when authorized,
+matching the document preview ratio and footer height. Download controls appear
+on card hover or keyboard focus and use theme-aware gray surfaces and icons so
+PDF previews cannot obscure the action.
+
+The therapist calendar uses a Monday–Sunday week as its primary surface. Its
+month view is a vertically scrollable stack that centers the current week on
+entry. View and date controls remain attached to the calendar, while a subtle
+masked blur softens content passing beneath the sticky weekday row. Month cells
+use a near-square shape with the date tucked into the upper-left corner, and
+prioritize active appointment counts and short time/client cues. The month
+surface keeps a bounded live render window, indexes appointments by day, and
+throttles scroll-derived state to preserve responsive navigation. Selecting a
+day expands the calendar section and opens its complete agenda flush beside the
+grid without narrowing the calendar on wide screens. Opening and dismissing the
+agenda use the same quiet width-and-panel transition so the calendar geometry
+does not jump. The calendar remains scrollable while its internal scrollbar
+stays visually hidden. The agenda is closed initially;
+selecting the same day again or clicking outside the agenda and day cells
+dismisses it. Each detailed appointment shows
+time, client, and appointment type; cancelled appointments remain visible with
+subdued styling. Client scheduling settings use the same
+appointment records and group recurring preferences, one-time or make-up
+creation, and upcoming-session actions into distinct sections. Suggested
+recurring times must account for the therapist's other active appointments. A
+client-specific Monday–Friday week calendar supports direct rescheduling: the
+current client's sessions use interactive evergreen cards, anonymous conflicts
+from the therapist's other appointments use non-interactive neutral Busy blocks,
+and open time remains a light neutral surface. Dragging preserves session length,
+snaps to 30-minute slots, and remains backed by the manual reschedule controls.
+When no real conflicts exist, the development experience may show clearly labeled
+demo Busy blocks. A drop stages rather than commits the change: a confirmation
+dialog names the proposed date and time and clarifies that a moved recurring
+session returns to its normal time the following week.
+Recurring scheduling configuration starts collapsed behind a single disclosure
+row. Its suggested options state the full date and start/end block derived from
+the selected session length; scheduling the series also persists those settings.
+One-time and make-up creation belongs directly in available week-calendar slots,
+not in a duplicate form below the calendar.
+Recurring configuration is relationship-aware: saved preferences and the next
+recurring time prefill for an established schedule, while a new relationship
+starts with unselected frequency, length, format, and time fields.
+Adding a client begins from the therapist client list and searches existing
+client accounts within the therapist's organization. Search results use the
+client's profile photo or initials alongside their account identity to reduce
+selection mistakes. A newly linked relationship opens with only the basic name
+card and a heavily blurred, non-interactive preview of the session carousel.
+Center a single `Configure sessions` action over that preview; it opens Client
+care settings directly to Scheduling with recurring appointment configuration
+expanded, so the relationship can be scheduled before the normal workspace is
+revealed.
 
 ## Interaction details
 
 - Pre-session briefs use a short opening paragraph, visible follow-up bullets,
   and a separate supporting-context list. Keep source links small and adjacent
-  to the statement rather than underlining whole paragraphs.
-- Suggested transcript passages use an underline and an explicit suggestion
-  label. Selecting the words opens clinician guidance inline; audio playback
-  remains a separate control. Saved quotes and longer journey lists start
+  to the statement rather than underlining whole paragraphs. In the pre-session
+  brief, emphasize the model-selected short claim phrases, leaving surrounding prose
+  normal-weight. Each phrase opens only its own attributed exchanges. Never infer
+  highlights by matching words to quotations. Legacy items without granular
+  claims use a small sentence-level Evidence link. These open a supporting-context dialog
+  with quotes and transcript links. Show preparation only for the immediate
+  upcoming scheduled session; later sessions remain empty.
+- Transcript segments share one compact row: a fixed timestamp column on the
+  left, grouping the play/pause icon, timestamp, and speaker name in one playback
+  control with even spacing, followed by dialogue. Flagged passage text is bold
+  and selectable; avoid separate cards, badges, or underlines for those rows.
+  Selecting bold text opens clinician guidance inline; the timestamp controls
+  audio playback. Make timestamps semibold and show a bordered playback surface
+  when the segment is hovered or keyboard-focused. Place the play/pause icon before
+  the timestamp and reveal it only on segment hover, keyboard focus, or active
+  playback position; reserve its space to prevent layout shifts. Use equally sized
+  SVG play and pause icons. Keep the viewport still while the active segment is
+  visible; only scroll an offscreen segment into view using nearest alignment. Keep row spacing tight for long transcripts. Saved quotes and longer journey lists start
   collapsed in Insights.
 
 - Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { TranscriptListItem } from "@/lib/types";
+import type { Appointment, TranscriptListItem } from "@/lib/types";
 
 export type SessionCard = {
   id: string;
@@ -10,19 +10,9 @@ export type SessionCard = {
   isAvailable: boolean;
 };
 
-const upcomingSessionDates = [
-  "2026-09-21T15:00:00-04:00",
-  "2026-09-28T15:00:00-04:00",
-  "2026-10-05T15:00:00-04:00",
-  "2026-10-12T15:00:00-04:00",
-  "2026-10-19T15:00:00-04:00",
-  "2026-10-26T15:00:00-04:00",
-  "2026-11-02T15:00:00-05:00",
-  "2026-11-09T15:00:00-05:00",
-];
-
 type Props = {
   transcripts: TranscriptListItem[];
+  appointments?: Appointment[];
   activeId: string | null;
   error: string | null;
   onOpen: (id: string) => void;
@@ -30,24 +20,24 @@ type Props = {
   onEditSchedule?: () => void;
 };
 
-function sessionCards(transcripts: TranscriptListItem[]): SessionCard[] {
+function sessionCards(transcripts: TranscriptListItem[], appointments: Appointment[] = []): SessionCard[] {
   const available = transcripts.map((transcript) => ({
     id: transcript.id,
     label: transcript.label,
     date: new Date(transcript.created_at ?? Date.now()),
     isAvailable: true,
   }));
-  const placeholders = upcomingSessionDates.map((date, index) => ({
-    id: `planned-${index + 1}`,
-    label: "Elena Sadić · Jeremy Heartwell",
-    date: new Date(date),
+  const placeholders = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed").map(item => ({
+    id: item.id,
+    label: item.client_name || "Scheduled session",
+    date: new Date(item.starts_at),
     isAvailable: false,
   }));
   return [...available, ...placeholders].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-export function nextScheduledSession(transcripts: TranscriptListItem[]): SessionCard | null {
-  const cards = sessionCards(transcripts);
+export function nextScheduledSession(transcripts: TranscriptListItem[], appointments: Appointment[] = []): SessionCard | null {
+  const cards = sessionCards(transcripts, appointments);
   const completed = cards.filter(card => card.isAvailable);
   const latest = completed.at(-1)?.date.getTime() ?? -Infinity;
   return cards.find(card => !card.isAvailable && card.date.getTime() > latest) ?? null;
@@ -63,8 +53,8 @@ function CalendarIcon() {
   );
 }
 
-export function SessionCardCarousel({ transcripts, activeId, error, onOpen, onSelectScheduled, onEditSchedule }: Props) {
-  const cards = useMemo(() => sessionCards(transcripts), [transcripts]);
+export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule }: Props) {
+  const cards = useMemo(() => sessionCards(transcripts, appointments), [transcripts, appointments]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
   const [hasInteracted, setHasInteracted] = useState(false);

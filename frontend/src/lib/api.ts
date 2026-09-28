@@ -30,7 +30,7 @@ export const api = {
   getTranscript: async (id: string) => normalizeTranscript(await request<Transcript>(`/transcripts/${encodeURIComponent(id)}`)),
   getJobStatus: (id: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status`),
   getCurrentPreSessionBrief: (organizationId: string, clientId: string) =>
-    request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`),
+    request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`, { cache: "no-store" }),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
     request<PersistedInsightSnapshot>(
       `/clinical-records/clients/${encodeURIComponent(clientId)}/insight-snapshots/latest?organization_id=${encodeURIComponent(organizationId)}`,

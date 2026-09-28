@@ -3,11 +3,11 @@ import json
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import unquote, urlparse
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -21,9 +21,13 @@ from database.auth import validate_access_token
 from database.connection import connect
 from database import organization_storage
 from database import client_journey
+from database import speaker_identification
 from database import document_workflow
+from database.scheduling import available_recurring_slots, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights
+from ai_harness.brief_service import brief_input
+from ai_harness.pre_session import generate_openai_pre_session_brief, resolve_brief
 from ai_harness.clinician_context import with_clinician_guidance
 from pydantic import BaseModel, Field, field_validator
 
@@ -45,6 +49,7 @@ INPUT_BUCKET = os.getenv("HEALTHSCRIBE_INPUT_BUCKET")
 OUTPUT_BUCKET = os.getenv("HEALTHSCRIBE_OUTPUT_BUCKET")
 BATCH_ROLE_ARN = os.getenv("HEALTHSCRIBE_BATCH_DATA_ACCESS_ROLE_ARN")
 POLL_SECONDS = max(1, int(os.getenv("HEALTHSCRIBE_POLL_SECONDS", "5")))
+HEALTHSCRIBE_MAX_SPEAKERS = min(30, max(3, int(os.getenv("HEALTHSCRIBE_MAX_SPEAKERS", "6"))))
 
 
 class TherapistOnboardingRequest(BaseModel):
@@ -63,10 +68,12 @@ class ClientPortalPermissionsRequest(BaseModel):
     can_view_draft_notes: bool
     can_view_approved_summaries: bool = False
     can_play_shared_recordings: bool = False
+    can_view_prescriptions: bool = False
 
 
 class ParticipantIdentificationRequest(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    pronouns: str | None = Field(default=None, max_length=80)
 
     @field_validator("name")
     @classmethod
@@ -76,11 +83,58 @@ class ParticipantIdentificationRequest(BaseModel):
             raise ValueError("Control characters are not allowed.")
         return value
 
+    @field_validator("pronouns")
+    @classmethod
+    def clean_identification_pronouns(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if any(ord(char) < 32 for char in value):
+            raise ValueError("Control characters are not allowed.")
+        return value or None
+
+class SpeakerAssociationRequest(BaseModel):
+    transcript_version_id: UUID
+    source_label: str = Field(min_length=1, max_length=200)
+    name: str = Field(default='', max_length=200)
+
+    @field_validator('name', 'source_label')
+    @classmethod
+    def clean_text(cls, value: str) -> str:
+        if any(ord(char) < 32 for char in value):
+            raise ValueError('Control characters are not allowed.')
+        return value.strip()
+
+
 class ClientIdentificationRequest(BaseModel):
     organization_id: str = Field(min_length=1, max_length=64)
     client_id: str = Field(min_length=1, max_length=64)
     client: ParticipantIdentificationRequest
     therapist: ParticipantIdentificationRequest
+    speakers: list[SpeakerAssociationRequest] = Field(default_factory=list, max_length=1000)
+
+
+class SchedulingPreferencesRequest(BaseModel):
+    organization_id: UUID
+    client_id: UUID
+    cadence_weeks: Literal[1, 2, 4] = 1
+    duration_minutes: int = Field(default=50, ge=20, le=180)
+    meeting_mode: Literal["in_person", "video", "phone"] = "in_person"
+    timezone: str = Field(default="America/New_York", min_length=1, max_length=100)
+
+
+class AppointmentCreateRequest(SchedulingPreferencesRequest):
+    starts_at: datetime
+    appointment_type: Literal["recurring", "make_up", "one_time"] = "one_time"
+    recurrence_count: int = Field(default=1, ge=1, le=26)
+
+
+class AppointmentUpdateRequest(BaseModel):
+    organization_id: UUID
+    client_id: UUID
+    action: Literal["cancel", "reschedule"]
+    starts_at: datetime | None = None
+    duration_minutes: int = Field(default=50, ge=20, le=180)
 
 
 @app.get("/identity/me")
@@ -105,7 +159,7 @@ def current_identity(authorization: str | None = Header(default=None)):
     return {"role": identity["role"], "displayName": identity["display_name"] or "there"}
 
 
-PERMISSION_FIELDS = ("can_view_session_history", "can_view_shared_transcripts", "can_view_insights", "can_view_draft_notes", "can_play_shared_recordings")
+PERMISSION_FIELDS = ("can_view_session_history", "can_view_shared_transcripts", "can_view_insights", "can_view_draft_notes", "can_play_shared_recordings", "can_view_prescriptions")
 
 
 @app.get("/therapist/clients")
@@ -136,6 +190,89 @@ def therapist_clients(authorization: str | None = Header(default=None)):
             ORDER BY client.display_name NULLS LAST, client.id""", (claims["sub"],))
         rows = cursor.fetchall()
     return {"clients": [{**row, "id": str(row["id"]), "organization_id": str(row["organization_id"])} for row in rows]}
+
+
+def therapist_principal(connection, authorization):
+    claims = validate_access_token(authorization)
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT actor.id AS actor_user_id, practitioner.id AS practitioner_id,
+                   practitioner.organization_id
+            FROM app.application_users actor
+            JOIN app.organization_memberships membership ON membership.user_id=actor.id
+            JOIN app.organization_practitioners practitioner ON practitioner.membership_id=membership.id
+            WHERE actor.auth0_subject=%s AND actor.status='active'
+              AND membership.status='active' AND practitioner.status='active'""", (claims["sub"],))
+        rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=403, detail="An unambiguous therapist account is required.")
+    return rows[0]
+
+
+@app.get("/therapist/client-directory")
+def therapist_client_directory(query: str = "", authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        principal = therapist_principal(connection, authorization)
+        pattern = f"%{query.strip()}%"
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT client.id, client.display_name AS name, client.email, client.phone,
+                       profile.photo IS NOT NULL AS has_photo
+                FROM app.clients client
+                JOIN app.client_portal_accounts portal ON portal.client_id=client.id
+                LEFT JOIN app.account_profiles profile ON profile.auth0_subject=portal.auth0_subject
+                WHERE client.organization_id=%s AND client.status='active' AND portal.status='active'
+                  AND (%s='' OR client.display_name ILIKE %s OR COALESCE(client.email,'') ILIKE %s)
+                  AND NOT EXISTS (SELECT 1 FROM app.client_therapist_access access
+                      WHERE access.client_id=client.id AND access.practitioner_id=%s
+                        AND access.revoked_at IS NULL)
+                ORDER BY client.display_name NULLS LAST LIMIT 30""",
+                (principal["organization_id"], query.strip(), pattern, pattern, principal["practitioner_id"]))
+            rows = cursor.fetchall()
+    return {"clients": [{"id": str(row["id"]), "name": row["name"], "email": row["email"],
+                         "phone": row["phone"],
+                         "photoUrl": f"/api/therapist/client-directory/{row['id']}/photo" if row["has_photo"] else None}
+                        for row in rows]}
+
+
+@app.get("/therapist/client-directory/{client_id}/photo")
+def therapist_directory_photo(client_id: UUID, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        principal = therapist_principal(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT profile.photo, profile.photo_mime FROM app.clients client
+                JOIN app.client_portal_accounts portal ON portal.client_id=client.id
+                JOIN app.account_profiles profile ON profile.auth0_subject=portal.auth0_subject
+                WHERE client.id=%s AND client.organization_id=%s AND client.status='active'
+                  AND portal.status='active'""", (client_id, principal["organization_id"]))
+            row = cursor.fetchone()
+    if not row or row["photo"] is None:
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    return Response(content=bytes(row["photo"]), media_type=row["photo_mime"], headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@app.post("/therapist/clients/{client_id}", status_code=201)
+def add_therapist_client(client_id: UUID, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        principal = therapist_principal(connection, authorization)
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT client.id, client.display_name AS name, client.email, client.phone
+                FROM app.clients client JOIN app.client_portal_accounts portal ON portal.client_id=client.id
+                WHERE client.id=%s AND client.organization_id=%s AND client.status='active'
+                  AND portal.status='active' FOR UPDATE""", (client_id, principal["organization_id"]))
+            client = cursor.fetchone()
+            if not client:
+                raise HTTPException(status_code=404, detail="Client account not found.")
+            cursor.execute("""SELECT 1 FROM app.client_therapist_access
+                WHERE client_id=%s AND practitioner_id=%s AND revoked_at IS NULL""",
+                (client_id, principal["practitioner_id"]))
+            if cursor.fetchone():
+                raise HTTPException(status_code=409, detail="This client is already connected to your practice.")
+            cursor.execute("""INSERT INTO app.client_therapist_access
+                (organization_id, client_id, practitioner_id, relationship_type,
+                 can_read_clinical, can_write_clinical, can_view_artifacts, can_manage_sessions,
+                 can_manage_client_access, granted_by_user_id, grant_reason)
+                VALUES (%s,%s,%s,'primary',true,true,true,true,true,%s,'Therapist added existing client account')""",
+                (principal["organization_id"], client_id, principal["practitioner_id"], principal["actor_user_id"]))
+    return {"client": {**client, "id": str(client["id"]), "organization_id": str(principal["organization_id"])}}
 
 
 def read_portal_permissions(connection, context):
@@ -171,6 +308,233 @@ def resolve_sharing_context(connection, authorization, *, therapist=False, write
     if len(rows) != 1:
         raise HTTPException(status_code=403, detail="No active linked client context is available.")
     return {key: str(value) for key, value in rows[0].items()}
+
+
+def resolve_therapist_client_context(connection, authorization, client_id, *, write=False):
+    principal = therapist_principal(connection, authorization)
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT client.id AS client_id, client.organization_id
+            FROM app.clients client JOIN app.client_therapist_access access
+              ON access.client_id=client.id AND access.organization_id=client.organization_id
+            WHERE client.id=%s AND client.organization_id=%s AND client.status='active'
+              AND access.practitioner_id=%s AND access.revoked_at IS NULL
+              AND access.effective_from<=CURRENT_TIMESTAMP
+              AND (access.effective_until IS NULL OR access.effective_until>CURRENT_TIMESTAMP)
+              AND access.can_read_clinical AND (NOT %s OR access.can_write_clinical)""",
+            (client_id, principal["organization_id"], principal["practitioner_id"], write))
+        row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=403, detail="This client workspace is not available for your account.")
+    return {key: str(value) for key, value in row.items()}
+
+
+def scheduling_scope(connection, authorization, organization_id, client_id):
+    """Resolve the signed-in therapist's active session-management grant."""
+    claims = validate_access_token(authorization)
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT actor.id AS actor_user_id, practitioner.id AS practitioner_id,
+                   client.display_name AS client_name
+            FROM app.application_users actor
+            JOIN app.organization_memberships membership ON membership.user_id=actor.id
+            JOIN app.organization_practitioners practitioner ON practitioner.membership_id=membership.id
+            JOIN app.client_therapist_access access ON access.practitioner_id=practitioner.id
+            JOIN app.clients client ON client.id=access.client_id AND client.organization_id=access.organization_id
+            WHERE actor.auth0_subject=%s AND actor.status='active'
+              AND membership.status='active' AND practitioner.status='active'
+              AND client.id=%s AND client.organization_id=%s AND client.status='active'
+              AND access.revoked_at IS NULL AND access.can_manage_sessions
+              AND access.effective_from<=CURRENT_TIMESTAMP
+              AND (access.effective_until IS NULL OR access.effective_until>CURRENT_TIMESTAMP)""",
+            (claims["sub"], client_id, organization_id))
+        rows = cursor.fetchall()
+    if len(rows) != 1:
+        raise HTTPException(status_code=403, detail="You do not have permission to manage this client's schedule.")
+    return rows[0]
+
+
+def appointment_payload(row):
+    return {
+        "id": str(row["id"]), "organization_id": str(row["organization_id"]),
+        "client_id": str(row["client_id"]), "client_name": row.get("client_name"),
+        "starts_at": row["starts_at"].isoformat(), "ends_at": row["ends_at"].isoformat(),
+        "status": row["status"], "appointment_type": row["appointment_type"],
+        "meeting_mode": row["meeting_mode"], "series_id": str(row["series_id"]) if row.get("series_id") else None,
+    }
+
+
+def scheduling_data(connection, context, scope):
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT cadence_weeks, duration_minutes, meeting_mode, timezone,
+                   preferred_weekday, preferred_start_local
+            FROM app.client_scheduling_preferences WHERE organization_id=%s AND client_id=%s
+              AND practitioner_id=%s""", (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        stored_preferences = cursor.fetchone()
+        preferences = stored_preferences or {"cadence_weeks": 1, "duration_minutes": 50,
+                                             "meeting_mode": "in_person", "timezone": "America/New_York",
+                                             "preferred_weekday": None, "preferred_start_local": None}
+        cursor.execute("""SELECT appointment.*, client.display_name AS client_name
+            FROM app.appointments appointment JOIN app.clients client ON client.id=appointment.client_id
+            WHERE appointment.organization_id=%s AND appointment.client_id=%s
+              AND appointment.primary_practitioner_id=%s
+            ORDER BY appointment.starts_at""", (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        client_appointments = cursor.fetchall()
+        cursor.execute("""SELECT starts_at, ends_at, meeting_mode FROM app.appointments
+            WHERE organization_id=%s AND client_id=%s AND primary_practitioner_id=%s
+              AND appointment_type='recurring' AND status IN ('scheduled','confirmed')
+              AND ends_at>CURRENT_TIMESTAMP ORDER BY starts_at LIMIT 2""",
+            (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        recurring_appointments = cursor.fetchall()
+        cursor.execute("""SELECT client_id, starts_at, ends_at, status FROM app.appointments
+            WHERE organization_id=%s AND primary_practitioner_id=%s
+              AND status IN ('scheduled','confirmed')
+              AND ends_at>CURRENT_TIMESTAMP AND starts_at<CURRENT_TIMESTAMP + interval '36 weeks'""",
+            (context["organization_id"], scope["practitioner_id"]))
+        busy = cursor.fetchall()
+    if not stored_preferences and recurring_appointments:
+        first = recurring_appointments[0]
+        cadence_weeks = 1
+        if len(recurring_appointments) > 1:
+            candidate = round((recurring_appointments[1]["starts_at"] - first["starts_at"]).days / 7)
+            cadence_weeks = candidate if candidate in (1, 2, 4) else 1
+        preferences = {"cadence_weeks": cadence_weeks,
+                       "duration_minutes": round((first["ends_at"] - first["starts_at"]).total_seconds() / 60),
+                       "meeting_mode": first["meeting_mode"], "timezone": "America/New_York",
+                       "preferred_weekday": None, "preferred_start_local": None}
+    preference_payload = dict(preferences)
+    if preference_payload.get("preferred_start_local"):
+        preference_payload["preferred_start_local"] = preference_payload["preferred_start_local"].isoformat()
+    suggestions = available_recurring_slots(
+        busy, timezone=preferences["timezone"], duration_minutes=preferences["duration_minutes"],
+        cadence_weeks=preferences["cadence_weeks"], occurrences=8,
+    )
+    return {"organization_id": str(context["organization_id"]), "client_id": str(context["client_id"]),
+            "client_name": scope["client_name"], "preferences": preference_payload,
+            "has_existing_schedule": bool(stored_preferences or recurring_appointments),
+            "current_recurring_starts_at": recurring_appointments[0]["starts_at"].isoformat() if recurring_appointments else None,
+            "appointments": [appointment_payload(row) for row in client_appointments],
+            "busy_times": [{"starts_at": row["starts_at"].isoformat(),
+                            "ends_at": row["ends_at"].isoformat()} for row in busy
+                           if str(row["client_id"]) != str(context["client_id"])],
+            "suggestions": suggestions}
+
+
+@app.get("/calendar/appointments")
+def calendar_appointments(start: datetime, end: datetime, authorization: str | None = Header(default=None)):
+    if end <= start or end - start > timedelta(days=62):
+        raise HTTPException(status_code=400, detail="Choose a calendar range of up to 62 days.")
+    claims = validate_access_token(authorization)
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("""SELECT DISTINCT appointment.*, client.display_name AS client_name
+            FROM app.appointments appointment
+            JOIN app.clients client ON client.id=appointment.client_id
+            JOIN app.client_therapist_access access ON access.client_id=client.id
+              AND access.organization_id=client.organization_id
+              AND access.practitioner_id=appointment.primary_practitioner_id
+            JOIN app.organization_practitioners practitioner ON practitioner.id=access.practitioner_id
+            JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id
+            JOIN app.application_users actor ON actor.id=membership.user_id
+            WHERE actor.auth0_subject=%s AND actor.status='active' AND membership.status='active'
+              AND practitioner.status='active' AND access.revoked_at IS NULL AND access.can_manage_sessions
+              AND appointment.starts_at<%s AND appointment.ends_at>%s
+            ORDER BY appointment.starts_at""", (claims["sub"], end, start))
+        rows = cursor.fetchall()
+    return {"appointments": [appointment_payload(row) for row in rows]}
+
+
+@app.get("/client-scheduling")
+def get_client_scheduling(client_id: str | None = None, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_therapist_client_context(connection, authorization, client_id) if client_id else resolve_sharing_context(connection, authorization, therapist=True)
+        scope = scheduling_scope(connection, authorization, **context)
+        return scheduling_data(connection, context, scope)
+
+
+@app.put("/client-scheduling/preferences")
+def update_scheduling_preferences(request: SchedulingPreferencesRequest, authorization: str | None = Header(default=None)):
+    context = {"organization_id": str(request.organization_id), "client_id": str(request.client_id)}
+    with connect() as connection:
+        scope = scheduling_scope(connection, authorization, **context)
+        with connection.cursor() as cursor:
+            cursor.execute("""INSERT INTO app.client_scheduling_preferences
+                (organization_id, client_id, practitioner_id, cadence_weeks, duration_minutes,
+                 meeting_mode, timezone, updated_by_user_id)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (client_id) DO UPDATE SET cadence_weeks=EXCLUDED.cadence_weeks,
+                  duration_minutes=EXCLUDED.duration_minutes, meeting_mode=EXCLUDED.meeting_mode,
+                  timezone=EXCLUDED.timezone, updated_by_user_id=EXCLUDED.updated_by_user_id,
+                  updated_at=CURRENT_TIMESTAMP""", (request.organization_id, request.client_id,
+                    scope["practitioner_id"], request.cadence_weeks, request.duration_minutes,
+                    request.meeting_mode, request.timezone, scope["actor_user_id"]))
+        return scheduling_data(connection, context, scope)
+
+
+@app.post("/client-scheduling/appointments", status_code=201)
+def create_appointment(request: AppointmentCreateRequest, authorization: str | None = Header(default=None)):
+    context = {"organization_id": str(request.organization_id), "client_id": str(request.client_id)}
+    with connect() as connection:
+        scope = scheduling_scope(connection, authorization, **context)
+        starts = recurring_occurrences(request.starts_at, request.cadence_weeks,
+                                       request.recurrence_count if request.appointment_type == "recurring" else 1)
+        series_id = uuid4() if len(starts) > 1 else None
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (str(scope["practitioner_id"]),))
+            for starts_at in starts:
+                ends_at = starts_at + timedelta(minutes=request.duration_minutes)
+                cursor.execute("""SELECT 1 FROM app.appointments WHERE primary_practitioner_id=%s
+                    AND status IN ('scheduled','confirmed') AND starts_at<%s AND ends_at>%s LIMIT 1""",
+                    (scope["practitioner_id"], ends_at, starts_at))
+                if cursor.fetchone():
+                    raise HTTPException(status_code=409, detail="That time overlaps another appointment.")
+            cursor.execute("""INSERT INTO app.client_scheduling_preferences
+                (organization_id, client_id, practitioner_id, cadence_weeks, duration_minutes,
+                 meeting_mode, timezone, updated_by_user_id)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (client_id) DO UPDATE SET cadence_weeks=EXCLUDED.cadence_weeks,
+                  duration_minutes=EXCLUDED.duration_minutes, meeting_mode=EXCLUDED.meeting_mode,
+                  timezone=EXCLUDED.timezone, updated_by_user_id=EXCLUDED.updated_by_user_id,
+                  updated_at=CURRENT_TIMESTAMP""", (request.organization_id, request.client_id,
+                    scope["practitioner_id"], request.cadence_weeks, request.duration_minutes,
+                    request.meeting_mode, request.timezone, scope["actor_user_id"]))
+            for starts_at in starts:
+                cursor.execute("""INSERT INTO app.appointments
+                    (organization_id, client_id, primary_practitioner_id, starts_at, ends_at,
+                     status, appointment_type, series_id, meeting_mode)
+                    VALUES (%s,%s,%s,%s,%s,'scheduled',%s,%s,%s)""",
+                    (request.organization_id, request.client_id, scope["practitioner_id"], starts_at,
+                     starts_at + timedelta(minutes=request.duration_minutes), request.appointment_type,
+                     series_id, request.meeting_mode))
+        return scheduling_data(connection, context, scope)
+
+
+@app.patch("/client-scheduling/appointments/{appointment_id}")
+def update_appointment(appointment_id: UUID, request: AppointmentUpdateRequest,
+                       authorization: str | None = Header(default=None)):
+    context = {"organization_id": str(request.organization_id), "client_id": str(request.client_id)}
+    with connect() as connection:
+        scope = scheduling_scope(connection, authorization, **context)
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT * FROM app.appointments WHERE id=%s AND organization_id=%s
+                AND client_id=%s AND primary_practitioner_id=%s FOR UPDATE""",
+                (appointment_id, request.organization_id, request.client_id, scope["practitioner_id"]))
+            appointment = cursor.fetchone()
+            if not appointment:
+                raise HTTPException(status_code=404, detail="Appointment not found.")
+            if request.action == "cancel":
+                cursor.execute("""UPDATE app.appointments SET status='cancelled', cancelled_at=CURRENT_TIMESTAMP,
+                    cancelled_by_user_id=%s, updated_at=CURRENT_TIMESTAMP WHERE id=%s""",
+                    (scope["actor_user_id"], appointment_id))
+            else:
+                if request.starts_at is None:
+                    raise HTTPException(status_code=422, detail="A new start time is required.")
+                ends_at = request.starts_at + timedelta(minutes=request.duration_minutes)
+                cursor.execute("""SELECT 1 FROM app.appointments WHERE primary_practitioner_id=%s
+                    AND id<>%s AND status IN ('scheduled','confirmed') AND starts_at<%s AND ends_at>%s LIMIT 1""",
+                    (scope["practitioner_id"], appointment_id, ends_at, request.starts_at))
+                if cursor.fetchone():
+                    raise HTTPException(status_code=409, detail="That time overlaps another appointment.")
+                cursor.execute("""UPDATE app.appointments SET starts_at=%s, ends_at=%s,
+                    updated_at=CURRENT_TIMESTAMP WHERE id=%s""", (request.starts_at, ends_at, appointment_id))
+        return scheduling_data(connection, context, scope)
 
 
 class AccountProfileUpdate(BaseModel):
@@ -302,11 +666,11 @@ def account_photo(authorization: str | None = Header(default=None)):
 
 
 @app.get("/relationship-profile/photo")
-def relationship_photo(authorization: str | None = Header(default=None)):
+def relationship_photo(client_id: str | None = None, authorization: str | None = Header(default=None)):
     identity = current_identity(authorization)
     therapist = identity["role"] == "therapist"
     with connect() as connection:
-        context = resolve_sharing_context(connection, authorization, therapist=therapist)
+        context = resolve_therapist_client_context(connection, authorization, client_id) if therapist and client_id else resolve_sharing_context(connection, authorization, therapist=therapist)
         with connection.cursor() as cursor:
             if therapist:
                 cursor.execute("""SELECT portal.auth0_subject FROM app.client_portal_accounts portal
@@ -337,11 +701,7 @@ def relationship_profile(authorization: str | None = Header(default=None), clien
     identity = current_identity(authorization)
     therapist = identity["role"] == "therapist"
     with connect() as connection:
-        context = resolve_sharing_context(connection, authorization, therapist=therapist)
-        # Existing session and insight APIs are bound to the linked demo case.
-        # Never render that workspace under a different client's URL.
-        if client_id is not None and (not therapist or client_id != context["client_id"]):
-            raise HTTPException(status_code=403, detail="This client workspace is not available for your account.")
+        context = resolve_therapist_client_context(connection, authorization, client_id) if therapist and client_id else resolve_sharing_context(connection, authorization, therapist=therapist)
         with connection.cursor() as cursor:
             if therapist:
                 cursor.execute("""SELECT client.display_name AS name, client.email, client.phone, portal.auth0_subject, portal.synthetic_case_key
@@ -375,11 +735,20 @@ def relationship_profile(authorization: str | None = Header(default=None), clien
     name = row["name"] or role
     profile = {"name": name, "role": role, "initials": "".join(part[0] for part in name.split()[:2]).upper(),
             "email": row["email"], "phone": row["phone"],
-            "imageSrc": "/api/relationship-profile/photo" if extras.get("has_photo") else None,
+            "imageSrc": f"/api/relationship-profile/photo?client_id={context['client_id']}" if therapist and extras.get("has_photo") else "/api/relationship-profile/photo" if extras.get("has_photo") else None,
             "aboutMe": extras.get("about_me") if not therapist else None}
     if therapist:
+        with connect() as connection, connection.cursor() as cursor:
+            cursor.execute("""SELECT EXISTS (SELECT 1 FROM app.client_scheduling_preferences preference
+                    WHERE preference.organization_id=%s AND preference.client_id=%s)
+                OR EXISTS (SELECT 1 FROM app.appointments appointment
+                    WHERE appointment.organization_id=%s AND appointment.client_id=%s
+                      AND appointment.status IN ('scheduled','confirmed')) AS configured""",
+                (context["organization_id"], context["client_id"], context["organization_id"], context["client_id"]))
+            configured = bool(cursor.fetchone()["configured"])
         profile.update(organizationId=context["organization_id"], clientId=context["client_id"],
-                       syntheticCase=row.get("synthetic_case_key") == "heartwell-sadic")
+                       syntheticCase=row.get("synthetic_case_key") == "heartwell-sadic",
+                       needsSetup=not configured)
     return profile
 
 
@@ -415,33 +784,31 @@ def update_client_portal_permissions(request: ClientPortalPermissionsRequest, au
 def identification_sample(cursor, context, display_name, speaker_prefix):
     """Find a brief review excerpt without creating or comparing voiceprints."""
     cursor.execute("""SELECT job.runtime_id, job.storage->>'audio_key' AS audio_key,
-            segment.starts_at_seconds, segment.ends_at_seconds
+            sample.starts_at_seconds, sample.ends_at_seconds
         FROM app.session_storage_jobs job
         JOIN app.sessions session ON session.id=job.session_id
         JOIN app.transcript_versions transcript
           ON transcript.session_id=session.id AND transcript.organization_id=session.organization_id
           AND transcript.client_id=session.client_id AND transcript.status <> 'superseded'
-        JOIN app.transcript_segments segment ON segment.transcript_version_id=transcript.id
+        JOIN app.transcript_speaker_samples sample ON sample.transcript_version_id=transcript.id
+        JOIN app.transcript_segments segment ON segment.id=sample.transcript_segment_id
         LEFT JOIN app.transcript_speaker_labels label
           ON label.transcript_version_id=transcript.id AND label.source_label=segment.speaker_label
         WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
-          AND segment.ends_at_seconds-segment.starts_at_seconds >= 0.5
           AND (lower(trim(label.display_label))=lower(trim(%s))
-               OR (label.display_label IS NULL AND segment.speaker_label LIKE %s))
+               OR (label.display_label IS NULL AND upper(segment.speaker_label) IN (%s, %s)))
           AND NOT EXISTS (
             SELECT 1 FROM app.transcript_versions newer
             WHERE newer.session_id=transcript.session_id
               AND newer.version_number>transcript.version_number
               AND newer.status <> 'superseded')
-        ORDER BY CASE WHEN label.display_label IS NOT NULL THEN 0 ELSE 1 END,
-          COALESCE(session.started_at, job.created_at) DESC,
-          segment.ends_at_seconds-segment.starts_at_seconds DESC
-        LIMIT 1""", (context["organization_id"], context["client_id"], display_name, f"{speaker_prefix}%"))
+        ORDER BY COALESCE(session.started_at, transcript.created_at) DESC
+        LIMIT 1""", (context["organization_id"], context["client_id"], display_name, speaker_prefix, f"{speaker_prefix}_0"))
     row = cursor.fetchone()
     if not row or not row["audio_key"]:
         return None
     start = float(row["starts_at_seconds"])
-    end = min(float(row["ends_at_seconds"]), start + 6.0)
+    end = float(row["ends_at_seconds"])
     return {"recordingUrl": f"/api/recordings/{row['runtime_id']}/{Path(row['audio_key']).name}",
             "start": start, "end": end}
 
@@ -470,9 +837,11 @@ def read_client_identification(connection, context, actor_user_id):
         therapist_name = saved.get("therapist", {}).get("display_name") or relationship["therapist_name"] or "Therapist"
         client_sample = identification_sample(cursor, context, client_name, "PATIENT")
         therapist_sample = identification_sample(cursor, context, therapist_name, "CLINICIAN")
+        speakers = speaker_identification.list_associations(cursor, context,
+            {'client': client_name, 'therapist': therapist_name})
     return {**context,
-        "client": {"name": client_name, "sample": client_sample},
-        "therapist": {"name": therapist_name, "sample": therapist_sample}}
+        "client": {"name": client_name, "pronouns": saved.get("client", {}).get("pronouns"), "sample": client_sample},
+        "therapist": {"name": therapist_name, "pronouns": saved.get("therapist", {}).get("pronouns"), "sample": therapist_sample}, "speakers": speakers}
 
 
 @app.get("/client-identification")
@@ -491,16 +860,21 @@ def update_client_identification(request: ClientIdentificationRequest, authoriza
             raise HTTPException(status_code=403, detail="The requested client is not your linked client.")
         actor = authorize_clinical_access(connection, authorization=authorization, **context, require_write=True)
         with connection.cursor() as cursor:
+            try:
+                speaker_identification.save_associations(cursor, context, request.speakers, actor)
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
             for role, participant in (("client", request.client), ("therapist", request.therapist)):
                 cursor.execute("""INSERT INTO app.client_identification_profiles
-                    (organization_id, client_id, participant_role, display_name, updated_by_user_id)
-                    VALUES (%s,%s,%s,%s,%s)
+                    (organization_id, client_id, participant_role, display_name, pronouns, updated_by_user_id)
+                    VALUES (%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (client_id, participant_role) DO UPDATE SET
                       organization_id=EXCLUDED.organization_id,
                       display_name=EXCLUDED.display_name,
+                      pronouns=EXCLUDED.pronouns,
                       updated_by_user_id=EXCLUDED.updated_by_user_id,
                       updated_at=CURRENT_TIMESTAMP""",
-                    (context["organization_id"], context["client_id"], role, participant.name, actor))
+                    (context["organization_id"], context["client_id"], role, participant.name, participant.pronouns, actor))
         return read_client_identification(connection, context, actor)
 
 
@@ -1041,7 +1415,63 @@ def get_current_pre_session_brief(
         raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
     if not packet and not journey:
         raise HTTPException(status_code=404, detail='No therapist-approved insight history is available for this client.')
-    return project_accepted_insights(packet, journey)
+    fallback = project_accepted_insights(packet, journey)
+    fingerprint, request = brief_input(fallback)
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass('app.generated_pre_session_briefs') AS relation")
+        if not cursor.fetchone()["relation"]:
+            return fallback
+        cursor.execute("SELECT response FROM app.generated_pre_session_briefs WHERE organization_id=%s AND client_id=%s AND context_hash=%s",
+                       (organization_id, client_id, fingerprint))
+        saved = cursor.fetchone()
+    if saved:
+        try:
+            return resolve_brief(saved['response'], request['evidence'])
+        except ValueError:
+            pass  # Invalid or obsolete output cannot produce claim links.
+    return fallback
+
+
+@app.post("/clinical-records/clients/{client_id}/pre-session-brief/generate")
+def generate_current_pre_session_brief(client_id: str, organization_id: str, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        actor = authorize_clinical_access(connection, authorization=authorization, organization_id=organization_id, client_id=client_id, require_write=True)
+        packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(organization_id=organization_id, client_id=client_id)
+        journey = client_journey.list_entries(connection, organization_id, client_id, status='accepted')
+    # Explicit deployment approval; never implicitly send all clients to a provider.
+    allowed = os.getenv('PRE_SESSION_MODEL_APPROVED_CLIENT_IDS', '').split(',')
+    if client_id not in allowed:
+        raise HTTPException(status_code=503, detail='Model processing is not configured for this client.')
+    key, model = os.getenv('OPENAI_API_KEY'), os.getenv('PRE_SESSION_MODEL')
+    if not key or not model:
+        raise HTTPException(status_code=503, detail='Pre-session model credentials and model must be configured.')
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass('app.generated_pre_session_briefs') AS relation")
+        if not cursor.fetchone()['relation']:
+            raise HTTPException(status_code=503, detail='Apply the generated-brief database migration before generation.')
+    fallback = project_accepted_insights(packet, journey)
+    fingerprint, request = brief_input(fallback)
+    if not request['evidence']:
+        raise HTTPException(status_code=409, detail='No accepted evidence is available.')
+    try:
+        generated, metadata = generate_openai_pre_session_brief(synthesis_request=request, api_key=key, model=model)
+        resolved = resolve_brief(generated, request['evidence'])
+    except (RuntimeError, ValueError):
+        raise HTTPException(status_code=502, detail='The model did not return a valid cited brief. Existing context was retained.')
+    with connect() as connection:
+        authorize_clinical_access(connection, authorization=authorization, organization_id=organization_id, client_id=client_id, require_write=True)
+        current_packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(organization_id=organization_id, client_id=client_id)
+        current_journey = client_journey.list_entries(connection, organization_id, client_id, status='accepted')
+        if brief_input(project_accepted_insights(current_packet, current_journey))[0] != fingerprint:
+            raise HTTPException(status_code=409, detail='Accepted context changed during generation. Generate again using the current context.')
+        with connection.cursor() as cursor:
+            cursor.execute("""INSERT INTO app.generated_pre_session_briefs
+                (organization_id, client_id, context_hash, response, model, generated_by)
+                VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (organization_id, client_id)
+                DO UPDATE SET context_hash=EXCLUDED.context_hash, response=EXCLUDED.response,
+                model=EXCLUDED.model, generated_by=EXCLUDED.generated_by, generated_at=CURRENT_TIMESTAMP""",
+                (organization_id, client_id, fingerprint, Json(generated), metadata['model'], actor))
+    return resolved
 
 
 @app.get("/clinical-records/clients/{client_id}/insight-snapshots/latest")
@@ -1307,7 +1737,7 @@ async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File
             Media={"MediaFileUri": f"s3://{input_bucket}/{input_key}"},
             OutputBucketName=output_bucket,
             DataAccessRoleArn=data_role,
-            Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": 2},
+            Settings={"ShowSpeakerLabels": True, "MaxSpeakerLabels": HEALTHSCRIBE_MAX_SPEAKERS},
             **encryption,
         )
         if storage:

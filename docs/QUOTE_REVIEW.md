@@ -3,7 +3,7 @@
 Current product work: make existing source-linked proposals reviewable in the
 transcript and make the pre-session brief easier to scan.
 
-The transcript underlines passages cited by proposed or accepted journey entries.
+The transcript bolds passages cited by proposed or accepted journey entries.
 It requires the session, segment index, and exact trimmed source text to match;
 it does not guess a quote from a generated summary. These are existing provider
 evidence links, not a new model's ranking of important quotations. Review controls
@@ -11,7 +11,7 @@ are available only in the therapist workspace with a relationship context.
 
 Selecting a passage opens an interpretation and category editor. Saving uses the
 existing authorized journey review endpoint and revision history. The underlying
-transcript remains unchanged. Dismissed and outdated entries lose their underline
+transcript remains unchanged. Dismissed and outdated entries lose their bold treatment
 and are excluded from subsequent briefs and guidance packets. If multiple entries
 cite the same passage, each retains its independent review decision.
 

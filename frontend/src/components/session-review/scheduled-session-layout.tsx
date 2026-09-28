@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { RecordingControls } from "@/components/session-review/recording-controls";
 import { AudioUploadButton } from "@/components/session-review/audio-upload-button";
 import { ApiError, api } from "@/lib/api";
@@ -17,12 +18,35 @@ type ScheduledSessionLayoutProps = {
 
 type BriefItem = PreSessionBrief["sections"][number]["items"][number];
 
-function EvidenceLink({ item, onViewEvidence }: { item: BriefItem; onViewEvidence: (source: BriefEvidence) => void }) {
-  const primarySource = item.sources[0];
-  if (!primarySource) return <>{item.text}</>;
-  const sessionNames = item.sources.map((source) => source.session_label.replace("Synthetic · Elena Sadić · ", "")).join(", ");
+function ClaimLink({ phrase, sources, onViewEvidence, fallback = false }: { phrase: string; sources: BriefEvidence[]; onViewEvidence: (source: BriefEvidence) => void; fallback?: boolean }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  return <>
+    <button type="button" onClick={() => dialog.current?.showModal()} aria-haspopup="dialog" aria-label={`View evidence for ${phrase}`} className={`${fallback ? "ml-1 text-xs font-medium" : "font-bold"} inline cursor-grab rounded-sm text-left text-stone-800 hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>{fallback ? "Evidence" : phrase}</button>
+    {typeof document !== "undefined" && createPortal(<dialog ref={dialog} aria-labelledby={titleId} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
+      <span className="flex items-start justify-between gap-4"><span id={titleId} className="text-base font-semibold">Supporting context</span><button type="button" onClick={() => dialog.current?.close()} aria-label="Close supporting context" className="cursor-grab rounded-lg px-2 text-xl active:cursor-grabbing focus-visible:outline-2">×</button></span>
+      <span className="my-4 block text-base leading-7">{phrase}</span>
+      {sources.map(source => <span key={source.evidence_id} className="mt-3 block rounded-xl border border-stone-300 p-4 text-sm leading-6">
+        <span className="block font-semibold">{source.session_label}</span>
+        {source.quote && <span className="mt-2 block">“{source.quote}”</span>}
+        <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 px-3 py-1 font-semibold text-emerald-800 hover:bg-stone-100 active:cursor-grabbing">Open transcript evidence</button>
+      </span>)}
+    </dialog>, document.body)}
+  </>;
+}
 
-  return <>{item.text}<sup className="ml-1 inline-flex gap-1 align-super text-[10px] leading-none">{item.sources.map((source, index) => <button key={source.evidence_id} type="button" onClick={() => onViewEvidence(source)} className="cursor-grab font-medium text-emerald-800 underline underline-offset-2 active:cursor-grabbing focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label={`Open cited evidence ${index + 1} from ${source.session_label}`} title={sessionNames}>{item.sources.length === 1 ? "source" : index + 1}</button>)}</sup></>;
+function EvidenceLink({ item, onViewEvidence }: { item: BriefItem; onViewEvidence: (source: BriefEvidence) => void }) {
+  const spans = (item.claims ?? []).map(claim => {
+    let start = -1;
+    for (let i = 0; i <= claim.occurrence; i++) { start = item.text.indexOf(claim.phrase, start + 1); if (start < 0) break; }
+    return { ...claim, start, end: start + claim.phrase.length };
+  }).sort((a, b) => a.start - b.start);
+  const valid = spans.length > 0 && spans.every((span, index) => span.start >= 0 && span.sources.length > 0 && (!index || span.start >= spans[index - 1].end));
+  if (!valid) return <>{item.text}{item.sources.length > 0 && <ClaimLink phrase={item.text} sources={item.sources} onViewEvidence={onViewEvidence} fallback />}</>;
+  return <>{spans.map((span, index) => <span key={`${span.start}-${span.end}`}>
+    {item.text.slice(index ? spans[index - 1].end : 0, span.start)}
+    <ClaimLink phrase={span.phrase} sources={span.sources} onViewEvidence={onViewEvidence} />
+  </span>)}{item.text.slice(spans[spans.length - 1].end)}</>;
 }
 
 function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onViewEvidence: (source: BriefEvidence) => void }) {

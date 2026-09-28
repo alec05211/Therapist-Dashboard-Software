@@ -110,6 +110,7 @@ AWS_REGION=us-east-1
 HEALTHSCRIBE_INPUT_BUCKET=your-input-bucket-name
 HEALTHSCRIBE_OUTPUT_BUCKET=your-output-bucket-name
 HEALTHSCRIBE_BATCH_DATA_ACCESS_ROLE_ARN=arn:aws:iam::123456789012:role/your-batch-role
+HEALTHSCRIBE_MAX_SPEAKERS=6
 ```
 
 The server uses the temporary credentials from `AWS_PROFILE=terraform`; it does

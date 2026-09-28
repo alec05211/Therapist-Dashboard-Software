@@ -98,4 +98,5 @@ class OrganizationStorageTests(unittest.TestCase):
             self.assertEqual(args['OutputBucketName'], 'private-org')
             self.assertEqual(args['OutputEncryptionKMSKeyId'], 'key')
             self.assertEqual(args['DataAccessRoleArn'], 'role')
+            self.assertEqual(args['Settings'], {'ShowSpeakerLabels': True, 'MaxSpeakerLabels': server.HEALTHSCRIBE_MAX_SPEAKERS})
             self.assertEqual(tasks.tasks[0].args[-1], self.binding)

@@ -1,8 +1,6 @@
 """Deterministic, source-preserving brief projection from accepted insight history."""
 
 from typing import Any
-
-
 def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Present clinician-approved items without inventing new clinical claims."""
     sections = {title: [] for title in ('Important trajectory', 'Open loops', 'Relevant history')}
@@ -54,6 +52,9 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
             continue
         sections[titles.get(item['kind'], 'Relevant history')].append({'text': text, 'sources': sources})
         selected += 1
+    for items in sections.values():
+        for item in items:
+            item["claims"] = []
     version = f"insights v{packet['snapshot_version']}" if packet else 'approved journey history'
     return {
         'status': f"REVIEW DRAFT · {version}",

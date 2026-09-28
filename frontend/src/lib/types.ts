@@ -25,6 +25,19 @@ export type TranscriptListItem = {
   created_at: string;
 };
 
+export type Appointment = {
+  id: string;
+  organization_id: string;
+  client_id: string;
+  client_name?: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: "scheduled" | "confirmed" | "cancelled" | "completed" | "no_show";
+  appointment_type: "recurring" | "make_up" | "one_time";
+  meeting_mode: "in_person" | "video" | "phone";
+  series_id?: string | null;
+};
+
 export type JobStatus = {
   id: string;
   status: string;
@@ -48,6 +61,7 @@ export type PreSessionBrief = {
     title: string;
     items: Array<{
       text: string;
+      claims?: Array<{ phrase: string; occurrence: number; scope: "single_exchange" | "cross_session"; evidence_ids: string[]; sources: BriefEvidence[] }>;
       sources: BriefEvidence[];
     }>;
   }>;

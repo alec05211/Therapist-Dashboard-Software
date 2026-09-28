@@ -17,7 +17,7 @@ class SharingTests(unittest.TestCase):
         for job in jobs:
             job['created_at'].isoformat.return_value = f'2026-08-{job["storage"]["session"]:02d}T15:00:00-04:00'
         review = {'speakers': {'spk_0': 'Therapist'}, 'segments': [{'speaker': 'spk_0', 'text': 'Review text', 'start': 0, 'end': 1}], 'clinical_note': [{'name': 'Draft', 'items': ['Review item']}]}
-        for flags in itertools.product((False, True), repeat=5):
+        for flags in itertools.product((False, True), repeat=len(server.PERMISSION_FIELDS)):
             permissions = dict(zip(server.PERMISSION_FIELDS, flags))
             connection = MagicMock()
             connection.cursor.return_value.__enter__.return_value.fetchall.return_value = []
@@ -35,6 +35,16 @@ class SharingTests(unittest.TestCase):
                 self.assertTrue(session['id'].startswith('session-'))
             if 'sessions' in result:
                 self.assertEqual(len(result['sessions']), 6)
+
+    def test_prescriptions_permission_does_not_expose_session_materials(self):
+        permissions = dict.fromkeys(server.PERMISSION_FIELDS, False)
+        permissions['can_view_prescriptions'] = True
+        with patch.object(server, 'connect') as connect, patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(server, 'read_portal_permissions', return_value=permissions), patch.object(server.organization_storage, 'completed_job_records') as completed_jobs:
+            connect.return_value.__enter__.return_value = MagicMock()
+            result = server.client_portal('Bearer client')
+        self.assertTrue(result['permissions']['can_view_prescriptions'])
+        self.assertNotIn('sessions', result)
+        completed_jobs.assert_not_called()
 
     def test_audio_requires_both_sharing_permissions_and_bound_session(self):
         session_id = 'session-00000000-0000-0000-0000-000000000001'

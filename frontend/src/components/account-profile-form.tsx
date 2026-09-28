@@ -43,6 +43,7 @@ export function AccountProfileForm() {
       const response = await fetch("/api/account/profile/photo", { method: "PUT", body: form });
       const body = await response.json(); if (!response.ok) throw new Error(body.detail || "Could not upload photo.");
       setProfile(current => current && ({ ...current, photoUrl: body.photoUrl })); setPhotoVersion(value => value + 1); setSaved(true);
+      window.dispatchEvent(new Event("account-photo-changed"));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not upload photo."); }
     finally { setBusy(false); event.target.value = ""; }
   };
@@ -52,6 +53,7 @@ export function AccountProfileForm() {
       const response = await fetch("/api/account/profile/photo", { method: "DELETE" });
       const body = await response.json(); if (!response.ok) throw new Error(body.detail || "Could not remove photo.");
       setProfile(current => current && ({ ...current, photoUrl: null })); setSaved(true);
+      window.dispatchEvent(new Event("account-photo-changed"));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not remove photo."); }
     finally { setBusy(false); }
   };
