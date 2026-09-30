@@ -10,9 +10,10 @@ Migration `007_relationship_contact_profiles.sql` seeds only the existing
 synthetic case's former presentation values; it leaves therapist phone blank.
 
 Jeremy's Client care settings → Permissions controls persist in
-`app.client_portal_permissions`. Schedule, Documents, and Chat remain available
-to the client and are omitted from the permissions form; therapists can control completed-session labels, transcripts,
-recordings, draft clinical notes, approved insights, and Prescriptions. The API resolves his active membership,
+`app.client_portal_permissions`. Schedule, Documents, Chat, and completed/future
+session cards remain available to the client and are omitted from the permissions
+form; therapists can control transcripts, recordings, draft clinical notes,
+approved insights, and Prescriptions. The API resolves his active membership,
 practitioner record, and client-specific access grant before reading or saving.
 Writes require clinical write access and reject mismatched client/organization
 IDs. Missing permission rows deny every category.
@@ -23,8 +24,8 @@ explicit database binding and verified Auth0 subjects, never display names.
 The migration preserves existing permission choices and makes new rows deny
 history/transcript access by default.
 
-Elena's `/client-portal` response contains only enabled categories. History
-contains labels/dates without transcript excerpts. Transcripts and draft notes
+The `/client-portal` response always contains the relationship's completed-session
+labels/dates and future scheduled appointments. Transcripts and draft notes
 are independently shared from the six explicitly mapped synthetic sessions;
 runtime recordings and provider metadata are excluded. Recording playback is a
 separate permission, requiring transcript sharing too. The client recording

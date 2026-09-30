@@ -17,6 +17,11 @@ from jwt import InvalidTokenError, PyJWKClient
 # handler of their own. Do not log tokens or decoded claims here.
 logger = logging.getLogger("uvicorn.error")
 
+# Auth0 and the local API can differ by a few seconds even when both clocks are
+# synchronized. PyJWT otherwise rejects a freshly issued token whose iat/nbf is
+# marginally ahead of the API host's clock.
+JWT_CLOCK_SKEW_LEEWAY_SECONDS = 5
+
 
 def auth0_domain() -> str:
     value = os.getenv("AUTH0_DOMAIN", "").strip().removeprefix("https://").rstrip("/")
@@ -67,6 +72,7 @@ def validate_access_token(authorization: str | None) -> dict[str, Any]:
             algorithms=["RS256"],
             audience=auth0_audience(),
             issuer=f"https://{auth0_domain()}/",
+            leeway=JWT_CLOCK_SKEW_LEEWAY_SECONDS,
         )
     except (InvalidTokenError, jwt.PyJWKClientError) as exc:
         # Keep the browser response generic. The exception category is enough

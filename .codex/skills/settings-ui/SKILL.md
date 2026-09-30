@@ -17,8 +17,8 @@ Read `docs/PROJECT_VISION.md` and `docs/DESIGN_LANGUAGE.md` before changing sett
 
 ## Client-care permissions
 
-- Schedule, Documents, and Chat are always visible to the client and are omitted from the permissions UI.
-- Completed-session labels, Transcript, recording playback, Clinical Note, Insights, and Prescriptions are therapist-controlled.
+- Schedule, Documents, Chat, and completed/future session cards are always visible to the client and are omitted from the permissions UI.
+- Transcript, recording playback, Clinical Note, Insights, and Prescriptions are therapist-controlled.
 - Recording playback requires transcript access.
 - Treat UI visibility as presentation only. Enforce every sensitive-material permission in the API, fail closed for configurable categories, and return only authorized fields.
 - Keep generated clinical notes visibly labeled `Clinical Note` with `Draft — review before use` immediately beside the title.

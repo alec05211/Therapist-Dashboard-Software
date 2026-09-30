@@ -68,18 +68,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
   const weekEnd = addDays(weekStart, DAYS);
   const activeAppointments = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed");
   const weekAppointments = activeAppointments.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
-  const usesDemoAvailability = busyTimes.length === 0;
-  const demoBusyTimes = [
-    { day: 1, start: 10 * 60 + 30, duration: 90 },
-    { day: 2, start: 13 * 60, duration: 60 },
-    { day: 3, start: 11 * 60 + 30, duration: 60 },
-    { day: 4, start: 14 * 60 + 30, duration: 90 },
-  ].map(item => {
-    const startsAt = atTime(addDays(weekStart, item.day), item.start);
-    return { starts_at: startsAt.toISOString(), ends_at: new Date(startsAt.getTime() + item.duration * 60_000).toISOString() };
-  }).filter(item => !activeAppointments.some(appointment => overlaps(new Date(item.starts_at), new Date(item.ends_at), appointment.starts_at, appointment.ends_at)));
-  const visibleBusyTimes = usesDemoAvailability ? demoBusyTimes : busyTimes;
-  const weekBusyTimes = visibleBusyTimes.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
+  const weekBusyTimes = busyTimes.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
   const dragging = activeAppointments.find(item => item.id === draggingId) || null;
 
   const canPlace = (start: Date, duration: number, excludeAppointmentId?: string) => {
@@ -109,8 +98,8 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
     <section className="rounded-xl border border-stone-300 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 px-4 py-3">
         <div>
-          <div className="flex items-center gap-2"><h4 className="font-semibold text-stone-900">Weekly schedule</h4>{usesDemoAvailability ? <span className="rounded-full border border-stone-300 bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">Demo availability</span> : null}</div>
-          <p className="mt-0.5 text-xs text-stone-500">{usesDemoAvailability ? "Sample busy times are shown because no other client conflicts exist." : "Drag this client’s sessions to an available time."}</p>
+          <h4 className="font-semibold text-stone-900">Weekly schedule</h4>
+          <p className="mt-0.5 text-xs text-stone-500">Drag this client’s sessions to an available time. Gray blocks are appointments with another client.</p>
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-stone-300 bg-stone-50 p-1">
           <button type="button" onClick={() => setWeekStart(current => addDays(current, -7))} className="cursor-grab rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing">Previous</button>
@@ -122,7 +111,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
         <p className="text-sm font-semibold text-stone-800">{weekLabel(weekStart)}</p>
         <div className="flex flex-wrap gap-3 text-[11px] font-medium text-stone-600" aria-label="Schedule legend">
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-emerald-400 bg-emerald-100" />Client session</span>
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-400 bg-stone-300" />{usesDemoAvailability ? "Busy (demo)" : "Busy"}</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-400 bg-stone-300" />Other client — unavailable</span>
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-300 bg-stone-50" />Available</span>
         </div>
       </div>
@@ -155,7 +144,20 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
                     setPendingMove({ appointment: dragging, startsAt: start });
                   }} className={`absolute inset-x-0 z-10 ${allowed ? "transition-colors duration-150" : ""} ${!dragging && availableForNewSession ? "cursor-grab hover:bg-stone-100 active:cursor-grabbing" : ""} ${hoveredSlot === key ? "bg-emerald-100/80" : ""}`} style={{ top: (minute - DAY_START) / SLOT_MINUTES * SLOT_HEIGHT, height: SLOT_HEIGHT }} />;
                 })}
-                {dayBusy.map(item => <div key={`${item.starts_at}-${item.ends_at}`} aria-label="Unavailable time" className="pointer-events-none absolute inset-x-1 z-20 overflow-hidden rounded-md border border-stone-400 bg-stone-300/90 px-1.5 py-1 text-[10px] font-semibold text-stone-700" style={position(item.starts_at, item.ends_at)}>Busy</div>)}
+                {dayBusy.map(item => <div
+                  key={`${item.starts_at}-${item.ends_at}`}
+                  aria-label="Unavailable time for another client appointment"
+                  title="Unavailable — another client appointment"
+                  onClick={event => event.stopPropagation()}
+                  onDragEnter={() => setHoveredSlot(null)}
+                  onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "none"; }}
+                  onDrop={event => event.preventDefault()}
+                  className="absolute inset-x-1 z-20 flex cursor-not-allowed items-start gap-1 overflow-hidden rounded-md border border-stone-400 bg-stone-300/90 px-1.5 py-1 text-[10px] font-semibold text-stone-700"
+                  style={position(item.starts_at, item.ends_at)}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="mt-px size-3 shrink-0"><circle cx="8" cy="8" r="5.5" stroke="currentColor" /><path d="m4.2 11.8 7.6-7.6" stroke="currentColor" strokeLinecap="round" /></svg>
+                  <span>Unavailable</span>
+                </div>)}
                 {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 overflow-hidden rounded-lg border border-emerald-400 bg-emerald-100 px-2 py-1.5 text-emerald-950 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
                   <div className="flex items-start justify-between gap-1">
                     <div className="min-w-0"><p className="truncate text-[11px] font-bold">{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(item.starts_at))}</p><p className="truncate text-[10px] font-medium">{item.appointment_type.replace("_", "-")}</p></div>

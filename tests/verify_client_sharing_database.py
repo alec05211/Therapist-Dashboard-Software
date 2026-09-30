@@ -22,7 +22,7 @@ with connect() as connection:
         yield connection
     with connection.transaction():
         with patch.object(server, 'connect', existing_connection), patch.object(server, 'validate_access_token', side_effect=lambda token: {'sub': identities['therapist_subject' if token == 'therapist' else 'client_subject']}):
-            context = server.get_client_portal_permissions('therapist')
+            context = server.get_client_portal_permissions(str(server.resolve_sharing_context(connection, 'therapist', therapist=True)['client_id']), 'therapist')
             clients = server.therapist_clients('therapist')['clients']
             assert any(client['id'] == context['client_id'] for client in clients)
             try:
@@ -43,12 +43,13 @@ with connect() as connection:
                 payload = {**context, **dict.fromkeys(server.PERMISSION_FIELDS, enabled)}
                 saved = server.update_client_portal_permissions(server.ClientPortalPermissionsRequest(**payload), 'therapist')
                 assert all(saved[key] == enabled for key in server.PERMISSION_FIELDS)
-                assert server.get_client_portal_permissions('therapist') == saved
+                assert server.get_client_portal_permissions(context['client_id'], 'therapist') == saved
                 portal = server.client_portal('client')
                 assert all(portal['permissions'][key] == enabled for key in server.PERMISSION_FIELDS)
-                assert ('sessions' in portal) == enabled
+                assert portal['permissions']['can_view_session_history'] is True
+                assert 'sessions' in portal and 'appointments' in portal
             try:
-                server.get_client_portal_permissions('client')
+                server.get_client_portal_permissions(context['client_id'], 'client')
                 raise AssertionError('Client accessed therapist settings')
             except server.HTTPException as error:
                 assert error.status_code == 403
@@ -56,7 +57,7 @@ with connect() as connection:
                 cursor.execute('UPDATE app.client_therapist_access SET revoked_at=CURRENT_TIMESTAMP WHERE client_id=%s', (context['client_id'],))
             assert all(client['id'] != context['client_id'] for client in server.therapist_clients('therapist')['clients'])
             try:
-                server.get_client_portal_permissions('therapist')
+                server.get_client_portal_permissions(context['client_id'], 'therapist')
                 raise AssertionError('Revoked relationship remained accessible')
             except server.HTTPException as error:
                 assert error.status_code == 403

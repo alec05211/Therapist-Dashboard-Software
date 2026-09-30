@@ -31,7 +31,7 @@ class SpeakerIdentificationTests(unittest.TestCase):
             display_label='Reviewed parent', starts_at_seconds=12, ends_at_seconds=22)]
         result = identification.list_associations(cursor, {'organization_id': 'org', 'client_id': 'client'}, {})
         self.assertEqual(result[0]['name'], 'Reviewed parent')
-        self.assertEqual(result[0]['sample'], {'recordingUrl': '/api/recordings/session-1/audio.wav', 'start': 12.0, 'end': 22.0})
+        self.assertEqual(result[0]['sample'], {'recordingUrl': '/api/recordings/session-1/audio.wav?client_id=client', 'start': 12.0, 'end': 22.0})
         sql, params = cursor.execute.call_args.args
         self.assertIn('app.transcript_speaker_samples', sql)
         self.assertIn('newer.version_number>transcript.version_number', sql)
@@ -68,7 +68,7 @@ class SpeakerIdentificationTests(unittest.TestCase):
     def test_identification_write_rejects_another_relationship_before_mutation(self):
         request = server.ClientIdentificationRequest(organization_id='other-org', client_id='other-client',
             client={'name': 'Client'}, therapist={'name': 'Therapist'})
-        with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(identification, 'save_associations') as save:
+        with patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(identification, 'save_associations') as save:
             with self.assertRaises(HTTPException) as error:
                 server.update_client_identification(request, 'Bearer token')
         self.assertEqual(error.exception.status_code, 403)

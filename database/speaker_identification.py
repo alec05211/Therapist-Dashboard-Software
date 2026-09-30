@@ -94,7 +94,7 @@ def list_associations(cursor, context, defaults):
         overrides = {label: row['display_label']} if row['display_label'] else {}
         start = float(row['starts_at_seconds'])
         end = float(row['ends_at_seconds'])
-        sample = {'recordingUrl': f"/api/recordings/{row['runtime_id']}/{Path(row['audio_key']).name}",
+        sample = {'recordingUrl': f"/api/recordings/{row['runtime_id']}/{Path(row['audio_key']).name}?client_id={context['client_id']}",
                   'start': start, 'end': end} if row['audio_key'] and end > start else None
         result.append({'transcriptVersionId': str(row['transcript_version_id']),
                        'sessionId': row['runtime_id'], 'sessionLabel': row['session_label'],

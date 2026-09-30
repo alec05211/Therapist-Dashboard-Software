@@ -15,20 +15,28 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return data as T;
 }
 
-function normalizeTranscript(transcript: Transcript): Transcript {
+function clientQuery(clientId: string) {
+  return `client_id=${encodeURIComponent(clientId)}`;
+}
+
+function normalizeTranscript(transcript: Transcript, clientId: string): Transcript {
   return {
     ...transcript,
     segments: transcript.segments ?? [],
     speakers: transcript.speakers ?? {},
     clinical_note: transcript.clinical_note ?? [],
-    recording_url: transcript.recording_url ? `/api${transcript.recording_url}` : undefined,
+    recording_url: transcript.recording_url
+      ? `/api${transcript.recording_url}${transcript.recording_url.includes("?") ? "&" : "?"}${clientQuery(clientId)}`
+      : undefined,
   };
 }
 
 export const api = {
-  listTranscripts: () => request<TranscriptListItem[]>("/transcripts"),
-  getTranscript: async (id: string) => normalizeTranscript(await request<Transcript>(`/transcripts/${encodeURIComponent(id)}`)),
-  getJobStatus: (id: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status`),
+  listTranscripts: (clientId: string) => request<TranscriptListItem[]>(`/transcripts?${clientQuery(clientId)}`),
+  getTranscript: async (id: string, clientId: string) => normalizeTranscript(
+    await request<Transcript>(`/transcripts/${encodeURIComponent(id)}?${clientQuery(clientId)}`), clientId,
+  ),
+  getJobStatus: (id: string, clientId: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status?${clientQuery(clientId)}`),
   getCurrentPreSessionBrief: (organizationId: string, clientId: string) =>
     request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`, { cache: "no-store" }),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
@@ -42,13 +50,13 @@ export const api = {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organization_id: organizationId, ...update }),
     }),
-  uploadRecording: (audio: Blob) => {
+  uploadRecording: (audio: Blob, clientId: string) => {
     const form = new FormData();
     form.append("audio", audio, audio instanceof File ? audio.name : "recording.webm");
-    return request<{ id: string }>("/transcribe", { method: "POST", body: form });
+    return request<{ id: string }>(`/transcribe?${clientQuery(clientId)}`, { method: "POST", body: form });
   },
-  saveSpeakerLabels: (id: string, labels: Record<string, string>) =>
-    request<{ speakers: Record<string, string> }>(`/transcripts/${encodeURIComponent(id)}/speakers`, {
+  saveSpeakerLabels: (id: string, clientId: string, labels: Record<string, string>) =>
+    request<{ speakers: Record<string, string> }>(`/transcripts/${encodeURIComponent(id)}/speakers?${clientQuery(clientId)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(labels),

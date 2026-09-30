@@ -3,7 +3,8 @@ import { auth0 } from "@/lib/auth0";
 
 async function forward(request: NextRequest) {
   try {
-    if (!await auth0.getSession()) return NextResponse.json({ detail: "Sign in is required." }, { status: 401 });
+    const session = await auth0.getSession();
+    if (!session) return NextResponse.json({ detail: "Sign in is required." }, { status: 401 });
     const { token } = await auth0.getAccessToken();
     const url = new URL(process.env.API_ORIGIN ?? "http://127.0.0.1:8000");
     url.pathname = request.nextUrl.pathname.slice(4);
@@ -14,6 +15,11 @@ async function forward(request: NextRequest) {
       if (value) headers.set(key, value);
     }
     const response = await fetch(url, { method: request.method, headers, cache: "no-store", body: ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer() });
+    if (request.method === "GET" && url.pathname === "/account/profile" && response.ok) {
+      const profile = await response.json();
+      const signInEmail = typeof session.user.email === "string" ? session.user.email : null;
+      return NextResponse.json({ ...profile, email: profile.email || signInEmail }, { headers: { "Cache-Control": "no-store" } });
+    }
     const outgoing = new Headers({ "Cache-Control": "no-store" });
     for (const key of ["content-type", "content-length", "content-range", "accept-ranges", "content-disposition", "x-content-type-options"]) {
       const value = response.headers.get(key);

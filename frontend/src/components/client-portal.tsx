@@ -7,10 +7,12 @@ import { TranscriptViewer } from "@/components/session-review/transcript-viewer"
 import { ClientDocumentRelationships } from "@/components/client-document-relationships";
 import { CareChat } from "@/components/care-chat";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import type { Appointment } from "@/lib/types";
 
 type Portal = {
   permissions: Record<"can_view_session_history" | "can_view_shared_transcripts" | "can_view_insights" | "can_view_draft_notes" | "can_play_shared_recordings" | "can_view_prescriptions", boolean>;
   sessions?: { id: string; label: string; created_at?: string; recording_url?: string; segments?: { speaker: string; text: string; start: number; end: number }[]; draft_note?: { name: string; items: string[] }[] }[];
+  appointments?: Appointment[];
   insights?: string[];
 };
 
@@ -38,13 +40,11 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     const timer = window.setInterval(load, 60000);
     return () => { active = false; window.removeEventListener("focus", load); window.clearInterval(timer); };
   }, []);
-  const carouselSessions = portal?.permissions.can_view_session_history ? (portal.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "" })) : [];
-  const scheduled = chosenScheduled ?? (!selectedId ? nextScheduledSession(carouselSessions) : null);
-  const latestSession = portal?.sessions?.at(-1);
+  const carouselSessions = (portal?.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "" }));
+  const scheduled = chosenScheduled ?? (!selectedId ? nextScheduledSession(carouselSessions, portal?.appointments ?? []) : null);
+  const latestSession = portal?.sessions?.[0];
   const selectedSession = portal?.sessions?.find(session => session.id === selectedId) ?? latestSession;
-  const visibleSessions = portal?.permissions.can_view_session_history
-    ? scheduled ? [] : selectedSession ? [selectedSession] : []
-    : portal?.sessions ?? [];
+  const visibleSessions = scheduled ? [] : selectedSession ? [selectedSession] : [];
   return <main className="mx-auto w-[min(92vw,1080px)] py-8 text-stone-900">
     <CareRelationshipHeader profile={profile} activeAction={activeView} actions={[
       { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: () => { setActiveView("clinical-workspace"); setSelectedId(null); setScheduled(null); setWorkspaceVisit(value => value + 1); document.getElementById("client-clinical-workspace")?.focus(); } },
@@ -56,10 +56,10 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     <p className="sr-only">{name}’s clinical workspace</p>
     {error && <p role="alert" className="mt-5">{error}</p>}{!portal && !error && <LoadingSpinner label="Loading shared materials…" />}
     {portal && <>
-      {!Object.values(portal.permissions).some(Boolean) && <p className="mt-5">Your therapist has not enabled shared materials.</p>}
       <div className="mt-6">
         <SessionCardCarousel key={workspaceVisit}
           transcripts={carouselSessions}
+          appointments={portal.appointments ?? []}
           activeId={scheduled?.id ?? selectedSession?.id ?? null}
           error={null}
           onOpen={id => { setSelectedId(id); setScheduled(null); }}
@@ -69,9 +69,10 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
           <p className="text-sm font-medium text-emerald-800">Upcoming session</p>
           <h2 className="mt-1 text-xl font-semibold">{scheduled.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
           <p className="mt-2 text-sm text-stone-600">With {profile.name} · {scheduled.date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</p>
-          <p className="mt-3 text-sm leading-6 text-stone-600">Planned session in your synthetic care schedule. Session details are pending.</p>
+          <p className="mt-3 text-sm leading-6 text-stone-600">This session is scheduled with your therapist.</p>
         </section> : null}
       </div>
+      {!portal.permissions.can_view_shared_transcripts && !portal.permissions.can_view_draft_notes && !portal.permissions.can_view_insights && !portal.permissions.can_view_prescriptions ? <p className="mt-5 text-sm text-stone-600">No additional session materials have been shared.</p> : null}
       {(portal.permissions.can_view_shared_transcripts || portal.permissions.can_view_draft_notes) && visibleSessions.map(session => <div key={session.id} className="mt-6"><CompletedSessionLayout sessionId={session.label}>
         <TranscriptViewer key={session.id}
           showTranscript={portal.permissions.can_view_shared_transcripts}

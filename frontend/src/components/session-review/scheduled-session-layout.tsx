@@ -10,6 +10,8 @@ import type { BriefEvidence, LongitudinalRecordContext, PreSessionBrief } from "
 type ScheduledSessionLayoutProps = {
   isRecording: boolean;
   isBusy: boolean;
+  hasPriorSessions: boolean;
+  onReschedule: () => void;
   onToggleRecording: () => void;
   onUploadAudio: (file: File) => void;
   onViewEvidence: (source: BriefEvidence) => void;
@@ -50,6 +52,9 @@ function EvidenceLink({ item, onViewEvidence }: { item: BriefItem; onViewEvidenc
 }
 
 function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onViewEvidence: (source: BriefEvidence) => void }) {
+  if (brief.status === "NO PRIOR CONTEXT") {
+    return <p className="mt-5 text-base leading-8 text-stone-800">No prior context or history. Record or upload the first session to begin.</p>;
+  }
   const latestSession = brief.sections.find((section) => section.title === "Since last session")?.items ?? [];
   const trajectory = brief.sections.find((section) => section.title === "Important trajectory")?.items ?? [];
   const openLoops = brief.sections.find((section) => section.title === "Open loops")?.items ?? [];
@@ -81,7 +86,7 @@ function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onV
   </>;
 }
 
-export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording, onUploadAudio, onViewEvidence, recordContext }: ScheduledSessionLayoutProps) {
+export function ScheduledSessionLayout({ isRecording, isBusy, hasPriorSessions, onReschedule, onToggleRecording, onUploadAudio, onViewEvidence, recordContext }: ScheduledSessionLayoutProps) {
   const [brief, setBrief] = useState<PreSessionBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
   const organizationId = recordContext?.organizationId;
@@ -94,9 +99,11 @@ export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording,
       return { result, source: "saved" as const };
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 404) throw error;
-      return { result: { status: "AWAITING APPROVED INSIGHTS", review_note: "The brief will draw from therapist-approved client journey entries when available.", sections: [] } as PreSessionBrief, source: "empty" as const };
+      return { result: hasPriorSessions
+        ? { status: "AWAITING APPROVED INSIGHTS", review_note: "The brief will draw from therapist-approved client journey entries when available.", sections: [] }
+        : { status: "NO PRIOR CONTEXT", review_note: "No earlier sessions are available for this client.", sections: [] } as PreSessionBrief, source: "empty" as const };
     }
-  }, [organizationId, clientId]);
+  }, [organizationId, clientId, hasPriorSessions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,10 +114,16 @@ export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording,
   }, [loadBrief]);
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5 text-left shadow-sm" aria-label="Scheduled session preparation">
-      <h2 className="text-lg font-semibold text-stone-900">Prepare for this session</h2>
+    <div className="grid gap-4" aria-label="Scheduled session preparation">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="reschedule-session-heading">
+        <h2 id="reschedule-session-heading" className="text-lg font-semibold text-stone-900">Reschedule session</h2>
+        <button type="button" onClick={onReschedule} className="cursor-grab rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm font-semibold text-stone-800 transition-colors duration-200 hover:border-stone-400 hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+          Reschedule
+        </button>
+      </section>
 
-      <section className="border-b border-stone-200 pb-4" aria-label="Pre-session brief">
+      <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="pre-session-brief-heading">
+        <h2 id="pre-session-brief-heading" className="text-lg font-semibold text-stone-900">Pre-session brief</h2>
         {briefError ? <p className="mt-4 text-sm text-red-700">{briefError}</p> : null}
         {!brief && !briefError ? <p className="mt-4 text-sm text-stone-600">Preparing cited context…</p> : null}
         {brief ? <>
@@ -119,7 +132,10 @@ export function ScheduledSessionLayout({ isRecording, isBusy, onToggleRecording,
         </> : null}
       </section>
 
-      <div className="mt-5 flex items-center gap-3"><div className="flex-1"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div><AudioUploadButton disabled={isRecording || isBusy} onUpload={onUploadAudio} /></div>
-    </section>
+      <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="record-session-heading">
+        <h2 id="record-session-heading" className="text-lg font-semibold text-stone-900">Record or upload session</h2>
+        <div className="mt-4 flex items-center gap-3"><div className="flex-1"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div><AudioUploadButton disabled={isRecording || isBusy} onUpload={onUploadAudio} /></div>
+      </section>
+    </div>
   );
 }

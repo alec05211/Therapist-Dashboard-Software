@@ -18,23 +18,22 @@ class SharingTests(unittest.TestCase):
             job['created_at'].isoformat.return_value = f'2026-08-{job["storage"]["session"]:02d}T15:00:00-04:00'
         review = {'speakers': {'spk_0': 'Therapist'}, 'segments': [{'speaker': 'spk_0', 'text': 'Review text', 'start': 0, 'end': 1}], 'clinical_note': [{'name': 'Draft', 'items': ['Review item']}]}
         for flags in itertools.product((False, True), repeat=len(server.PERMISSION_FIELDS)):
-            permissions = dict(zip(server.PERMISSION_FIELDS, flags))
+            permissions = {'can_view_session_history': True, **dict(zip(server.PERMISSION_FIELDS, flags))}
             connection = MagicMock()
             connection.cursor.return_value.__enter__.return_value.fetchall.return_value = []
             with patch.object(server, 'connect') as connect, patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'org', 'client_id': 'client'}), patch.object(server, 'read_portal_permissions', return_value=permissions), patch.object(server.organization_storage, 'completed_job_records', return_value=jobs), patch.object(server.organization_storage.session_review, 'read_result', return_value=review):
                 connect.return_value.__enter__.return_value = connection
                 result = server.client_portal('Bearer client')
-            self.assertEqual('insights' in result, flags[2])
-            self.assertEqual('sessions' in result, flags[0] or flags[1] or flags[3])
-            for session in result.get('sessions', []):
-                self.assertEqual('created_at' in session, flags[0])
-                self.assertEqual('segments' in session, flags[1])
-                self.assertEqual('draft_note' in session, flags[3])
-                self.assertEqual('recording_url' in session, flags[1] and flags[4])
+            self.assertEqual('insights' in result, permissions['can_view_insights'])
+            self.assertIn('sessions', result)
+            for session in result['sessions']:
+                self.assertIn('created_at', session)
+                self.assertEqual('segments' in session, permissions['can_view_shared_transcripts'])
+                self.assertEqual('draft_note' in session, permissions['can_view_draft_notes'])
+                self.assertEqual('recording_url' in session, permissions['can_view_shared_transcripts'] and permissions['can_play_shared_recordings'])
                 self.assertNotIn('healthscribe', session)
                 self.assertTrue(session['id'].startswith('session-'))
-            if 'sessions' in result:
-                self.assertEqual(len(result['sessions']), 6)
+            self.assertEqual(len(result['sessions']), 6)
 
     def test_prescriptions_permission_does_not_expose_session_materials(self):
         permissions = dict.fromkeys(server.PERMISSION_FIELDS, False)
@@ -43,8 +42,8 @@ class SharingTests(unittest.TestCase):
             connect.return_value.__enter__.return_value = MagicMock()
             result = server.client_portal('Bearer client')
         self.assertTrue(result['permissions']['can_view_prescriptions'])
-        self.assertNotIn('sessions', result)
-        completed_jobs.assert_not_called()
+        self.assertEqual(result['sessions'], [])
+        completed_jobs.assert_called_once()
 
     def test_audio_requires_both_sharing_permissions_and_bound_session(self):
         session_id = 'session-00000000-0000-0000-0000-000000000001'
@@ -75,7 +74,7 @@ class SharingTests(unittest.TestCase):
                 result = server.relationship_profile('Bearer identity')
                 expected = {'name': 'Database Person', 'email': 'care@example.com', 'phone': None, 'initials': 'DP', 'role': 'Therapist' if role == 'client' else 'Client', 'imageSrc': None, 'aboutMe': None}
                 if role == 'therapist':
-                    expected.update(organizationId='o', clientId='c', syntheticCase=False)
+                    expected.update(organizationId='o', clientId='c', syntheticCase=False, needsSetup=True)
                 self.assertEqual(result, expected)
                 resolve.assert_called_once_with(connection, 'Bearer identity', therapist=role == 'therapist')
                 if role == 'client':
@@ -106,7 +105,9 @@ class SharingTests(unittest.TestCase):
     def test_missing_permissions_deny_all(self):
         connection = MagicMock()
         connection.cursor.return_value.__enter__.return_value.fetchone.return_value = None
-        self.assertFalse(any(server.read_portal_permissions(connection, {'organization_id': 'o', 'client_id': 'c'}).values()))
+        permissions = server.read_portal_permissions(connection, {'organization_id': 'o', 'client_id': 'c'})
+        self.assertTrue(permissions['can_view_session_history'])
+        self.assertFalse(any(permissions[key] for key in server.PERMISSION_FIELDS))
 
     def test_unlinked_or_ambiguous_context_denied(self):
         for rows in ([], [{'client_id': 'a'}, {'client_id': 'b'}]):
@@ -118,9 +119,20 @@ class SharingTests(unittest.TestCase):
                         server.resolve_sharing_context(connection, 'Bearer other', therapist=therapist)
                     self.assertEqual(error.exception.status_code, 403)
 
+    def test_connected_client_context_does_not_require_synthetic_case_marker(self):
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchall.return_value = [{'client_id': 'marcus', 'organization_id': 'practice'}]
+        with patch.object(server, 'validate_access_token', return_value={'sub': 'auth0|marcus'}):
+            context = server.resolve_sharing_context(connection, 'Bearer client')
+        self.assertEqual(context, {'client_id': 'marcus', 'organization_id': 'practice'})
+        sql, params = cursor.execute.call_args.args
+        self.assertNotIn('synthetic_case_key', sql)
+        self.assertEqual(params, ('auth0|marcus',))
+
     def test_spoofed_client_write_rejected(self):
         request = server.ClientPortalPermissionsRequest(organization_id='o', client_id='other', **dict.fromkeys(server.PERMISSION_FIELDS, True))
-        with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'o', 'client_id': 'linked'}):
+        with patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context', return_value={'organization_id': 'o', 'client_id': 'linked'}):
             with self.assertRaises(HTTPException) as error:
                 server.update_client_portal_permissions(request, 'Bearer therapist')
             self.assertEqual(error.exception.status_code, 403)
@@ -128,8 +140,8 @@ class SharingTests(unittest.TestCase):
     def test_legacy_routes_block_client_before_reading_files(self):
         async def run():
             for path in ('/transcripts', '/transcripts/session-00000000-0000-0000-0000-000000000001', '/recordings/session/transcript.json', '/transcribe'):
-                request = Request({'type': 'http', 'path': path, 'method': 'GET', 'headers': []})
-                with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', side_effect=HTTPException(403, 'Denied')):
+                request = Request({'type': 'http', 'path': path, 'query_string': b'client_id=client', 'method': 'GET', 'headers': []})
+                with patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context', side_effect=HTTPException(403, 'Denied')):
                     response = await server.protect_legacy_clinical_routes(request, MagicMock(side_effect=AssertionError('Must not reach handler')))
                 self.assertEqual(response.status_code, 403)
         asyncio.run(run())

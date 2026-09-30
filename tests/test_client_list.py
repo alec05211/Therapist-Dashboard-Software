@@ -22,7 +22,7 @@ class ClientListTests(unittest.TestCase):
             self.assertEqual(cursor.execute.call_count, 1)
 
     def test_returns_database_clients_and_empty_list(self):
-        row = {'id': uuid4(), 'organization_id': uuid4(), 'name': 'Database Client', 'email': None, 'phone': None, 'status': 'active'}
+        row = {'id': uuid4(), 'organization_id': uuid4(), 'name': 'Database Client', 'email': None, 'phone': None, 'status': 'active', 'has_photo': True}
         for rows in ([], [row]):
             with patch.object(server, 'validate_access_token', return_value={'sub': 'therapist'}), patch.object(server, 'connect') as connect:
                 cursor = connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
@@ -33,6 +33,7 @@ class ClientListTests(unittest.TestCase):
                 if rows:
                     self.assertEqual(result[0]['id'], str(row['id']))
                     self.assertEqual(result[0]['name'], row['name'])
+                    self.assertEqual(result[0]['photoUrl'], f"/api/therapist/client-directory/{row['id']}/photo")
 
     def test_invalid_token_never_opens_database(self):
         with patch.object(server, 'validate_access_token', side_effect=server.HTTPException(401)), patch.object(server, 'connect') as connect:

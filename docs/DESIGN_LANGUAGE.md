@@ -45,7 +45,7 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 - The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
 - Search fields use a concise placeholder and an accessible name; do not add a redundant visible label or helper sentence.
-- Client permissions show one left-aligned list of editable choices using native checkbox inputs with switch semantics. Fixed Schedule, Documents, and Chat access is not repeated in the form.
+- Client permissions show one left-aligned list of editable choices using native checkbox inputs with switch semantics. Fixed Schedule, Documents, Chat, and completed/future session-card access is not repeated in the form.
 - Relationship identification uses one compact row each for Client and Therapist: role, name, optional pronouns, and a brief audio sample. Keep provider codenames in an info tooltip rather than the persistent label.
 
 ## Reusable content panels
@@ -93,11 +93,11 @@ creation, and upcoming-session actions into distinct sections. Suggested
 recurring times must account for the therapist's other active appointments. A
 client-specific Monday–Friday week calendar supports direct rescheduling: the
 current client's sessions use interactive evergreen cards, anonymous conflicts
-from the therapist's other appointments use non-interactive neutral Busy blocks,
+from the therapist's other appointments use non-interactive neutral Unavailable blocks
+with a blocked icon and `cursor-not-allowed`,
 and open time remains a light neutral surface. Dragging preserves session length,
 snaps to 30-minute slots, and remains backed by the manual reschedule controls.
-When no real conflicts exist, the development experience may show clearly labeled
-demo Busy blocks. A drop stages rather than commits the change: a confirmation
+A drop stages rather than commits the change: a confirmation
 dialog names the proposed date and time and clarifies that a moved recurring
 session returns to its normal time the following week.
 Recurring scheduling configuration starts collapsed behind a single disclosure
@@ -108,11 +108,15 @@ not in a duplicate form below the calendar.
 Recurring configuration is relationship-aware: saved preferences and the next
 recurring time prefill for an established schedule, while a new relationship
 starts with unselected frequency, length, format, and time fields.
-Adding a client begins from the therapist client list and searches existing
-client accounts within the therapist's organization. Search results use the
-client's profile photo or initials alongside their account identity to reduce
+The therapist client list uses one inline search surface for both filtering
+connected clients and finding discoverable client accounts. Search results stay
+inside the list rather than opening a separate add-client dialog, and use the
+person's profile photo or initials alongside their account identity to reduce
 selection mistakes. A newly linked relationship opens with only the basic name
-card and a heavily blurred, non-interactive preview of the session carousel.
+card and a softly blurred, non-interactive preview of the session carousel;
+card boundaries, spacing, and the carousel's general structure remain visible.
+Its outer border and surface match the quiet treatment of the relationship name
+card above it.
 Center a single `Configure sessions` action over that preview; it opens Client
 care settings directly to Scheduling with recurring appointment configuration
 expanded, so the relationship can be scheduled before the normal workspace is

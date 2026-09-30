@@ -6,7 +6,7 @@ import { SettingsLayout, settingsFieldClass, type SettingsSection } from "@/comp
 import { ClientScheduling } from "@/components/client-scheduling";
 
 type Section = "identification" | "scheduling" | "permissions";
-type Permission = "history" | "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
+type Permission = "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
 type AudioSample = { recordingUrl: string; start: number; end: number };
 type Participant = { name: string; pronouns: string; sample: AudioSample | null };
 
@@ -17,7 +17,6 @@ const sections: SettingsSection[] = [
 ];
 
 const permissions: { id: Permission; title: string; detail: string }[] = [
-  { id: "history", title: "Completed sessions", detail: "Show dates and labels for past sessions." },
   { id: "transcript", title: "Transcripts", detail: "Allow the client to review transcripts from completed sessions." },
   { id: "recordings", title: "Recording playback", detail: "Allow audio playback alongside a shared transcript." },
   { id: "clinicalNote", title: "Clinical notes", detail: "Share draft clinical notes for the client to review." },
@@ -25,7 +24,7 @@ const permissions: { id: Permission; title: string; detail: string }[] = [
   { id: "prescriptions", title: "Prescriptions", detail: "Show the prescriptions view in the client portal." },
 ];
 
-const permissionFields = { history: "can_view_session_history", transcript: "can_view_shared_transcripts", insights: "can_view_insights", clinicalNote: "can_view_draft_notes", recordings: "can_play_shared_recordings", prescriptions: "can_view_prescriptions" } as const;
+const permissionFields = { transcript: "can_view_shared_transcripts", insights: "can_view_insights", clinicalNote: "can_view_draft_notes", recordings: "can_play_shared_recordings", prescriptions: "can_view_prescriptions" } as const;
 
 function VolumeIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5 6.8 8.5H3.5v7h3.3L11 19V5Z" /><path strokeLinecap="round" d="M15 9.25a4 4 0 0 1 0 5.5M17.75 6.75a7.5 7.5 0 0 1 0 10.5" /></svg>;
@@ -68,7 +67,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
   const [therapist, setTherapist] = useState<Participant>({ name: "", pronouns: "", sample: null });
   const [activeSample, setActiveSample] = useState<(AudioSample & { id: string }) | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [choices, setChoices] = useState<Record<Permission, boolean>>({ history: false, transcript: false, insights: false, clinicalNote: false, recordings: false, prescriptions: false });
+  const [choices, setChoices] = useState<Record<Permission, boolean>>({ transcript: false, insights: false, clinicalNote: false, recordings: false, prescriptions: false });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -79,8 +78,18 @@ export function ClientCareSettings({ initialSection = "identification", clientId
 
   useEffect(() => {
     if (setupSchedulingOnly) return;
+    if (!clientId) {
+      void Promise.resolve().then(() => {
+        setIdentificationError("This client workspace is unavailable.");
+        setPermissionsError("This client workspace is unavailable.");
+        setIdentificationLoading(false);
+        setPermissionsLoading(false);
+      });
+      return;
+    }
     let active = true;
-    void fetch("/api/client-identification", { cache: "no-store" })
+    const query = `?client_id=${encodeURIComponent(clientId)}`;
+    void fetch(`/api/client-identification${query}`, { cache: "no-store" })
       .then(response => responseBody(response, "Could not load identification settings."))
       .then(body => {
         if (!active) return;
@@ -92,17 +101,17 @@ export function ClientCareSettings({ initialSection = "identification", clientId
       })
       .catch((reason: Error) => { if (active) setIdentificationError(reason.message); })
       .finally(() => { if (active) setIdentificationLoading(false); });
-    void fetch("/api/client-portal-permissions", { cache: "no-store" })
+    void fetch(`/api/client-portal-permissions${query}`, { cache: "no-store" })
       .then(response => responseBody(response, "Could not load permission settings."))
       .then(body => {
         if (!active) return;
         setContext({ organization_id: String(body.organization_id), client_id: String(body.client_id) });
-        setChoices({ history: Boolean(body.can_view_session_history), transcript: Boolean(body.can_view_shared_transcripts), insights: Boolean(body.can_view_insights), clinicalNote: Boolean(body.can_view_draft_notes), recordings: Boolean(body.can_play_shared_recordings), prescriptions: Boolean(body.can_view_prescriptions) });
+        setChoices({ transcript: Boolean(body.can_view_shared_transcripts), insights: Boolean(body.can_view_insights), clinicalNote: Boolean(body.can_view_draft_notes), recordings: Boolean(body.can_play_shared_recordings), prescriptions: Boolean(body.can_view_prescriptions) });
       })
       .catch((reason: Error) => { if (active) setPermissionsError(reason.message); })
       .finally(() => { if (active) setPermissionsLoading(false); });
     return () => { active = false; };
-  }, [setupSchedulingOnly]);
+  }, [clientId, setupSchedulingOnly]);
 
   const save = async () => {
     if (!context || busy || section === "scheduling") return;

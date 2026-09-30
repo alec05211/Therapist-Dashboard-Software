@@ -23,6 +23,10 @@ function UserIcon() {
   );
 }
 
+function InboxIcon() {
+  return <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 18.75a2.25 2.25 0 0 1-4.5 0m8.25-7.5a6 6 0 0 0-12 0c0 7.5-3 6-3 7.5h18c0-1.5-3 0-3-7.5Z" /></svg>;
+}
+
 function LogoutIcon() {
   return (
     <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -78,6 +82,7 @@ export function AppHeader() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [accountRole, setAccountRole] = useState<"therapist" | "client" | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -128,13 +133,24 @@ export function AppHeader() {
     };
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const refreshInbox = () => { void fetch("/api/inbox", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(body => setUnreadCount(body?.unreadCount || 0)).catch(() => setUnreadCount(0)); };
+    refreshInbox();
+    window.addEventListener("inbox-changed", refreshInbox);
+    return () => window.removeEventListener("inbox-changed", refreshInbox);
+  }, [isAuthenticated]);
+
   return (
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex h-16 w-[min(94vw,1200px)] items-center justify-between">
         <Link className="text-lg font-semibold tracking-tight text-stone-900" href="/">
           Therapist Dashboard
         </Link>
-        <nav className="flex items-center" aria-label="Account navigation">
+        <nav className="flex items-center gap-2" aria-label="Account navigation">
+          {isAuthenticated && <Link href="/inbox" aria-label={unreadCount ? `Inbox, ${unreadCount} pending ${unreadCount === 1 ? "invitation" : "invitations"}` : "Inbox"} aria-current={pathname.startsWith("/inbox") ? "page" : undefined} className={`relative inline-flex size-10 cursor-grab items-center justify-center rounded-full border shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/inbox") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}>
+            <InboxIcon />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-emerald-800 px-1 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+          </Link>}
           <div className="relative" ref={menuRef}>
             <button
               aria-controls={menuId}

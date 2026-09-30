@@ -79,12 +79,22 @@ class OrganizationStorageTests(unittest.TestCase):
 
     def test_wrong_client_session_is_denied_before_file_access(self):
         for runtime_id in (self.binding['runtime_id'], self.binding['runtime_id'].upper()):
-            request = Request({'type': 'http', 'method': 'GET', 'path': f'/transcripts/{runtime_id}', 'headers': []})
+            request = Request({'type': 'http', 'method': 'GET', 'path': f'/transcripts/{runtime_id}', 'query_string': f'client_id={self.client_id}'.encode(), 'headers': []})
             downstream = AsyncMock()
-            with patch.object(server, 'connect'), patch.object(server, 'resolve_sharing_context', return_value={'organization_id': 'other', 'client_id': 'other'}), patch.object(storage, 'find_job', return_value=None):
+            with patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context', return_value={'organization_id': 'other', 'client_id': 'other'}) as resolve, patch.object(storage, 'find_job', return_value=None):
                 result = asyncio.run(server.protect_legacy_clinical_routes(request, downstream))
             self.assertEqual(result.status_code, 404)
+            self.assertEqual(resolve.call_args.args[2], self.client_id)
             downstream.assert_not_called()
+
+    def test_clinical_route_without_client_scope_fails_closed(self):
+        request = Request({'type': 'http', 'method': 'GET', 'path': '/transcripts', 'query_string': b'', 'headers': []})
+        downstream = AsyncMock()
+        with patch.object(server, 'connect'), patch.object(server, 'resolve_therapist_client_context') as resolve:
+            result = asyncio.run(server.protect_legacy_clinical_routes(request, downstream))
+        self.assertEqual(result.status_code, 422)
+        resolve.assert_not_called()
+        downstream.assert_not_called()
 
     def test_upload_uses_registered_bucket_and_encryption(self):
         request = SimpleNamespace(headers={}, state=SimpleNamespace(care_context={'organization_id': self.organization_id, 'client_id': self.client_id}))
