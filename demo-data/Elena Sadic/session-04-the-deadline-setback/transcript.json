@@ -1,0 +1,949 @@
+{
+  "id": "heartwell-sadic-session-04",
+  "created_at": "2026-09-15T13:59:57-04:00",
+  "audio": {
+    "file": "recording.wav",
+    "mime_type": "audio/wav"
+  },
+  "speakers": {},
+  "text": "You sounded disappointed in yourself in your message this week. What happened? The deadline moved up. Two cases became urgent at the same time, and I went right back to doing everything I said I would not do. I worked through dinner twice. I did not take the Thursday break. I stayed late Tuesday, even though I had promised myself I would leave. It sounds like the pressure was intense. What story have you been telling yourself about the setback? That I proved I cannot keep this up. I had one decent week and then I failed the first time anything got hard. What makes that conclusion feel convincing? Because I knew the warning signs. My shoulders were tight. I stopped answering Nora. I was exhausted. And I still kept going. You noticed the signs, even if you could not change course right away. That is different from not noticing them at all. It does not feel different. It feels worse. Because now I know better and I still did it. I hear how harsh that is. Can we slow down the sequence? When the deadline changed, what did you believe you had to do? I believed I had to make it work without inconveniencing anyone. I did not ask which case had priority. I did not tell my supervisor the timeline had changed. I just assumed I had to absorb it. What might have happened if you had asked for clarification? She might have helped me decide. Or she might have been annoyed. I do not know. Not knowing leaves room for the old assumption to take over. The assumption is always that I should handle it alone. If I ask, I am making my problem someone else's problem. Where do you think you learned that? My family did not say it directly. But after my dad got sick, everyone was already stretched. I did not want to add anything. I became the person who could be counted on. That role may have protected your family in a difficult time. It may also be asking too much of you now. I know that intellectually. Emotionally, asking for help still feels selfish. We do not have to argue with the feeling. We can ask whether it is giving you the whole picture. Is there a difference between asking someone else to carry everything and asking a supervisor to set priorities? Yes. When you say it like that, it sounds reasonable. I would want someone on my team to ask before they burned themselves out. Could that be the next experiment? Not a promise to avoid every difficult week, but one direct question when competing demands arrive. I could ask, which of these needs my attention first? I hate how simple it is. Simple questions can be difficult when they challenge a long standing rule. I did eventually tell Nora I was overwhelmed. She was frustrated that I had shut her out, but she did not make it bigger than it was. We talked for a while. What did you take from that conversation? That she would rather know I am struggling than have me disappear into work. I keep assuming I am protecting her by not bringing things home. And what did she say she needed? She said, she does not need a perfect version of me. She needs to know when I am not OK. How have the self-harm thoughts been during this more difficult week? They came up one night after I got home late. I thought about not wanting to deal with anything anymore. It scared me, but I did not have a plan or want to act on it. I sat with Nora and told her it was a bad night. I am glad you told her. Do you have any plan or intention to harm yourself today? No, I do not. I feel worn out, but I am safe. Thank you for telling me clearly. Using the support plan during a hard night is not a failure of the plan. It is exactly what it is for. I had not thought of it that way. I thought I should only use it if things were much worse. Support does not have to wait for a crisis, for this week, would it help to identify one moment when you will ask for prioritization instead of silently absorbing the work? There is a meeting Thursday morning. I can ask then. And I can tell Nora ahead of time that it is a heavy week. Instead of waiting until I am shut down. That sounds like a thoughtful repair. What would you want to remember when you look back on this week? That a hard week did not erase the things I learned. I noticed the pattern. I told someone I came here That has to count for something. It counts for a great deal. There is something I want to make sure we do not lose in the deadline week. You said you noticed the warning signs earlier than you would have before. I did, but I still ignored them. You did not respond in the way you wanted to. You also noticed them, reached out to Nora and brought the week here. Those are all changes I have a hard time holding both. If I give myself credit, I worry I am excusing the part that hurt me. What would accountability look like without punishment? Maybe admitting that I made choices I do not want to repeat. I did not eat enough. I stopped answering messages. I did not ask for help until I was overwhelmed. But I do not have to call myself hopeless because of it. That sounds balanced and specific. It feels unfamiliar. Usually I go from, I made a mistake to, I am the kind of person who ruins things. What happens in your body when that second conclusion takes over? Everything gets heavy. I want to hide. That is usually when the dark thoughts are more likely to show up. So the global judgment is not just painful, it can also make the situation harder to navigate safely. Yes. When I tell myself I ruined everything, reaching out feels pointless. I think, why bother? What might be a sentence that acknowledges the hard week without closing the door on support? This week was too much, and I need help deciding what comes next. I do not love it, but it feels more useful. That is a good bridge sentence. Would Nora or your sister understand what you meant if you said it? Nora would. My sister probably would too if I let her. I texted her after our last session, actually. We talked on Sunday. How was that? Awkward at first. I told her I had been struggling with work and sleep. She said she had noticed I sounded tired but did not want to push. Then she told me she misses Dad too. What was it like to hear that? A relief I think I assumed I was the only one still carrying it around. We talked about him for a while. It was sad, but not isolating. That sounds like an important connection. It made me realize that asking for support does not always create a burden. Sometimes it gives someone else permission to be honest, too. How could you remember that during the next pressure cycle? Maybe I can put the bridge sentence in my phone. If I start spiraling, I can send it instead of trying to come up with the perfect explanation. That is practical. The goal is to make the safer choice easier to reach when you are depleted. I like that. It does not make the feeling disappear, but it gives me something to do with it.",
+  "segments": [
+    {
+      "start": 0.009,
+      "end": 3.509,
+      "text": "You sounded disappointed in yourself in your message this week.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 3.93,
+      "end": 4.769,
+      "text": "What happened?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 5.17,
+      "end": 6.309,
+      "text": "The deadline moved up.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 6.719,
+      "end": 12.67,
+      "text": "Two cases became urgent at the same time, and I went right back to doing everything I said I would not do.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 13.51,
+      "end": 15.079,
+      "text": "I worked through dinner twice.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 15.56,
+      "end": 17.54,
+      "text": "I did not take the Thursday break.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 18.0,
+      "end": 21.579,
+      "text": "I stayed late Tuesday, even though I had promised myself I would leave.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 22.18,
+      "end": 24.139,
+      "text": "It sounds like the pressure was intense.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 25.069,
+      "end": 27.799,
+      "text": "What story have you been telling yourself about the setback?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 28.579,
+      "end": 30.889,
+      "text": "That I proved I cannot keep this up.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 31.68,
+      "end": 36.659,
+      "text": "I had one decent week and then I failed the first time anything got hard.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 37.4,
+      "end": 39.72,
+      "text": "What makes that conclusion feel convincing?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 40.33,
+      "end": 42.509,
+      "text": "Because I knew the warning signs.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 43.43,
+      "end": 44.709,
+      "text": "My shoulders were tight.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 45.439,
+      "end": 46.919,
+      "text": "I stopped answering Nora.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 47.799,
+      "end": 48.979,
+      "text": "I was exhausted.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 50.189,
+      "end": 52.049,
+      "text": "And I still kept going.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 52.819,
+      "end": 56.86,
+      "text": "You noticed the signs, even if you could not change course right away.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 57.979,
+      "end": 59.909,
+      "text": "That is different from not noticing them at all.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 60.77,
+      "end": 62.31,
+      "text": "It does not feel different.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 62.729,
+      "end": 63.79,
+      "text": "It feels worse.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 64.719,
+      "end": 67.719,
+      "text": "Because now I know better and I still did it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 68.158,
+      "end": 69.978,
+      "text": "I hear how harsh that is.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 70.439,
+      "end": 72.039,
+      "text": "Can we slow down the sequence?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 73.099,
+      "end": 76.73,
+      "text": "When the deadline changed, what did you believe you had to do?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 79.9,
+      "end": 82.959,
+      "text": "I believed I had to make it work without inconveniencing anyone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 84.489,
+      "end": 86.669,
+      "text": "I did not ask which case had priority.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 87.91,
+      "end": 91.01,
+      "text": "I did not tell my supervisor the timeline had changed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 91.809,
+      "end": 94.129,
+      "text": "I just assumed I had to absorb it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 94.93,
+      "end": 98.389,
+      "text": "What might have happened if you had asked for clarification?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 98.97,
+      "end": 100.309,
+      "text": "She might have helped me decide.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 101.18,
+      "end": 102.5,
+      "text": "Or she might have been annoyed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 102.62,
+      "end": 103.58,
+      "text": "I do not know.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 104.18,
+      "end": 107.76,
+      "text": "Not knowing leaves room for the old assumption to take over.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 108.22,
+      "end": 110.8,
+      "text": "The assumption is always that I should handle it alone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 111.9,
+      "end": 115.769,
+      "text": "If I ask, I am making my problem someone else's problem.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 116.769,
+      "end": 118.129,
+      "text": "Where do you think you learned that?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 118.98,
+      "end": 120.76,
+      "text": "My family did not say it directly.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 121.75,
+      "end": 125.809,
+      "text": "But after my dad got sick, everyone was already stretched.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 126.15,
+      "end": 127.91,
+      "text": "I did not want to add anything.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 128.85,
+      "end": 130.99,
+      "text": "I became the person who could be counted on.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 131.729,
+      "end": 135.21,
+      "text": "That role may have protected your family in a difficult time.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 136.149,
+      "end": 138.63,
+      "text": "It may also be asking too much of you now.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 139.339,
+      "end": 140.75,
+      "text": "I know that intellectually.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 141.47,
+      "end": 145.009,
+      "text": "Emotionally, asking for help still feels selfish.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 145.82,
+      "end": 148.07,
+      "text": "We do not have to argue with the feeling.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 148.509,
+      "end": 151.029,
+      "text": "We can ask whether it is giving you the whole picture.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 151.899,
+      "end": 158.27,
+      "text": "Is there a difference between asking someone else to carry everything and asking a supervisor to set priorities?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 159.0,
+      "end": 159.72,
+      "text": "Yes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 160.08,
+      "end": 162.38,
+      "text": "When you say it like that, it sounds reasonable.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 163.25,
+      "end": 166.649,
+      "text": "I would want someone on my team to ask before they burned themselves out.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 167.13,
+      "end": 168.71,
+      "text": "Could that be the next experiment?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 169.5,
+      "end": 175.96,
+      "text": "Not a promise to avoid every difficult week, but one direct question when competing demands arrive.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 176.46,
+      "end": 179.94,
+      "text": "I could ask, which of these needs my attention first?",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 181.05,
+      "end": 182.789,
+      "text": "I hate how simple it is.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 184.5,
+      "end": 188.419,
+      "text": "Simple questions can be difficult when they challenge a long standing rule.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 189.24,
+      "end": 191.699,
+      "text": "I did eventually tell Nora I was overwhelmed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 192.63,
+      "end": 197.289,
+      "text": "She was frustrated that I had shut her out, but she did not make it bigger than it was.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 197.869,
+      "end": 199.21,
+      "text": "We talked for a while.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 199.71,
+      "end": 201.389,
+      "text": "What did you take from that conversation?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 202.119,
+      "end": 206.41,
+      "text": "That she would rather know I am struggling than have me disappear into work.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 207.49,
+      "end": 210.77,
+      "text": "I keep assuming I am protecting her by not bringing things home.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 211.449,
+      "end": 213.49,
+      "text": "And what did she say she needed?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 214.009,
+      "end": 216.91,
+      "text": "She said, she does not need a perfect version of me.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 217.889,
+      "end": 220.169,
+      "text": "She needs to know when I am not OK.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 220.94,
+      "end": 224.259,
+      "text": "How have the self-harm thoughts been during this more difficult week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 225.08,
+      "end": 227.02,
+      "text": "They came up one night after I got home late.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 228.08,
+      "end": 230.639,
+      "text": "I thought about not wanting to deal with anything anymore.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 231.49,
+      "end": 234.96,
+      "text": "It scared me, but I did not have a plan or want to act on it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 236.07,
+      "end": 238.57,
+      "text": "I sat with Nora and told her it was a bad night.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 239.46,
+      "end": 240.74,
+      "text": "I am glad you told her.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 241.699,
+      "end": 245.46,
+      "text": "Do you have any plan or intention to harm yourself today?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 245.929,
+      "end": 247.32,
+      "text": "No, I do not.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 248.059,
+      "end": 250.66,
+      "text": "I feel worn out, but I am safe.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 251.259,
+      "end": 252.74,
+      "text": "Thank you for telling me clearly.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 253.539,
+      "end": 257.1,
+      "text": "Using the support plan during a hard night is not a failure of the plan.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 257.69,
+      "end": 259.45,
+      "text": "It is exactly what it is for.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 260.109,
+      "end": 261.89,
+      "text": "I had not thought of it that way.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 262.35,
+      "end": 265.19,
+      "text": "I thought I should only use it if things were much worse.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 266.04,
+      "end": 276.22,
+      "text": "Support does not have to wait for a crisis, for this week, would it help to identify one moment when you will ask for prioritization instead of silently absorbing the work?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 277.1,
+      "end": 279.44,
+      "text": "There is a meeting Thursday morning.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 279.899,
+      "end": 280.91,
+      "text": "I can ask then.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 281.929,
+      "end": 284.88,
+      "text": "And I can tell Nora ahead of time that it is a heavy week.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 285.589,
+      "end": 287.859,
+      "text": "Instead of waiting until I am shut down.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 288.809,
+      "end": 290.619,
+      "text": "That sounds like a thoughtful repair.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 291.41,
+      "end": 294.01,
+      "text": "What would you want to remember when you look back on this week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 294.85,
+      "end": 297.38,
+      "text": "That a hard week did not erase the things I learned.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 298.54,
+      "end": 299.519,
+      "text": "I noticed the pattern.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 300.559,
+      "end": 306.089,
+      "text": "I told someone I came here That has to count for something.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 306.79,
+      "end": 308.269,
+      "text": "It counts for a great deal.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 309.149,
+      "end": 313.73,
+      "text": "There is something I want to make sure we do not lose in the deadline week.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 314.63,
+      "end": 318.589,
+      "text": "You said you noticed the warning signs earlier than you would have before.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 319.32,
+      "end": 321.97,
+      "text": "I did, but I still ignored them.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 322.489,
+      "end": 324.869,
+      "text": "You did not respond in the way you wanted to.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 325.829,
+      "end": 329.79,
+      "text": "You also noticed them, reached out to Nora and brought the week here.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 330.7,
+      "end": 331.85,
+      "text": "Those are all changes",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 332.559,
+      "end": 334.22,
+      "text": "I have a hard time holding both.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 335.059,
+      "end": 339.019,
+      "text": "If I give myself credit, I worry I am excusing the part that hurt me.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 339.82,
+      "end": 343.38,
+      "text": "What would accountability look like without punishment?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 343.739,
+      "end": 347.359,
+      "text": "Maybe admitting that I made choices I do not want to repeat.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 348.549,
+      "end": 349.85,
+      "text": "I did not eat enough.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 350.429,
+      "end": 352.17,
+      "text": "I stopped answering messages.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 352.899,
+      "end": 355.559,
+      "text": "I did not ask for help until I was overwhelmed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 356.97,
+      "end": 359.739,
+      "text": "But I do not have to call myself hopeless because of it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 360.519,
+      "end": 362.859,
+      "text": "That sounds balanced and specific.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 363.399,
+      "end": 364.88,
+      "text": "It feels unfamiliar.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 365.279,
+      "end": 371.1,
+      "text": "Usually I go from, I made a mistake to, I am the kind of person who ruins things.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 371.92,
+      "end": 375.98,
+      "text": "What happens in your body when that second conclusion takes over?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 376.559,
+      "end": 378.1,
+      "text": "Everything gets heavy.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 378.519,
+      "end": 379.6,
+      "text": "I want to hide.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 380.619,
+      "end": 383.6,
+      "text": "That is usually when the dark thoughts are more likely to show up.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 384.41,
+      "end": 390.97,
+      "text": "So the global judgment is not just painful, it can also make the situation harder to navigate safely.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 391.45,
+      "end": 392.13,
+      "text": "Yes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 392.489,
+      "end": 396.75,
+      "text": "When I tell myself I ruined everything, reaching out feels pointless.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 397.17,
+      "end": 399.269,
+      "text": "I think, why bother?",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 400.01,
+      "end": 405.209,
+      "text": "What might be a sentence that acknowledges the hard week without closing the door on support?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 406.01,
+      "end": 409.829,
+      "text": "This week was too much, and I need help deciding what comes next.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 410.579,
+      "end": 413.66,
+      "text": "I do not love it, but it feels more useful.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 414.179,
+      "end": 415.519,
+      "text": "That is a good bridge sentence.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 416.589,
+      "end": 420.049,
+      "text": "Would Nora or your sister understand what you meant if you said it?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 420.67,
+      "end": 421.35,
+      "text": "Nora would.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 422.359,
+      "end": 424.7,
+      "text": "My sister probably would too if I let her.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 425.779,
+      "end": 428.22,
+      "text": "I texted her after our last session, actually.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 428.619,
+      "end": 429.72,
+      "text": "We talked on Sunday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 431.239,
+      "end": 431.92,
+      "text": "How was that?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 433.179,
+      "end": 434.839,
+      "text": "Awkward at first.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 435.75,
+      "end": 438.25,
+      "text": "I told her I had been struggling with work and sleep.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 439.04,
+      "end": 442.459,
+      "text": "She said she had noticed I sounded tired but did not want to push.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 443.76,
+      "end": 445.88,
+      "text": "Then she told me she misses Dad too.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 446.399,
+      "end": 447.72,
+      "text": "What was it like to hear that?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 448.399,
+      "end": 453.16,
+      "text": "A relief I think I assumed I was the only one still carrying it around.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 454.25,
+      "end": 455.959,
+      "text": "We talked about him for a while.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 456.38,
+      "end": 458.64,
+      "text": "It was sad, but not isolating.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 459.41,
+      "end": 461.429,
+      "text": "That sounds like an important connection.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 461.89,
+      "end": 465.85,
+      "text": "It made me realize that asking for support does not always create a burden.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 466.97,
+      "end": 470.079,
+      "text": "Sometimes it gives someone else permission to be honest, too.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 470.809,
+      "end": 473.91,
+      "text": "How could you remember that during the next pressure cycle?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 474.57,
+      "end": 477.01,
+      "text": "Maybe I can put the bridge sentence in my phone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 477.45,
+      "end": 482.13,
+      "text": "If I start spiraling, I can send it instead of trying to come up with the perfect explanation.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 483.329,
+      "end": 484.75,
+      "text": "That is practical.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 485.559,
+      "end": 489.679,
+      "text": "The goal is to make the safer choice easier to reach when you are depleted.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 490.459,
+      "end": 491.14,
+      "text": "I like that.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 492.079,
+      "end": 495.579,
+      "text": "It does not make the feeling disappear, but it gives me something to do with it.",
+      "speaker": "PATIENT_0"
+    }
+  ],
+  "clinical_note": [
+    {
+      "name": "Chief Complaint",
+      "items": [
+        "Work-related stress and setback in coping strategies"
+      ]
+    },
+    {
+      "name": "History Of Present Illness",
+      "items": [
+        "The patient reports a difficult week at work due to increased pressure and deadlines.",
+        "They describe a setback in their coping strategies, having reverted to old patterns of overworking and self-neglect.",
+        "Specifically, the patient worked through dinner twice, skipped a scheduled Thursday break, and stayed late on Tuesday despite promising themselves they would leave on time.\n",
+        "The patient identified early warning signs of stress, including tight shoulders, exhaustion, and withdrawal from their partner Nora.",
+        "Despite recognizing these signs, they continued to work without seeking help, believing they had to handle the increased workload alone without inconveniencing others.",
+        "They did not ask their supervisor for clarification on priorities or inform them of the changed timeline.\n",
+        "The patient reports that this pattern of behavior stems from a long-standing belief that asking for help is selfish, which they trace back to their family dynamics after their father became ill.",
+        "They describe becoming the person who could be counted on and not wanting to add to the family's burden.\n",
+        "The patient eventually told Nora they were overwhelmed, and she expressed frustration that they had shut her out but did not make the situation bigger than it was.",
+        "Nora told the patient she does not need a perfect version of them, but rather needs to know when they are not okay.\n",
+        "Regarding self-harm thoughts, the patient reports they came up one night after getting home late, with thoughts about not wanting to deal with anything anymore.",
+        "They describe feeling scared by these thoughts but did not have a plan or intent to act on them.",
+        "The patient sat with Nora and told her it was a bad night.",
+        "They deny any current plan or intention to harm themselves today and report feeling worn out but safe.\n",
+        "The patient also reports reaching out to their sister after the last session, which they describe as initially awkward but ultimately helpful.",
+        "They discussed their struggles with work and sleep, and their sister shared that she also misses their father.",
+        "This conversation helped the patient realize that asking for support does not always create a burden and can allow others to be honest about their own struggles.\n"
+      ]
+    },
+    {
+      "name": "Review Of Systems",
+      "items": [
+        "Constitutional: Reports exhaustion",
+        "Psychiatric: Reports self-harm ideation (passive, no plan or intent), reports feeling overwhelmed, reports feeling worn out"
+      ]
+    },
+    {
+      "name": "Past Family History",
+      "items": [
+        "Father: became ill (unspecified illness), deceased"
+      ]
+    },
+    {
+      "name": "Past Social History",
+      "items": [
+        "Employed in a profession with deadlines and case-based work",
+        "In a relationship with Nora",
+        "Has a sister"
+      ]
+    },
+    {
+      "name": "Assessment",
+      "items": [
+        "1. Work-related stress and coping strategies"
+      ]
+    },
+    {
+      "name": "Plan",
+      "items": [
+        "Work-related stress and coping strategies:\n- Explored the patient's belief that asking for help is selfish, tracing this to family dynamics after father's illness.\n",
+        "- Discussed the difference between asking someone to carry everything versus asking a supervisor to set priorities.\n",
+        "- Explored the patient's pattern of global self-judgment and how it contributes to feeling hopeless and isolated.\n",
+        "- Discussed the importance of recognizing early warning signs and reaching out before becoming overwhelmed.\n",
+        "- Explored the concept of accountability without punishment, focusing on specific behaviors rather than global self-criticism.\n",
+        "- Discussed the value of the support plan and that using it during difficult times is its intended purpose, not a failure.\n",
+        "- Explored the idea that asking for support can benefit others by giving them permission to be honest about their own struggles.\n",
+        "- Patient will identify one specific moment during the next pressure cycle to ask for prioritization instead of silently absorbing the work.\n",
+        "- Patient will inform Nora ahead of time when anticipating a heavy work week instead of waiting until overwhelmed.\n",
+        "- Patient will use a \"bridge sentence\" (\"This week was too much, and I need help deciding what comes next\") to communicate when overwhelmed, and will save this sentence in their phone to use when spiraling.\n",
+        "- Patient to follow up at next scheduled appointment.\n"
+      ]
+    }
+  ],
+  "healthscribe": {
+    "job_name": "healthscribe-demo-20260915135646-dedf3633",
+    "input_uri": "s3://therapist-dashboard-healthscribe-input-408009925213-us-east-1/demo-data/heartwell-sadic/session-04/recording.wav",
+    "transcript_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135646-dedf3633/transcript.json",
+    "clinical_note_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135646-dedf3633/summary.json"
+  }
+}

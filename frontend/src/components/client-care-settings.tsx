@@ -9,6 +9,7 @@ type Section = "identification" | "scheduling" | "permissions";
 type Permission = "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
 type AudioSample = { recordingUrl: string; start: number; end: number };
 type Participant = { name: string; pronouns: string; sample: AudioSample | null };
+type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sessionLabel: string; sourceLabel: string; name: string; sample: AudioSample | null; overridden: boolean };
 
 const sections: SettingsSection[] = [
   { id: "identification", title: "Identification" },
@@ -30,21 +31,13 @@ function VolumeIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5 6.8 8.5H3.5v7h3.3L11 19V5Z" /><path strokeLinecap="round" d="M15 9.25a4 4 0 0 1 0 5.5M17.75 6.75a7.5 7.5 0 0 1 0 10.5" /></svg>;
 }
 
-function InfoTip({ code }: { code: string }) {
-  return <span className="group/info relative inline-flex">
-    <button type="button" aria-label={`Speaker code ${code}`} className="grid size-5 cursor-grab place-items-center rounded-full border border-stone-300 text-[11px] font-semibold text-stone-500 hover:border-stone-400 hover:text-stone-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">i</button>
-    <span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-stone-800 px-2 py-1 text-xs font-medium text-white shadow-sm group-hover/info:block group-focus-within/info:block">{code}</span>
-  </span>;
-}
-
-function IdentificationRow({ id, label, code, value, playing, onChange, onPlay }: { id: string; label: string; code: string; value: Participant; playing: boolean; onChange: (value: Participant) => void; onPlay: () => void }) {
+function IdentificationRow({ id, label, name, sample, playing, suggestions, onChange, onPlay }: { id: string; label: string; name: string; sample: AudioSample | null; playing: boolean; suggestions: string[]; onChange: (name: string) => void; onPlay: () => void }) {
   return <div className="grid items-center gap-2 py-2.5 text-left sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(8rem,0.55fr)_2.5rem]">
-    <div className="flex items-center gap-1.5 text-sm font-semibold text-stone-800"><span>{label}</span><InfoTip code={code} /></div>
+    <div className="min-w-0 break-words text-sm font-semibold text-stone-800">{label}</div>
     <label className="sr-only" htmlFor={`${id}-name`}>{label} name</label>
-    <input id={`${id}-name`} required maxLength={200} placeholder="Name" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} className={`${settingsFieldClass} mt-0 min-w-0`} />
-    <label className="sr-only" htmlFor={`${id}-pronouns`}>{label} pronouns</label>
-    <input id={`${id}-pronouns`} maxLength={80} placeholder="Pronouns (optional)" value={value.pronouns} onChange={(event) => onChange({ ...value, pronouns: event.target.value })} className={`${settingsFieldClass} mt-0 min-w-0`} />
-    <button type="button" onClick={onPlay} disabled={!value.sample} aria-label={`${playing ? "Pause" : "Play"} ${label.toLowerCase()} audio sample`} title={value.sample ? `${playing ? "Pause" : "Play"} a brief ${label.toLowerCase()} audio sample` : `No ${label.toLowerCase()} audio sample is available`} className={`grid size-10 place-items-center rounded-lg border border-stone-300 bg-white transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${value.sample ? `cursor-grab hover:border-stone-400 hover:bg-stone-100 active:cursor-grabbing ${playing ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "text-stone-600 hover:text-stone-900"}` : "cursor-not-allowed text-stone-300"}`}><VolumeIcon /></button>
+    <input id={`${id}-name`} list={`${id}-suggestions`} maxLength={200} placeholder="Choose or enter a name" value={name} onChange={(event) => onChange(event.target.value)} className={`${settingsFieldClass} mt-0 min-w-0 sm:col-span-2`} />
+    <datalist id={`${id}-suggestions`}>{suggestions.map(suggestion => <option key={suggestion} value={suggestion} />)}</datalist>
+    <button type="button" onClick={onPlay} disabled={!sample} aria-label={`${playing ? "Pause" : "Play"} ${label.toLowerCase()} audio sample`} title={sample ? `${playing ? "Pause" : "Play"} a brief ${label.toLowerCase()} audio sample` : `No ${label.toLowerCase()} audio sample is available`} className={`grid size-10 place-items-center rounded-lg border border-stone-300 bg-white transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${sample ? `cursor-grab hover:border-stone-400 hover:bg-stone-100 active:cursor-grabbing ${playing ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "text-stone-600 hover:text-stone-900"}` : "cursor-not-allowed text-stone-300"}`}><VolumeIcon /></button>
   </div>;
 }
 
@@ -65,6 +58,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
   const [context, setContext] = useState<{ organization_id: string; client_id: string } | null>(null);
   const [client, setClient] = useState<Participant>({ name: "", pronouns: "", sample: null });
   const [therapist, setTherapist] = useState<Participant>({ name: "", pronouns: "", sample: null });
+  const [speakers, setSpeakers] = useState<SpeakerAssociation[]>([]);
   const [activeSample, setActiveSample] = useState<(AudioSample & { id: string }) | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [choices, setChoices] = useState<Record<Permission, boolean>>({ transcript: false, insights: false, clinicalNote: false, recordings: false, prescriptions: false });
@@ -98,6 +92,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
         setContext({ organization_id: String(body.organization_id), client_id: String(body.client_id) });
         setClient({ name: clientBody.name, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
         setTherapist({ name: therapistBody.name, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
+        setSpeakers((body.speakers as SpeakerAssociation[] | undefined) ?? []);
       })
       .catch((reason: Error) => { if (active) setIdentificationError(reason.message); })
       .finally(() => { if (active) setIdentificationLoading(false); });
@@ -118,7 +113,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
     setBusy(true); setSaved(false); setError(null);
     try {
       const response = section === "identification"
-        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.name, pronouns: client.pronouns || null }, therapist: { name: therapist.name, pronouns: therapist.pronouns || null } }) })
+        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.name, pronouns: client.pronouns || null }, therapist: { name: therapist.name, pronouns: therapist.pronouns || null }, speakers: speakers.map(({ transcriptVersionId, sourceLabel, name }) => ({ transcript_version_id: transcriptVersionId, source_label: sourceLabel, name })) }) })
         : await fetch("/api/client-portal-permissions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, ...Object.fromEntries(Object.entries(permissionFields).map(([key, field]) => [field, choices[key as Permission]])) }) });
       const body = await responseBody(response, "Could not save client care settings.");
       if (section === "identification") {
@@ -127,6 +122,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
         const therapistBody = body.therapist as Participant;
         setClient({ name: clientBody.name, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
         setTherapist({ name: therapistBody.name, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
+        setSpeakers((body.speakers as SpeakerAssociation[] | undefined) ?? []);
       }
       setSaved(true);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save client care settings."); }
@@ -136,7 +132,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
   const sectionLoading = section === "identification" ? identificationLoading : section === "permissions" ? permissionsLoading : false;
   const sectionError = section === "identification" ? identificationError : section === "permissions" ? permissionsError : null;
   const sectionReady = section === "scheduling" || (Boolean(context) && !sectionLoading && !sectionError);
-  const canSave = sectionReady && !busy && section !== "scheduling" && (section !== "identification" || Boolean(client.name.trim() && therapist.name.trim()));
+  const canSave = sectionReady && !busy && section !== "scheduling";
 
   const toggleSample = (id: string, sample: AudioSample | null) => {
     const player = audioRef.current;
@@ -161,7 +157,19 @@ export function ClientCareSettings({ initialSection = "identification", clientId
   return <SettingsLayout sections={expandRecurring ? sections.filter(item => item.id === "scheduling") : sections} activeSection={section} onSelect={(id) => { audioRef.current?.pause(); setActiveSample(null); setSection(id as Section); setSaved(false); setError(null); }} navigationLabel="Client care setting sections" headingLevel="h2">
     {sectionLoading ? <LoadingSpinner label={`Loading ${section.toLowerCase()} settings…`} /> : null}
     {sectionError ? <p role="alert" className="mt-5 text-sm text-red-700">{sectionError}</p> : null}
-    {sectionReady && section === "identification" ? <div className="mt-4 divide-y divide-stone-200"><IdentificationRow label="Client" code="PATIENT_0" id="speaker-one" value={client} playing={activeSample?.id === "speaker-one"} onPlay={() => toggleSample("speaker-one", client.sample)} onChange={(value) => { setClient(value); setSaved(false); }} /><IdentificationRow label="Therapist" code="CLINICIAN_0" id="speaker-two" value={therapist} playing={activeSample?.id === "speaker-two"} onPlay={() => toggleSample("speaker-two", therapist.sample)} onChange={(value) => { setTherapist(value); setSaved(false); }} /></div> : null}
+    {sectionReady && section === "identification" ? <div className="mt-4 text-left">
+      <p className="text-sm leading-6 text-stone-600">HealthScribe separates voices but does not reliably identify people. Each row shows its exact speaker label; assign a name once to use it for the same label throughout this client relationship.</p>
+      {speakers.length ? <div className="mt-4 space-y-4">{Array.from(new Set(speakers.map(speaker => speaker.transcriptVersionId))).map(transcriptVersionId => {
+        const sessionSpeakers = speakers.filter(speaker => speaker.transcriptVersionId === transcriptVersionId);
+        return <section key={transcriptVersionId} className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
+          <h3 className="border-b border-stone-200 px-4 py-3 text-sm font-semibold text-stone-900">{sessionSpeakers[0]?.sessionLabel ?? "Completed session"}</h3>
+          <div className="divide-y divide-stone-200 px-4">{sessionSpeakers.map((speaker) => {
+            const id = `speaker-${speaker.transcriptVersionId}-${speaker.sourceLabel}`;
+            return <IdentificationRow key={`${speaker.transcriptVersionId}-${speaker.sourceLabel}`} id={id} label={speaker.sourceLabel} name={speaker.name} sample={speaker.sample} suggestions={[client.name, therapist.name].filter(Boolean)} playing={activeSample?.id === id} onPlay={() => toggleSample(id, speaker.sample)} onChange={(name) => { setSpeakers(current => current.map(item => item.sourceLabel.toUpperCase() === speaker.sourceLabel.toUpperCase() ? { ...item, name } : item)); setSaved(false); }} />;
+          })}</div>
+        </section>;
+      })}</div> : <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">Speaker samples will appear after the first session finishes processing.</p>}
+    </div> : null}
     {section === "scheduling" ? <ClientScheduling clientId={clientId} initiallyExpanded={expandRecurring} onChanged={onScheduleChanged} /> : null}
     {sectionReady && section === "permissions" ? <div className="mt-6 text-left">
       <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-stone-50">{permissions.map((permission) => {

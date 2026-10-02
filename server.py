@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -25,7 +26,7 @@ from database import speaker_identification
 from database import document_workflow
 from database.scheduling import available_recurring_slots, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
-from ai_harness.brief_projection import project_accepted_insights
+from ai_harness.brief_projection import project_accepted_insights, project_session_proposals
 from ai_harness.brief_service import brief_input
 from ai_harness.pre_session import generate_openai_pre_session_brief, resolve_brief
 from ai_harness.clinician_context import with_clinician_guidance
@@ -50,6 +51,8 @@ OUTPUT_BUCKET = os.getenv("HEALTHSCRIBE_OUTPUT_BUCKET")
 BATCH_ROLE_ARN = os.getenv("HEALTHSCRIBE_BATCH_DATA_ACCESS_ROLE_ARN")
 POLL_SECONDS = max(1, int(os.getenv("HEALTHSCRIBE_POLL_SECONDS", "5")))
 HEALTHSCRIBE_MAX_SPEAKERS = min(30, max(3, int(os.getenv("HEALTHSCRIBE_MAX_SPEAKERS", "6"))))
+PROCESSING_JOBS: set[str] = set()
+PROCESSING_JOBS_LOCK = threading.Lock()
 
 
 class TherapistOnboardingRequest(BaseModel):
@@ -1000,38 +1003,6 @@ def update_client_portal_permissions(request: ClientPortalPermissionsRequest, au
         return {**context, "can_view_session_history": True, **row}
 
 
-def identification_sample(cursor, context, display_name, speaker_prefix):
-    """Find a brief review excerpt without creating or comparing voiceprints."""
-    cursor.execute("""SELECT job.runtime_id, job.storage->>'audio_key' AS audio_key,
-            sample.starts_at_seconds, sample.ends_at_seconds
-        FROM app.session_storage_jobs job
-        JOIN app.sessions session ON session.id=job.session_id
-        JOIN app.transcript_versions transcript
-          ON transcript.session_id=session.id AND transcript.organization_id=session.organization_id
-          AND transcript.client_id=session.client_id AND transcript.status <> 'superseded'
-        JOIN app.transcript_speaker_samples sample ON sample.transcript_version_id=transcript.id
-        JOIN app.transcript_segments segment ON segment.id=sample.transcript_segment_id
-        LEFT JOIN app.transcript_speaker_labels label
-          ON label.transcript_version_id=transcript.id AND label.source_label=segment.speaker_label
-        WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
-          AND (lower(trim(label.display_label))=lower(trim(%s))
-               OR (label.display_label IS NULL AND upper(segment.speaker_label) IN (%s, %s)))
-          AND NOT EXISTS (
-            SELECT 1 FROM app.transcript_versions newer
-            WHERE newer.session_id=transcript.session_id
-              AND newer.version_number>transcript.version_number
-              AND newer.status <> 'superseded')
-        ORDER BY COALESCE(session.started_at, transcript.created_at) DESC
-        LIMIT 1""", (context["organization_id"], context["client_id"], display_name, speaker_prefix, f"{speaker_prefix}_0"))
-    row = cursor.fetchone()
-    if not row or not row["audio_key"]:
-        return None
-    start = float(row["starts_at_seconds"])
-    end = float(row["ends_at_seconds"])
-    return {"recordingUrl": f"/api/recordings/{row['runtime_id']}/{Path(row['audio_key']).name}?client_id={context['client_id']}",
-            "start": start, "end": end}
-
-
 def read_client_identification(connection, context, actor_user_id):
     with connection.cursor() as cursor:
         cursor.execute("""SELECT client.display_name AS client_name,
@@ -1054,13 +1025,10 @@ def read_client_identification(connection, context, actor_user_id):
         saved = {row["participant_role"]: row for row in cursor.fetchall()}
         client_name = saved.get("client", {}).get("display_name") or relationship["client_name"] or "Client"
         therapist_name = saved.get("therapist", {}).get("display_name") or relationship["therapist_name"] or "Therapist"
-        client_sample = identification_sample(cursor, context, client_name, "PATIENT")
-        therapist_sample = identification_sample(cursor, context, therapist_name, "CLINICIAN")
-        speakers = speaker_identification.list_associations(cursor, context,
-            {'client': client_name, 'therapist': therapist_name})
+        speakers = speaker_identification.list_associations(cursor, context)
     return {**context,
-        "client": {"name": client_name, "pronouns": saved.get("client", {}).get("pronouns"), "sample": client_sample},
-        "therapist": {"name": therapist_name, "pronouns": saved.get("therapist", {}).get("pronouns"), "sample": therapist_sample}, "speakers": speakers}
+        "client": {"name": client_name, "pronouns": saved.get("client", {}).get("pronouns"), "sample": None},
+        "therapist": {"name": therapist_name, "pronouns": saved.get("therapist", {}).get("pronouns"), "sample": None}, "speakers": speakers}
 
 
 @app.get("/client-identification")
@@ -1168,7 +1136,7 @@ def shared_session_recording(session_id: str, authorization: str | None = Header
 async def protect_legacy_clinical_routes(request: Request, call_next):
     # The old filesystem API is therapist-only, including direct backend requests.
     path = request.scope["path"]
-    if path.startswith(("/transcripts", "/recordings")) or path == "/transcribe":
+    if path.startswith(("/transcripts", "/recordings")) or path in ("/transcribe", "/transcription-jobs"):
         try:
             with connect() as connection:
                 client_id = request.query_params.get("client_id")
@@ -1681,19 +1649,24 @@ def get_current_pre_session_brief(
     organization_id: str,
     authorization: str | None = Header(default=None),
 ):
-    """Read the latest accepted client history as a cited, current review draft."""
+    """Read accepted history or a cited, explicitly unreviewed first-session draft."""
     try:
         with connect() as connection:
             authorize_clinical_access(connection, authorization=authorization,
                                       organization_id=organization_id, client_id=client_id, require_write=False)
             packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(
                 organization_id=organization_id, client_id=client_id)
-            journey = client_journey.list_entries(connection, organization_id, client_id, status='accepted')
+            journey = client_journey.list_entries(connection, organization_id, client_id)
     except (RuntimeError, PsycopgError) as exc:
         raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
-    if not packet and not journey:
-        raise HTTPException(status_code=404, detail='No therapist-approved insight history is available for this client.')
-    fallback = project_accepted_insights(packet, journey)
+    accepted_journey = [entry for entry in journey if entry['status'] == 'accepted']
+    proposed_journey = [entry for entry in journey if entry['status'] == 'proposed']
+    if packet or accepted_journey:
+        fallback = project_accepted_insights(packet, accepted_journey)
+    else:
+        fallback = project_session_proposals(proposed_journey)
+        if not fallback['sections']:
+            raise HTTPException(status_code=404, detail='No source-linked session context is available for this client.')
     fingerprint, request = brief_input(fallback)
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute("SELECT to_regclass('app.generated_pre_session_briefs') AS relation")
@@ -1833,22 +1806,39 @@ def summary_from_healthscribe(document: dict[str, Any]) -> list[dict[str, Any]]:
 
 def process_job(session_id: str, job_name: str, input_key: str, storage: dict | None = None) -> None:
     """Download completed HealthScribe JSON files to the local session folder."""
+    with PROCESSING_JOBS_LOCK:
+        if job_name in PROCESSING_JOBS:
+            return
+        PROCESSING_JOBS.add(job_name)
     directory = session_directory(session_id)
+    def update_status(status: str, detail: str | None = None) -> None:
+        payload = {"id": session_id, "status": status, "job_name": job_name}
+        if detail:
+            payload["detail"] = detail
+        write_json(status_path(session_id), payload)
+        if storage:
+            organization_storage.set_job_status(storage, status, detail)
+
     try:
+        directory.mkdir(parents=True, exist_ok=True)
         input_bucket = storage['bucket'] if storage else configuration()[0]
         region = storage['region'] if storage else AWS_REGION
         transcribe = boto3.client("transcribe", region_name=region)
         s3 = boto3.client("s3", region_name=region)
+        previous_state = None
         while True:
             job = transcribe.get_medical_scribe_job(MedicalScribeJobName=job_name)["MedicalScribeJob"]
             state = job["MedicalScribeJobStatus"]
             if state in {"COMPLETED", "FAILED"}:
                 break
-            write_json(status_path(session_id), {"id": session_id, "status": state, "job_name": job_name})
+            if state != previous_state:
+                update_status(state)
+                previous_state = state
             time.sleep(POLL_SECONDS)
         if state == "FAILED":
             raise RuntimeError(job.get("FailureReason", "HealthScribe did not complete the job."))
 
+        update_status("RETRIEVING_RESULTS")
         outputs = job["MedicalScribeOutput"]
         transcript_bucket, transcript_key = s3_location(outputs["TranscriptFileUri"])
         note_bucket, note_key = s3_location(outputs["ClinicalDocumentUri"])
@@ -1858,14 +1848,23 @@ def process_job(session_id: str, job_name: str, input_key: str, storage: dict | 
         raw_note = json.loads(s3.get_object(Bucket=note_bucket, Key=note_key)["Body"].read())
         write_json(directory / "healthscribe-transcript.json", raw_transcript)
         write_json(directory / "clinical-note.json", raw_note)
+        update_status("PREPARING_TRANSCRIPT")
         segments = segments_from_healthscribe(raw_transcript)
-        recording = next(directory.glob("recording.*"))
+        recording = next(directory.glob("recording.*"), None)
+        if recording is None and storage:
+            recording = organization_storage.restore_artifact(
+                storage, Path(storage['audio_key']).name, directory
+            )
+        if recording is None:
+            raise RuntimeError("The source recording is unavailable.")
         clinical_note = summary_from_healthscribe(raw_note)
         write_json(transcript_path(session_id), {
             "id": session_id,
             "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "audio": {"file": recording.name, "mime_type": AUDIO_MIME_TYPES.get(recording.suffix.lower(), "application/octet-stream")},
-            "speakers": {},
+            "speakers": speaker_identification.resolve_names(
+                [segment["speaker"] for segment in segments if segment.get("speaker")], {}
+            ),
             "text": " ".join(segment["text"] for segment in segments),
             "segments": segments,
             "clinical_note": clinical_note,
@@ -1877,12 +1876,20 @@ def process_job(session_id: str, job_name: str, input_key: str, storage: dict | 
             },
         })
         if storage:
+            update_status("SAVING_SESSION")
             organization_storage.publish_results(storage, directory, segments, clinical_note, raw_transcript, raw_note)
-        write_json(status_path(session_id), {"id": session_id, "status": "COMPLETED", "job_name": job_name})
+        update_status("COMPLETED")
     except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError, PsycopgError) as exc:
-        write_json(status_path(session_id), {"id": session_id, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            write_json(status_path(session_id), {"id": session_id, "status": "FAILED", "job_name": job_name, "detail": str(exc)})
+        except OSError:
+            pass
         if storage:
             organization_storage.set_job_status(storage, 'FAILED', 'Session processing failed. Please contact support before retrying.')
+    finally:
+        with PROCESSING_JOBS_LOCK:
+            PROCESSING_JOBS.discard(job_name)
 
 
 @app.get("/")
@@ -1951,6 +1958,25 @@ def job_status(session_id: str, request: Request = None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@app.get("/transcription-jobs")
+def transcription_jobs(background_tasks: BackgroundTasks, request: Request):
+    """Rediscover active client jobs and resume their server-side monitor."""
+    jobs = organization_storage.active_jobs(request.state.care_context)
+    for job in jobs:
+        if job['status'] == 'UPLOADING':
+            continue
+        storage = job['storage']
+        background_tasks.add_task(
+            process_job,
+            job['id'],
+            job['job_name'],
+            storage['audio_key'],
+            storage,
+        )
+    return [{key: (str(job.get(key)) if key == 'appointment_id' and job.get(key) else job.get(key))
+             for key in ('id', 'status', 'detail', 'appointment_id', 'created_at', 'updated_at')} for job in jobs]
+
+
 @app.put("/transcripts/{session_id}/speakers")
 def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...), request: Request = None):
     job = getattr(request.state, 'storage_job', None) if request else None
@@ -1975,7 +2001,8 @@ def save_speaker_labels(session_id: str, labels: dict[str, str] = Body(...), req
 
 
 @app.post("/transcribe", status_code=202)
-async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File(...), request: Request = None):
+async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File(...), request: Request = None,
+                     appointment_id: str | None = None):
     suffix = Path(audio.filename or "recording.webm").suffix.lower()
     if suffix not in AUDIO_MIME_TYPES:
         raise HTTPException(status_code=415, detail="Choose a WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, or AMR audio file.")
@@ -1990,13 +2017,17 @@ async def transcribe(background_tasks: BackgroundTasks, audio: UploadFile = File
     try:
         if request is not None and os.getenv('ORGANIZATION_STORAGE_ENABLED') == 'true':
             actor = validate_access_token(request.headers.get('authorization'))
-            storage = organization_storage.create_upload(request.state.care_context, suffix, actor['sub'])
+            storage = organization_storage.create_upload(
+                request.state.care_context, suffix, actor['sub'], appointment_id
+            )
             input_bucket = output_bucket = storage['bucket']
             data_role = storage['healthscribe_role_arn']
         else:
             input_bucket, output_bucket, data_role = configuration()
     except (RuntimeError, PsycopgError) as exc:
         raise HTTPException(status_code=503, detail="Organization storage is unavailable.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     session_id = storage['runtime_id'] if storage else f"session-{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:8]}"
     job_name = storage['job_name'] if storage else f"healthscribe-{datetime.now():%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
     directory = session_directory(session_id)

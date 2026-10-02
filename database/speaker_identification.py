@@ -36,14 +36,27 @@ def store_samples(cursor, storage, transcript_version_id):
         (transcript_version_id, storage['organization_id'], storage['client_id'], storage['session_id']))
 
 
-def resolve_names(labels, overrides, defaults):
+def resolve_names(labels, overrides, relationship_names=None):
+    """Return reviewed names or the provider's exact diarization labels.
+
+    HealthScribe's PATIENT/CLINICIAN values are job-local model output, not
+    durable identities. Preserve them verbatim until the therapist explicitly
+    associates that label with a name in this care relationship.
+    """
     names = dict(overrides)
-    roles = {'PATIENT': 'client', 'PATIENT_0': 'client', 'CLINICIAN': 'therapist', 'CLINICIAN_0': 'therapist'}
-    for label in labels:
-        role = roles.get(label.upper())
-        if label not in names and role and defaults.get(role):
-            names[label] = defaults[role]
+    relationship_names = {key.upper(): value for key, value in (relationship_names or {}).items()}
+    for label in dict.fromkeys(labels):
+        if label not in names:
+            names[label] = relationship_names.get(label.upper(), label)
     return names
+
+
+def read_relationship_names(cursor, context):
+    cursor.execute("""SELECT source_label, display_name
+        FROM app.client_speaker_label_profiles
+        WHERE organization_id=%s AND client_id=%s""",
+        (context['organization_id'], context['client_id']))
+    return {row['source_label']: row['display_name'] for row in cursor.fetchall()}
 
 
 def read_defaults(cursor, storage):
@@ -68,12 +81,16 @@ def read_defaults(cursor, storage):
             'therapist': saved.get('therapist') or row.get('therapist_name')}
 
 
-def list_associations(cursor, context, defaults):
-    cursor.execute("""SELECT DISTINCT ON (transcript.id, segment.speaker_label)
-            transcript.id AS transcript_version_id, job.runtime_id,
+def list_associations(cursor, context):
+    cursor.execute("""SELECT transcript.id AS transcript_version_id, job.runtime_id,
             COALESCE(job.storage->>'label', 'Completed session') AS session_label,
             job.storage->>'audio_key' AS audio_key, segment.speaker_label,
-            label.display_label, sample.starts_at_seconds, sample.ends_at_seconds
+            COALESCE(label.display_label, profile.display_name) AS display_label,
+            sample.starts_at_seconds, sample.ends_at_seconds,
+            (SELECT min(first_segment.sequence_number)
+             FROM app.transcript_segments first_segment
+             WHERE first_segment.transcript_version_id=transcript.id
+               AND first_segment.speaker_label=segment.speaker_label) AS first_sequence
         FROM app.session_storage_jobs job
         JOIN app.transcript_versions transcript ON transcript.session_id=job.session_id
           AND transcript.organization_id=job.organization_id AND transcript.client_id=job.client_id
@@ -81,12 +98,15 @@ def list_associations(cursor, context, defaults):
         JOIN app.transcript_segments segment ON segment.id=sample.transcript_segment_id
         LEFT JOIN app.transcript_speaker_labels label ON label.transcript_version_id=transcript.id
           AND label.source_label=segment.speaker_label
+        LEFT JOIN app.client_speaker_label_profiles profile
+          ON profile.organization_id=transcript.organization_id AND profile.client_id=transcript.client_id
+          AND profile.source_label=upper(segment.speaker_label)
         WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
           AND transcript.status <> 'superseded' AND segment.speaker_label IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM app.transcript_versions newer
             WHERE newer.session_id=transcript.session_id AND newer.version_number>transcript.version_number
               AND newer.status <> 'superseded')
-        ORDER BY transcript.id, segment.speaker_label""",
+        ORDER BY transcript.id, first_sequence, segment.speaker_label""",
         (context['organization_id'], context['client_id']))
     result = []
     for row in cursor.fetchall():
@@ -98,12 +118,14 @@ def list_associations(cursor, context, defaults):
                   'start': start, 'end': end} if row['audio_key'] and end > start else None
         result.append({'transcriptVersionId': str(row['transcript_version_id']),
                        'sessionId': row['runtime_id'], 'sessionLabel': row['session_label'],
-                       'sourceLabel': label, 'name': resolve_names([label], overrides, defaults).get(label, ''),
+                       'sourceLabel': label,
+                       'name': overrides.get(label, ''),
                        'sample': sample, 'overridden': bool(overrides)})
-    return sorted(result, key=lambda row: (row['sessionLabel'], row['sourceLabel']))
+    return result
 
 
 def save_associations(cursor, context, associations, actor):
+    names = {}
     for association in associations:
         cursor.execute("""SELECT transcript.id FROM app.transcript_versions transcript
             JOIN app.transcript_segments segment ON segment.transcript_version_id=transcript.id
@@ -115,14 +137,41 @@ def save_associations(cursor, context, associations, actor):
             (association.transcript_version_id, context['organization_id'], context['client_id'], association.source_label))
         if not cursor.fetchone():
             raise ValueError('Speaker association is no longer available for this client. Reload identification settings.')
-        if not association.name.strip():
-            cursor.execute("""DELETE FROM app.transcript_speaker_labels
-                WHERE transcript_version_id=%s AND source_label=%s""",
-                (association.transcript_version_id, association.source_label))
+        source_label = association.source_label.upper()
+        name = association.name.strip()
+        if source_label in names and names[source_label] != name:
+            raise ValueError('The same speaker label has conflicting names. Reload identification settings.')
+        names[source_label] = name
+
+    for source_label, name in names.items():
+        if not name:
+            cursor.execute("""DELETE FROM app.client_speaker_label_profiles
+                WHERE organization_id=%s AND client_id=%s AND source_label=%s""",
+                (context['organization_id'], context['client_id'], source_label))
+            cursor.execute("""DELETE FROM app.transcript_speaker_labels label
+                USING app.transcript_versions transcript
+                WHERE label.transcript_version_id=transcript.id
+                  AND transcript.organization_id=%s AND transcript.client_id=%s
+                  AND upper(label.source_label)=%s""",
+                (context['organization_id'], context['client_id'], source_label))
         else:
+            cursor.execute("""INSERT INTO app.client_speaker_label_profiles
+                (organization_id, client_id, source_label, display_name, updated_by_user_id)
+                VALUES (%s,%s,%s,%s,%s) ON CONFLICT (client_id, source_label)
+                DO UPDATE SET organization_id=EXCLUDED.organization_id,
+                  display_name=EXCLUDED.display_name,
+                  updated_by_user_id=EXCLUDED.updated_by_user_id,
+                  updated_at=CURRENT_TIMESTAMP""",
+                (context['organization_id'], context['client_id'], source_label, name, actor))
             cursor.execute("""INSERT INTO app.transcript_speaker_labels
                 (transcript_version_id, source_label, display_label, updated_by_user_id)
-                VALUES (%s,%s,%s,%s) ON CONFLICT (transcript_version_id, source_label)
+                SELECT DISTINCT transcript.id, segment.speaker_label, %s, %s
+                FROM app.transcript_versions transcript
+                JOIN app.transcript_segments segment ON segment.transcript_version_id=transcript.id
+                WHERE transcript.organization_id=%s AND transcript.client_id=%s
+                  AND upper(segment.speaker_label)=%s AND transcript.status <> 'superseded'
+                ON CONFLICT (transcript_version_id, source_label)
                 DO UPDATE SET display_label=EXCLUDED.display_label,
-                  updated_by_user_id=EXCLUDED.updated_by_user_id, updated_at=CURRENT_TIMESTAMP""",
-                (association.transcript_version_id, association.source_label, association.name.strip(), actor))
+                  updated_by_user_id=EXCLUDED.updated_by_user_id,
+                  updated_at=CURRENT_TIMESTAMP""",
+                (name, actor, context['organization_id'], context['client_id'], source_label))

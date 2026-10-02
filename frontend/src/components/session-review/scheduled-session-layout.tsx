@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { RecordingControls } from "@/components/session-review/recording-controls";
 import { AudioUploadButton } from "@/components/session-review/audio-upload-button";
 import { ApiError, api } from "@/lib/api";
-import type { BriefEvidence, LongitudinalRecordContext, PreSessionBrief } from "@/lib/types";
+import type { BriefEvidence, LongitudinalRecordContext, PreSessionBrief, SessionProcessingState } from "@/lib/types";
 
 type ScheduledSessionLayoutProps = {
   isRecording: boolean;
   isBusy: boolean;
+  processingState: SessionProcessingState | null;
+  processingError: string | null;
   hasPriorSessions: boolean;
-  onReschedule: () => void;
   onToggleRecording: () => void;
   onUploadAudio: (file: File) => void;
   onViewEvidence: (source: BriefEvidence) => void;
@@ -53,7 +55,7 @@ function EvidenceLink({ item, onViewEvidence }: { item: BriefItem; onViewEvidenc
 
 function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onViewEvidence: (source: BriefEvidence) => void }) {
   if (brief.status === "NO PRIOR CONTEXT") {
-    return <p className="mt-5 text-base leading-8 text-stone-800">No prior context or history. Record or upload the first session to begin.</p>;
+    return <p className="text-base leading-8 text-stone-800">No prior context or history. Record or upload the first session to begin.</p>;
   }
   const latestSession = brief.sections.find((section) => section.title === "Since last session")?.items ?? [];
   const trajectory = brief.sections.find((section) => section.title === "Important trajectory")?.items ?? [];
@@ -66,7 +68,7 @@ function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onV
   const reviewItems = contextItems.slice(2);
 
   return <>
-    <p className="mt-5 text-base leading-8 text-stone-800">
+    <p className="text-base leading-8 text-stone-800">
       {narrativeItems.map((item, index) => <span key={index}><EvidenceLink item={item} onViewEvidence={onViewEvidence} />{/[.!?…][”"']?$/.test(item.text.trim()) ? " " : ". "}</span>)}
       {narrativeItems.length === 0 ? openLoops.length ? "Review these follow-ups before the upcoming session." : "No cited context is available for this upcoming session." : null}
     </p>
@@ -86,7 +88,7 @@ function BriefNarrative({ brief, onViewEvidence }: { brief: PreSessionBrief; onV
   </>;
 }
 
-export function ScheduledSessionLayout({ isRecording, isBusy, hasPriorSessions, onReschedule, onToggleRecording, onUploadAudio, onViewEvidence, recordContext }: ScheduledSessionLayoutProps) {
+export function ScheduledSessionLayout({ isRecording, isBusy, processingState, processingError, hasPriorSessions, onToggleRecording, onUploadAudio, onViewEvidence, recordContext }: ScheduledSessionLayoutProps) {
   const [brief, setBrief] = useState<PreSessionBrief | null>(null);
   const [briefError, setBriefError] = useState<string | null>(null);
   const organizationId = recordContext?.organizationId;
@@ -113,29 +115,37 @@ export function ScheduledSessionLayout({ isRecording, isBusy, hasPriorSessions, 
     return () => { cancelled = true; };
   }, [loadBrief]);
 
+  const briefPreview = briefError
+    ?? (!brief
+      ? "Preparing cited context…"
+      : brief.status === "NO PRIOR CONTEXT"
+        ? "No prior context or history. Record or upload the first session to begin."
+        : brief.sections.flatMap((section) => section.items.map((item) => item.text)).join(" ") || brief.review_note);
+  const briefContent = <div className="px-4 pb-4 pt-1">
+    {briefError ? <p className="text-sm text-red-700">{briefError}</p> : null}
+    {!brief && !briefError ? <p className="text-sm text-stone-600">Preparing cited context…</p> : null}
+    {brief ? <>
+      <BriefNarrative brief={brief} onViewEvidence={onViewEvidence} />
+      <p className="mt-4 text-xs leading-5 text-stone-500">{brief.review_note}</p>
+    </> : null}
+  </div>;
+
   return (
-    <div className="grid gap-4" aria-label="Scheduled session preparation">
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="reschedule-session-heading">
-        <h2 id="reschedule-session-heading" className="text-lg font-semibold text-stone-900">Reschedule session</h2>
-        <button type="button" onClick={onReschedule} className="cursor-grab rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm font-semibold text-stone-800 transition-colors duration-200 hover:border-stone-400 hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
-          Reschedule
-        </button>
-      </section>
+    <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-label="Scheduled session preparation" aria-busy={isBusy}>
+      <CollapsibleContentPanel title="Pre-session Brief" preview={briefPreview} previewContent={briefContent}>
+        {briefContent}
+      </CollapsibleContentPanel>
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="pre-session-brief-heading">
-        <h2 id="pre-session-brief-heading" className="text-lg font-semibold text-stone-900">Pre-session brief</h2>
-        {briefError ? <p className="mt-4 text-sm text-red-700">{briefError}</p> : null}
-        {!brief && !briefError ? <p className="mt-4 text-sm text-stone-600">Preparing cited context…</p> : null}
-        {brief ? <>
-          <BriefNarrative brief={brief} onViewEvidence={onViewEvidence} />
-          <p className="mt-4 text-xs leading-5 text-stone-500">{brief.review_note}</p>
-        </> : null}
-      </section>
+      {processingError ? <p role="alert" className="mt-3 text-sm text-red-700">{processingError}</p> : null}
 
-      <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-labelledby="record-session-heading">
-        <h2 id="record-session-heading" className="text-lg font-semibold text-stone-900">Record or upload session</h2>
-        <div className="mt-4 flex items-center gap-3"><div className="flex-1"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div><AudioUploadButton disabled={isRecording || isBusy} onUpload={onUploadAudio} /></div>
-      </section>
-    </div>
+      {processingState?.phase === "uploading" ? <div className="relative mt-4 flex min-h-12 items-center justify-center gap-2 overflow-hidden rounded-xl border border-stone-300 bg-stone-100 px-4 text-sm font-semibold text-stone-800 shadow-sm" role="progressbar" aria-label={processingState.message} aria-valuemin={0} aria-valuemax={100} aria-valuenow={processingState.progress ?? 0}>
+        <span className="absolute inset-y-0 left-0 bg-stone-300 transition-[width] duration-200 ease-out motion-reduce:transition-none" style={{ width: `${processingState.progress ?? 0}%` }} aria-hidden="true" />
+        <span className="relative z-10">{processingState.message}</span>
+        <span className="relative z-10 tabular-nums text-stone-700">{processingState.progress ?? 0}%</span>
+      </div> : <div className="mt-4 flex min-h-12 overflow-hidden rounded-xl border border-stone-300 bg-stone-100 shadow-sm" aria-label="Record or upload session">
+        <div className="min-w-0 flex-1"><RecordingControls isRecording={isRecording} isBusy={isBusy} onToggle={onToggleRecording} /></div>
+        <AudioUploadButton disabled={isRecording || isBusy} onUpload={onUploadAudio} />
+      </div>}
+    </section>
   );
 }

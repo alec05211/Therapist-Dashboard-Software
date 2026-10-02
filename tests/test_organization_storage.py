@@ -45,6 +45,48 @@ class OrganizationStorageTests(unittest.TestCase):
                 storage.create_upload({'organization_id': self.organization_id, 'client_id': self.client_id}, '.wav', 'therapist')
             self.assertFalse(any('INSERT INTO app.sessions' in call.args[0] for call in cursor.execute.call_args_list))
 
+    def test_upload_is_bound_to_the_selected_scheduled_appointment(self):
+        appointment_id = str(uuid4())
+        with patch.object(storage, 'connect') as connect:
+            cursor = connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+            cursor.fetchone.side_effect = [
+                {'bucket': 'private-org', 'region': 'us-east-1', 'kms_key_arn': 'key', 'healthscribe_role_arn': 'role'},
+                {'relation': 'labels'}, {'relation': 'journey'}, {'relation': 'samples'}, {'relation': 'relationship-speakers'},
+                {'id': appointment_id, 'starts_at': '2026-09-30T12:00:00Z'},
+            ]
+            result = storage.create_upload(
+                {'organization_id': self.organization_id, 'client_id': self.client_id},
+                '.wav', 'therapist', appointment_id,
+            )
+        self.assertEqual(result['appointment_id'], appointment_id)
+        appointment_lookup = next(call for call in cursor.execute.call_args_list if 'FROM app.appointments' in call.args[0])
+        self.assertEqual(appointment_lookup.args[1], (appointment_id, self.organization_id, self.client_id, 'therapist'))
+        session_insert = next(call for call in cursor.execute.call_args_list if 'INSERT INTO app.sessions' in call.args[0])
+        self.assertEqual(session_insert.args[1][3], appointment_id)
+
+    def test_server_handoff_marks_only_its_linked_appointment_completed(self):
+        with patch.object(storage, 'connect') as connect:
+            cursor = connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+            storage.set_job_status(self.binding, 'IN_PROGRESS')
+        appointment_update = next(call for call in cursor.execute.call_args_list if 'UPDATE app.appointments' in call.args[0])
+        self.assertEqual(appointment_update.args[1], (self.session_id, self.organization_id, self.client_id))
+
+    def test_failed_processing_restores_linked_appointment_for_retry(self):
+        with patch.object(storage, 'connect') as connect:
+            cursor = connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+            storage.set_job_status(self.binding, 'FAILED', 'failed')
+        appointment_update = next(call for call in cursor.execute.call_args_list if 'UPDATE app.appointments' in call.args[0])
+        self.assertIn("SET status='scheduled'", appointment_update.args[0])
+        self.assertEqual(appointment_update.args[1], (self.session_id, self.organization_id, self.client_id))
+
+    def test_completed_processing_marks_clinical_session_ready(self):
+        with patch.object(storage, 'connect') as connect:
+            cursor = connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+            storage.set_job_status(self.binding, 'COMPLETED')
+        statements = [call.args[0] for call in cursor.execute.call_args_list]
+        self.assertTrue(any("UPDATE app.sessions SET status='review'" in sql for sql in statements))
+        self.assertFalse(any('UPDATE app.appointments' in sql for sql in statements))
+
     def test_results_complete_only_after_all_artifacts_are_catalogued(self):
         with patch.object(storage, 'put_artifact', side_effect=['raw-id', 'note-id', 'export-id']) as put, patch.object(storage.session_review, 'persist_result') as persist:
             storage.publish_results(self.binding, 'cache', [{'start': 0, 'end': 1, 'text': 'hello'}], [{'name': 'Note', 'items': ['draft']}])
@@ -101,7 +143,7 @@ class OrganizationStorageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, ORGANIZATION_STORAGE_ENABLED='true'), patch.object(server, 'RECORDINGS_DIRECTORY', Path(directory)), patch.object(server, 'validate_access_token', return_value={'sub': 'therapist'}), patch.object(storage, 'create_upload', return_value=self.binding) as create, patch.object(storage, 'put_artifact') as put, patch.object(storage, 'set_job_status'), patch.object(server.boto3, 'client') as aws:
             tasks = BackgroundTasks()
             result = asyncio.run(server.transcribe(tasks, UploadFile(filename='import.wav', file=io.BytesIO(b'audio')), request))
-            create.assert_called_once_with(request.state.care_context, '.wav', 'therapist')
+            create.assert_called_once_with(request.state.care_context, '.wav', 'therapist', None)
             self.assertEqual(result['id'], self.binding['runtime_id'])
             self.assertEqual(put.call_args.args[3], self.binding['audio_key'])
             args = aws.return_value.start_medical_scribe_job.call_args.kwargs

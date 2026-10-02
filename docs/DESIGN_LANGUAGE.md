@@ -46,7 +46,7 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
 - Search fields use a concise placeholder and an accessible name; do not add a redundant visible label or helper sentence.
 - Client permissions show one left-aligned list of editable choices using native checkbox inputs with switch semantics. Fixed Schedule, Documents, Chat, and completed/future session-card access is not repeated in the form.
-- Relationship identification uses one compact row each for Client and Therapist: role, name, optional pronouns, and a brief audio sample. Keep provider codenames in an info tooltip rather than the persistent label.
+- Relationship identification groups detected speakers by completed session. Show each provider speaker label verbatim, alongside a name field with known relationship names as suggestions and a brief audio sample. A saved name applies to the same provider label throughout that client relationship.
 
 ## Reusable content panels
 
@@ -61,6 +61,24 @@ The entire collapsed card is one disclosure button, with a visible SVG down-chev
 Transcripts and clinical notes supply `previewContent` using the same content
 rendering as their expanded view, clipped to the preview height and inert while collapsed. Playback labels
 and dialogue share the same first-line baseline, including wrapped segments.
+
+Scheduled-session preparation uses that same `CollapsibleContentPanel` shell for
+the pre-session brief, with its actual brief rendering serving as the collapsed
+teaser. The brief and capture controls share one raised card. Below the brief, a
+neutral split control presents the dominant `Record Session` action with a small
+red recording dot and an appended icon-only upload action; both halves use the
+same surface, border, and interaction treatment. Both actions stay disabled while
+work is active. During browser upload, the entire split control becomes a
+determinate loading surface: a slightly darker neutral fill advances across its
+full height and explicitly asks the user to remain on the page. Once the server
+accepts the recording, remove the preparation card and mark the corresponding
+carousel card `Complete`. That card owns the remaining state: a small spinner in
+its upper-right corner and a compact `Hang tight` message with a progressively
+animated ellipsis until both transcript and draft clinical note are durable. It
+must state accessibly that the upload is secure and the page may be left;
+reduced-motion mode shows a static ellipsis. Completed-session review begins directly with Associated materials at
+the standard 24px workspace-section gap, without a redundant completed-session
+heading or uploaded-session label.
 
 The session carousel uses symmetrical 2px blur over the outer 12% on each side,
 keeping adjacent session labels sharp. Its schedule action is a calendar/edit
@@ -133,18 +151,51 @@ revealed.
   claims use a small sentence-level Evidence link. These open a supporting-context dialog
   with quotes and transcript links. Show preparation only for the immediate
   upcoming scheduled session; later sessions remain empty.
-- Transcript segments share one compact row: a fixed timestamp column on the
-  left, grouping the play/pause icon, timestamp, and speaker name in one playback
-  control with even spacing, followed by dialogue. Flagged passage text is bold
-  and selectable; avoid separate cards, badges, or underlines for those rows.
-  Selecting bold text opens clinician guidance inline; the timestamp controls
-  audio playback. Make timestamps semibold and show a bordered playback surface
-  when the segment is hovered or keyboard-focused. Place the play/pause icon before
+- Transcript segments share one compact playback row: a fixed timestamp column on
+  the left groups the play/pause icon, timestamp, and speaker name with even
+  spacing, followed by dialogue. Flagged passage text is bold and selectable;
+  avoid separate cards, badges, or underlines for those rows. Selecting bold text
+  opens clinician guidance inline without changing playback. Clicking anywhere
+  else in the row plays or pauses that segment. Hover uses a faint full-row inset
+  surface, while active playback uses a slightly stronger neutral surface. Give
+  each row rounded-xl corners and a small vertical gap so adjacent state surfaces
+  remain visually separate; do not box the timestamp/name group. Make
+  timestamps semibold. Place the play/pause icon before
   the timestamp and reveal it only on segment hover, keyboard focus, or active
   playback position; reserve its space to prevent layout shifts. Use equally sized
   SVG play and pause icons. Keep the viewport still while the active segment is
   visible; only scroll an offscreen segment into view using nearest alignment. Keep row spacing tight for long transcripts. Saved quotes and longer journey lists start
   collapsed in Insights.
+
+- The therapist Insights page begins with its generated longitudinal overview,
+  without a decorative accent bar. Four compact orientation metrics follow:
+  evidence-linked sessions, themes in view, open threads, and items awaiting
+  review. Follow them with a compact theme-recurrence view that compares each
+  current theme by distinct cited sessions and cited record moments. Its bars
+  show relative evidence coverage for navigation, not severity or clinical
+  importance. These are record-navigation counts rather than clinical scores. A
+  longitudinal overview follows, then evidence-linked sections for trajectory,
+  recurring themes, open threads, and client context. The evidence and review
+  queue remains a separate deeper section below the overview.
+  Write each saved insight as cohesive natural-language prose with two semantic
+  layers: first an unlinked analysis statement explaining what may matter, then
+  contextual statements explaining where that interpretation appeared in the
+  record. Keep them in one paragraph when concise and use an ordinary paragraph
+  break only when length requires it; do not render the context as a list,
+  nested panel, callout, or separately bordered block. Contextual prose should
+  use sentence structures chosen for the specific evidence rather than repeated
+  lead-ins such as “This appeared when.” Evidence belongs only in
+  the contextual layer:
+  one or more model-provided claim anchors bold and link each supported phrase to its exact
+  transcript slices. Linked claims use bold text without colored underlines and
+  remain true inline prose links, wrapping word-by-word like the surrounding text
+  rather than moving the entire claim to a new line as an atomic control. Render
+  the first letter in sentence case for its displayed position—capitalized at a
+  sentence start and lowercase mid-sentence—without changing the stored anchor
+  used to resolve evidence.
+  Do not infer anchors from similar wording or quotations.
+  Older items without valid claim anchors keep their analysis intact and place
+  one quiet statement-level source link in a separate contextual block.
 
 - Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,
   `TranscriptViewer`, and `ClinicalNote` in both roles. The viewer owns playback

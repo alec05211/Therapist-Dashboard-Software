@@ -6,15 +6,16 @@ type RecordingControlsProps = {
 
 export function RecordingControls({ isRecording, isBusy, onToggle }: RecordingControlsProps) {
   return (
-    <div aria-label="Record a new session">
+    <div className="h-full" aria-label="Record a new session">
       <button
         type="button"
-        className={`w-full cursor-grab rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing disabled:cursor-wait disabled:opacity-70 ${isRecording ? "bg-red-700 hover:bg-red-800" : "bg-emerald-800 hover:bg-emerald-900"}`}
+        className="flex h-full w-full cursor-grab items-center justify-center gap-2 bg-stone-100 px-4 py-3 text-sm font-semibold text-stone-900 transition-colors duration-200 hover:bg-stone-200 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60"
         aria-pressed={isRecording}
         disabled={isBusy}
         onClick={onToggle}
       >
-        {isRecording ? "Stop recording" : "Record new session"}
+        <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full bg-red-600 ${isRecording ? "animate-pulse motion-reduce:animate-none" : ""}`} />
+        {isRecording ? "Stop Recording" : "Record Session"}
       </button>
     </div>
   );

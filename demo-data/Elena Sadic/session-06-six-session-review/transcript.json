@@ -1,0 +1,836 @@
+{
+  "id": "heartwell-sadic-session-06",
+  "created_at": "2026-09-15T13:59:59-04:00",
+  "audio": {
+    "file": "recording.wav",
+    "mime_type": "audio/wav"
+  },
+  "speakers": {},
+  "text": "We have met 6 times now. Before we look ahead, I am curious how you would describe the past month and a half. I would say I am still overwhelmed more often than I want to be. But I can see the sequence now. Before, I just thought I was bad at handling stress. Now I notice that something happens. I assume I have disappointed someone, and then I try to fix everything by working harder and needing less. What has changed about what happens next? Sometimes I catch it. I ask what the actual priority is. I tell Nora I am having a hard day. I leave work on time once in a while. It does not make me calm immediately, but I do not feel as trapped. That sounds like a meaningful shift in your relationship to the pressure. I am trying not to call it progress too quickly. Part of me thinks if I say I am doing better, I will have to keep doing better forever. What would progress mean if it did not require a perfect upward line? Maybe being able to recover from a hard week without deciding, I am back at the beginning. Like the deadline week. I hated it, but I asked for help eventually and I told Nora what was going on. You also used your support plan during a difficult moment. Yes, I am less ashamed about that now. I still do not want those thoughts to come back, but I do not feel like they have to be a secret if they do. How have they been recently? Quiet. I have not had thoughts of hurting myself since the deadline week. I have had anxious nights, but not that feeling of wanting to disappear. Do you have any plan or intention to harm yourself today? No, I do not. I feel safe today. Thank you. We will continue to revisit that directly, especially as your work changes. You mentioned a project launch is coming up. It starts next month. I am excited about it, which makes me nervous. I care about it a lot and I can already feel the part of me that wants to say yes to every extra request. What have you learned that might help you approach it differently? I need to ask for priorities before I'm already overwhelmed. I need to keep at least some food and sleep in the picture. And I need to tell Nora when I am struggling instead of acting like I am protecting her. Which of those feels most vulnerable? Asking for priorities. If I can do that early, I think the other things become possible. If I wait, I start hiding and everything gets smaller. Could we make a concrete plan for the first week of the launch? I can block 2 lunches on my calendar. I can write a short update for my supervisor at the beginning of the week instead of waiting until someone asks. And if 2 urgent things come in at once, I will ask which one comes first. How will you know that the plan is beginning to slip? My shoulders skipping food. Switching between tabs without doing anything. Ignoring Nora's texts. And telling myself, I just need to make it through one more night. When you notice one of those signs, what is the first response you want to try? Stop for 2 minutes. Breathe. Decide whether I need food, a break, or a question answered. If I'm having a really bad moment, I tell Nora or my sister instead of pretending I am fine. That is a clear and practical plan. What is still unresolved for you. I still do not know how to let people take care of me without feeling like I owe them something. I still feel guilty when I rest. And I want to talk more about my dad because I think a lot of this started before my job got so busy. Those feel like important threads to carry forward. We do not need to solve them before the launch. We can use the next sessions to see what the launch brings up and what supports you in real time. That helps. I usually want to have the answer before I start something hard. What is it like to consider that you can begin without having the whole answer? Scary, but a little less lonely than it used to be. That seems like an honest place to finish today. It is. I am glad I came in. As you look ahead to the launch, what are you most afraid will happen? That I will disappear into it. Not literally. I mean, I will become all work again, and then one day I will look up and Nora will be frustrated. My sister will stop calling and I will not have taken care of myself at all. What makes that fear feel different now than it did 6 sessions ago? I can name it. Before, I would have said I just needed to be more organized. Now I know I am afraid of letting people down, and I react by making myself smaller and more useful. What does the version of you who is not disappearing look like during a demanding week? She still works hard. She does not pretend the launch is easy. But she eats lunch. She tells Nora when she is overloaded. She asks the question before saying yes. She lets someone else decide a priority with her. That sounds specific and achievable. I hope so. I am worried I will hear it as another list to fail. How can we keep it from becoming that? Maybe choose one anchor instead of trying to do everything. If I notice the warning signs, I ask one question. What is the priority? That can be the first step. And if asking the question feels impossible in the moment. I can write it in an email or ask a coworker to look at the list with me. I do not have to make it sound polished. Good. What support do you want from Nora during the launch? I want to tell her the dates ahead of time. I want her to ask me once in the evening whether I need company, quiet, or help getting away from my laptop. I do not want her to become my manager, though. How could you say that distinction clearly? I need you near me, not responsible for fixing this. I think she would understand that. And what would you want to do if the darker thoughts returned during a high pressure week? I would tell Nora directly instead of minimizing it. I would use the plan we made. I would not wait to see whether it gets worse before I reach out. Do you have any plan or intention to harm yourself today? No, I do not. I feel safe today. Thank you. You are building a response that respects the thoughts without letting them become something you carry alone. That feels different from trying to prove I will never have them again. Exactly, the goal is not to promise certainty. It is to stay connected to support and to yourself when things are difficult. I think I can carry that into the launch. We will keep reviewing what happens in real time. You do not have to complete the next 2 months perfectly for the work to be meaningful. I am relieved to hear that.",
+  "segments": [
+    {
+      "start": 0.079,
+      "end": 1.85,
+      "text": "We have met 6 times now.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 2.97,
+      "end": 7.76,
+      "text": "Before we look ahead, I am curious how you would describe the past month and a half.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 8.479,
+      "end": 13.38,
+      "text": "I would say I am still overwhelmed more often than I want to be.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 14.72,
+      "end": 16.35,
+      "text": "But I can see the sequence now.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 17.159,
+      "end": 20.299,
+      "text": "Before, I just thought I was bad at handling stress.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 21.42,
+      "end": 23.6,
+      "text": "Now I notice that something happens.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 24.059,
+      "end": 30.799,
+      "text": "I assume I have disappointed someone, and then I try to fix everything by working harder and needing less.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 31.34,
+      "end": 34.159,
+      "text": "What has changed about what happens next?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 34.9,
+      "end": 36.119,
+      "text": "Sometimes I catch it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 36.7,
+      "end": 38.7,
+      "text": "I ask what the actual priority is.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 38.86,
+      "end": 40.759,
+      "text": "I tell Nora I am having a hard day.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 40.86,
+      "end": 42.68,
+      "text": "I leave work on time once in a while.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 43.59,
+      "end": 47.689,
+      "text": "It does not make me calm immediately, but I do not feel as trapped.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 48.189,
+      "end": 51.689,
+      "text": "That sounds like a meaningful shift in your relationship to the pressure.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 52.15,
+      "end": 54.77,
+      "text": "I am trying not to call it progress too quickly.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 55.97,
+      "end": 61.229,
+      "text": "Part of me thinks if I say I am doing better, I will have to keep doing better forever.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 62.009,
+      "end": 66.569,
+      "text": "What would progress mean if it did not require a perfect upward line?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 67.169,
+      "end": 71.79,
+      "text": "Maybe being able to recover from a hard week without deciding, I am back at the beginning.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 73.089,
+      "end": 74.55,
+      "text": "Like the deadline week.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 75.05,
+      "end": 79.98,
+      "text": "I hated it, but I asked for help eventually and I told Nora what was going on.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 80.58,
+      "end": 84.22,
+      "text": "You also used your support plan during a difficult moment.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 85.069,
+      "end": 87.83,
+      "text": "Yes, I am less ashamed about that now.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 88.9,
+      "end": 94.58,
+      "text": "I still do not want those thoughts to come back, but I do not feel like they have to be a secret if they do.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 94.98,
+      "end": 96.36,
+      "text": "How have they been recently?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 96.98,
+      "end": 97.58,
+      "text": "Quiet.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 98.68,
+      "end": 102.019,
+      "text": "I have not had thoughts of hurting myself since the deadline week.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 102.839,
+      "end": 107.459,
+      "text": "I have had anxious nights, but not that feeling of wanting to disappear.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 107.959,
+      "end": 111.599,
+      "text": "Do you have any plan or intention to harm yourself today?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 112.48,
+      "end": 113.94,
+      "text": "No, I do not.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 114.4,
+      "end": 115.58,
+      "text": "I feel safe today.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 116.04,
+      "end": 116.739,
+      "text": "Thank you.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 117.18,
+      "end": 121.529,
+      "text": "We will continue to revisit that directly, especially as your work changes.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 122.19,
+      "end": 124.529,
+      "text": "You mentioned a project launch is coming up.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 124.8,
+      "end": 125.97,
+      "text": "It starts next month.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 126.55,
+      "end": 129.21,
+      "text": "I am excited about it, which makes me nervous.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 129.75,
+      "end": 135.669,
+      "text": "I care about it a lot and I can already feel the part of me that wants to say yes to every extra request.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 136.429,
+      "end": 139.11,
+      "text": "What have you learned that might help you approach it differently?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 139.929,
+      "end": 143.41,
+      "text": "I need to ask for priorities before I'm already overwhelmed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 144.55,
+      "end": 147.449,
+      "text": "I need to keep at least some food and sleep in the picture.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 148.82,
+      "end": 153.279,
+      "text": "And I need to tell Nora when I am struggling instead of acting like I am protecting her.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 153.779,
+      "end": 155.96,
+      "text": "Which of those feels most vulnerable?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 156.66,
+      "end": 158.22,
+      "text": "Asking for priorities.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 159.059,
+      "end": 162.529,
+      "text": "If I can do that early, I think the other things become possible.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 163.36,
+      "end": 167.24,
+      "text": "If I wait, I start hiding and everything gets smaller.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 168.009,
+      "end": 171.199,
+      "text": "Could we make a concrete plan for the first week of the launch?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 172.009,
+      "end": 174.27,
+      "text": "I can block 2 lunches on my calendar.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 174.57,
+      "end": 179.949,
+      "text": "I can write a short update for my supervisor at the beginning of the week instead of waiting until someone asks.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 180.369,
+      "end": 184.75,
+      "text": "And if 2 urgent things come in at once, I will ask which one comes first.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 185.33,
+      "end": 188.11,
+      "text": "How will you know that the plan is beginning to slip?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 188.899,
+      "end": 191.58,
+      "text": "My shoulders skipping food.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 192.46,
+      "end": 194.88,
+      "text": "Switching between tabs without doing anything.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 195.759,
+      "end": 197.479,
+      "text": "Ignoring Nora's texts.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 198.22,
+      "end": 202.36,
+      "text": "And telling myself, I just need to make it through one more night.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 203.1,
+      "end": 208.11,
+      "text": "When you notice one of those signs, what is the first response you want to try?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 208.74,
+      "end": 210.16,
+      "text": "Stop for 2 minutes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 210.58,
+      "end": 211.139,
+      "text": "Breathe.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 212.229,
+      "end": 216.08,
+      "text": "Decide whether I need food, a break, or a question answered.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 217.16,
+      "end": 223.399,
+      "text": "If I'm having a really bad moment, I tell Nora or my sister instead of pretending I am fine.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 224.13,
+      "end": 225.839,
+      "text": "That is a clear and practical plan.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 226.889,
+      "end": 228.809,
+      "text": "What is still unresolved for you.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 229.3,
+      "end": 235.27,
+      "text": "I still do not know how to let people take care of me without feeling like I owe them something.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 236.49,
+      "end": 238.63,
+      "text": "I still feel guilty when I rest.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 239.75,
+      "end": 245.649,
+      "text": "And I want to talk more about my dad because I think a lot of this started before my job got so busy.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 246.19,
+      "end": 248.789,
+      "text": "Those feel like important threads to carry forward.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 249.75,
+      "end": 252.22,
+      "text": "We do not need to solve them before the launch.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 252.759,
+      "end": 258.059,
+      "text": "We can use the next sessions to see what the launch brings up and what supports you in real time.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 258.459,
+      "end": 259.299,
+      "text": "That helps.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 260.209,
+      "end": 263.39,
+      "text": "I usually want to have the answer before I start something hard.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 263.97,
+      "end": 269.309,
+      "text": "What is it like to consider that you can begin without having the whole answer?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 269.809,
+      "end": 273.51,
+      "text": "Scary, but a little less lonely than it used to be.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 274.35,
+      "end": 276.769,
+      "text": "That seems like an honest place to finish today.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 277.309,
+      "end": 277.959,
+      "text": "It is.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 278.959,
+      "end": 280.32,
+      "text": "I am glad I came in.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 280.839,
+      "end": 284.7,
+      "text": "As you look ahead to the launch, what are you most afraid will happen?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 285.239,
+      "end": 287.04,
+      "text": "That I will disappear into it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 287.94,
+      "end": 288.98,
+      "text": "Not literally.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 289.42,
+      "end": 296.049,
+      "text": "I mean, I will become all work again, and then one day I will look up and Nora will be frustrated.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 296.23,
+      "end": 301.299,
+      "text": "My sister will stop calling and I will not have taken care of myself at all.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 301.859,
+      "end": 305.899,
+      "text": "What makes that fear feel different now than it did 6 sessions ago?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 306.7,
+      "end": 307.48,
+      "text": "I can name it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 308.54,
+      "end": 311.44,
+      "text": "Before, I would have said I just needed to be more organized.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 312.54,
+      "end": 319.22,
+      "text": "Now I know I am afraid of letting people down, and I react by making myself smaller and more useful.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 319.66,
+      "end": 325.32,
+      "text": "What does the version of you who is not disappearing look like during a demanding week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 325.859,
+      "end": 327.13,
+      "text": "She still works hard.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 327.5,
+      "end": 329.6,
+      "text": "She does not pretend the launch is easy.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 330.54,
+      "end": 332.07,
+      "text": "But she eats lunch.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 332.54,
+      "end": 334.42,
+      "text": "She tells Nora when she is overloaded.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 335.269,
+      "end": 337.859,
+      "text": "She asks the question before saying yes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 338.48,
+      "end": 340.799,
+      "text": "She lets someone else decide a priority with her.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 341.529,
+      "end": 343.63,
+      "text": "That sounds specific and achievable.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 344.089,
+      "end": 344.929,
+      "text": "I hope so.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 345.69,
+      "end": 348.51,
+      "text": "I am worried I will hear it as another list to fail.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 349.089,
+      "end": 350.89,
+      "text": "How can we keep it from becoming that?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 351.69,
+      "end": 355.029,
+      "text": "Maybe choose one anchor instead of trying to do everything.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 355.75,
+      "end": 359.7,
+      "text": "If I notice the warning signs, I ask one question.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 360.359,
+      "end": 362.0,
+      "text": "What is the priority?",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 363.17,
+      "end": 364.609,
+      "text": "That can be the first step.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 365.049,
+      "end": 368.01,
+      "text": "And if asking the question feels impossible in the moment.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 368.72,
+      "end": 372.76,
+      "text": "I can write it in an email or ask a coworker to look at the list with me.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 373.769,
+      "end": 375.989,
+      "text": "I do not have to make it sound polished.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 376.57,
+      "end": 377.07,
+      "text": "Good.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 377.529,
+      "end": 380.23,
+      "text": "What support do you want from Nora during the launch?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 380.69,
+      "end": 382.75,
+      "text": "I want to tell her the dates ahead of time.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 383.7,
+      "end": 390.559,
+      "text": "I want her to ask me once in the evening whether I need company, quiet, or help getting away from my laptop.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 391.859,
+      "end": 394.959,
+      "text": "I do not want her to become my manager, though.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 395.799,
+      "end": 397.399,
+      "text": "How could you say that distinction",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 397.399,
+      "end": 398.049,
+      "text": "clearly?",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 398.559,
+      "end": 402.17,
+      "text": "I need you near me, not responsible for fixing this.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 403.579,
+      "end": 405.059,
+      "text": "I think she would understand that.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 405.73,
+      "end": 410.089,
+      "text": "And what would you want to do if the darker thoughts returned during a high pressure week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 410.76,
+      "end": 413.64,
+      "text": "I would tell Nora directly instead of minimizing it.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 414.5,
+      "end": 415.899,
+      "text": "I would use the plan we made.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 416.75,
+      "end": 420.809,
+      "text": "I would not wait to see whether it gets worse before I reach out.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 421.609,
+      "end": 425.369,
+      "text": "Do you have any plan or intention to harm yourself today?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 426.1,
+      "end": 427.559,
+      "text": "No, I do not.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 428.019,
+      "end": 429.22,
+      "text": "I feel safe today.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 429.7,
+      "end": 430.359,
+      "text": "Thank you.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 430.619,
+      "end": 436.179,
+      "text": "You are building a response that respects the thoughts without letting them become something you carry alone.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 436.959,
+      "end": 439.959,
+      "text": "That feels different from trying to prove I will never have them again.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 440.94,
+      "end": 444.149,
+      "text": "Exactly, the goal is not to promise certainty.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 444.54,
+      "end": 448.619,
+      "text": "It is to stay connected to support and to yourself when things are difficult.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 449.359,
+      "end": 451.299,
+      "text": "I think I can carry that into the launch.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 452.0,
+      "end": 454.679,
+      "text": "We will keep reviewing what happens in real time.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 455.6,
+      "end": 459.769,
+      "text": "You do not have to complete the next 2 months perfectly for the work to be meaningful.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 460.589,
+      "end": 461.92,
+      "text": "I am relieved to hear that.",
+      "speaker": "PATIENT_0"
+    }
+  ],
+  "clinical_note": [
+    {
+      "name": "Chief Complaint",
+      "items": [
+        "Follow-up for anxiety and stress management"
+      ]
+    },
+    {
+      "name": "History Of Present Illness",
+      "items": [
+        "The patient presents for their 6th session, reporting ongoing challenges with stress management and emotional regulation.",
+        "They describe feeling overwhelmed more often than desired but note a growing ability to recognize patterns in their stress response.",
+        "Specifically, the patient identifies a cycle where they assume they have disappointed someone, leading to increased work and self-imposed pressure.",
+        "They have begun to catch these patterns and implement coping strategies such as asking about priorities, communicating with their partner Nora about having a hard day, and leaving work on time occasionally.",
+        "These interventions have reduced feelings of being trapped, though they do not provide immediate relief.\n",
+        "The patient reports a recent difficult period during a deadline week, which they managed by asking for help and communicating with Nora.",
+        "They used their support plan during this time and feel less ashamed about doing so.",
+        "Since the deadline week, the patient has not experienced thoughts of self-harm but continues to have anxious nights.",
+        "They deny current suicidal ideation or intent and report feeling safe today.\n",
+        "A project launch is scheduled for next month, which the patient is excited about but also nervous.",
+        "They recognize a tendency to say yes to every extra request and have identified the need to ask for priorities early, maintain adequate food and sleep, and communicate with Nora when struggling.",
+        "The patient identifies asking for priorities as the most vulnerable and challenging part of their plan.\n",
+        "The patient continues to struggle with feeling guilty when resting and difficulty accepting care from others without feeling obligated.",
+        "They express a desire to explore their relationship with their father, believing it contributed to their current patterns.\n"
+      ]
+    },
+    {
+      "name": "Review Of Systems",
+      "items": [
+        "Psychiatric: Reports anxiety, reports stress, reports feeling overwhelmed, reports anxious nights, denies current suicidal ideation, denies current self-harm intent, denies current plan to harm self"
+      ]
+    },
+    {
+      "name": "Past Social History",
+      "items": [
+        "Employed in a professional role with a supervisor",
+        "In a relationship with Nora",
+        "Has a sister"
+      ]
+    },
+    {
+      "name": "Assessment",
+      "items": [
+        "1. Anxiety and stress management"
+      ]
+    },
+    {
+      "name": "Plan",
+      "items": [
+        "Anxiety and stress management:\n- Continue to monitor patient's stress levels and coping strategies, particularly during upcoming project launch\n",
+        "- Patient to implement concrete plan for first week of launch: block 2 lunches on calendar, send short update to supervisor at beginning of week, ask for priority when multiple urgent tasks arise\n",
+        "- Patient to identify early warning signs of stress (shoulder tension, skipping meals, task switching without productivity, ignoring partner's texts, telling self \"just need to make it through one more night\")\n",
+        "- When warning signs are noticed, patient to stop for 2 minutes, breathe, and determine if they need food, a break, or a question answered\n",
+        "- If having a particularly difficult moment, patient to reach out to partner or sister instead of pretending to be fine\n",
+        "- Patient to communicate launch dates to partner in advance and ask partner to check in once in the evening regarding need for company, quiet, or help disconnecting from work\n",
+        "- If darker thoughts return during high-pressure periods, patient to tell partner directly and use support plan without waiting for symptoms to worsen\n",
+        "- Continue to explore relationship with father and its impact on current patterns in future sessions\n",
+        "- Continue to monitor for suicidal ideation and self-harm risk, particularly during high-pressure periods\n",
+        "- Discussed patient's progress in recognizing stress patterns and implementing coping strategies\n",
+        "- Explored patient's fear of \"disappearing\" into work during the upcoming launch and developed a concrete plan to prevent this\n",
+        "- Discussed the importance of asking for priorities early and communicating needs to partner\n",
+        "- Explored the concept of progress as recovery from difficult periods rather than a perfect upward trajectory\n",
+        "- Discussed the goal of staying connected to support and self during difficult times rather than promising the absence of difficult thoughts\n",
+        "- Patient identified that asking for priorities is the most vulnerable part of their plan; discussed strategies for doing this (e.g., email, asking a coworker to review the list)\n",
+        "- Patient identified that they do not have to complete the next 2 months perfectly for the work to be meaningful\n"
+      ]
+    }
+  ],
+  "healthscribe": {
+    "job_name": "healthscribe-demo-20260915135719-3b7e1ce3",
+    "input_uri": "s3://therapist-dashboard-healthscribe-input-408009925213-us-east-1/demo-data/heartwell-sadic/session-06/recording.wav",
+    "transcript_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135719-3b7e1ce3/transcript.json",
+    "clinical_note_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135719-3b7e1ce3/summary.json"
+  }
+}

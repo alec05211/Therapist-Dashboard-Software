@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } from "react";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { ClinicalNote } from "@/components/session-review/clinical-note";
 import type { LongitudinalRecordContext, Transcript } from "@/lib/types";
@@ -91,12 +91,14 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
     audio.current.volume = next;
     setVolume(next);
   };
+  const isGuidanceInteraction = (target: EventTarget) =>
+    target instanceof Element && Boolean(target.closest("[data-no-segment-playback]"));
 
   if (!transcript) return <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Associated materials"><p className="text-sm text-stone-500">Choose a completed session to review its associated materials.</p></section>;
 
   const previewOnly = !expanded;
   const transcriptRows = (
-    <ol className="list-none px-4 pb-4 pt-1">
+    <ol className="list-none space-y-1 px-4 pb-4 pt-1">
             {(previewOnly ? transcript.segments.slice(0, 5) : transcript.segments).map((segment, index) => {
               const active = activeSegment === index;
               const proposals = readOnly ? [] : quotes.entries.filter(entry => entry.evidence.some(source => source.session_id === sessionId && source.segment_index === index && source.quote?.trim() === segment.text.trim()));
@@ -105,12 +107,14 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
               const reviewId = `${transcriptId}-review-${index}`;
               const canPlay = !readOnly && Boolean(transcript.recording_url);
               const speaker = segment.speaker ? transcript.speakers[segment.speaker] || segment.speaker : null;
-              return <li key={`${segment.start}-${index}`} ref={active && !previewOnly ? activeSegmentElement : undefined} className={`group/segment grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] items-start gap-x-3 rounded-md px-1 py-1 text-sm leading-6 ${active ? "bg-emerald-50" : ""}`}>
-                {canPlay ? <button type="button" onClick={() => playSegment(index)} aria-label={`${active && isPlaying ? "Pause" : "Play"} segment at ${formatTime(segment.start)}`} title={`${active && isPlaying ? "Pause" : "Play"} from ${formatTime(segment.start)}`} className={`inline-flex min-h-8 max-w-[45vw] cursor-grab items-baseline gap-2 rounded-lg border px-2 py-[3px] text-sm font-semibold tabular-nums text-stone-700 transition duration-200 ease-out group-hover/segment:border-[var(--border)] group-hover/segment:bg-[var(--surface)] group-hover/segment:shadow-sm group-focus-within/segment:border-[var(--border)] group-focus-within/segment:bg-[var(--surface)] hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${active ? "border-emerald-300 bg-white shadow-sm" : "border-transparent"}`}><svg viewBox="0 0 16 16" fill="currentColor" className={`size-4 shrink-0 self-center text-emerald-800 group-hover/segment:opacity-100 group-focus-within/segment:opacity-100 ${active ? "opacity-100" : "opacity-0"}`} aria-hidden="true">{active && isPlaying ? <><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></> : <path d="M3 2a.75.75 0 0 1 1.14-.64l9 5.25a1.6 1.6 0 0 1 0 2.78l-9 5.25A.75.75 0 0 1 3 14Z" />}</svg><time className="shrink-0">{formatTime(segment.start)}</time>{speaker && <span className="min-w-0 break-words text-left text-xs leading-6 font-normal text-stone-600">{speaker}:</span>}</button> : <div className="flex items-baseline gap-2 px-2 py-1"><time className="text-sm font-semibold tabular-nums text-stone-600">{formatTime(segment.start)}</time>{speaker && <span className="text-xs text-stone-600">{speaker}:</span>}</div>}
+              const playFromRow = (event: MouseEvent<HTMLLIElement>) => { if (!isGuidanceInteraction(event.target)) playSegment(index); };
+              const playFromKeyboard = (event: KeyboardEvent<HTMLLIElement>) => { if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return; event.preventDefault(); playSegment(index); };
+              return <li key={`${segment.start}-${index}`} ref={active && !previewOnly ? activeSegmentElement : undefined} role={canPlay ? "button" : undefined} tabIndex={canPlay ? 0 : undefined} aria-label={canPlay ? `${active && isPlaying ? "Pause" : "Play"} segment at ${formatTime(segment.start)}` : undefined} onClick={canPlay ? playFromRow : undefined} onKeyDown={canPlay ? playFromKeyboard : undefined} className={`group/segment grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] items-start gap-x-3 rounded-xl px-2 py-1.5 text-sm leading-6 transition-colors duration-200 ease-out ${canPlay ? "cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-700" : ""} ${active ? "bg-[var(--surface-active)]" : canPlay ? "hover:bg-[var(--surface-inset)]" : ""}`}>
+                <div className="inline-flex min-h-8 max-w-[45vw] items-baseline gap-2 px-2 py-[3px] text-sm font-semibold tabular-nums text-stone-700"><svg viewBox="0 0 16 16" fill="currentColor" className={`size-4 shrink-0 self-center text-emerald-800 transition-opacity duration-200 group-hover/segment:opacity-100 group-focus/segment:opacity-100 ${active ? "opacity-100" : "opacity-0"}`} aria-hidden="true">{active && isPlaying ? <><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></> : <path d="M3 2a.75.75 0 0 1 1.14-.64l9 5.25a1.6 1.6 0 0 1 0 2.78l-9 5.25A.75.75 0 0 1 3 14Z" />}</svg><time className="shrink-0">{formatTime(segment.start)}</time>{speaker && <span className="min-w-0 break-words text-left text-xs leading-6 font-normal text-stone-600">{speaker}:</span>}</div>
                 <div className="min-w-0 break-words pt-1 text-stone-800">
-                  {flagged ? <button type="button" aria-expanded={reviewOpen} aria-controls={reviewId} title="Flagged passage — select to review guidance" onClick={() => setSelectedQuoteSegment(reviewOpen ? null : index)} className="inline cursor-grab rounded-sm text-left font-bold text-stone-800 transition-colors hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><span className="sr-only">Review flagged passage: </span>{segment.text.trim()}</button> : <span>{segment.text.trim()}</span>}
+                  {flagged ? <button type="button" data-no-segment-playback aria-expanded={reviewOpen} aria-controls={reviewId} title="Flagged passage — select to review guidance" onClick={(event) => { event.stopPropagation(); setSelectedQuoteSegment(reviewOpen ? null : index); }} className="inline cursor-grab rounded-sm text-left font-bold text-stone-800 transition-colors hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><span className="sr-only">Review flagged passage: </span>{segment.text.trim()}</button> : <span>{segment.text.trim()}</span>}
                 </div>
-                {flagged && !previewOnly && <div id={reviewId} hidden={!reviewOpen} className="col-start-2 min-w-0">{reviewOpen && recordContext && proposals.map(entry => <QuoteReview key={entry.id} entry={entry} recordContext={recordContext} onSaved={quotes.onSaved} />)}</div>}
+                {flagged && !previewOnly && <div id={reviewId} data-no-segment-playback hidden={!reviewOpen} className="col-start-2 min-w-0">{reviewOpen && recordContext && proposals.map(entry => <QuoteReview key={entry.id} entry={entry} recordContext={recordContext} onSaved={quotes.onSaved} />)}</div>}
               </li>;
             })}
           </ol>

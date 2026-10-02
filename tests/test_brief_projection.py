@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 import server
-from ai_harness.brief_projection import project_accepted_insights
+from ai_harness.brief_projection import project_accepted_insights, project_session_proposals
 
 
 class BriefProjectionTests(unittest.TestCase):
@@ -42,6 +42,27 @@ class BriefProjectionTests(unittest.TestCase):
             with self.assertRaises(HTTPException) as error:
                 server.get_current_pre_session_brief('client', 'org', 'Bearer therapist')
         self.assertEqual(error.exception.status_code, 404)
+
+    def test_first_session_proposals_create_a_cited_unreviewed_brief(self):
+        evidence = [{'evidence_id': str(uuid4()), 'session_id': f'session-{uuid4()}',
+                     'session_label': 'Session 01', 'segment_index': 2,
+                     'start': 4.0, 'end': 8.0, 'quote': 'I have not been sleeping.'}]
+        brief = project_session_proposals([
+            {'status': 'proposed', 'category': 'context', 'text': 'Client reported disrupted sleep.', 'evidence': evidence},
+            {'status': 'accepted', 'category': 'context', 'text': 'Not part of this projection.', 'evidence': evidence},
+        ])
+        self.assertEqual(brief['status'], 'REVIEW DRAFT · FIRST SESSION')
+        self.assertIn('not been therapist-approved', brief['review_note'])
+        self.assertEqual(brief['sections'][0]['items'][0]['sources'], evidence)
+        self.assertNotIn('Not part of this projection.', str(brief))
+
+    def test_brief_route_falls_back_to_first_session_proposals(self):
+        proposal = {'status': 'proposed', 'category': 'context', 'text': 'Source-linked context.',
+                    'evidence': [{'evidence_id': str(uuid4()), 'session_id': f'session-{uuid4()}',
+                                  'session_label': 'Session 01'}]}
+        with patch.object(server, 'connect'), patch.object(server, 'authorize_clinical_access'), patch.object(server.LongitudinalRecordRepository, 'build_pre_session_context_packet', return_value=None), patch.object(server.client_journey, 'list_entries', return_value=[proposal]):
+            brief = server.get_current_pre_session_brief('client', 'org', 'Bearer therapist')
+        self.assertEqual(brief['status'], 'REVIEW DRAFT · FIRST SESSION')
 
     def test_synthetic_fixture_routes_are_not_registered(self):
         paths = server.app.openapi()['paths']

@@ -1,6 +1,8 @@
 """Deterministic, source-preserving brief projection from accepted insight history."""
 
 from typing import Any
+
+
 def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Present clinician-approved items without inventing new clinical claims."""
     sections = {title: [] for title in ('Important trajectory', 'Open loops', 'Relevant history')}
@@ -60,5 +62,43 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
         'status': f"REVIEW DRAFT · {version}",
         'review_note': 'Drawn only from therapist-accepted insights and journey entries. Review cited session material before relying on this brief.',
         'source_insight_snapshot_id': packet['snapshot_id'] if packet else None,
+        'sections': [{'title': title, 'items': items} for title, items in sections.items() if items],
+    }
+
+
+def project_session_proposals(journey_entries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Create a bounded first-session orientation draft from cited provider proposals.
+
+    This deliberately does not promote proposals into accepted longitudinal memory.
+    """
+    section_titles = {
+        'open_thread': 'Possible follow-ups',
+        'context': 'Context from the latest session',
+        'important_quote': 'Context from the latest session',
+        'resolution': 'Context from the latest session',
+        'breakthrough': 'Context from the latest session',
+        'theme': 'Topics from the latest session',
+    }
+    sections: dict[str, list[dict[str, Any]]] = {}
+    selected = 0
+    for entry in journey_entries or []:
+        if selected >= 6:
+            break
+        if entry.get('status') != 'proposed' or not entry.get('evidence'):
+            continue
+        title = section_titles.get(entry.get('category'), 'Context from the latest session')
+        sections.setdefault(title, []).append({
+            'text': entry['text'],
+            'sources': entry['evidence'],
+            'claims': [],
+        })
+        selected += 1
+    return {
+        'status': 'REVIEW DRAFT · FIRST SESSION',
+        'review_note': (
+            'Built from source-linked HealthScribe proposals that have not been therapist-approved. '
+            'Review the cited transcript material before using or accepting this context.'
+        ),
+        'source_insight_snapshot_id': None,
         'sections': [{'title': title, 'items': items} for title, items in sections.items() if items],
     }

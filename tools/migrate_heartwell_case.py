@@ -205,6 +205,20 @@ def _segment_id(cursor, number: int, quote: str) -> str:
     return str(rows[0]["id"])
 
 
+def _claimed_text(text: str, *claims: tuple[str, tuple[str, ...]], evidence: dict[str, str]) -> dict[str, object]:
+    return {
+        "text": text,
+        "claims": [
+            {
+                "phrase": phrase,
+                "occurrence": 0,
+                "evidence_ids": [evidence[name] for name in source_names],
+            }
+            for phrase, source_names in claims
+        ],
+    }
+
+
 def _seed_longitudinal_records(context: dict[str, str]) -> tuple[str, str]:
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute(
@@ -228,6 +242,40 @@ def _seed_longitudinal_records(context: dict[str, str]) -> tuple[str, str]:
 
     if existing:
         snapshot_id = str(existing["id"])
+        claim_updates = {
+            0: _claimed_text(
+                "The upcoming launch and the client's own priority question.",
+                ("upcoming launch", ("launch",)),
+                ("client's own priority question", ("launch",)), evidence=evidence,
+            ),
+            1: {"title": "Pressure, self-criticism, and overextension", **_claimed_text(
+                "Possible pattern to review: pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities. The latest session includes an earlier recognition of that sequence.",
+                ("pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities", ("pressure_origin", "setback")),
+                ("earlier recognition of that sequence", ("current_shift",)), evidence=evidence,
+            )},
+            2: {"title": "Direct requests as a developing practice", **_claimed_text(
+                "Across recent sessions, direct requests to a supervisor and close supports appear to be a meaningful area of practice.",
+                ("direct requests to a supervisor and close supports", ("setback", "request", "launch")), evidence=evidence,
+            )},
+            3: _claimed_text(
+                "What feels important to understand about receiving care without turning it into obligation?",
+                ("receiving care without turning it into obligation", ("care", "help_as_debt")), evidence=evidence,
+            ),
+            4: _claimed_text(
+                "What connection, if any, does the client want to explore between current pressure and the experience of the father's illness?",
+                ("current pressure and the experience of the father's illness", ("father", "role_history")), evidence=evidence,
+            ),
+            5: _claimed_text(
+                "How is the approaching launch affecting the client's ability to use the priority question before pressure escalates?",
+                ("use the priority question before pressure escalates", ("launch", "request")), evidence=evidence,
+            ),
+        }
+        with connect() as connection, connection.cursor() as cursor:
+            for display_order, content in claim_updates.items():
+                cursor.execute(
+                    "UPDATE app.longitudinal_insight_items SET content=%s WHERE snapshot_id=%s AND display_order=%s",
+                    (Json(content), snapshot_id, display_order),
+                )
     else:
         def sources(*names: str) -> tuple[InsightEvidence, ...]:
             return tuple(InsightEvidence(transcript_segment_id=evidence[name]) for name in names)
@@ -235,32 +283,52 @@ def _seed_longitudinal_records(context: dict[str, str]) -> tuple[str, str]:
         items = (
             InsightItem(
                 item_kind="relevant_history", review_state="accepted", display_order=0,
-                content={"text": "The upcoming launch and the client's own priority question."},
+                content=_claimed_text(
+                    "The upcoming launch and the client's own priority question.",
+                    ("upcoming launch", ("launch",)),
+                    ("client's own priority question", ("launch",)), evidence=evidence,
+                ),
                 evidence=sources("launch"),
             ),
             InsightItem(
                 item_kind="trajectory", review_state="accepted", display_order=1,
-                content={"title": "Pressure, self-criticism, and overextension", "text": "Possible pattern to review: pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities. The latest session includes an earlier recognition of that sequence."},
+                content={"title": "Pressure, self-criticism, and overextension", **_claimed_text(
+                    "Possible pattern to review: pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities. The latest session includes an earlier recognition of that sequence.",
+                    ("pressure and anticipated disappointment have repeatedly been followed by overwork, reduced rest, and difficulty asking for priorities", ("pressure_origin", "setback")),
+                    ("earlier recognition of that sequence", ("current_shift",)), evidence=evidence,
+                )},
                 evidence=sources("pressure_origin", "setback", "current_shift"),
             ),
             InsightItem(
                 item_kind="trajectory", review_state="accepted", display_order=2,
-                content={"title": "Direct requests as a developing practice", "text": "Across recent sessions, direct requests to a supervisor and close supports appear to be a meaningful area of practice."},
+                content={"title": "Direct requests as a developing practice", **_claimed_text(
+                    "Across recent sessions, direct requests to a supervisor and close supports appear to be a meaningful area of practice.",
+                    ("direct requests to a supervisor and close supports", ("setback", "request", "launch")), evidence=evidence,
+                )},
                 evidence=sources("setback", "request", "launch"),
             ),
             InsightItem(
                 item_kind="open_thread", review_state="accepted", display_order=3,
-                content={"text": "What feels important to understand about receiving care without turning it into obligation?"},
+                content=_claimed_text(
+                    "What feels important to understand about receiving care without turning it into obligation?",
+                    ("receiving care without turning it into obligation", ("care", "help_as_debt")), evidence=evidence,
+                ),
                 evidence=sources("care", "help_as_debt"),
             ),
             InsightItem(
                 item_kind="open_thread", review_state="accepted", display_order=4,
-                content={"text": "What connection, if any, does the client want to explore between current pressure and the experience of the father's illness?"},
+                content=_claimed_text(
+                    "What connection, if any, does the client want to explore between current pressure and the experience of the father's illness?",
+                    ("current pressure and the experience of the father's illness", ("father", "role_history")), evidence=evidence,
+                ),
                 evidence=sources("father", "role_history"),
             ),
             InsightItem(
                 item_kind="open_thread", review_state="accepted", display_order=5,
-                content={"text": "How is the approaching launch affecting the client's ability to use the priority question before pressure escalates?"},
+                content=_claimed_text(
+                    "How is the approaching launch affecting the client's ability to use the priority question before pressure escalates?",
+                    ("use the priority question before pressure escalates", ("launch", "request")), evidence=evidence,
+                ),
                 evidence=sources("launch", "request"),
             ),
         )

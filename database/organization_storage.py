@@ -18,7 +18,7 @@ def session_prefix(client_id, session_id):
     return f"clients/{UUID(str(client_id))}/sessions/{UUID(str(session_id))}/"
 
 
-def create_upload(context, suffix, actor_subject):
+def create_upload(context, suffix, actor_subject, appointment_id=None):
     session_id = str(uuid4())
     runtime_id = f"session-{session_id}"
     job_name = f"healthscribe-{uuid4().hex}"
@@ -41,15 +41,43 @@ def create_upload(context, suffix, actor_subject):
         cursor.execute("SELECT to_regclass('app.transcript_speaker_samples') AS relation")
         if not cursor.fetchone()['relation']:
             raise RuntimeError('Speaker sample database migration has not been applied.')
+        cursor.execute("SELECT to_regclass('app.client_speaker_label_profiles') AS relation")
+        if not cursor.fetchone()['relation']:
+            raise RuntimeError('Relationship speaker-name database migration has not been applied.')
+        appointment = None
+        if appointment_id:
+            cursor.execute("""SELECT appointment.id, appointment.starts_at
+                FROM app.appointments appointment
+                JOIN app.organization_practitioners practitioner
+                  ON practitioner.id=appointment.primary_practitioner_id
+                 AND practitioner.organization_id=appointment.organization_id
+                JOIN app.organization_memberships membership
+                  ON membership.id=practitioner.membership_id
+                 AND membership.organization_id=appointment.organization_id
+                JOIN app.application_users actor ON actor.id=membership.user_id
+                WHERE appointment.id=%s AND appointment.organization_id=%s
+                  AND appointment.client_id=%s AND actor.auth0_subject=%s
+                  AND actor.status='active' AND membership.status='active'
+                  AND practitioner.status='active'
+                  AND appointment.status IN ('scheduled', 'confirmed')
+                FOR UPDATE""",
+                (appointment_id, context['organization_id'], context['client_id'], actor_subject))
+            appointment = cursor.fetchone()
+            if not appointment:
+                raise ValueError('The selected scheduled session is no longer available.')
         prefix = session_prefix(context['client_id'], session_id)
         storage = {key: str(binding[key]) for key in ('bucket', 'region', 'kms_key_arn', 'healthscribe_role_arn')}
         storage.update(organization_id=context['organization_id'], client_id=context['client_id'],
                        session_id=session_id, prefix=prefix, audio_key=f'{prefix}audio/recording{suffix}',
-                       runtime_id=runtime_id, job_name=job_name)
-        cursor.execute("""INSERT INTO app.sessions (id, organization_id, client_id, status, started_at, created_by_user_id)
-            VALUES (%s, %s, %s, 'processing', CURRENT_TIMESTAMP,
+                       runtime_id=runtime_id, job_name=job_name,
+                       appointment_id=str(appointment['id']) if appointment else None)
+        cursor.execute("""INSERT INTO app.sessions
+            (id, organization_id, client_id, appointment_id, status, started_at, created_by_user_id)
+            VALUES (%s, %s, %s, %s, 'processing', COALESCE(%s, CURRENT_TIMESTAMP),
                 (SELECT id FROM app.application_users WHERE auth0_subject=%s AND status='active'))""",
-            (session_id, context['organization_id'], context['client_id'], actor_subject))
+            (session_id, context['organization_id'], context['client_id'],
+             appointment['id'] if appointment else None,
+             appointment['starts_at'] if appointment else None, actor_subject))
         cursor.execute("""INSERT INTO app.session_storage_jobs
             (runtime_id, session_id, organization_id, client_id, job_name, storage, status)
             VALUES (%s, %s, %s, %s, %s, %s, 'UPLOADING')""",
@@ -62,7 +90,18 @@ def set_job_status(storage, status, detail=None):
         cursor.execute("""UPDATE app.session_storage_jobs SET status=%s, detail=%s, updated_at=CURRENT_TIMESTAMP
             WHERE runtime_id=%s AND organization_id=%s AND client_id=%s""",
             (status, detail, storage['runtime_id'], storage['organization_id'], storage['client_id']))
-        if status == 'COMPLETED':
+        if status == 'IN_PROGRESS':
+            cursor.execute("""UPDATE app.appointments SET status='completed', updated_at=CURRENT_TIMESTAMP
+                WHERE id=(SELECT appointment_id FROM app.sessions WHERE id=%s)
+                  AND organization_id=%s AND client_id=%s
+                  AND status IN ('scheduled', 'confirmed')""",
+                (storage['session_id'], storage['organization_id'], storage['client_id']))
+        elif status == 'FAILED':
+            cursor.execute("""UPDATE app.appointments SET status='scheduled', updated_at=CURRENT_TIMESTAMP
+                WHERE id=(SELECT appointment_id FROM app.sessions WHERE id=%s)
+                  AND organization_id=%s AND client_id=%s AND status='completed'""",
+                (storage['session_id'], storage['organization_id'], storage['client_id']))
+        elif status == 'COMPLETED':
             cursor.execute("UPDATE app.sessions SET status='review' WHERE id=%s AND organization_id=%s AND client_id=%s",
                            (storage['session_id'], storage['organization_id'], storage['client_id']))
 
@@ -75,15 +114,31 @@ def find_job(context, runtime_id):
         return cursor.fetchone()
 
 
+def active_jobs(context):
+    """Return durable, authorized processing jobs for workspace recovery."""
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("""SELECT job.runtime_id AS id, job.storage, job.job_name, job.status, job.detail,
+                session.appointment_id, job.created_at, job.updated_at
+            FROM app.session_storage_jobs job
+            JOIN app.sessions session ON session.id=job.session_id
+            WHERE job.organization_id=%s AND job.client_id=%s
+              AND job.status NOT IN ('COMPLETED', 'FAILED')
+            ORDER BY job.updated_at DESC""",
+            (context['organization_id'], context['client_id']))
+        return [{**row, 'created_at': row['created_at'].isoformat(),
+                 'updated_at': row['updated_at'].isoformat()} for row in cursor.fetchall()]
+
+
 def completed_jobs(context):
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute("""SELECT job.runtime_id AS id,
                 COALESCE(job.storage->>'label', 'Uploaded session') AS label,
-                COALESCE(session.started_at, job.created_at) AS created_at
+                COALESCE(appointment.starts_at, session.started_at, job.created_at) AS created_at
             FROM app.session_storage_jobs job
             JOIN app.sessions session ON session.id=job.session_id
+            LEFT JOIN app.appointments appointment ON appointment.id=session.appointment_id
             WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
-            ORDER BY COALESCE(session.started_at, job.created_at) DESC""",
+            ORDER BY COALESCE(appointment.starts_at, session.started_at, job.created_at) DESC""",
             (context['organization_id'], context['client_id']))
         return [{**row, 'created_at': row['created_at'].isoformat(), 'text': ''} for row in cursor.fetchall()]
 

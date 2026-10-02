@@ -59,7 +59,7 @@ class SessionReviewTests(unittest.TestCase):
         cursor.fetchall.side_effect = [
             [{'starts_at_seconds': Decimal('0.100'), 'ends_at_seconds': Decimal('1.200'), 'speaker_label': 'PATIENT', 'content': 'Hello.'}],
             [{'source_label': 'PATIENT', 'display_label': 'Client'}],
-            [{'participant_role': 'client', 'display_name': 'Configured client'}]
+            [{'source_label': 'PATIENT', 'display_name': 'Relationship client'}]
         ]
         with patch.object(session_review, 'connect', return_value=connection):
             result = session_review.read_result(self.storage)

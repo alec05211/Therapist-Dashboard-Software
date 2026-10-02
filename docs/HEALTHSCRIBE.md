@@ -2,7 +2,7 @@
 
 > This document describes the application's present AWS HealthScribe integration. It is implementation documentation, not a long-term commitment to HealthScribe. For the product's AI/ML direction beyond this early implementation, see [AI_ML_VISION.md](AI_ML_VISION.md).
 
-**Last updated:** 2026-09-01  
+**Last updated:** 2026-10-02
 **Status:** Current early-development transcription and draft-note provider
 
 ## Purpose in this project
@@ -38,14 +38,39 @@ client-portal routes no longer read that case from local fixture files. The
 legacy diagram below still describes deployments where the new storage mode has
 not been enabled; other old files are not migrated implicitly.
 The source-linked HealthScribe note excerpts also become proposed client-journey
-entries. They stay out of the pre-session brief until a therapist reviews and
-accepts them in Insights. Rejected, hidden, stale, and disputed entries are
-excluded. The original note and transcript remain available for inspection.
+entries. After a first completed session, a bounded pre-session orientation draft
+and the Insights workspace may surface those proposals with an explicit unreviewed
+label and transcript citations. They do not become accepted longitudinal memory
+until a therapist reviews them. Cross-session trajectory and recurring-theme cards
+require evidence from at least two distinct sessions, and unsupported groups remain
+hidden. Rejected, hidden, stale, and disputed entries are excluded. The original
+note and transcript remain available for inspection.
 Apply the additive session-review migrations through
-`019_transcript_speaker_samples.sql` before processing new
+`025_relationship_speaker_names.sql` before processing new
 organization-stored uploads. Local AWS-secret setups can run
 `.venv/Scripts/python.exe -m tools.apply_session_review_migration` after the
 configured AWS profile is available.
+
+The browser must remain open until the recording upload reaches 100% and the API
+returns the durable job ID. The scheduled-session control shows this browser-owned
+upload state across its full button surface. At the secured handoff, the linked
+appointment is marked complete and its carousel card shows the compact transcript
+and clinical-note processing state; the preparation card is removed. If processing
+fails, the appointment returns to scheduled so it can be retried. After that
+handoff, HealthScribe processing is owned
+by the server and recorded in `app.session_storage_jobs`; navigation and logout
+do not cancel it. Returning to the client workspace discovers active jobs,
+restores their status, and resumes the server-side HealthScribe monitor after an
+application restart. The source audio can be restored from its catalogued,
+version-pinned S3 artifact when the local processing cache is unavailable.
+
+Uploads and browser recordings are bound to the scheduled appointment selected
+in the session carousel. The server validates that the appointment belongs to
+the authorized organization and client before creating the clinical session.
+After all artifacts are saved, that appointment becomes completed and its same
+date/card position is used for the completed recording; later scheduled cards
+remain separate. A failed processing job leaves the appointment scheduled so it
+can be retried.
 
 The local FastAPI application in `server.py` uses **asynchronous batch Medical Scribe jobs**—not the streaming API—for the browser-recorded workflow.
 
@@ -81,7 +106,7 @@ The UI-ready `transcript.json` retains each transcript segment's start time, end
 
 ### 1. Upload and job creation
 
-The scheduled-session recording controls include an icon-only **Upload audio recording** button for externally recorded audio, including synthetic test audio. Selecting a file starts the same authenticated `/transcribe` batch workflow as microphone recording. The UI shows upload/processing status and opens the completed transcript for review; failures remain visible. Upload is disabled while recording or processing.
+The scheduled-session recording controls include an icon-only **Upload audio recording** button for externally recorded audio, including synthetic test audio. Selecting a file starts the same authenticated `/transcribe` batch workflow as microphone recording. During the browser-owned transfer, the full record/upload control becomes a determinate neutral-fill indicator that tells the user to keep the page open. When the API returns the durable job ID, the preparation panel is removed and the corresponding carousel card is marked `Complete`, with a small spinner and `Hang tight` message until the transcript and draft clinical note are durable. HealthScribe itself exposes `QUEUED`, `IN_PROGRESS`, `COMPLETED`, and `FAILED`, not a numeric provider-processing percentage, so the carousel state does not imply one. The completed transcript opens for review, and failures restore the appointment and preparation controls with an inline error.
 
 The application accepts WAV, MP3, M4A, MP4, FLAC, Ogg, WebM, and AMR files up to 100 MB. Empty files, unsupported extensions, and oversized files are rejected before AWS submission. HealthScribe validates the actual audio encoding. The file extension is preserved, and playback uses its corresponding media type. With organization storage enabled, imports use persisted database session/artifact records; the UI remains scoped to the synthetic care relationship.
 
@@ -108,7 +133,7 @@ The application downloads both raw artifacts from S3. It then normalizes transcr
 
 ### Current implementation constraints
 
-- The application reads HealthScribe's reported participant roles as provided. HealthScribe can return numbered roles such as `PATIENT_1` or `CLINICIAN_1`; every distinct label is stored, but remains unverified until a therapist names or confirms it.
+- The application preserves HealthScribe's reported participant roles verbatim and does not treat them as identities. HealthScribe can return labels such as `PATIENT_0`, `PATIENT_1`, or `CLINICIAN_1`; unassigned transcript speakers and Identification settings display those exact labels. A therapist-saved Identification mapping applies that exact provider label within one client relationship across existing and future transcripts, while transcript-specific corrections can override one session.
 - Organization-stored sessions save therapist speaker-name overrides and durable sample pointers in PostgreSQL. The encrypted source audio remains in S3. Legacy sessions still save speaker names in local transcript JSON.
 - Processing occurs after upload rather than live during a session.
 - Audio files and outputs are also written to the local `recordings/` directory. That directory contains sensitive session data and requires the same care as cloud-stored artifacts.

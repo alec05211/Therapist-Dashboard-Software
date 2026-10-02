@@ -44,6 +44,18 @@ export type JobStatus = {
   detail?: string;
 };
 
+export type ProcessingJob = JobStatus & {
+  appointment_id?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SessionProcessingState = {
+  phase: "uploading" | "processing";
+  message: string;
+  progress: number | null;
+};
+
 export type BriefEvidence = {
   evidence_id: string;
   session_id: string;
@@ -126,6 +138,17 @@ export type PersistedInsightEvidence = {
   start?: number;
   end?: number;
   quote?: string;
+};
+
+export type PersistedInsightClaim = {
+  phrase: string;
+  occurrence: number;
+  evidence_ids: string[];
+};
+
+export type PersistedInsightContext = {
+  text: string;
+  claims: PersistedInsightClaim[];
 };
 
 export type PersistedInsightSnapshot = {

@@ -2,7 +2,7 @@
 
 > A living strategy for the product's AI and machine-learning work. This document captures both a product conviction and a learning agenda: the goal is not merely to replace a vendor, but to develop accountable, purpose-built intelligence for psychiatric care.
 
-**Last updated:** 2026-09-01  
+**Last updated:** 2026-10-02
 **Status:** Long-term direction; HealthScribe remains the current early-development provider
 
 ## 1. Intent
@@ -175,7 +175,10 @@ For every proposed AI/ML feature, experiment, or integration, document:
 ### Current decisions
 
 - Amazon HealthScribe is the early-development provider for batch transcription, diarization, and generated clinical documentation.
-- Source-linked HealthScribe note excerpts may be proposed as client-journey entries; only therapist-accepted entries can enter the current pre-session brief. This is current product work and does not treat provider output as a finalized clinical conclusion.
+- Source-linked HealthScribe note excerpts may be proposed as client-journey entries. After a first completed session, a bounded pre-session orientation draft may surface those proposals with an explicit unreviewed label and transcript citations; proposals do not become accepted longitudinal memory until a therapist reviews them. This is current product work and does not treat provider output as a finalized clinical conclusion.
+- The therapist Insights page progressively reveals only evidence-supported material. Single-session source-linked observations and open threads can appear immediately with their review state; trajectory and recurring-theme cards require evidence from at least two distinct sessions. Empty metric and insight groups remain hidden. Counts organize the record and are not clinical scores.
+- Longitudinal insight items are generated as coherent top-to-bottom mini-reports: an unlinked analysis statement (what may matter) flows into dynamically phrased contextual evidence statements (where, when, and how it appeared), rather than repeated template lead-ins or separate UI blocks. One or more explicit phrase-level anchors in the contextual layer connect to the exact supporting record slices. The interface must never guess these links from lexical similarity, and legacy items retain a statement-level evidence fallback within the prose flow.
+- Insights orientation metrics include a compact recurrence view for current themes, counted by distinct cited sessions and cited record moments. These measures organize evidence coverage and must not be presented as symptom, severity, or clinical-importance scores.
 - The current system is a baseline to learn from, not the final ML architecture.
 - Transcript review and therapist control are core product requirements.
 - Longitudinal insight is a major long-term direction, not a near-term excuse to collect or infer indiscriminately.

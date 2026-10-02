@@ -73,7 +73,7 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
         </section> : null}
       </div>
       {!portal.permissions.can_view_shared_transcripts && !portal.permissions.can_view_draft_notes && !portal.permissions.can_view_insights && !portal.permissions.can_view_prescriptions ? <p className="mt-5 text-sm text-stone-600">No additional session materials have been shared.</p> : null}
-      {(portal.permissions.can_view_shared_transcripts || portal.permissions.can_view_draft_notes) && visibleSessions.map(session => <div key={session.id} className="mt-6"><CompletedSessionLayout sessionId={session.label}>
+      {(portal.permissions.can_view_shared_transcripts || portal.permissions.can_view_draft_notes) && visibleSessions.map(session => <div key={session.id} className="mt-6"><CompletedSessionLayout>
         <TranscriptViewer key={session.id}
           showTranscript={portal.permissions.can_view_shared_transcripts}
           showClinicalNote={portal.permissions.can_view_draft_notes}

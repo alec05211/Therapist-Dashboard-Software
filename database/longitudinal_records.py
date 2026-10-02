@@ -50,6 +50,42 @@ class InsightItem:
             raise ValueError("Insight items require at least one reviewable source.")
         for evidence in self.evidence:
             evidence.validate()
+        available_ids = {
+            evidence.transcript_segment_id or evidence.clinical_note_version_id
+            for evidence in self.evidence
+        }
+
+        def validate_claims(claims: Any, text: Any) -> None:
+            if not isinstance(claims, list):
+                raise ValueError("Insight claims must be a list.")
+            for claim in claims:
+                if not isinstance(claim, Mapping):
+                    raise ValueError("Each insight claim must be an object.")
+                phrase = claim.get("phrase")
+                occurrence = claim.get("occurrence", 0)
+                evidence_ids = claim.get("evidence_ids")
+                if not isinstance(phrase, str) or not phrase.strip():
+                    raise ValueError("Insight claim phrases cannot be empty.")
+                if isinstance(occurrence, bool) or not isinstance(occurrence, int) or occurrence < 0:
+                    raise ValueError("Insight claim occurrences must be non-negative integers.")
+                if not isinstance(evidence_ids, list) or not evidence_ids or not all(isinstance(value, str) and value for value in evidence_ids):
+                    raise ValueError("Insight claims require evidence IDs.")
+                if not set(evidence_ids).issubset(available_ids):
+                    raise ValueError("Insight claims may only reference evidence attached to the item.")
+                if not isinstance(text, str) or phrase not in text:
+                    raise ValueError("Insight claim phrases must occur in their contextual text.")
+
+        claims = self.content.get("claims")
+        if claims is not None:
+            validate_claims(claims, self.content.get("text"))
+        contexts = self.content.get("contexts")
+        if contexts is not None:
+            if not isinstance(contexts, list) or not contexts:
+                raise ValueError("Insight contexts must be a non-empty list.")
+            for context in contexts:
+                if not isinstance(context, Mapping) or not isinstance(context.get("text"), str) or not context["text"].strip():
+                    raise ValueError("Each insight context must contain text.")
+                validate_claims(context.get("claims"), context["text"])
 
 
 class LongitudinalRecordRepository:

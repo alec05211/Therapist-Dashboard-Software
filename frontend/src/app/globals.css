@@ -7,6 +7,7 @@
   --surface: #f6f6f4;
   --surface-subtle: #fbfbfa;
   --surface-inset: #e8e7e3;
+  --surface-active: #dedcd6;
   --border: #c9c4bc;
   --border-strong: #a9a299;
   --text-muted: #6b665f;
@@ -41,6 +42,7 @@ html[data-theme="dark"] {
   --surface: #211f1d;
   --surface-subtle: #292724;
   --surface-inset: #34312d;
+  --surface-active: #403c37;
   --border: #625d57;
   --border-strong: #827b73;
   --text-muted: #c0bab3;
@@ -204,6 +206,40 @@ html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
   .scroll-smooth { scroll-behavior: auto; }
   .calendar-month-layout--agenda,
   .calendar-day-agenda { transition: none; }
+}
+
+@keyframes upload-check-in {
+  0% { opacity: 0; transform: scale(0.65); }
+  70% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.upload-check {
+  animation: upload-check-in 420ms ease-out both;
+}
+
+@keyframes processing-dot-two {
+  0%, 32% { opacity: 0; }
+  33%, 100% { opacity: 1; }
+}
+
+@keyframes processing-dot-three {
+  0%, 65% { opacity: 0; }
+  66%, 100% { opacity: 1; }
+}
+
+.processing-ellipsis span:nth-child(2) {
+  animation: processing-dot-two 1.35s steps(1, end) infinite;
+}
+
+.processing-ellipsis span:nth-child(3) {
+  animation: processing-dot-three 1.35s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-check,
+  .processing-ellipsis span:nth-child(2),
+  .processing-ellipsis span:nth-child(3) { animation: none; opacity: 1; }
 }
 
 /* Keep document actions legible above light PDF thumbnails in either theme. */

@@ -1,0 +1,967 @@
+{
+  "id": "heartwell-sadic-session-03",
+  "created_at": "2026-09-15T13:59:56-04:00",
+  "audio": {
+    "file": "recording.wav",
+    "mime_type": "audio/wav"
+  },
+  "speakers": {},
+  "text": "What stood out to you from the week? I took the Thursday break. I almost did not. I had the calendar reminder and I remember staring at it like it was asking me to do something irresponsible. What helped you go anyway? I thought about the example from last week. My supervisor had not punished me for giving a realistic timeline. I told myself 10 minutes outside was not going to destroy the day. And what happened? Nothing dramatic. I walked around the block, came back and finished the email I had been avoiding. I was less frantic. I keep waiting for these things to feel profound, but mostly they feel ordinary. Ordinary can be valuable. You are learning that a pause does not have to be earned by reaching a breaking point. I did it again on Friday. That one was harder because I had a client situation that was upsetting. I wanted to stay at my desk until I solved everything. What did you notice before you made that choice? I was holding my breath again. I had that thought that if I stopped paying attention, something bad would happen. But I knew I was not actually doing useful work. I was just rereading my notes. Were you able to check the evidence for that thought? A little. The client had been connected with the right person. I had done what I could do that day. I still felt worried, but I could see that worrying was not the same as being needed at that exact second. That is a meaningful distinction. It also made me think about my dad. When he got sick, it felt like there was always one more call to make. If I stopped paying attention, I was afraid I would miss something important. It makes sense that stepping away can carry more meaning than simply taking a break from work. I had not connected those things before. With my dad being organized felt like love. If I forgot something, I felt like I had failed him. And now when you are responsible for people at work, the same rule may be showing up. Staying vigilant is how you prove you care. Yes, except I cannot keep doing it all the time. I am tired of making every task feel moral. That is a powerful way to put it. Caring about your work does not require treating every unanswered message as a test of your character. I want to believe that. I am not sure I know what caring looks like without overextending myself. We can learn it gradually. What happened with Nora this week? We cooked dinner together on Wednesday. I did not open my laptop afterward. I told her I was trying to keep the evening separate from work, and she said she had noticed I seemed more present. How did it feel to hear that? Nice. And then sad. I did not realize how absent I had been. Part of me wanted to apologize for every time I was in the room, but not really there. You can acknowledge the impact without turning the whole history into evidence against yourself. That is hard for me. My first instinct is always to make a list of everything I did wrong. What might it be like to make room for both truths? You have been strained and less available at times, and you are taking steps to reconnect now. Less punishing, more honest, maybe. How have the darker thoughts been since we last spoke? They have not come up this week. I have had moments of feeling overwhelmed. But I did not feel like disappearing from everything. Do you have any plan or intention to harm yourself today? No, I do not. Thank you We will continue to check in directly. What would you like to practice between now and next week? I want to keep the Thursday break, but I also want to try leaving work on time one night. Even saying that makes me nervous. What is the smallest version of that experiment? Tuesday. I can leave by 6, even if my list is not finished. I can write down the first thing I will do the next morning, so I am not carrying it all evening. That sounds specific. What might you say to yourself when the guilt arrives? Maybe leaving work does not mean I stopped caring. It feels corny, but it is probably true. It does not have to sound perfect to be useful. We can review what you notice. OK, I think I am starting to see the pattern before it takes over. Not every time, but sometimes. Sometimes is a real beginning. You mentioned in your note that leaving work on time was harder than taking a short break. What happened Tuesday? I packed my bag by 6. Then an email came in from a client who was upset about a hearing date. I told myself I would only respond for 5 minutes. An hour later, I was still there. What made it difficult to leave after you had already prepared to go? The client sounded scared. I know the date was not something I could change that night, but I felt like leaving would mean I did not care. What did caring require in that moment? I could have sent a short response saying I received the message and would call the next morning. That would have been enough Instead, I researched everything again because I wanted to make the fear go away for both of us. And could you make the fear go away? No, I was just more tired. I sent a longer email, and then I worried I had said the wrong thing. It sounds like urgency pulled you away from the boundary you had planned. I keep seeing that I confuse being available with being helpful. What is the difference for you? Being available means I respond immediately and make the person feel I am there. Being helpful means I do the next appropriate thing, even if it is not everything they want in that second. That is a thoughtful distinction. Could you practice a version of that response in advance? Maybe. I received your message. I know this is stressful. I will review the details and call you tomorrow. It sounds almost too simple. Simple can be clear and containing. It also tells the client what to expect without promising work you cannot complete well at the end of the day. I worry they will think I do not care. What evidence do you have that a measured response means you do not care? None, really. I think I am imagining how I would feel if I were scared. But I would probably rather get a clear answer tomorrow than a rushed answer tonight. That is useful empathy, not a reason to abandon your limits. Nora said something similar. She told me, I speak about my clients as if I am the only thing between them and disaster. I was defensive at first. What did you hear in what she said? That I take my job seriously in a way that can make me feel alone. I do not want to be told to care less. But maybe I need to remember there are systems and colleagues and other resources too. You can care deeply without becoming the whole system. I want to write that down. Please do. How was it to notice the grief moments we discussed? I had one on Thursday. I was organizing a file and remembered how my dad used to keep every receipt in a labeled envelope. I got unexpectedly emotional. I went to the bathroom and cried for a few minutes. What happened after you let yourself feel it? I felt embarrassed, but also calmer. I did not need to work faster afterward. I came back and did one task at a time. That is important information. Letting the feeling exist did not make you incapable of continuing. No, it actually made the day feel less sharp. Would you like to keep making room for that when it comes naturally? Yes, not on a schedule, just without treating it like a problem to solve. That sounds wise.",
+  "segments": [
+    {
+      "start": 0.09,
+      "end": 1.809,
+      "text": "What stood out to you from the week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 2.64,
+      "end": 4.3,
+      "text": "I took the Thursday break.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 4.679,
+      "end": 5.96,
+      "text": "I almost did not.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 6.84,
+      "end": 12.46,
+      "text": "I had the calendar reminder and I remember staring at it like it was asking me to do something irresponsible.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 13.229,
+      "end": 14.569,
+      "text": "What helped you go anyway?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 15.579,
+      "end": 17.68,
+      "text": "I thought about the example from last week.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 18.059,
+      "end": 21.86,
+      "text": "My supervisor had not punished me for giving a realistic timeline.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 22.729,
+      "end": 26.61,
+      "text": "I told myself 10 minutes outside was not going to destroy the day.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 27.25,
+      "end": 28.479,
+      "text": "And what happened?",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 28.889,
+      "end": 30.11,
+      "text": "Nothing dramatic.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 30.569,
+      "end": 34.81,
+      "text": "I walked around the block, came back and finished the email I had been avoiding.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 35.72,
+      "end": 37.04,
+      "text": "I was less frantic.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 37.979,
+      "end": 42.979,
+      "text": "I keep waiting for these things to feel profound, but mostly they feel ordinary.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 43.729,
+      "end": 45.43,
+      "text": "Ordinary can be valuable.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 46.259,
+      "end": 50.599,
+      "text": "You are learning that a pause does not have to be earned by reaching a breaking point.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 51.06,
+      "end": 52.4,
+      "text": "I did it again on Friday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 53.49,
+      "end": 56.619,
+      "text": "That one was harder because I had a client situation that was upsetting.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 57.61,
+      "end": 60.45,
+      "text": "I wanted to stay at my desk until I solved everything.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 61.119,
+      "end": 63.72,
+      "text": "What did you notice before you made that choice?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 64.22,
+      "end": 65.639,
+      "text": "I was holding my breath again.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 66.69,
+      "end": 70.93,
+      "text": "I had that thought that if I stopped paying attention, something bad would happen.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 72.139,
+      "end": 75.01,
+      "text": "But I knew I was not actually doing useful work.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 75.779,
+      "end": 77.86,
+      "text": "I was just rereading my notes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 78.459,
+      "end": 80.989,
+      "text": "Were you able to check the evidence for that thought?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 81.44,
+      "end": 82.239,
+      "text": "A little.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 82.779,
+      "end": 84.86,
+      "text": "The client had been connected with the right person.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 85.569,
+      "end": 87.47,
+      "text": "I had done what I could do that day.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 87.97,
+      "end": 93.97,
+      "text": "I still felt worried, but I could see that worrying was not the same as being needed at that exact second.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 94.699,
+      "end": 96.22,
+      "text": "That is a meaningful distinction.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 96.83,
+      "end": 98.69,
+      "text": "It also made me think about my dad.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 99.569,
+      "end": 103.79,
+      "text": "When he got sick, it felt like there was always one more call to make.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 104.459,
+      "end": 109.319,
+      "text": "If I stopped paying attention, I was afraid I would miss something important.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 109.769,
+      "end": 114.51,
+      "text": "It makes sense that stepping away can carry more meaning than simply taking a break from work.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 114.94,
+      "end": 116.879,
+      "text": "I had not connected those things before.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 117.73,
+      "end": 120.519,
+      "text": "With my dad being organized felt like love.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 121.059,
+      "end": 123.739,
+      "text": "If I forgot something, I felt like I had failed him.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 124.489,
+      "end": 129.58,
+      "text": "And now when you are responsible for people at work, the same rule may be showing up.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 130.16,
+      "end": 132.32,
+      "text": "Staying vigilant is how you prove you care.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 133.029,
+      "end": 136.33,
+      "text": "Yes, except I cannot keep doing it all the time.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 137.13,
+      "end": 140.169,
+      "text": "I am tired of making every task feel moral.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 140.899,
+      "end": 142.66,
+      "text": "That is a powerful way to put it.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 143.639,
+      "end": 149.13,
+      "text": "Caring about your work does not require treating every unanswered message as a test of your character.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 149.669,
+      "end": 151.05,
+      "text": "I want to believe that.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 152.199,
+      "end": 157.169,
+      "text": "I am not sure I know what caring looks like without overextending myself.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 157.96,
+      "end": 159.25,
+      "text": "We can learn it gradually.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 160.139,
+      "end": 161.919,
+      "text": "What happened with Nora this week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 162.419,
+      "end": 164.36,
+      "text": "We cooked dinner together on Wednesday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 165.21,
+      "end": 167.35,
+      "text": "I did not open my laptop afterward.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 168.759,
+      "end": 175.22,
+      "text": "I told her I was trying to keep the evening separate from work, and she said she had noticed I seemed more present.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 176.029,
+      "end": 177.57,
+      "text": "How did it feel to hear that?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 178.07,
+      "end": 178.77,
+      "text": "Nice.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 179.11,
+      "end": 179.91,
+      "text": "And then sad.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 181.149,
+      "end": 183.49,
+      "text": "I did not realize how absent I had been.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 184.77,
+      "end": 189.559,
+      "text": "Part of me wanted to apologize for every time I was in the room, but not really there.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 190.25,
+      "end": 195.149,
+      "text": "You can acknowledge the impact without turning the whole history into evidence against yourself.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 195.649,
+      "end": 196.949,
+      "text": "That is hard for me.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 197.449,
+      "end": 200.55,
+      "text": "My first instinct is always to make a list of everything I did wrong.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 201.44,
+      "end": 204.279,
+      "text": "What might it be like to make room for both truths?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 205.139,
+      "end": 210.759,
+      "text": "You have been strained and less available at times, and you are taking steps to reconnect now.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 211.259,
+      "end": 214.559,
+      "text": "Less punishing, more honest, maybe.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 215.059,
+      "end": 218.0,
+      "text": "How have the darker thoughts been since we last spoke?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 218.46,
+      "end": 219.919,
+      "text": "They have not come up this week.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 221.589,
+      "end": 223.589,
+      "text": "I have had moments of feeling overwhelmed.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 224.389,
+      "end": 226.669,
+      "text": "But I did not feel like disappearing from everything.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 227.479,
+      "end": 230.399,
+      "text": "Do you have any plan or intention to harm yourself today?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 231.649,
+      "end": 232.919,
+      "text": "No, I do not.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 233.69,
+      "end": 236.899,
+      "text": "Thank you We will continue to check in directly.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 237.85,
+      "end": 241.039,
+      "text": "What would you like to practice between now and next week?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 241.5,
+      "end": 246.36,
+      "text": "I want to keep the Thursday break, but I also want to try leaving work on time one night.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 246.86,
+      "end": 248.82,
+      "text": "Even saying that makes me nervous.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 249.57,
+      "end": 252.72,
+      "text": "What is the smallest version of that experiment?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 253.259,
+      "end": 253.82,
+      "text": "Tuesday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 254.619,
+      "end": 257.279,
+      "text": "I can leave by 6, even if my list is not finished.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 258.199,
+      "end": 262.938,
+      "text": "I can write down the first thing I will do the next morning, so I am not carrying it all evening.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 263.558,
+      "end": 264.739,
+      "text": "That sounds specific.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 265.72,
+      "end": 268.609,
+      "text": "What might you say to yourself when the guilt arrives?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 269.25,
+      "end": 273.07,
+      "text": "Maybe leaving work does not mean I stopped caring.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 274.23,
+      "end": 277.119,
+      "text": "It feels corny, but it is probably true.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 277.829,
+      "end": 280.89,
+      "text": "It does not have to sound perfect to be useful.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 281.839,
+      "end": 283.329,
+      "text": "We can review what you notice.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 284.119,
+      "end": 288.019,
+      "text": "OK, I think I am starting to see the pattern before it takes over.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 289.049,
+      "end": 291.39,
+      "text": "Not every time, but sometimes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 292.41,
+      "end": 293.73,
+      "text": "Sometimes is a real beginning.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 294.54,
+      "end": 299.94,
+      "text": "You mentioned in your note that leaving work on time was harder than taking a short break.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 300.779,
+      "end": 301.829,
+      "text": "What happened Tuesday?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 302.609,
+      "end": 304.13,
+      "text": "I packed my bag by 6.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 304.98,
+      "end": 308.39,
+      "text": "Then an email came in from a client who was upset about a hearing date.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 309.269,
+      "end": 312.29,
+      "text": "I told myself I would only respond for 5 minutes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 313.04,
+      "end": 315.16,
+      "text": "An hour later, I was still there.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 316.01,
+      "end": 319.76,
+      "text": "What made it difficult to leave after you had already prepared to go?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 320.26,
+      "end": 321.72,
+      "text": "The client sounded scared.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 322.649,
+      "end": 327.829,
+      "text": "I know the date was not something I could change that night, but I felt like leaving would mean I did not care.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 328.69,
+      "end": 331.13,
+      "text": "What did caring require in that moment?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 331.82,
+      "end": 336.44,
+      "text": "I could have sent a short response saying I received the message and would call the next morning.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 337.399,
+      "end": 345.559,
+      "text": "That would have been enough Instead, I researched everything again because I wanted to make the fear go away for both of us.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 346.019,
+      "end": 348.019,
+      "text": "And could you make the fear go away?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 348.899,
+      "end": 350.54,
+      "text": "No, I was just more tired.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 351.32,
+      "end": 354.799,
+      "text": "I sent a longer email, and then I worried I had said the wrong thing.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 355.44,
+      "end": 359.63,
+      "text": "It sounds like urgency pulled you away from the boundary you had planned.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 359.959,
+      "end": 363.88,
+      "text": "I keep seeing that I confuse being available with being helpful.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 364.359,
+      "end": 365.959,
+      "text": "What is the difference for you?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 366.44,
+      "end": 371.079,
+      "text": "Being available means I respond immediately and make the person feel I am there.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 372.179,
+      "end": 379.089,
+      "text": "Being helpful means I do the next appropriate thing, even if it is not everything they want in that second.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 379.66,
+      "end": 381.26,
+      "text": "That is a thoughtful distinction.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 382.39,
+      "end": 385.29,
+      "text": "Could you practice a version of that response in advance?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 385.829,
+      "end": 386.32,
+      "text": "Maybe.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 387.399,
+      "end": 388.45,
+      "text": "I received your message.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 388.91,
+      "end": 390.17,
+      "text": "I know this is stressful.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 391.029,
+      "end": 393.41,
+      "text": "I will review the details and call you tomorrow.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 394.799,
+      "end": 397.04,
+      "text": "It sounds almost too simple.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 397.89,
+      "end": 400.339,
+      "text": "Simple can be clear and containing.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 400.73,
+      "end": 406.589,
+      "text": "It also tells the client what to expect without promising work you cannot complete well at the end of the day.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 407.049,
+      "end": 408.869,
+      "text": "I worry they will think I do not care.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 410.019,
+      "end": 414.7,
+      "text": "What evidence do you have that a measured response means you do not care?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 415.26,
+      "end": 416.23,
+      "text": "None, really.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 417.04,
+      "end": 420.019,
+      "text": "I think I am imagining how I would feel if I were scared.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 420.88,
+      "end": 425.619,
+      "text": "But I would probably rather get a clear answer tomorrow than a rushed answer tonight.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 426.6,
+      "end": 430.6,
+      "text": "That is useful empathy, not a reason to abandon your limits.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 431.41,
+      "end": 433.109,
+      "text": "Nora said something similar.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 433.69,
+      "end": 438.79,
+      "text": "She told me, I speak about my clients as if I am the only thing between them and disaster.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 440.239,
+      "end": 441.779,
+      "text": "I was defensive at first.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 442.519,
+      "end": 444.16,
+      "text": "What did you hear in what she said?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 444.92,
+      "end": 448.35,
+      "text": "That I take my job seriously in a way that can make me feel alone.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 449.299,
+      "end": 451.559,
+      "text": "I do not want to be told to care less.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 452.559,
+      "end": 457.72,
+      "text": "But maybe I need to remember there are systems and colleagues and other resources too.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 458.089,
+      "end": 461.35,
+      "text": "You can care deeply without becoming the whole system.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 461.809,
+      "end": 463.019,
+      "text": "I want to write that down.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 463.839,
+      "end": 464.25,
+      "text": "Please do.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 465.019,
+      "end": 467.899,
+      "text": "How was it to notice the grief moments we discussed?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 468.649,
+      "end": 469.85,
+      "text": "I had one on Thursday.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 471.019,
+      "end": 476.32,
+      "text": "I was organizing a file and remembered how my dad used to keep every receipt in a labeled envelope.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 477.23,
+      "end": 479.17,
+      "text": "I got unexpectedly emotional.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 480.339,
+      "end": 482.519,
+      "text": "I went to the bathroom and cried for a few minutes.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 483.339,
+      "end": 485.269,
+      "text": "What happened after you let yourself feel it?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 485.98,
+      "end": 488.66,
+      "text": "I felt embarrassed, but also calmer.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 489.64,
+      "end": 491.799,
+      "text": "I did not need to work faster afterward.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 492.809,
+      "end": 495.48,
+      "text": "I came back and did one task at a time.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 496.279,
+      "end": 498.059,
+      "text": "That is important information.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 498.41,
+      "end": 502.25,
+      "text": "Letting the feeling exist did not make you incapable of continuing.",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 503.22,
+      "end": 506.119,
+      "text": "No, it actually made the day feel less sharp.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 506.75,
+      "end": 509.739,
+      "text": "Would you like to keep making room for that when it comes naturally?",
+      "speaker": "CLINICIAN_0"
+    },
+    {
+      "start": 510.579,
+      "end": 515.14,
+      "text": "Yes, not on a schedule, just without treating it like a problem to solve.",
+      "speaker": "PATIENT_0"
+    },
+    {
+      "start": 515.58,
+      "end": 516.58,
+      "text": "That sounds wise.",
+      "speaker": "CLINICIAN_0"
+    }
+  ],
+  "clinical_note": [
+    {
+      "name": "Chief Complaint",
+      "items": [
+        "Work-related stress and anxiety",
+        "Grief"
+      ]
+    },
+    {
+      "name": "History Of Present Illness",
+      "items": [
+        "The patient presents for follow-up regarding work-related stress and anxiety.",
+        "They report taking a scheduled break on Thursday, which they initially felt was \"irresponsible\" but ultimately found beneficial.",
+        "The patient describes walking around the block for 10 minutes, returning to work less frantic, and completing a task they had been avoiding.",
+        "They note that these experiences feel \"ordinary\" rather than profound.\n",
+        "On Friday, the patient experienced a more challenging situation with an upset client.",
+        "They initially wanted to stay at their desk until everything was solved, recognizing they were holding their breath and feeling that if they stopped paying attention, something bad would happen.",
+        "The patient was able to check the evidence for this thought, noting the client had been connected with the right person and they had done what they could that day.",
+        "They still felt worried but recognized that worrying was not the same as being needed at that exact moment.\n",
+        "The patient reports that their father's illness has contributed to their current patterns of behavior.",
+        "They describe feeling that there was always one more call to make and that if they stopped paying attention, they would miss something important.",
+        "The patient associates their father's organization with love and felt that forgetting something meant failing him.",
+        "They recognize that staying vigilant has become their way of proving they care about their work.",
+        "The patient expresses being tired of making every task feel moral and wants to believe that leaving work on time does not mean they stopped caring.\n",
+        "The patient reports that darker thoughts have not come up this week.",
+        "They have had moments of feeling overwhelmed but did not feel like disappearing.",
+        "The patient denies any plan or intention to harm themselves today.\n",
+        "The patient reports an episode of grief on Thursday while organizing a file, triggered by a memory of their father's organization.",
+        "They went to the bathroom and cried for a few minutes, then returned to work feeling calmer and less sharp.",
+        "The patient states they do not need to work faster after allowing themselves to feel the emotion.\n",
+        "The patient reports that their partner Nora noticed they seemed more present after they cooked dinner together on Wednesday and did not open their laptop afterward.",
+        "The patient felt nice but also sad, realizing how absent they had been.",
+        "Their first instinct was to apologize for every time they were in the room but not really there.\n",
+        "The patient attempted to leave work on time on Tuesday but was interrupted by an email from an upset client about a hearing date.",
+        "They told themselves they would only respond for 5 minutes but ended up staying an hour longer.",
+        "The patient felt that leaving would mean they did not care, and they researched everything again to try to make the fear go away for both themselves and the client.",
+        "They sent a longer email and then worried they had said the wrong thing.",
+        "The patient recognizes they confuse being available with being helpful.\n"
+      ]
+    },
+    {
+      "name": "Review Of Systems",
+      "items": [
+        "Psychiatric: Reports moments of feeling overwhelmed",
+        "Denies darker thoughts this week",
+        "Denies suicidal ideation or plan"
+      ]
+    },
+    {
+      "name": "Past Family History",
+      "items": [
+        "Father: had a significant illness (deceased)"
+      ]
+    },
+    {
+      "name": "Past Social History",
+      "items": [
+        "Employed in a profession with client responsibilities",
+        "Has a partner named Nora"
+      ]
+    },
+    {
+      "name": "Assessment",
+      "items": [
+        "1. Work-related stress and anxiety",
+        "2. Grief"
+      ]
+    },
+    {
+      "name": "Plan",
+      "items": [
+        "Work-related stress and anxiety:\n- Continue to practice taking scheduled breaks during the workday\n",
+        "- Continue to practice leaving work on time, starting with Tuesday at 6 PM\n",
+        "- Practice distinguishing between being available and being helpful\n",
+        "- Develop a standardized response for after-hours client communication: \"I received your message. I know this is stressful. I will review the details and call you tomorrow.\"\n",
+        "- Acknowledge that caring about work does not require treating every unanswered message as a test of character\n",
+        "- Remind self that leaving work on time does not mean stopped caring\n",
+        "- Discussed the distinction between being available (responding immediately) and being helpful (doing the next appropriate thing)\n",
+        "- Explored the connection between current work patterns and childhood experiences with father's illness\n",
+        "- Discussed that caring deeply does not require becoming the whole system\n",
+        "- Explored the concept of making room for both truths: having been strained and less available, while taking steps to reconnect\n",
+        "- Discussed that letting grief exist does not make one incapable of continuing work\n",
+        "- Continue to monitor for suicidal ideation and self-harm risk\n",
+        "- Review progress with boundary-setting and work-life balance at next session\n",
+        "Grief:\n- Continue to allow grief to arise naturally without treating it as a problem to solve\n",
+        "- Discussed that letting the feeling exist did not make the patient incapable of continuing work\n",
+        "- Explored the connection between father's organization and patient's current work patterns\n",
+        "- Discussed that staying vigilant is not the only way to show care\n"
+      ]
+    }
+  ],
+  "healthscribe": {
+    "job_name": "healthscribe-demo-20260915135627-dcb28191",
+    "input_uri": "s3://therapist-dashboard-healthscribe-input-408009925213-us-east-1/demo-data/heartwell-sadic/session-03/recording.wav",
+    "transcript_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135627-dcb28191/transcript.json",
+    "clinical_note_uri": "https://s3.us-east-1.amazonaws.com/therapist-dashboard-healthscribe-408009925213-us-east-1/healthscribe-demo-20260915135627-dcb28191/summary.json"
+  }
+}

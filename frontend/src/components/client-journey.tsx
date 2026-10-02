@@ -66,8 +66,8 @@ export function ClientJourney({ recordContext, onViewEvidence }: Props) {
   const accepted = entries?.filter(entry => entry.status === "accepted") ?? [];
   const quotes = accepted.filter(entry => entry.category === "important_quote");
   const history = accepted.filter(entry => entry.category !== "important_quote");
-  return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Client journey review">
-    <h2 className="text-lg font-semibold text-stone-900">Client journey</h2>
+  return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Evidence and review queue">
+    <h2 className="text-lg font-semibold text-stone-900">Evidence and review</h2>
     {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <p className="mt-4 text-sm text-stone-600">Loading journey entries…</p> : <div className="mt-5 grid gap-6">
       <details className="rounded-xl border border-stone-300 bg-stone-50 p-4">
         <summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Saved quotes · {quotes.length}</summary>

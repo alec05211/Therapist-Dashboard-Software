@@ -1,0 +1,756 @@
+{
+  "ClinicalDocumentation": {
+    "Sections": [
+      {
+        "SectionName": "CHIEF_COMPLAINT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "535d6a99-73c5-4156-9cb4-c797c9461d3c"
+              },
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              },
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "Work-related stress and burnout"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              },
+              {
+                "SegmentId": "566314dd-b1ce-453b-8161-98ca41e75253"
+              }
+            ],
+            "SummarizedSegment": "Passive suicidal ideation"
+          }
+        ]
+      },
+      {
+        "SectionName": "HISTORY_OF_PRESENT_ILLNESS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "daf49647-68a9-42ab-992f-0bf3886fd82a"
+              },
+              {
+                "SegmentId": "535d6a99-73c5-4156-9cb4-c797c9461d3c"
+              },
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              }
+            ],
+            "SummarizedSegment": "The patient presents for initial therapy session, reporting significant work-related stress and burnout."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              },
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "They work in legal aid and describe feeling constantly overwhelmed, either working, thinking about work, or feeling guilty about not working."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "The patient reports being tired all the time but feeling restless when trying to rest."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "fc74bf7f-b248-4ec9-943b-8a28421f9705"
+              },
+              {
+                "SegmentId": "b9a9f20b-519c-4d03-9eab-7c1e2286e203"
+              }
+            ],
+            "SummarizedSegment": "They stay up late trying to get ahead but do not actually get ahead, often rereading the same document or rearranging lists."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "483901d4-045b-4067-9a3b-adad736f1850"
+              }
+            ],
+            "SummarizedSegment": "Some nights they sleep 5 hours, some nights more."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "ce1beaf5-6c67-4427-bb19-08e229c423c9"
+              }
+            ],
+            "SummarizedSegment": "The patient skips lunch when anxious about deadlines."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "b0794105-c620-48b5-ac02-b4a358fb435e"
+              },
+              {
+                "SegmentId": "ad5d6c05-ee94-43c7-921f-4bd03cf55428"
+              }
+            ],
+            "SummarizedSegment": "They used to see friends on Sundays but now cancel plans because they cannot imagine having a conversation.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "75deb882-e6f5-4b25-ba89-f61fb7a7f45c"
+              },
+              {
+                "SegmentId": "4d09ca79-5252-4423-b85e-a59fc12a3b95"
+              },
+              {
+                "SegmentId": "e44fd266-9fe1-42cf-885a-51e86dfc7c1d"
+              },
+              {
+                "SegmentId": "6b17d849-ba9e-4ae5-b722-9125cab92e0a"
+              }
+            ],
+            "SummarizedSegment": "The patient describes feeling like they are holding everything together by staying one step away from falling apart."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "26891357-ed63-44a1-9fba-76e424d126ce"
+              },
+              {
+                "SegmentId": "9f8c82a1-e167-47bc-9855-ef7d90d06940"
+              }
+            ],
+            "SummarizedSegment": "They report being more irritable than usual, with small questions feeling like criticism."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "28dee851-0fcd-464e-977c-459a1eb763b2"
+              },
+              {
+                "SegmentId": "26891357-ed63-44a1-9fba-76e424d126ce"
+              },
+              {
+                "SegmentId": "f60e5d27-4fd4-45f7-b65b-73990e70f7d0"
+              }
+            ],
+            "SummarizedSegment": "The patient feels ashamed about their irritability and the impact on their partner, Nora."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "32253a7d-abe8-49e8-a0bf-5fe5abd1d41e"
+              },
+              {
+                "SegmentId": "28dee851-0fcd-464e-977c-459a1eb763b2"
+              }
+            ],
+            "SummarizedSegment": "They describe being able to sit on the couch with their partner while halfway through an email in their head, not hearing what their partner says.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c56563e6-ca56-451f-b8d5-e3f19b29cb96"
+              },
+              {
+                "SegmentId": "b49d5024-c4dd-4846-b0c7-810626825456"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that their family relied on them heavily when their father got sick last year, and they became the one who remembers appointments, calls people, and keeps the tone calm."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "3cb8cf51-7c79-497b-9865-36e204482db5"
+              }
+            ],
+            "SummarizedSegment": "They state they do not know how to turn that role off."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d2a1cbc1-4fd3-4c22-9ae2-a0cb3f98494d"
+              },
+              {
+                "SegmentId": "c35b79fc-4d72-41ee-95fd-17d284e9c918"
+              }
+            ],
+            "SummarizedSegment": "The patient expresses a strong belief that they should not complain because others have worse problems.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              }
+            ],
+            "SummarizedSegment": "The patient reports moments when things feel dark enough that they do not want to be here."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6ea5e1d2-83a6-4e48-a3b2-aef8dabf48ae"
+              },
+              {
+                "SegmentId": "148a3393-6d8c-4765-b4d2-43653d0c6438"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              }
+            ],
+            "SummarizedSegment": "These thoughts are not constant but occur after a bad night or after disappointing someone."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              }
+            ],
+            "SummarizedSegment": "They describe wishing they could disappear for a while and thinking that people might be better off if they were not making everything harder."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f2a30024-924c-46a2-97a5-1d4ce72bb47e"
+              },
+              {
+                "SegmentId": "3403cdd6-7b5f-4688-9525-c961ca6309d8"
+              }
+            ],
+            "SummarizedSegment": "The patient denies having a plan to hurt themselves or wanting to die, stating they want the pressure to stop."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "566314dd-b1ce-453b-8161-98ca41e75253"
+              },
+              {
+                "SegmentId": "52c4d8d7-a7b8-4020-8f07-3343da2b2602"
+              }
+            ],
+            "SummarizedSegment": "They report feeling ashamed of these thoughts and try to push them away and act normal.\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f8cf21ee-0f6c-4e11-8100-0c4ce3777629"
+              },
+              {
+                "SegmentId": "a8a6e4b7-6ca0-4af3-8ee1-0bfc2bd310d3"
+              }
+            ],
+            "SummarizedSegment": "The patient reports that their partner Nora, their dog, and their sister have been helpful in getting through difficult moments."
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "a8a6e4b7-6ca0-4af3-8ee1-0bfc2bd310d3"
+              }
+            ],
+            "SummarizedSegment": "Work can also be a distraction, though the patient acknowledges this is not always helpful.\n"
+          }
+        ]
+      },
+      {
+        "SectionName": "REVIEW_OF_SYSTEMS",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              },
+              {
+                "SegmentId": "fc74bf7f-b248-4ec9-943b-8a28421f9705"
+              },
+              {
+                "SegmentId": "483901d4-045b-4067-9a3b-adad736f1850"
+              }
+            ],
+            "SummarizedSegment": "Constitutional: Reports fatigue, reports sleep disturbance (some nights 5 hours, some nights more)"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              },
+              {
+                "SegmentId": "26891357-ed63-44a1-9fba-76e424d126ce"
+              },
+              {
+                "SegmentId": "9f8c82a1-e167-47bc-9855-ef7d90d06940"
+              },
+              {
+                "SegmentId": "f60e5d27-4fd4-45f7-b65b-73990e70f7d0"
+              },
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              },
+              {
+                "SegmentId": "566314dd-b1ce-453b-8161-98ca41e75253"
+              },
+              {
+                "SegmentId": "f2a30024-924c-46a2-97a5-1d4ce72bb47e"
+              }
+            ],
+            "SummarizedSegment": "Psychiatric: Reports anxiety, reports irritability, reports passive suicidal ideation (wishing to disappear, feeling people would be better off without them), denies active suicidal ideation, denies suicidal plan, reports guilt, reports shame"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_MEDICAL_HISTORY",
+        "Summary": []
+      },
+      {
+        "SectionName": "PAST_FAMILY_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c56563e6-ca56-451f-b8d5-e3f19b29cb96"
+              }
+            ],
+            "SummarizedSegment": "Father: had a significant illness last year requiring family support"
+          }
+        ]
+      },
+      {
+        "SectionName": "PAST_SOCIAL_HISTORY",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              }
+            ],
+            "SummarizedSegment": "Employed in legal aid"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "32253a7d-abe8-49e8-a0bf-5fe5abd1d41e"
+              },
+              {
+                "SegmentId": "28dee851-0fcd-464e-977c-459a1eb763b2"
+              },
+              {
+                "SegmentId": "f8cf21ee-0f6c-4e11-8100-0c4ce3777629"
+              }
+            ],
+            "SummarizedSegment": "Cohabitates with partner Nora"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f8cf21ee-0f6c-4e11-8100-0c4ce3777629"
+              },
+              {
+                "SegmentId": "c8e2e1b9-1fa7-4ce6-baab-ea3ec7607d1d"
+              }
+            ],
+            "SummarizedSegment": "Has a dog"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f8cf21ee-0f6c-4e11-8100-0c4ce3777629"
+              }
+            ],
+            "SummarizedSegment": "Has a sister"
+          }
+        ]
+      },
+      {
+        "SectionName": "PHYSICAL_EXAMINATION",
+        "Summary": []
+      },
+      {
+        "SectionName": "DIAGNOSTIC_TESTING",
+        "Summary": []
+      },
+      {
+        "SectionName": "ASSESSMENT",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "535d6a99-73c5-4156-9cb4-c797c9461d3c"
+              },
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              },
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "1. Work-related stress and burnout"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "535d6a99-73c5-4156-9cb4-c797c9461d3c"
+              },
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              },
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "2. Passive suicidal ideation"
+          }
+        ]
+      },
+      {
+        "SectionName": "PLAN",
+        "Summary": [
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              }
+            ],
+            "SummarizedSegment": "Work-related stress and burnout:\n- Encouraged the patient to take a two-minute pause when they notice pressure building, such as stepping outside the building or putting both feet on the floor and drinking water before answering another message\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              }
+            ],
+            "SummarizedSegment": "- Encouraged the patient to return to their previous routine of walking the dog by the river early on Saturday morning for 20 minutes, without looking at their phone, as a way to reconnect with themselves\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "535d6a99-73c5-4156-9cb4-c797c9461d3c"
+              },
+              {
+                "SegmentId": "7ebfbaa6-2475-4117-b433-639240692068"
+              },
+              {
+                "SegmentId": "b29fda67-19c7-43e2-911b-2d0b001e3e8f"
+              },
+              {
+                "SegmentId": "58cd7b42-fb38-4bc2-8233-36eb4338b242"
+              }
+            ],
+            "SummarizedSegment": "- Encouraged the patient to tell their partner Nora that they have been struggling more than she knows\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "017c2bbf-97f8-41e0-aa61-62d9f6801f54"
+              },
+              {
+                "SegmentId": "ca668ab5-63cb-49a2-87b6-053754abcb41"
+              },
+              {
+                "SegmentId": "64fee592-4f29-4e2f-b994-1c3082cb38d0"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the patient's tendency to treat physical signs of stress (shoulder tension, holding breath, difficulty focusing) as signals to work faster rather than as cues to pause\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c8e2e1b9-1fa7-4ce6-baab-ea3ec7607d1d"
+              },
+              {
+                "SegmentId": "63096d6d-dd99-4ceb-8282-a920fa7d8005"
+              },
+              {
+                "SegmentId": "cc284559-68a5-4417-90dd-678d0b56302a"
+              },
+              {
+                "SegmentId": "dfa1b3c6-0fdd-4745-8512-87a9defd88dd"
+              }
+            ],
+            "SummarizedSegment": "- Explored the patient's belief that they should not complain because others have worse problems, and encouraged them to be curious about this rule without judgment\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4d4d4ef8-fecb-40e8-b66a-78949129de09"
+              },
+              {
+                "SegmentId": "b0fd46ad-1a7b-4101-b760-96a94f44e508"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the importance of recognizing physical signs of stress as signals to pause before the day becomes unmanageable\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "5ed522fc-b998-4eb3-a616-861a39edf4d1"
+              },
+              {
+                "SegmentId": "2412a54b-8565-48ca-a455-1a2a77ef1ba2"
+              },
+              {
+                "SegmentId": "b2a50061-289a-4e1f-a6b4-c50f48caf5cc"
+              },
+              {
+                "SegmentId": "1e0a08f7-4b43-44da-8fb9-d934f0ef631c"
+              }
+            ],
+            "SummarizedSegment": "- Explored the patient's role as the family member who holds everything together and how this role may leave little room for their own limits\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "d2a1cbc1-4fd3-4c22-9ae2-a0cb3f98494d"
+              },
+              {
+                "SegmentId": "c35b79fc-4d72-41ee-95fd-17d284e9c918"
+              },
+              {
+                "SegmentId": "2d194784-b940-4094-b2b3-138a7ef73a85"
+              },
+              {
+                "SegmentId": "4d1ec5cb-38ff-4f89-b511-3e730d68bc59"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the difference between wanting relief from pressure and wanting to end one's life\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "64cf1ec0-f1f9-41bd-b5a8-a6c6994e2c4d"
+              },
+              {
+                "SegmentId": "5ed522fc-b998-4eb3-a616-861a39edf4d1"
+              },
+              {
+                "SegmentId": "2412a54b-8565-48ca-a455-1a2a77ef1ba2"
+              },
+              {
+                "SegmentId": "017c2bbf-97f8-41e0-aa61-62d9f6801f54"
+              }
+            ],
+            "SummarizedSegment": "- Patient to notice one pressure cycle this week and write down what happened, the thought that arrived, and what their body was doing\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "c56563e6-ca56-451f-b8d5-e3f19b29cb96"
+              },
+              {
+                "SegmentId": "b49d5024-c4dd-4846-b0c7-810626825456"
+              },
+              {
+                "SegmentId": "3cb8cf51-7c79-497b-9865-36e204482db5"
+              },
+              {
+                "SegmentId": "1fa00c36-8951-40ff-9487-360b9ed6a39c"
+              }
+            ],
+            "SummarizedSegment": "- Patient to try the Saturday morning walk with their dog and partner\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "28d20dee-bd30-4498-9fbc-1c408e408938"
+              },
+              {
+                "SegmentId": "8165357c-cdff-4626-b173-e45b384c29fc"
+              }
+            ],
+            "SummarizedSegment": "- Patient to tell Nora they have been struggling more than she knows\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "04c1726f-e4a7-4acd-8ef3-aad49db84771"
+              },
+              {
+                "SegmentId": "806dee93-3417-4e54-90c6-82dcb0b70749"
+              },
+              {
+                "SegmentId": "6d9b26ca-4750-4fa0-9c9c-33aeb06bb9d9"
+              }
+            ],
+            "SummarizedSegment": "- Patient to use the safety plan if thoughts become more frequent, harder to set aside, or change in a way that worries them\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "cc284559-68a5-4417-90dd-678d0b56302a"
+              },
+              {
+                "SegmentId": "dfa1b3c6-0fdd-4745-8512-87a9defd88dd"
+              },
+              {
+                "SegmentId": "94c286a8-3e36-4ce2-b349-be08950477d3"
+              }
+            ],
+            "SummarizedSegment": "- Follow-up next week to review the patient's observations and experiences with the interventions\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4d4d4ef8-fecb-40e8-b66a-78949129de09"
+              },
+              {
+                "SegmentId": "b0fd46ad-1a7b-4101-b760-96a94f44e508"
+              }
+            ],
+            "SummarizedSegment": "Passive suicidal ideation:\n- Developed a safety plan for the patient to use if thoughts become more frequent, harder to set aside, or change in a way that worries them\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "cb70c8d4-19c8-44fe-8264-798db9f33327"
+              },
+              {
+                "SegmentId": "371d2f2e-3566-4d55-a1bb-dd30d42442c3"
+              }
+            ],
+            "SummarizedSegment": "- Identified Nora and the patient's sister as people the patient could tell directly when having a hard moment\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "6d9b26ca-4750-4fa0-9c9c-33aeb06bb9d9"
+              },
+              {
+                "SegmentId": "00e719de-ee3d-4630-bd6f-4a36a602c059"
+              }
+            ],
+            "SummarizedSegment": "- Included the local crisis line, emergency services, and the office's after-hours contact information in the safety plan\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "89dfd7c8-95e1-4aa9-8520-e051aaa8f3a7"
+              },
+              {
+                "SegmentId": "da81f1db-85e4-4bec-b486-aee5d6395703"
+              },
+              {
+                "SegmentId": "99360bef-dd9a-43fc-9de1-3f979d80a075"
+              },
+              {
+                "SegmentId": "dbb4fd4f-45a2-430e-9cea-78b0842700c0"
+              }
+            ],
+            "SummarizedSegment": "- Encouraged the patient to tell Nora that they have been struggling more than she knows\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "cb70c8d4-19c8-44fe-8264-798db9f33327"
+              },
+              {
+                "SegmentId": "d08df7c2-3fa4-47e8-ab15-d39f44e70980"
+              },
+              {
+                "SegmentId": "371d2f2e-3566-4d55-a1bb-dd30d42442c3"
+              }
+            ],
+            "SummarizedSegment": "- Explored the patient's feelings of shame associated with these thoughts and encouraged them to be open about their struggles\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "f89e9709-dab1-4717-a3ce-4999c3c77762"
+              }
+            ],
+            "SummarizedSegment": "- Discussed the importance of reaching out for support when thoughts become more frequent or harder to manage\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "adcc6b79-0e5e-4d9d-ad55-4bc514228c6a"
+              }
+            ],
+            "SummarizedSegment": "- Explored the patient's current coping strategies and identified meaningful connections as protective factors\n"
+          },
+          {
+            "EvidenceLinks": [
+              {
+                "SegmentId": "4d4d4ef8-fecb-40e8-b66a-78949129de09"
+              },
+              {
+                "SegmentId": "b0fd46ad-1a7b-4101-b760-96a94f44e508"
+              }
+            ],
+            "SummarizedSegment": "- Follow-up next week to review the patient's experiences and any changes in their safety or well-being\n"
+          }
+        ]
+      }
+    ]
+  }
+}

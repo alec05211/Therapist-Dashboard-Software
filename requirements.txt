@@ -8,3 +8,4 @@ PyJWT[crypto]
 pypdf>=6.0,<7
 reportlab>=4.4,<5
 pypdfium2>=4.30,<6
+google-cloud-texttospeech>=2.31,<3

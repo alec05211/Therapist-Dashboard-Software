@@ -108,9 +108,10 @@ def read_result(storage):
             ORDER BY version_number DESC LIMIT 1""",
             (storage['session_id'], storage['organization_id'], storage['client_id']))
         draft = cursor.fetchone()
+        relationship_names = speaker_identification.read_relationship_names(cursor, storage)
         speakers = speaker_identification.resolve_names(
-            {segment['speaker'] for segment in segments if segment.get('speaker')}, speakers,
-            speaker_identification.read_defaults(cursor, storage))
+            [segment['speaker'] for segment in segments if segment.get('speaker')], speakers,
+            relationship_names)
     recording_name = Path(storage['audio_key']).name
     return dict(id=storage['runtime_id'], created_at=version['created_at'].isoformat(),
                 audio={'file': recording_name}, speakers=speakers,

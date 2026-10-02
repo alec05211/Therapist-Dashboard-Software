@@ -1,4 +1,4 @@
-import type { ClientJourneyEntry, JobStatus, PersistedInsightSnapshot, PreSessionBrief, Transcript, TranscriptListItem } from "@/lib/types";
+import type { ClientJourneyEntry, JobStatus, PersistedInsightSnapshot, PreSessionBrief, ProcessingJob, Transcript, TranscriptListItem } from "@/lib/types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
@@ -37,6 +37,7 @@ export const api = {
     await request<Transcript>(`/transcripts/${encodeURIComponent(id)}?${clientQuery(clientId)}`), clientId,
   ),
   getJobStatus: (id: string, clientId: string) => request<JobStatus>(`/transcripts/${encodeURIComponent(id)}/status?${clientQuery(clientId)}`),
+  listProcessingJobs: (clientId: string) => request<ProcessingJob[]>(`/transcription-jobs?${clientQuery(clientId)}`),
   getCurrentPreSessionBrief: (organizationId: string, clientId: string) =>
     request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`, { cache: "no-store" }),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
@@ -50,10 +51,26 @@ export const api = {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organization_id: organizationId, ...update }),
     }),
-  uploadRecording: (audio: Blob, clientId: string) => {
+  uploadRecording: (audio: Blob, clientId: string, appointmentId: string | null, onProgress?: (percent: number) => void) => {
     const form = new FormData();
     form.append("audio", audio, audio instanceof File ? audio.name : "recording.webm");
-    return request<{ id: string }>(`/transcribe?${clientQuery(clientId)}`, { method: "POST", body: form });
+    return new Promise<{ id: string }>((resolve, reject) => {
+      const upload = new XMLHttpRequest();
+      const appointmentQuery = appointmentId ? `&appointment_id=${encodeURIComponent(appointmentId)}` : "";
+      upload.open("POST", `/api/transcribe?${clientQuery(clientId)}${appointmentQuery}`);
+      upload.responseType = "json";
+      upload.upload.addEventListener("progress", event => {
+        if (event.lengthComputable) onProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      });
+      upload.addEventListener("load", () => {
+        const data = upload.response && typeof upload.response === "object" ? upload.response : {};
+        if (upload.status >= 200 && upload.status < 300 && typeof data.id === "string") resolve({ id: data.id });
+        else reject(new ApiError(typeof data.detail === "string" ? data.detail : "The recording could not be uploaded.", upload.status));
+      });
+      upload.addEventListener("error", () => reject(new ApiError("The recording upload was interrupted.", 0)));
+      upload.addEventListener("abort", () => reject(new ApiError("The recording upload was cancelled.", 0)));
+      upload.send(form);
+    });
   },
   saveSpeakerLabels: (id: string, clientId: string, labels: Record<string, string>) =>
     request<{ speakers: Record<string, string> }>(`/transcripts/${encodeURIComponent(id)}/speakers?${clientQuery(clientId)}`, {

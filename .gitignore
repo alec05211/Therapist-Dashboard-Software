@@ -13,6 +13,9 @@ htmlcov/
 *.out
 *.err
 
+# Session-processing runtime artifacts; canonical synthetic fixtures live in demo-data/.
+recordings/
+
 # Temporary Microsoft Office lock files
 ~$*.doc*
 
@@ -21,6 +24,7 @@ htmlcov/
 .env.*
 !.env.example
 !.env.*.example
+.secrets/
 
 # Terraform local state, working files, plans, and potentially sensitive variables
 .terraform/
