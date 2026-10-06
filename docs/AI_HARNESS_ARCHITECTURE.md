@@ -3,7 +3,7 @@
 > A working architecture for clinician-facing longitudinal memory and synthesis. This document is a proposed design, not a claim of HIPAA compliance, clinical validation, or approval to process real clinical data with any particular model provider.
 
 **Status:** Proposed architecture — no production implementation yet  
-**Related:** [Project vision](PROJECT_VISION.md), [AI / ML vision](AI_ML_VISION.md), [storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md), [current HealthScribe implementation](HEALTHSCRIBE.md)
+**Related:** [Project vision](PROJECT_VISION.md), [AI / ML vision](AI_ML_VISION.md), [clinical synthesis generation lifecycle](CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md), [storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md), [current HealthScribe implementation](HEALTHSCRIBE.md)
 
 ## 1. What “harness” means here
 
@@ -124,13 +124,13 @@ For each generation, save a versioned brief record with the task, source version
 
 ### Pre-session brief
 
-1. A therapist opens an upcoming session.
-2. The API authorizes access to that client and checks whether a recent suitable brief exists.
-3. The context builder selects a compact evidence bundle from finalized and clinician-curated records.
-4. The model gateway requests a concise, source-cited draft under explicit no-diagnosis/no-risk/no-treatment-decision rules.
-5. The verifier checks structure and citations.
-6. The UI shows a five-minute brief with links to its supporting finalized note, transcript excerpt, and synchronized audio when available.
-7. Therapist edits, pins, dismisses, or marks items outdated; those choices update the memory projection and are auditable.
+1. A validated Insights snapshot becomes current, or an appointment is scheduled against an existing current snapshot.
+2. A background job selects a compact bundle only from that Insights snapshot and its trusted evidence mappings.
+3. The model gateway requests concise editorial selection and compression under explicit no-new-clinical-interpretation, no-diagnosis, no-risk, and no-treatment-decision rules.
+4. The verifier checks structure, inherited source membership, and phrase-level citations.
+5. The validated brief is saved against the appointment and exact Insights snapshot version.
+6. Opening the scheduled session performs a read only and shows the five-minute brief with links through Insights to the supporting finalized note, transcript excerpt, and synchronized audio when available.
+7. The therapist does not edit or regenerate the brief. Corrections occur in the canonical record or Insights environment and flow into a later background-generated version.
 
 ### Clinical journey review
 

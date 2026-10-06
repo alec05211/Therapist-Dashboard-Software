@@ -71,12 +71,14 @@ def rds_ca_bundle_path() -> str:
     return str(cache_path)
 
 
+@lru_cache(maxsize=1)
 def database_url_from_local_aws_secret() -> str:
     """Build a TLS URL from an RDS-managed secret for the local synthetic demo.
 
     The secret ARN, host, and database name are identifiers rather than
-    credentials. The password remains in memory for the duration of a single
-    connection attempt and is never written to an environment file.
+    credentials. The resolved URL is cached in memory for the lifetime of the
+    local API process so routine workspace requests do not depend on a live AWS
+    SSO session. The password is never written to an environment file.
     """
     secret_arn = os.getenv("DATABASE_SECRET_ARN")
     if not secret_arn:

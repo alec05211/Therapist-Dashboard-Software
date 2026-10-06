@@ -33,16 +33,41 @@ class ClientJourneyTests(unittest.TestCase):
     def test_review_scopes_update_and_records_revision(self):
         connection = MagicMock()
         cursor = connection.cursor.return_value.__enter__.return_value
-        cursor.fetchone.return_value = {'status': 'proposed', 'category': 'context', 'content': 'Original'}
         entry_id, client_id, organization_id, actor_id = [str(uuid4()) for _ in range(4)]
+        cursor.fetchall.return_value = [{'id': entry_id, 'status': 'proposed', 'category': 'context',
+                                         'categories': ['context'], 'content': 'Original'}]
         self.assertTrue(client_journey.review_entry(connection, organization_id=organization_id, client_id=client_id,
                                                     entry_id=entry_id, category='theme', content='Reviewed',
+                                                    categories=['theme', 'breakthrough'],
                                                     state='accepted', actor_user_id=actor_id))
         scope_call = cursor.execute.call_args_list[0]
         self.assertIn('FOR UPDATE', scope_call.args[0])
-        self.assertEqual(scope_call.args[1], (entry_id, organization_id, client_id))
+        self.assertEqual(scope_call.args[1], ([entry_id], organization_id, client_id))
         self.assertTrue(any('INSERT INTO app.client_journey_entry_revisions' in call.args[0]
                             for call in cursor.execute.call_args_list))
+
+    def test_grouped_review_rejects_same_passage_duplicates(self):
+        connection = MagicMock()
+        cursor = connection.cursor.return_value.__enter__.return_value
+        entry_id, duplicate_id, client_id, organization_id, actor_id = [str(uuid4()) for _ in range(5)]
+        primary = {'id': entry_id, 'status': 'proposed', 'category': 'context',
+                   'categories': ['context'], 'content': 'Primary'}
+        duplicate = {'id': duplicate_id, 'status': 'proposed', 'category': 'theme',
+                     'categories': ['theme'], 'content': 'Duplicate'}
+        cursor.fetchall.side_effect = [[primary, duplicate], [{'id': duplicate_id}]]
+
+        self.assertTrue(client_journey.review_entry(
+            connection, organization_id=organization_id, client_id=client_id,
+            entry_id=entry_id, category='important_quote',
+            categories=['important_quote', 'theme'], duplicate_entry_ids=[duplicate_id],
+            content='Therapist interpretation', state='accepted', actor_user_id=actor_id,
+        ))
+
+        updates = [call.args for call in cursor.execute.call_args_list
+                   if 'UPDATE app.client_journey_entries' in call.args[0]]
+        self.assertEqual(len(updates), 2)
+        self.assertIn('categories=%s', updates[0][0])
+        self.assertEqual(updates[1][1][0], 'rejected')
 
     def test_only_accepted_entries_can_reach_bounded_brief(self):
         evidence = [{'evidence_id': str(uuid4()), 'session_id': f'session-{uuid4()}',

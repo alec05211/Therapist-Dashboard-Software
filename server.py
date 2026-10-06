@@ -24,6 +24,7 @@ from database import organization_storage
 from database import client_journey
 from database import speaker_identification
 from database import document_workflow
+from database import synthesis_refresh
 from database.scheduling import available_recurring_slots, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights, project_session_proposals
@@ -688,6 +689,11 @@ def create_appointment(request: AppointmentCreateRequest, authorization: str | N
                     (request.organization_id, request.client_id, scope["practitioner_id"], starts_at,
                      starts_at + timedelta(minutes=request.duration_minutes), request.appointment_type,
                      series_id, request.meeting_mode))
+        synthesis_refresh.enqueue_next_appointment_brief(
+            connection,
+            organization_id=context["organization_id"],
+            client_id=context["client_id"],
+        )
         return scheduling_data(connection, context, scope)
 
 
@@ -1166,6 +1172,17 @@ class ClinicalNoteVersionRequest(BaseModel):
     parent_version_id: str | None = Field(default=None, max_length=64)
 
 
+class ClinicalNoteDraftRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    session_id: str = Field(min_length=1, max_length=64)
+    content: dict[str, Any]
+
+
+class ClinicalNoteFinalizeRequest(BaseModel):
+    organization_id: str = Field(min_length=1, max_length=64)
+    session_id: str = Field(min_length=1, max_length=64)
+
+
 class LongitudinalEvidenceRequest(BaseModel):
     transcript_segment_id: str | None = Field(default=None, max_length=64)
     clinical_note_version_id: str | None = Field(default=None, max_length=64)
@@ -1196,6 +1213,8 @@ class LongitudinalInsightSnapshotRequest(BaseModel):
 class JourneyReviewRequest(BaseModel):
     organization_id: str = Field(min_length=1, max_length=64)
     category: Literal['context', 'theme', 'important_quote', 'resolution', 'breakthrough', 'open_thread']
+    categories: list[Literal['context', 'theme', 'important_quote', 'resolution', 'breakthrough', 'open_thread']] = Field(min_length=1, max_length=6)
+    duplicate_entry_ids: list[str] = Field(default_factory=list, max_length=50)
     text: str = Field(min_length=1, max_length=4000)
     status: Literal['accepted', 'rejected', 'hidden', 'stale', 'disputed']
 
@@ -1484,6 +1503,107 @@ def onboard_client(
             "registration_id": str(registration["id"])}
 
 
+@app.get("/clinical-records/clients/{client_id}/note-versions/latest")
+def get_latest_clinical_note_version(
+    client_id: str,
+    organization_id: str,
+    session_id: str,
+    authorization: str | None = Header(default=None),
+):
+    """Return the latest therapist-owned note version, if one has been saved."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=organization_id,
+                client_id=client_id,
+                require_write=False,
+            )
+            note = LongitudinalRecordRepository(connection).get_latest_clinical_note_version(
+                organization_id=organization_id,
+                client_id=client_id,
+                session_id=session_id,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    return {"note": note}
+
+
+@app.put("/clinical-records/clients/{client_id}/note-draft")
+def save_clinical_note_draft(
+    client_id: str,
+    request: ClinicalNoteDraftRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Autosave the session's mutable therapist working draft."""
+    try:
+        with connect() as connection:
+            actor_user_id = authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=request.organization_id,
+                client_id=client_id,
+                require_write=True,
+            )
+            note = LongitudinalRecordRepository(connection).save_clinical_note_draft(
+                organization_id=request.organization_id,
+                client_id=client_id,
+                session_id=request.session_id,
+                content=request.content,
+                actor_user_id=actor_user_id,
+            )
+            connection.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    return note
+
+
+@app.post("/clinical-records/clients/{client_id}/note-versions/{note_version_id}/finalize")
+def finalize_clinical_note_draft(
+    client_id: str,
+    note_version_id: str,
+    request: ClinicalNoteFinalizeRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Finalize the latest working draft and queue downstream clinical synthesis."""
+    try:
+        with connect() as connection:
+            actor_user_id = authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=request.organization_id,
+                client_id=client_id,
+                require_write=True,
+            )
+            note = LongitudinalRecordRepository(connection).finalize_clinical_note_draft(
+                organization_id=request.organization_id,
+                client_id=client_id,
+                session_id=request.session_id,
+                note_version_id=note_version_id,
+                actor_user_id=actor_user_id,
+            )
+            synthesis_refresh.enqueue_insights_refresh(
+                connection,
+                organization_id=request.organization_id,
+                client_id=client_id,
+                event_type="clinical_note_amended" if note["parent_version_id"] else "clinical_note_finalized",
+                actor_user_id=actor_user_id,
+                target_type="clinical_note_version",
+                target_id=note["id"],
+            )
+            connection.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The database is temporarily unavailable.") from exc
+    return note
+
+
 @app.post("/clinical-records/clients/{client_id}/note-versions", status_code=status.HTTP_201_CREATED)
 def create_clinical_note_version(
     client_id: str,
@@ -1510,6 +1630,16 @@ def create_clinical_note_version(
                 source_synthesis_version_id=request.source_synthesis_version_id,
                 parent_version_id=request.parent_version_id,
             )
+            if request.status == "finalized":
+                synthesis_refresh.enqueue_insights_refresh(
+                    connection,
+                    organization_id=str(request.organization_id),
+                    client_id=client_id,
+                    event_type="clinical_note_amended" if request.parent_version_id else "clinical_note_finalized",
+                    actor_user_id=actor_user_id,
+                    target_type="clinical_note_version",
+                    target_id=record_id,
+                )
             connection.commit()
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
@@ -1602,14 +1732,35 @@ def review_client_journey_entry(client_id: str, entry_id: str, request: JourneyR
                                               require_write=True)
             found = client_journey.review_entry(connection, organization_id=request.organization_id,
                                                 client_id=client_id, entry_id=entry_id, category=request.category,
+                                                categories=request.categories,
+                                                duplicate_entry_ids=request.duplicate_entry_ids,
                                                 content=request.text, state=request.status, actor_user_id=actor)
+            if found:
+                event_type = {
+                    'accepted': 'evidence_claim_accepted',
+                    'rejected': 'evidence_claim_dismissed',
+                    'hidden': 'insight_hidden',
+                    'stale': 'insight_outdated',
+                    'disputed': 'insight_disputed',
+                }[request.status]
+                synthesis_refresh.enqueue_insights_refresh(
+                    connection,
+                    organization_id=str(request.organization_id),
+                    client_id=client_id,
+                    event_type=event_type,
+                    actor_user_id=actor,
+                    target_type='client_journey_entry',
+                    target_id=entry_id,
+                    metadata={'categories': request.categories},
+                )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except (RuntimeError, PsycopgError) as exc:
         raise HTTPException(status_code=503, detail='The database is temporarily unavailable.') from exc
     if not found:
         raise HTTPException(status_code=404, detail='Journey entry not found for this client.')
-    return {'id': entry_id, 'status': request.status}
+    return {'id': entry_id, 'status': request.status, 'categories': request.categories,
+            'dismissed_entry_ids': request.duplicate_entry_ids}
 
 
 @app.get("/clinical-records/clients/{client_id}/pre-session-context")

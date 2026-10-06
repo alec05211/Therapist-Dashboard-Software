@@ -21,7 +21,11 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
             break
         if entry['status'] != 'accepted' or not entry['evidence']:
             continue
-        sections[journey_titles.get(entry['category'], 'Relevant history')].append({
+        categories = entry.get('categories') or [entry['category']]
+        brief_category = ('open_thread' if 'open_thread' in categories else
+                          next((value for value in ('theme', 'breakthrough', 'resolution')
+                                if value in categories), categories[0]))
+        sections[journey_titles.get(brief_category, 'Relevant history')].append({
             'text': entry['text'], 'sources': entry['evidence'],
         })
         selected += 1

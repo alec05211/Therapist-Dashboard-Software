@@ -141,13 +141,50 @@ export function AppHeader() {
     return () => window.removeEventListener("inbox-changed", refreshInbox);
   }, [isAuthenticated]);
 
+  const showTherapistNavigation = Boolean(
+    isAuthenticated && accountRole && canUseFeature(accountRole, "practiceNavigation"),
+  );
+
   return (
     <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex h-16 w-[min(94vw,1200px)] items-center justify-between">
-        <Link className="text-lg font-semibold tracking-tight text-stone-900" href="/">
+      <div className="mx-auto grid min-h-16 w-[min(96vw,1400px)] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 py-2">
+        <Link className="whitespace-nowrap text-lg font-semibold tracking-tight text-stone-900" href="/">
           Therapist Dashboard
         </Link>
-        <nav className="flex items-center gap-2" aria-label="Account navigation">
+        {showTherapistNavigation ? <nav className="flex min-w-0 items-center justify-center gap-1 overflow-x-auto" aria-label="Therapist workspace">
+          <Link
+            href="/calendar"
+            aria-current={pathname.startsWith("/calendar") ? "page" : undefined}
+            className={`inline-flex shrink-0 cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/calendar") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
+          >
+            <CalendarIcon />
+            Calendar
+          </Link>
+          <Link
+            href="/clients"
+            aria-current={pathname.startsWith("/clients") ? "page" : undefined}
+            className={`inline-flex shrink-0 cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/clients") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
+          >
+            <ClientsIcon />
+            Client list
+          </Link>
+          <button disabled className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-stone-500 disabled:opacity-60" type="button">
+            <PracticeIcon />
+            Practice
+          </button>
+          <button disabled className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-stone-500 disabled:opacity-60" type="button">
+            <BillingIcon />
+            Billing
+          </button>
+          <button disabled className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-stone-500 disabled:opacity-60" type="button">
+            <DocumentsIcon />
+            Documents
+          </button>
+        </nav> : <span />}
+        <nav className="flex items-center justify-end gap-2" aria-label="Account navigation">
+          {showTherapistNavigation && <Link href="/settings?section=appearance" aria-label="Settings" aria-current={pathname.startsWith("/settings") ? "page" : undefined} className={`inline-flex size-10 cursor-grab items-center justify-center rounded-full border shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/settings") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}>
+            <GearIcon />
+          </Link>}
           {isAuthenticated && <Link href="/inbox" aria-label={unreadCount ? `Inbox, ${unreadCount} pending ${unreadCount === 1 ? "invitation" : "invitations"}` : "Inbox"} aria-current={pathname.startsWith("/inbox") ? "page" : undefined} className={`relative inline-flex size-10 cursor-grab items-center justify-center rounded-full border shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/inbox") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}>
             <InboxIcon />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-emerald-800 px-1 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}
           </Link>}
@@ -181,63 +218,6 @@ export function AppHeader() {
           </div>
         </nav>
       </div>
-      {isAuthenticated && accountRole && canUseFeature(accountRole, "practiceNavigation") && <div className="border-t border-stone-100 bg-stone-50">
-        <nav className="mx-auto flex min-h-12 w-[min(94vw,1200px)] flex-wrap items-center justify-end gap-2 py-1" aria-label="Therapist workspace">
-          <Link
-            href="/calendar"
-            aria-current={pathname.startsWith("/calendar") ? "page" : undefined}
-            className={`inline-flex cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/calendar") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
-          >
-            <CalendarIcon />
-            Calendar
-          </Link>
-          <Link
-            href="/clients"
-            aria-current={pathname.startsWith("/clients") ? "page" : undefined}
-            className={`inline-flex cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${pathname.startsWith("/clients") ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-transparent text-stone-700"}`}
-          >
-            <ClientsIcon />
-            Client list
-          </Link>
-          <button
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Practice settings are coming soon"
-            type="button"
-          >
-            <PracticeIcon />
-            Practice
-            <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
-          </button>
-          <button
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Billing is coming soon"
-            type="button"
-          >
-            <BillingIcon />
-            Billing
-            <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
-          </button>
-          <button
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500"
-            title="Documents are coming soon"
-            type="button"
-          >
-            <DocumentsIcon />
-            Documents
-            <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Soon</span>
-          </button>
-          <Link
-            className="inline-flex cursor-grab items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"
-            href="/settings?section=appearance"
-          >
-            <GearIcon />
-            Settings
-          </Link>
-        </nav>
-      </div>}
     </header>
   );
 }

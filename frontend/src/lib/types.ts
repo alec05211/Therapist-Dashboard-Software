@@ -10,6 +10,21 @@ export type ClinicalNoteSection = {
   items: string[];
 };
 
+export type ClinicalNoteVersion = {
+  id: string;
+  parent_version_id?: string | null;
+  version_number: number;
+  status: "draft" | "reviewed" | "finalized";
+  content: {
+    schema_version: number;
+    editor: "tiptap";
+    document: Record<string, unknown>;
+    plain_text: string;
+  };
+  finalized_at?: string | null;
+  created_at?: string;
+};
+
 export type Transcript = {
   id?: string;
   segments: TranscriptSegment[];
@@ -122,6 +137,7 @@ export type ClientJourneyEntry = {
   session_id: string;
   source_provider: string;
   category: "context" | "theme" | "important_quote" | "resolution" | "breakthrough" | "open_thread";
+  categories: Array<ClientJourneyEntry["category"]>;
   text: string;
   status: "proposed" | "accepted" | "rejected" | "hidden" | "stale" | "disputed";
   created_at: string;

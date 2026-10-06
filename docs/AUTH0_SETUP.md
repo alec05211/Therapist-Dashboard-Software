@@ -81,11 +81,10 @@ configuration error rather than storing any practice details locally.
 - Keep Auth0 metadata and tokens free of client, session, transcript, audio, diagnosis, consent-document, and clinical-access information.
 - Implement RDS-backed user, organization, membership, practitioner, and audit records before granting any application clinical access.
 
-## 7. Immediate infrastructure prerequisite
+## 7. Production infrastructure prerequisite
 
-Provision the private RDS instance with Terraform, then run the initial
-migration from an approved in-VPC migration environment. The RDS security group
-intentionally has no public ingress, so a local laptop cannot connect directly.
-See [the database migration guide](../database/README.md) for the runner and
-[the storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md) for
-the boundary design.
+The current RDS instance is restricted to synthetic demonstrations. Before
+enabling real accounts or clinical data, provision a reviewed private database
+and an in-VPC migration path. See [the database migration guide](../database/README.md)
+and [the storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md)
+for the required boundary.

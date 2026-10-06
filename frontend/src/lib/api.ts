@@ -1,4 +1,4 @@
-import type { ClientJourneyEntry, JobStatus, PersistedInsightSnapshot, PreSessionBrief, ProcessingJob, Transcript, TranscriptListItem } from "@/lib/types";
+import type { ClientJourneyEntry, ClinicalNoteVersion, JobStatus, PersistedInsightSnapshot, PreSessionBrief, ProcessingJob, Transcript, TranscriptListItem } from "@/lib/types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
@@ -46,8 +46,20 @@ export const api = {
     ),
   getClientJourney: (organizationId: string, clientId: string) =>
     request<{ entries: ClientJourneyEntry[] }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries?organization_id=${encodeURIComponent(organizationId)}`),
-  reviewClientJourneyEntry: (organizationId: string, clientId: string, entryId: string, update: Pick<ClientJourneyEntry, "category" | "text"> & { status: "accepted" | "rejected" | "hidden" | "stale" | "disputed" }) =>
-    request<{ id: string; status: string }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries/${encodeURIComponent(entryId)}`, {
+  getLatestClinicalNoteVersion: (organizationId: string, clientId: string, sessionId: string) =>
+    request<{ note: ClinicalNoteVersion | null }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/note-versions/latest?organization_id=${encodeURIComponent(organizationId)}&session_id=${encodeURIComponent(sessionId)}`, { cache: "no-store" }),
+  saveClinicalNoteDraft: (organizationId: string, clientId: string, sessionId: string, content: ClinicalNoteVersion["content"]) =>
+    request<Pick<ClinicalNoteVersion, "id" | "parent_version_id" | "version_number" | "status">>(`/clinical-records/clients/${encodeURIComponent(clientId)}/note-draft`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization_id: organizationId, session_id: sessionId, content }),
+    }),
+  finalizeClinicalNoteDraft: (organizationId: string, clientId: string, sessionId: string, noteVersionId: string) =>
+    request<Pick<ClinicalNoteVersion, "id" | "parent_version_id" | "status" | "finalized_at">>(`/clinical-records/clients/${encodeURIComponent(clientId)}/note-versions/${encodeURIComponent(noteVersionId)}/finalize`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization_id: organizationId, session_id: sessionId }),
+    }),
+  reviewClientJourneyEntry: (organizationId: string, clientId: string, entryId: string, update: Pick<ClientJourneyEntry, "category" | "categories" | "text"> & { duplicate_entry_ids?: string[]; status: "accepted" | "rejected" | "hidden" | "stale" | "disputed" }) =>
+    request<{ id: string; status: ClientJourneyEntry["status"]; categories: ClientJourneyEntry["categories"]; dismissed_entry_ids: string[] }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries/${encodeURIComponent(entryId)}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organization_id: organizationId, ...update }),
     }),

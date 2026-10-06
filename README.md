@@ -1,6 +1,13 @@
 # Therapist-Dashboard-Software
 Therapist Sidekick is an all-in-one digital platform designed to reduce the administrative and cognitive overhead associated with managing a psychotherapy practice.
 
+## Project direction and architecture
+
+- [Product vision](docs/PROJECT_VISION.md)
+- [Hosted deployment architecture and readiness gate](docs/HOSTED_DEPLOYMENT_ARCHITECTURE.md)
+- [AI / ML vision](docs/AI_ML_VISION.md)
+- [Current HealthScribe implementation](docs/HEALTHSCRIBE.md)
+
 ## HealthScribe microphone recorder
 
 This starter records from the browser microphone and sends the resulting file to

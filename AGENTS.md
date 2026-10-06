@@ -7,6 +7,8 @@ Treat it as the source of truth for the product's long-term intent, strategic pr
 
 Before proposing, planning, or implementing AI/ML, transcription, diarization, clinical-synthesis, or longitudinal-insight work, also read `docs/AI_ML_VISION.md`. For changes to the current Amazon HealthScribe integration or its AWS infrastructure, read `docs/HEALTHSCRIBE.md` as well.
 
+Before changing draft-note finalization, Insights regeneration, synthesis queues, or pre-session brief generation, read `docs/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Treat it as the source of truth for the approved generation hierarchy and refresh triggers: Insights is the primary longitudinal synthesis environment, and pre-session briefs are background-generated, read-only condensations of a validated Insights snapshot.
+
 ## Interaction style
 
 The product owner prefers a grab-hand cursor for most directly manipulable or clickable interface elements. Use `cursor-grab` (and `active:cursor-grabbing`) by default for new interactive controls where it does not conflict with a more meaningful state such as disabled, waiting, or text entry.
@@ -55,3 +57,34 @@ How completion will be checked.
 ```
 
 Keep acceptance criteria independently testable. Do not prescribe implementation details unless they are a real constraint.
+
+<!-- BEGIN AWS Agent Toolkit rules -->
+# AWS Guidance
+
+- Where these AWS rules conflict with the project's own instructions, the
+  project's instructions take precedence.
+- Prefer the AWS MCP Server for AWS interactions — it provides sandboxed
+  execution, observability, and audit logging. If unavailable, use the
+  AWS CLI directly.
+- Before starting a task, check whether a relevant AWS skill is available.
+  Load the skill with `retrieve_skill` and prefer its guidance over
+  general knowledge.
+- When uncertain about specific AWS details (API parameters, permissions,
+  limits, error codes), verify against documentation rather than guessing.
+  State uncertainty explicitly if you cannot confirm.
+- When creating infrastructure, prefer infrastructure-as-code (AWS CDK or
+  CloudFormation) over direct CLI commands.
+- When working with infrastructure, follow AWS Well-Architected Framework
+  principles.
+- Do not use em dashes in AWS resource names or descriptions. Use
+  hyphens instead.
+
+## Secret Safety
+
+- MUST load the `aws-secrets-manager` skill first for any secret,
+  credential, API key, token, or password task. MUST NOT call
+  `secretsmanager get-secret-value` or `batch-get-secret-value`, and MUST
+  NOT hit the Secrets Manager Agent daemon directly. MUST use
+  `{{resolve:secretsmanager:secret-id:SecretString:json-key}}` with
+  `asm-exec` so the secret resolves at runtime without entering context.
+<!-- END AWS Agent Toolkit rules -->

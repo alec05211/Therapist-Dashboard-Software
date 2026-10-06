@@ -47,7 +47,7 @@ def propose_from_healthscribe(cursor, storage, raw_transcript, raw_note, transcr
 def list_entries(connection, organization_id, client_id, status=None):
     with connection.cursor() as cursor:
         cursor.execute("""SELECT entry.id, entry.session_id, entry.source_provider,
-                entry.category, entry.content, entry.status, entry.created_at,
+                entry.category, entry.categories, entry.content, entry.status, entry.created_at,
                 segment.id AS transcript_segment_id, segment.sequence_number,
                 segment.starts_at_seconds, segment.ends_at_seconds, segment.content AS quote,
                 COALESCE(job.storage->>'label', 'Completed session') AS session_label
@@ -66,6 +66,7 @@ def list_entries(connection, organization_id, client_id, status=None):
         entry = entries.setdefault(entry_id, {
             'id': entry_id, 'session_id': f"session-{row['session_id']}",
             'source_provider': row['source_provider'], 'category': row['category'],
+            'categories': list(row['categories']),
             'text': row['content'], 'status': row['status'],
             'created_at': row['created_at'].isoformat(), 'evidence': [],
         })
@@ -79,25 +80,67 @@ def list_entries(connection, organization_id, client_id, status=None):
     return list(entries.values())
 
 
-def review_entry(connection, *, organization_id, client_id, entry_id, category, content, state, actor_user_id):
-    if category not in CATEGORIES or state not in REVIEW_STATES or not content.strip():
+def review_entry(connection, *, organization_id, client_id, entry_id, category, content, state,
+                 actor_user_id, categories=None, duplicate_entry_ids=None):
+    categories = list(dict.fromkeys(categories or [category]))
+    duplicate_entry_ids = list(dict.fromkeys(duplicate_entry_ids or []))
+    if (category not in CATEGORIES or not categories or any(value not in CATEGORIES for value in categories)
+            or state not in REVIEW_STATES or not content.strip()):
         raise ValueError('Choose a category, a review decision, and non-empty text.')
     with connection.cursor() as cursor:
-        cursor.execute("""SELECT status, category, content FROM app.client_journey_entries
-            WHERE id=%s AND organization_id=%s AND client_id=%s FOR UPDATE""",
-            (entry_id, organization_id, client_id))
-        previous = cursor.fetchone()
+        requested_ids = [entry_id, *[value for value in duplicate_entry_ids if value != entry_id]]
+        cursor.execute("""SELECT id, status, category, categories, content
+            FROM app.client_journey_entries
+            WHERE id=ANY(%s) AND organization_id=%s AND client_id=%s
+            FOR UPDATE""", (requested_ids, organization_id, client_id))
+        rows = cursor.fetchall()
+        by_id = {str(row['id']): row for row in rows}
+        previous = by_id.get(str(entry_id))
         if not previous:
             return False
+        if len(by_id) != len(requested_ids):
+            raise ValueError('One or more grouped suggestions are no longer available.')
+        if duplicate_entry_ids:
+            cursor.execute("""SELECT DISTINCT sibling.id
+                FROM app.client_journey_entries sibling
+                JOIN app.client_journey_evidence sibling_evidence
+                  ON sibling_evidence.journey_entry_id=sibling.id
+                JOIN app.client_journey_evidence primary_evidence
+                  ON primary_evidence.transcript_segment_id=sibling_evidence.transcript_segment_id
+                 AND primary_evidence.journey_entry_id=%s
+                WHERE sibling.id=ANY(%s) AND sibling.organization_id=%s AND sibling.client_id=%s""",
+                (entry_id, duplicate_entry_ids, organization_id, client_id))
+            shared_ids = {str(row['id']) for row in cursor.fetchall()}
+            if shared_ids != {str(value) for value in duplicate_entry_ids}:
+                raise ValueError('Grouped suggestions must cite the same transcript passage.')
         cursor.execute("""UPDATE app.client_journey_entries
-            SET category=%s, content=%s, status=%s, reviewed_by_user_id=%s,
+            SET category=%s, categories=%s, content=%s, status=%s, reviewed_by_user_id=%s,
                 reviewed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP
             WHERE id=%s AND organization_id=%s AND client_id=%s""",
-            (category, content.strip(), state, actor_user_id, entry_id, organization_id, client_id))
+            (categories[0], categories, content.strip(), state, actor_user_id,
+             entry_id, organization_id, client_id))
         cursor.execute("""INSERT INTO app.client_journey_entry_revisions
             (journey_entry_id, previous_status, next_status, previous_category,
-             next_category, previous_content, next_content, changed_by_user_id)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (entry_id, previous['status'], state, previous['category'], category,
-             previous['content'], content.strip(), actor_user_id))
+             next_category, previous_content, next_content, changed_by_user_id,
+             previous_categories, next_categories)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (entry_id, previous['status'], state, previous['category'], categories[0],
+             previous['content'], content.strip(), actor_user_id,
+             previous['categories'], categories))
+        duplicate_state = 'rejected' if state in {'accepted', 'rejected'} else state
+        for duplicate_id in duplicate_entry_ids:
+            duplicate = by_id[str(duplicate_id)]
+            cursor.execute("""UPDATE app.client_journey_entries
+                SET status=%s, reviewed_by_user_id=%s, reviewed_at=CURRENT_TIMESTAMP,
+                    updated_at=CURRENT_TIMESTAMP
+                WHERE id=%s AND organization_id=%s AND client_id=%s""",
+                (duplicate_state, actor_user_id, duplicate_id, organization_id, client_id))
+            cursor.execute("""INSERT INTO app.client_journey_entry_revisions
+                (journey_entry_id, previous_status, next_status, previous_category,
+                 next_category, previous_content, next_content, changed_by_user_id,
+                 previous_categories, next_categories)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (duplicate_id, duplicate['status'], duplicate_state, duplicate['category'],
+                 duplicate['category'], duplicate['content'], duplicate['content'], actor_user_id,
+                 duplicate['categories'], duplicate['categories']))
     return True

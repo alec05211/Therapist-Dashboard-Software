@@ -95,24 +95,28 @@ class LongitudinalRecordRepository:
         self.connection = connection
 
     @staticmethod
-    def _assert_session_scope(
+    def _resolve_session_scope(
         cursor: Any,
         *,
         organization_id: str,
         client_id: str,
         session_id: str,
-    ) -> None:
-        """Ensure a note revision cannot be attached across client boundaries."""
+    ) -> str:
+        """Resolve a database or public runtime session ID within the client boundary."""
         cursor.execute(
             """
-            SELECT 1
-            FROM app.sessions
-            WHERE id = %s AND organization_id = %s AND client_id = %s
+            SELECT session.id
+            FROM app.sessions AS session
+            LEFT JOIN app.session_storage_jobs AS job ON job.session_id = session.id
+            WHERE (session.id::text = %s OR job.runtime_id = %s)
+              AND session.organization_id = %s AND session.client_id = %s
             """,
-            (session_id, organization_id, client_id),
+            (session_id, session_id, organization_id, client_id),
         )
-        if not cursor.fetchone():
+        row = cursor.fetchone()
+        if not row:
             raise ValueError("The session is not available for this client and organization.")
+        return str(row["id"])
 
     @staticmethod
     def _assert_evidence_scope(
@@ -168,7 +172,7 @@ class LongitudinalRecordRepository:
         if not content:
             raise ValueError("Clinical-note content cannot be empty.")
         with self.connection.cursor() as cursor:
-            self._assert_session_scope(
+            session_id = self._resolve_session_scope(
                 cursor,
                 organization_id=organization_id,
                 client_id=client_id,
@@ -210,6 +214,168 @@ class LongitudinalRecordRepository:
             if not row:
                 raise RuntimeError("Could not persist the clinical-note version.")
             return str(row["id"])
+
+    def get_latest_clinical_note_version(
+        self,
+        *,
+        organization_id: str,
+        client_id: str,
+        session_id: str,
+    ) -> dict[str, Any] | None:
+        """Return the latest clinician-owned note version for an authorized session."""
+        with self.connection.cursor() as cursor:
+            resolved_session_id = self._resolve_session_scope(
+                cursor,
+                organization_id=organization_id,
+                client_id=client_id,
+                session_id=session_id,
+            )
+            cursor.execute(
+                """
+                SELECT id, parent_version_id, version_number, status, content,
+                       finalized_at, created_at
+                FROM app.clinical_note_versions
+                WHERE session_id = %s AND organization_id = %s AND client_id = %s
+                ORDER BY version_number DESC
+                LIMIT 1
+                """,
+                (resolved_session_id, organization_id, client_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                **row,
+                "id": str(row["id"]),
+                "parent_version_id": str(row["parent_version_id"]) if row["parent_version_id"] else None,
+                "finalized_at": row["finalized_at"].isoformat() if row["finalized_at"] else None,
+                "created_at": row["created_at"].isoformat(),
+            }
+
+    def save_clinical_note_draft(
+        self,
+        *,
+        organization_id: str,
+        client_id: str,
+        session_id: str,
+        content: Mapping[str, Any],
+        actor_user_id: str,
+    ) -> dict[str, Any]:
+        """Autosave one mutable working draft while finalized versions stay immutable."""
+        if not content:
+            raise ValueError("Clinical-note content cannot be empty.")
+        with self.connection.cursor() as cursor:
+            resolved_session_id = self._resolve_session_scope(
+                cursor,
+                organization_id=organization_id,
+                client_id=client_id,
+                session_id=session_id,
+            )
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (resolved_session_id,))
+            cursor.execute(
+                """
+                SELECT id, parent_version_id, version_number, status
+                FROM app.clinical_note_versions
+                WHERE session_id = %s
+                ORDER BY version_number DESC
+                LIMIT 1
+                FOR UPDATE
+                """,
+                (resolved_session_id,),
+            )
+            latest = cursor.fetchone()
+            if latest and latest["status"] in {"draft", "reviewed"}:
+                cursor.execute(
+                    """
+                    UPDATE app.clinical_note_versions
+                    SET content = %s, status = 'draft', authored_by_user_id = %s
+                    WHERE id = %s
+                    RETURNING id, parent_version_id, version_number, status
+                    """,
+                    (Json(dict(content)), actor_user_id, latest["id"]),
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO app.clinical_note_versions (
+                      organization_id, client_id, session_id, parent_version_id,
+                      version_number, status, content, authored_by_user_id
+                    ) VALUES (%s, %s, %s, %s, %s, 'draft', %s, %s)
+                    RETURNING id, parent_version_id, version_number, status
+                    """,
+                    (
+                        organization_id,
+                        client_id,
+                        resolved_session_id,
+                        latest["id"] if latest else None,
+                        (latest["version_number"] if latest else 0) + 1,
+                        Json(dict(content)),
+                        actor_user_id,
+                    ),
+                )
+            row = cursor.fetchone()
+            if not row:
+                raise RuntimeError("Could not autosave the clinical-note draft.")
+            return {
+                "id": str(row["id"]),
+                "parent_version_id": str(row["parent_version_id"]) if row["parent_version_id"] else None,
+                "version_number": row["version_number"],
+                "status": row["status"],
+            }
+
+    def finalize_clinical_note_draft(
+        self,
+        *,
+        organization_id: str,
+        client_id: str,
+        session_id: str,
+        note_version_id: str,
+        actor_user_id: str,
+    ) -> dict[str, Any]:
+        """Lock the latest working draft as an immutable therapist-finalized version."""
+        with self.connection.cursor() as cursor:
+            resolved_session_id = self._resolve_session_scope(
+                cursor,
+                organization_id=organization_id,
+                client_id=client_id,
+                session_id=session_id,
+            )
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (resolved_session_id,))
+            cursor.execute(
+                """
+                SELECT id, parent_version_id, status
+                FROM app.clinical_note_versions
+                WHERE session_id = %s AND organization_id = %s AND client_id = %s
+                ORDER BY version_number DESC
+                LIMIT 1
+                FOR UPDATE
+                """,
+                (resolved_session_id, organization_id, client_id),
+            )
+            latest = cursor.fetchone()
+            if not latest or str(latest["id"]) != note_version_id:
+                raise ValueError("The clinical-note draft changed. Review the latest version before finalizing.")
+            if latest["status"] not in {"draft", "reviewed"}:
+                raise ValueError("Only a working clinical-note draft can be finalized.")
+            cursor.execute(
+                """
+                UPDATE app.clinical_note_versions
+                SET status = 'finalized', finalized_by_user_id = %s,
+                    finalized_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+                RETURNING id, parent_version_id, status, finalized_at
+                """,
+                (actor_user_id, latest["id"]),
+            )
+            row = cursor.fetchone()
+            if not row:
+                raise RuntimeError("Could not finalize the clinical-note draft.")
+            return {
+                "id": str(row["id"]),
+                "parent_version_id": str(row["parent_version_id"]) if row["parent_version_id"] else None,
+                "status": row["status"],
+                "finalized_at": row["finalized_at"].isoformat(),
+            }
 
     def create_insight_snapshot(
         self,

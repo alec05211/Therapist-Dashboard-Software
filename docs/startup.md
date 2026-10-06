@@ -165,14 +165,22 @@ npm run dev
 Then open `http://localhost:3000`. The frontend uses the API address in
 `frontend/.env.local` (normally `API_ORIGIN=http://127.0.0.1:8000`).
 
-For the Terraform demo environment, prefer the startup script. It clears a
+For the Terraform demo environment, use the startup script. It clears a
 previous Python/Uvicorn process on the API port, checks whether Windows has
-reserved the port (a common cause of `WinError 10013`), and binds the API to
-loopback only:
+reserved the port (a common cause of `WinError 10013`), verifies access to the
+database before serving requests, resolves the RDS secret once into the API
+process, and binds the API to loopback only:
 
 ```powershell
 .\tools\start-demo-api.ps1
 ```
+
+Starting Uvicorn directly remains supported, but the first database-backed
+request then needs a valid `AWS_PROFILE=terraform` SSO session. The API caches
+the successfully resolved database URL in memory after that first request, so
+later SSO expiry does not make an already-running clinical workspace
+unavailable. A newly started API process still requires a current SSO login;
+run `aws sso login --profile terraform` before starting it.
 
 To use a different port, pass `-Port 8001` and set `API_ORIGIN` in
 `frontend/.env.local` to `http://127.0.0.1:8001` before starting Next.js.

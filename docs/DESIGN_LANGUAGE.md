@@ -41,6 +41,10 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 
 ## Interface copy
 
+- The authenticated therapist application uses one global top bar. Keep the product name at the left,
+  center Calendar, Client list, Practice, Billing, and Documents in the same row, and group icon-only
+  Settings, Inbox, and account controls at the right. Unimplemented destinations are plainly disabled;
+  do not append `Soon` badges to global navigation labels.
 - Use one meaningful heading per panel. Omit redundant context labels such as “Scheduled session” above a preparation heading, and avoid stacked headings that describe the same content.
 - The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
@@ -52,7 +56,8 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 
 Use `CollapsibleContentPanel` for a compact text teaser that expands into richer
 content. Clinical notes and transcripts share this exact shell: title,
-optional summary, a 96px faded preview, and a disclosure button. Pass text as
+optional summary, a faded preview, and a disclosure button. Its preview defaults
+to 96px and accepts a component-specific numeric height override. Pass text as
 `preview` and expanded content as children; use `expanded` and
 `onExpandedChange` when a parent needs to open it, such as transcript playback.
 The entire collapsed card is one disclosure button, with a visible SVG down-chevron
@@ -60,7 +65,31 @@ The entire collapsed card is one disclosure button, with a visible SVG down-chev
   panel so controls and text inside remain usable.
 Transcripts and clinical notes supply `previewContent` using the same content
 rendering as their expanded view, clipped to the preview height and inert while collapsed. Playback labels
-and dialogue share the same first-line baseline, including wrapped segments.
+and dialogue share the same first-line baseline, including wrapped segments. Use the same fixed 64px
+bottom fade and 56px blur band for every preview so component-specific height overrides do not stretch
+or dilute the concealment treatment. The clinical-note
+preview renders the current Tiptap document structure rather than flattened plain text, preserving
+its headings, lists, paragraph spacing, and inline emphasis. Its collapsed and expanded document
+surfaces use a 56px left inset aligned with the transcript timestamp rail and a 16px right inset.
+The clinical-note preview is 136px tall so additional document context remains visible without making
+the collapsed card feel dense. Give its content a 12px top inset, and remove the first document block's top margin in both
+collapsed and expanded states.
+
+Clinical notes begin as explicitly labeled AI drafts. A working draft's Tiptap document
+is directly editable whenever the panel is expanded; do not require a separate edit-mode
+control. Center its restrained formatting controls in the same header row as `Clinical Note`
+and its draft status, rather than adding a second toolbar row. Keep finalization at the right.
+Do not show persistent autosave helper copy: after an edit, briefly show an animated
+`Saving...` followed by `Saved`, then remove the indicator. Finalized records remain locked until the therapist explicitly starts a linked
+amendment. Show an
+uppercase, italic amber `AI DRAFT` or `DRAFT` status without appending autosave copy;
+keep save feedback in the editing toolbar. The finalization checkmark appears only
+while the editor is active. Support paragraph, heading, subheading, bold,
+italic, strikethrough, bulleted and numbered lists, undo, and redo; omit decorative
+font, color, and alignment controls. Edits autosave to one mutable server-side working
+draft after a short debounce and on editor blur, with a quiet Saving/Saved/error state.
+Finalization requires two explicit confirmations, locks that version for longitudinal
+synthesis, and turns any later edit into a linked amendment draft.
 
 Scheduled-session preparation uses that same `CollapsibleContentPanel` shell for
 the pre-session brief, with its actual brief rendering serving as the collapsed
@@ -153,10 +182,22 @@ revealed.
   upcoming scheduled session; later sessions remain empty.
 - Transcript segments share one compact playback row: a fixed timestamp column on
   the left groups the play/pause icon, timestamp, and speaker name with even
-  spacing, followed by dialogue. Flagged passage text is bold and selectable;
+  spacing, followed by dialogue. The transcript header reports the number of
+  remaining passage-level proposed claims. Proposed passage text is bold and selectable;
+  accepted or dismissed passages immediately return to ordinary transcript styling;
   avoid separate cards, badges, or underlines for those rows. Selecting bold text
-  opens clinician guidance inline without changing playback. Clicking anywhere
-  else in the row plays or pauses that segment. Hover uses a faint full-row inset
+  opens one non-modal evidence inspector without changing playback or the transcript's
+  layout. On desktop, the inspector floats above the workspace, can be repositioned
+  from its grab handle, remains inside the viewport, and updates in place when another
+  passage is selected. Multiple provider proposals citing the same passage remain one
+  review object in this inspector. Present `Use as` as a checkmarked multi-select so
+  one therapist interpretation can inform several synthesis categories without
+  stacking duplicate editors. Keep its menu compact in two columns on desktop and
+  let the inspector grow to contain it without an internal scrollbar. Summarize up
+  to the first three selected category labels inline, followed by `+N more` when
+  additional categories are selected. On narrow screens it becomes a fixed bottom sheet. Keep the
+  selected transcript row visibly highlighted so its relationship to the inspector
+  remains clear. Clicking anywhere else in the row plays or pauses that segment. Hover uses a faint full-row inset
   surface, while active playback uses a slightly stronger neutral surface. Give
   each row rounded-xl corners and a small vertical gap so adjacent state surfaces
   remain visually separate; do not box the timestamp/name group. Make
@@ -164,7 +205,7 @@ revealed.
   the timestamp and reveal it only on segment hover, keyboard focus, or active
   playback position; reserve its space to prevent layout shifts. Use equally sized
   SVG play and pause icons. Keep the viewport still while the active segment is
-  visible; only scroll an offscreen segment into view using nearest alignment. Keep row spacing tight for long transcripts. Saved quotes and longer journey lists start
+  visible; only scroll an offscreen segment into view using nearest alignment. Keep row spacing tight for long transcripts. Accepted evidence category groups start
   collapsed in Insights.
 
 - The therapist Insights page begins with its generated longitudinal overview,
@@ -175,8 +216,10 @@ revealed.
   show relative evidence coverage for navigation, not severity or clinical
   importance. These are record-navigation counts rather than clinical scores. A
   longitudinal overview follows, then evidence-linked sections for trajectory,
-  recurring themes, open threads, and client context. The evidence and review
-  queue remains a separate deeper section below the overview.
+  recurring themes, open threads, and client context. Keep proposed evidence
+  review in the transcript rather than repeating session observations in
+  Insights. The deeper Evidence and review section shows only therapist-accepted
+  claims, grouped by their `Use as` category, with links to every cited source.
   Write each saved insight as cohesive natural-language prose with two semantic
   layers: first an unlinked analysis statement explaining what may matter, then
   contextual statements explaining where that interpretation appeared in the

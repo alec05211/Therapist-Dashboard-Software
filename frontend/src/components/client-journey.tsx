@@ -2,82 +2,123 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { JOURNEY_CATEGORIES } from "@/lib/journey-categories";
 import type { BriefEvidence, ClientJourneyEntry, LongitudinalRecordContext } from "@/lib/types";
 
-type Props = { recordContext: LongitudinalRecordContext; onViewEvidence: (source: BriefEvidence) => void };
-type Category = ClientJourneyEntry["category"];
+type Props = {
+  recordContext: LongitudinalRecordContext;
+  onViewEvidence: (source: BriefEvidence) => void;
+};
 
-const categories: Array<{ value: Category; label: string }> = [
-  { value: "context", label: "Client context" },
-  { value: "theme", label: "Theme" },
-  { value: "important_quote", label: "Important statement" },
-  { value: "resolution", label: "Resolution" },
-  { value: "breakthrough", label: "Breakthrough" },
-  { value: "open_thread", label: "Open thread" },
-];
+const formatTime = (seconds?: number) => {
+  const safeSeconds = Number.isFinite(seconds) ? Number(seconds) : 0;
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainder = Math.floor(safeSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${remainder}`;
+};
 
-function JourneyCard({ entry, recordContext, onViewEvidence, onSaved }: {
-  entry: ClientJourneyEntry; recordContext: LongitudinalRecordContext;
-  onViewEvidence: Props["onViewEvidence"]; onSaved: () => Promise<void>;
+const evidenceSessionLabel = (label: string) => {
+  const parts = label.split(" · ");
+  return parts[0] === "Synthetic" && parts.length > 2 ? parts.slice(2).join(" · ") : label;
+};
+
+function AcceptedEvidenceCard({ entry, recordContext, onViewEvidence, onSaved }: {
+  entry: ClientJourneyEntry;
+  recordContext: LongitudinalRecordContext;
+  onViewEvidence: Props["onViewEvidence"];
+  onSaved: () => Promise<void>;
 }) {
-  const [text, setText] = useState(entry.text);
-  const [category, setCategory] = useState<Category>(entry.category);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<"stale" | "hidden" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const proposed = entry.status === "proposed";
-  const save = async (status: "accepted" | "rejected" | "hidden" | "stale") => {
-    setSaving(true); setError(null);
+
+  const save = async (status: "stale" | "hidden") => {
+    setSaving(status);
+    setError(null);
     try {
-      await api.reviewClientJourneyEntry(recordContext.organizationId, recordContext.clientId, entry.id,
-        { category, text: text.trim(), status });
+      await api.reviewClientJourneyEntry(
+        recordContext.organizationId,
+        recordContext.clientId,
+        entry.id,
+        { category: entry.categories[0], categories: entry.categories, text: entry.text, status },
+      );
       await onSaved();
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save the review decision."); }
-    finally { setSaving(false); }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not update this accepted claim.");
+    } finally {
+      setSaving(null);
+    }
   };
+
   return <article className="rounded-xl border border-stone-300 bg-stone-50 p-4">
-    <div className="flex items-start justify-between gap-3"><span className="text-xs font-medium capitalize text-stone-600">{entry.status}</span><span className="text-xs text-stone-500">{entry.evidence.length} cited {entry.evidence.length === 1 ? "passage" : "passages"}</span></div>
-    {proposed ? <div className="mt-3 grid gap-3">
-      <label className="grid gap-1 text-xs font-medium text-stone-600">Category<select value={category} onChange={event => setCategory(event.target.value as Category)} className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:outline-none focus-visible:border-emerald-700">{categories.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-      <label className="grid gap-1 text-xs font-medium text-stone-600">Proposed entry<textarea value={text} onChange={event => setText(event.target.value)} rows={3} maxLength={4000} className="w-full resize-y rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-900 focus:outline-none focus-visible:border-emerald-700" /></label>
-    </div> : <p className="mt-3 text-sm leading-6 text-stone-800">{entry.text}</p>}
-    {entry.evidence[0] && <button type="button" onClick={() => onViewEvidence(entry.evidence[0])} className="mt-3 cursor-grab text-xs font-medium text-emerald-800 underline underline-offset-3 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Review cited transcript</button>}
-    <div className="mt-4 flex flex-wrap gap-2">
-      {proposed ? <><button type="button" disabled={saving || !text.trim()} onClick={() => void save("accepted")} className="cursor-grab rounded-xl bg-emerald-800 px-3 py-2 text-xs font-semibold text-white active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Accept for brief</button><button type="button" disabled={saving} onClick={() => void save("rejected")} className="cursor-grab rounded-xl border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 active:cursor-grabbing disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Dismiss</button></> : entry.status === "accepted" ? <><button type="button" disabled={saving} onClick={() => void save("stale")} className="cursor-grab rounded-xl border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 active:cursor-grabbing disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Mark outdated</button><button type="button" disabled={saving} onClick={() => void save("hidden")} className="cursor-grab rounded-xl border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 active:cursor-grabbing disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hide</button></> : null}
+    <p className="text-sm leading-6 text-stone-800">{entry.text}</p>
+    <div className="mt-3 flex flex-wrap gap-2">
+      {entry.evidence.map((source, index) => <button
+        key={source.evidence_id}
+        type="button"
+        onClick={() => onViewEvidence(source)}
+        className="cursor-grab rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-left text-xs font-medium text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+      >
+        {entry.evidence.length > 1 ? `Source ${index + 1} · ` : ""}{evidenceSessionLabel(source.session_label)} · {formatTime(source.start)}
+      </button>)}
     </div>
-    {error && <p role="alert" className="mt-3 text-xs text-red-700">{error}</p>}
+    <div className="mt-4 flex flex-wrap justify-end gap-2">
+      <button type="button" disabled={Boolean(saving)} onClick={() => void save("stale")} className="cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+        {saving === "stale" ? "Updating…" : "Mark outdated"}
+      </button>
+      <button type="button" disabled={Boolean(saving)} onClick={() => void save("hidden")} className="cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+        {saving === "hidden" ? "Hiding…" : "Hide"}
+      </button>
+    </div>
+    {error ? <p role="alert" className="mt-3 text-xs text-red-700">{error}</p> : null}
   </article>;
 }
 
 export function ClientJourney({ recordContext, onViewEvidence }: Props) {
   const [entries, setEntries] = useState<ClientJourneyEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const load = async () => {
     const result = await api.getClientJourney(recordContext.organizationId, recordContext.clientId);
     setEntries(result.entries);
   };
+
   useEffect(() => {
     let cancelled = false;
     void api.getClientJourney(recordContext.organizationId, recordContext.clientId)
-      .then(result => { if (!cancelled) setEntries(result.entries); })
-      .catch(reason => { if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load client journey entries."); });
+      .then((result) => {
+        if (!cancelled) {
+          setEntries(result.entries);
+          setError(null);
+        }
+      })
+      .catch((reason) => {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load accepted evidence.");
+      });
     return () => { cancelled = true; };
   }, [recordContext.organizationId, recordContext.clientId]);
-  const proposed = entries?.filter(entry => entry.status === "proposed") ?? [];
-  const accepted = entries?.filter(entry => entry.status === "accepted") ?? [];
-  const quotes = accepted.filter(entry => entry.category === "important_quote");
-  const history = accepted.filter(entry => entry.category !== "important_quote");
-  return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Evidence and review queue">
+
+  const accepted = entries?.filter((entry) => entry.status === "accepted" && entry.evidence.length > 0) ?? [];
+  const groupedClaims = JOURNEY_CATEGORIES.map((category) => ({
+    ...category,
+    entries: accepted.filter((entry) => entry.categories.includes(category.value)),
+  })).filter((group) => group.entries.length > 0);
+
+  return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Accepted evidence claims">
     <h2 className="text-lg font-semibold text-stone-900">Evidence and review</h2>
-    {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <p className="mt-4 text-sm text-stone-600">Loading journey entries…</p> : <div className="mt-5 grid gap-6">
-      <details className="rounded-xl border border-stone-300 bg-stone-50 p-4">
-        <summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Saved quotes · {quotes.length}</summary>
-        {quotes.length ? <div className="mt-4 grid gap-4">{quotes.map(entry => <article key={entry.id}>
-          {entry.evidence.map(source => <button key={source.evidence_id} type="button" onClick={() => onViewEvidence(source)} className="mb-2 block cursor-grab text-left text-sm leading-6 text-stone-800 underline decoration-stone-400 underline-offset-4 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">“{source.quote}” <span className="text-xs text-stone-500">{source.session_label}</span></button>)}
-          <JourneyCard entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />
-        </article>)}</div> : <p className="mt-3 text-sm text-stone-600">Review a bold passage in a completed transcript to save an important statement.</p>}
-      </details>
-      <details className="rounded-xl border border-stone-300 p-4"><summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Other proposals · {proposed.length}</summary>{proposed.length ? <div className="mt-3 grid gap-3">{proposed.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">No passages await review.</p>}</details>
-      <details className="rounded-xl border border-stone-300 p-4"><summary className="cursor-grab text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Accepted history · {history.length}</summary>{history.length ? <div className="mt-3 grid gap-3">{history.map(entry => <JourneyCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}</div> : <p className="mt-2 text-sm text-stone-600">Accepted entries will inform the pre-session brief.</p>}</details>
-    </div>}
+    <p className="mt-1 text-xs leading-5 text-stone-500">Therapist-accepted claims from transcript review, grouped by how they should inform future synthesis.</p>
+    {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <p className="mt-4 text-sm text-stone-600">Loading accepted evidence…</p> : groupedClaims.length ? <div className="mt-5 grid gap-3">
+      {groupedClaims.map((group) => <details key={group.value} className="group rounded-xl border border-stone-300 bg-white">
+        <summary className="flex cursor-grab list-none items-center justify-between gap-4 rounded-xl px-4 py-3 text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
+          <span>{group.label}</span>
+          <span className="flex items-center gap-3">
+            <span className="text-xs font-medium tabular-nums text-stone-500">{group.entries.length}</span>
+            <svg viewBox="0 0 20 20" className="size-4 text-stone-500 transition-transform group-open:rotate-180" fill="none" aria-hidden="true"><path d="m5.5 7.5 4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+        </summary>
+        <div className="grid gap-3 border-t border-stone-200 p-3">
+          {group.entries.map((entry) => <AcceptedEvidenceCard key={entry.id} entry={entry} recordContext={recordContext} onViewEvidence={onViewEvidence} onSaved={load} />)}
+        </div>
+      </details>)}
+    </div> : <p className="mt-4 rounded-xl border border-stone-300 bg-stone-50 p-4 text-sm leading-6 text-stone-600">No accepted evidence yet. Capture an insight while reviewing a suggested passage in a completed transcript.</p>}
   </section>;
 }

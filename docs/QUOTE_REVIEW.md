@@ -9,15 +9,22 @@ it does not guess a quote from a generated summary. These are existing provider
 evidence links, not a new model's ranking of important quotations. Review controls
 are available only in the therapist workspace with a relationship context.
 
-Selecting a passage opens an interpretation and category editor. Saving uses the
-existing authorized journey review endpoint and revision history. The underlying
-transcript remains unchanged. Dismissed and outdated entries lose their bold treatment
-and are excluded from subsequent briefs and guidance packets. If multiple entries
-cite the same passage, each retains its independent review decision.
+Selecting a passage opens one interpretation editor even when several provider
+summaries cite that segment. `Use as` is a checkmarked multi-select, allowing one
+therapist-reviewed claim to belong to several synthesis categories. Saving keeps
+one canonical claim, records its complete category set and revision history, and
+dismisses redundant proposals tied to that same passage. The underlying transcript
+remains unchanged. Dismissed and outdated entries lose their bold treatment and
+are excluded from subsequent briefs and guidance packets.
 
-The Insights tab includes a collapsed collection of accepted important statements,
-with original quotations and links back to the transcript. Other accepted
-categories remain in the collapsed history collection.
+Proposed entries are reviewed only from their cited passage in the completed
+transcript. The Insights tab does not repeat proposed session observations or
+provide a second review queue. Instead, its Evidence and review section is an
+accepted-evidence library grouped by the same `Use as` categories available in
+the transcript inspector: Important statement, Resolution, Breakthrough,
+Relevant context, Theme to consider, and Follow-up for next session. Each claim
+retains links to every cited transcript source and can be marked outdated or
+hidden without changing the underlying transcript.
 
 The current pre-session brief remains a deterministic projection of accepted
 records. It renders at most two context entries as the opening paragraph, then
