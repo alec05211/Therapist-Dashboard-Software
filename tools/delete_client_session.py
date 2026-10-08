@@ -50,6 +50,9 @@ def main() -> None:
         expected_prefix = f"clients/{target['client_id']}/sessions/{args.session_id}/"
         if any(not row["object_key"].startswith(expected_prefix) for row in artifacts):
             raise SystemExit("An artifact is outside the expected session prefix; nothing was deleted.")
+        cursor.execute("SELECT count(*) AS count FROM app.sessions WHERE client_id=%s AND id<>%s",
+                       (target['client_id'], args.session_id))
+        deleting_only_session = cursor.fetchone()['count'] == 0
 
         s3 = boto3.client("s3", region_name=target["region"])
         for artifact in artifacts:
@@ -77,10 +80,30 @@ def main() -> None:
                 )""",
             (args.session_id, args.session_id),
         )
-        cursor.execute("DELETE FROM app.pre_session_brief_snapshots WHERE upcoming_session_id=%s", (args.session_id,))
-        cursor.execute("DELETE FROM app.longitudinal_insight_snapshots WHERE source_cutoff_session_id=%s", (args.session_id,))
+        if deleting_only_session:
+            # No clinical source remains for client-level synthesis. Clear the
+            # generated projections so a later re-upload starts from evidence,
+            # not stale Insights or a stale pre-session brief.
+            cursor.execute("DELETE FROM app.pre_session_brief_refresh_state WHERE client_id=%s",
+                           (target['client_id'],))
+            cursor.execute("DELETE FROM app.pre_session_brief_snapshots WHERE client_id=%s",
+                           (target['client_id'],))
+            cursor.execute("DELETE FROM app.generated_pre_session_briefs WHERE client_id=%s",
+                           (target['client_id'],))
+            cursor.execute("DELETE FROM app.clinical_synthesis_refresh_events WHERE client_id=%s",
+                           (target['client_id'],))
+            cursor.execute("DELETE FROM app.clinical_synthesis_refresh_state WHERE client_id=%s",
+                           (target['client_id'],))
+            cursor.execute("DELETE FROM app.longitudinal_insight_snapshots WHERE client_id=%s",
+                           (target['client_id'],))
+        else:
+            cursor.execute("DELETE FROM app.pre_session_brief_snapshots WHERE upcoming_session_id=%s",
+                           (args.session_id,))
+            cursor.execute("DELETE FROM app.longitudinal_insight_snapshots WHERE source_cutoff_session_id=%s",
+                           (args.session_id,))
         cursor.execute("DELETE FROM app.clinical_note_versions WHERE session_id=%s", (args.session_id,))
         cursor.execute("DELETE FROM app.synthesis_versions WHERE session_id=%s", (args.session_id,))
+        cursor.execute("DELETE FROM app.journey_proposal_analysis_jobs WHERE session_id=%s", (args.session_id,))
         cursor.execute(
             """DELETE FROM app.transcript_segments WHERE transcript_version_id IN (
                     SELECT id FROM app.transcript_versions WHERE session_id=%s

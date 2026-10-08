@@ -151,7 +151,7 @@ export function AppHeader() {
         <Link className="whitespace-nowrap text-lg font-semibold tracking-tight text-stone-900" href="/">
           Therapist Dashboard
         </Link>
-        {showTherapistNavigation ? <nav className="flex min-w-0 items-center justify-center gap-1 overflow-x-auto" aria-label="Therapist workspace">
+        {showTherapistNavigation ? <nav className="flex min-w-0 items-center justify-end gap-1 overflow-x-auto" aria-label="Therapist workspace">
           <Link
             href="/calendar"
             aria-current={pathname.startsWith("/calendar") ? "page" : undefined}

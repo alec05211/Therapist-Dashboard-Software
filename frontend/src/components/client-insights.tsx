@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
+import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
 import { ApiError, api } from "@/lib/api";
 import type { BriefEvidence, ClientJourneyEntry, LongitudinalRecordContext, PersistedInsightSnapshot } from "@/lib/types";
 
@@ -25,12 +27,80 @@ type ThemeMetric = {
   momentCount: number;
 };
 
-const groups: Array<{ title: string; description: string; kinds: InsightItem["kind"][] }> = [
-  { title: "Overall trajectory", description: "Evidence-linked changes or continuity across the relationship.", kinds: ["trajectory"] },
-  { title: "Recurring themes", description: "Topics that appear across more than one part of the record.", kinds: ["theme"] },
-  { title: "Open threads", description: "Items that may be useful to revisit in a future session.", kinds: ["open_thread"] },
-  { title: "Context and history", description: "Relevant background and therapist-curated context.", kinds: ["relevant_history", "client_context", "therapist_curated"] },
+type InsightModuleKind = "current_focus" | "change" | "recurring_themes" | "context_history";
+type InsightMaturity = "single_session" | "emerging" | "longitudinal";
+type InsightPriorityBucket = "immediate" | "active" | "background";
+
+type InsightModule = {
+  kind: InsightModuleKind;
+  title: string;
+  previewSummary: string;
+  maturity: InsightMaturity;
+  priorityBucket: InsightPriorityBucket;
+  sourceSessionCount: number;
+  items: InsightItem[];
+  displayMode: "compact" | "collapsible";
+};
+
+const moduleDefinitions: Array<{
+  kind: InsightModuleKind;
+  title: string;
+  priorityBucket: InsightPriorityBucket;
+  kinds: InsightItem["kind"][];
+}> = [
+  { kind: "current_focus", title: "Current focus", priorityBucket: "immediate", kinds: ["open_thread"] },
+  { kind: "change", title: "Changes over time", priorityBucket: "active", kinds: ["trajectory"] },
+  { kind: "recurring_themes", title: "Recurring themes", priorityBucket: "active", kinds: ["theme"] },
+  { kind: "context_history", title: "Relevant context", priorityBucket: "background", kinds: ["relevant_history", "client_context", "therapist_curated"] },
 ];
+
+function sourceSessionCount(items: InsightItem[]) {
+  return new Set(items.flatMap((item) => item.evidence.map((source) => source.session_id).filter((sessionId): sessionId is string => Boolean(sessionId)))).size;
+}
+
+function moduleMaturity(sessionCount: number): InsightMaturity {
+  if (sessionCount <= 1) return "single_session";
+  if (sessionCount <= 3) return "emerging";
+  return "longitudinal";
+}
+
+function firstSentence(text: string) {
+  return text.trim().split(/(?<=[.!?])\s/u, 1)[0].trim();
+}
+
+function truncateAtWord(text: string, maximumLength: number) {
+  if (text.length <= maximumLength) return text;
+  const candidate = text.slice(0, Math.max(0, maximumLength - 1));
+  const lastSpace = candidate.lastIndexOf(" ");
+  return `${candidate.slice(0, lastSpace > maximumLength * 0.6 ? lastSpace : candidate.length).trimEnd()}…`;
+}
+
+function modulePreviewSummary(items: InsightItem[]) {
+  const maximumTotalLength = 420;
+  const perItemLength = Math.max(88, Math.floor(maximumTotalLength / items.length));
+  return items.map((item) => truncateAtWord(firstSentence(savedContentText(item.content)), perItemLength)).join(" ");
+}
+
+function buildInsightModules(items: InsightItem[]): InsightModule[] {
+  return moduleDefinitions.flatMap((definition) => {
+    const moduleItems = items
+      .filter((item) => definition.kinds.includes(item.kind))
+      .sort((left, right) => {
+        const reviewPriority = (item: InsightItem) => item.review_state === "accepted" ? 0 : 1;
+        return reviewPriority(left) - reviewPriority(right) || left.display_order - right.display_order;
+      });
+    if (!moduleItems.length) return [];
+    const sessions = sourceSessionCount(moduleItems);
+    return [{
+      ...definition,
+      previewSummary: modulePreviewSummary(moduleItems),
+      maturity: moduleMaturity(sessions),
+      sourceSessionCount: sessions,
+      items: moduleItems,
+      displayMode: "collapsible",
+    }];
+  });
+}
 
 function savedContentText(content: Record<string, unknown>) {
   for (const field of ["analysis", "text", "summary", "narrative", "title"]) {
@@ -157,21 +227,23 @@ function EvidenceLinkedText({ content, item, onViewEvidence }: { content: Record
 }
 
 function StatCard({ value, label, detail }: { value: number; label: string; detail: string }) {
-  return <article className="rounded-xl border border-stone-300 bg-stone-50 p-4">
-    <p className="text-2xl font-semibold tracking-tight text-stone-900">{value}</p>
-    <h3 className="mt-1 text-sm font-semibold text-stone-800">{label}</h3>
-    <p className="mt-1 text-xs leading-5 text-stone-500">{detail}</p>
+  return <article className="rounded-xl border border-stone-300 bg-stone-50 px-3.5 py-3">
+    <div className="flex items-baseline gap-2">
+      <p className="text-xl font-semibold tracking-tight text-stone-900">{value}</p>
+      <h3 className="text-sm font-semibold text-stone-800">{label}</h3>
+    </div>
+    <p className="mt-0.5 text-xs leading-4 text-stone-500">{detail}</p>
   </article>;
 }
 
 function ThemeRecurrence({ themes }: { themes: ThemeMetric[] }) {
   const maximumMoments = Math.max(1, ...themes.map((theme) => theme.momentCount));
-  return <section className="mt-5 rounded-xl border border-stone-300 bg-stone-50 p-4" aria-labelledby="theme-recurrence-heading">
+  return <section className="mt-3 rounded-xl border border-stone-300 bg-stone-50 p-3.5" aria-labelledby="theme-recurrence-heading">
     <div className="flex items-baseline justify-between gap-3">
       <h3 id="theme-recurrence-heading" className="text-sm font-semibold text-stone-900">Theme recurrence</h3>
       <span className="text-xs text-stone-500">Cited record moments</span>
     </div>
-    {themes.length ? <div className="mt-4 grid gap-4">
+    {themes.length ? <div className="mt-3 grid gap-3">
       {themes.map((theme) => <div key={theme.key} className="grid gap-2 sm:grid-cols-[minmax(150px,0.8fr)_minmax(180px,1.2fr)_auto] sm:items-center">
         <p className="truncate text-sm font-medium text-stone-800" title={theme.label}>{theme.label}</p>
         <div className="h-2 overflow-hidden rounded-full border border-stone-300 bg-white" aria-hidden="true">
@@ -199,13 +271,76 @@ function InsightCard({ item, onViewEvidence }: { item: InsightItem; onViewEviden
   </article>;
 }
 
-function InsightGroup({ title, description, items, onViewEvidence }: { title: string; description: string; items: InsightItem[]; onViewEvidence: Props["onViewEvidence"] }) {
-  return <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h2 className="text-base font-semibold text-stone-900">{title}</h2>
-      <p className="text-xs leading-5 text-stone-500">{description}</p>
+function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: InsightItem[]; onViewEvidence: Props["onViewEvidence"]; className?: string }) {
+  return <div className={`grid gap-3 ${className}`}>{items.map((item) => <InsightCard key={item.id} item={item} onViewEvidence={onViewEvidence} />)}</div>;
+}
+
+function InsightModulePreview({ module }: { module: InsightModule }) {
+  return <div className="px-4 pb-4">
+    <p className="max-w-4xl text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      {module.items.map((item) => <span key={item.id} className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+        {insightLabel(item.content)}
+      </span>)}
     </div>
-    {items.length ? <div className="mt-4 grid gap-3">{items.map((item) => <InsightCard key={item.id} item={item} onViewEvidence={onViewEvidence} />)}</div> : <p className="mt-4 rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-5 text-sm text-stone-600">Nothing is currently saved in this area.</p>}
+  </div>;
+}
+
+function InsightGroup({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
+  if (module.displayMode === "collapsible") {
+    const body = <InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-4 pt-0" />;
+    return <CollapsibleContentPanel
+      title={module.title}
+      preview={`${module.previewSummary} ${module.items.map((item) => insightLabel(item.content)).join(". ")}`}
+      previewContent={<InsightModulePreview module={module} />}
+      collapsedPreviewHeight={152}
+      className="rounded-2xl border-stone-300 bg-white shadow-sm"
+      ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
+    >
+      <div className="border-t border-stone-200">{body}</div>
+    </CollapsibleContentPanel>;
+  }
+
+  return <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
+    <h2 className="text-base font-semibold text-stone-900">{module.title}</h2>
+    <InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="mt-4" />
+  </section>;
+}
+
+function InsightSectionLoadingSkeleton({ title }: { title: string }) {
+  return <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
+    <h2 className="text-base font-semibold text-stone-900">{title}</h2>
+    <TextLoadingSkeleton className="mt-4" label={`Loading ${title.toLowerCase()}`} widths={["92%", "78%"]} />
+    <div className="mt-4 grid gap-2 sm:grid-cols-2" aria-hidden="true">
+      <span className="h-10 rounded-xl border border-stone-300 bg-stone-50 p-3"><span className="text-loading-streak block w-3/4" /></span>
+      <span className="h-10 rounded-xl border border-stone-300 bg-stone-50 p-3"><span className="text-loading-streak block w-2/3" /></span>
+    </div>
+  </section>;
+}
+
+function InsightsLoadingSkeleton() {
+  return <section className="text-left" aria-label="Loading clinical insights workspace" aria-busy="true">
+    <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
+      <h2 className="text-base font-semibold text-stone-900">Clinical overview</h2>
+      <TextLoadingSkeleton className="mt-4" label="Loading clinical overview" widths={["96%", "89%", "71%"]} />
+    </section>
+    <section className="mt-4 rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="Loading at-a-glance insight metrics">
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+        {["Themes in view", "Open threads", "Awaiting review", "Accepted evidence"].map((label, index) => <article key={label} className="rounded-xl border border-stone-300 bg-stone-50 px-3.5 py-3">
+          <div className="flex items-center gap-2"><span className="text-loading-streak block w-6" /><span className="text-sm font-semibold text-stone-800">{label}</span></div>
+          <span aria-hidden="true" className="text-loading-streak mt-2 block" style={{ width: index % 2 ? "72%" : "84%" }} />
+        </article>)}
+      </div>
+      <div className="mt-3 rounded-xl border border-stone-300 bg-stone-50 p-3.5">
+        <h3 className="text-sm font-semibold text-stone-900">Theme recurrence</h3>
+        <TextLoadingSkeleton className="mt-3" label="Loading theme recurrence" widths={["88%", "76%"]} />
+      </div>
+    </section>
+    <section className="mt-6 rounded-2xl border border-stone-300 bg-stone-100 p-4 shadow-sm" aria-label="Loading synthesis sections">
+      <div className="grid gap-4">
+        {["Current focus", "Changes over time", "Recurring themes", "Relevant context"].map((title) => <InsightSectionLoadingSkeleton key={title} title={title} />)}
+      </div>
+    </section>
   </section>;
 }
 
@@ -218,10 +353,6 @@ function InsightsWorkspace({ snapshot, entries, onViewEvidence }: { snapshot: Pe
   }) ?? [], [snapshot]);
   const currentItems = visibleItems.filter((item) => item.review_state !== "stale" && item.review_state !== "disputed");
   const acceptedJourney = entries.filter((entry) => entry.status === "accepted" && entry.evidence.length > 0);
-  const representedSessions = new Set([
-    ...visibleItems.flatMap((item) => item.evidence.map((source) => source.session_id).filter(Boolean)),
-    ...acceptedJourney.flatMap((entry) => entry.evidence.map((source) => source.session_id).filter(Boolean)),
-  ]).size;
   const snapshotThemes = currentItems.filter((item) => item.kind === "theme");
   const themeMetrics: ThemeMetric[] = snapshotThemes.length ? snapshotThemes.map((item) => {
     const sessions = new Set(item.evidence.map((source) => source.session_id).filter(Boolean));
@@ -231,33 +362,53 @@ function InsightsWorkspace({ snapshot, entries, onViewEvidence }: { snapshot: Pe
   const themeCount = themeMetrics.length;
   const openThreadCount = currentItems.filter((item) => item.kind === "open_thread").length;
   const awaitingReview = currentItems.filter((item) => item.review_state === "draft").length;
-  const visibleGroups = groups.map((group) => ({ ...group, items: visibleItems.filter((item) => group.kinds.includes(item.kind)) })).filter((group) => group.items.length > 0);
-  const hasEvidence = representedSessions > 0;
+  const acceptedSessions = Array.from(acceptedJourney.reduce((sessions, entry) => {
+    const acceptedAt = Number.isFinite(Date.parse(entry.created_at)) ? Date.parse(entry.created_at) : 0;
+    sessions.set(entry.session_id, Math.max(sessions.get(entry.session_id) ?? 0, acceptedAt));
+    return sessions;
+  }, new Map<string, number>()).entries()).sort((left, right) => right[1] - left[1]);
+  const latestAcceptedSessionId = acceptedSessions[0]?.[0];
+  const acceptedSincePreviousSession = latestAcceptedSessionId ? acceptedJourney.filter((entry) => entry.session_id === latestAcceptedSessionId).length : 0;
+  const acceptedEvidenceDetail = acceptedSessions.length > 1
+    ? `${acceptedSincePreviousSession} added since previous session.`
+    : `${acceptedSincePreviousSession} captured in the current record.`;
+  const insightModules = buildInsightModules(currentItems);
+  const hasMetrics = themeCount > 0 || openThreadCount > 0 || awaitingReview > 0 || acceptedJourney.length > 0;
+  const overview = snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet.";
+  const overviewDetails = snapshot ? <>
+    <p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p>
+    <p className="mt-4 text-xs leading-5 text-stone-500">Workspace {snapshot.status} · version {snapshot.version} · generated by {snapshot.generator_name}. Review the cited evidence before relying on generated observations.</p>
+  </> : <p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p>;
+  const overviewIsLong = overview.length > 420;
 
   return <section className="text-left" aria-label="Clinical insights workspace">
-    <header className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-stone-900">Insights</h2>
-      <section className="mt-5" aria-labelledby="longitudinal-overview-heading">
-        <h3 id="longitudinal-overview-heading" className="text-base font-semibold text-stone-900">Longitudinal overview</h3>
-        <p className="mt-3 max-w-4xl text-[15px] leading-7 text-stone-700">{snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet."}</p>
-        {snapshot ? <p className="mt-4 text-xs leading-5 text-stone-500">Workspace {snapshot.status} · version {snapshot.version} · generated by {snapshot.generator_name}. Review the cited evidence before relying on generated observations.</p> : null}
-      </section>
-    </header>
+    {overviewIsLong ? <CollapsibleContentPanel
+      title="Clinical overview"
+      preview={overview}
+      previewContent={<div className="px-4 pb-4"><p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p></div>}
+      collapsedPreviewHeight={112}
+      className="rounded-2xl border-stone-300 bg-white shadow-sm"
+    >
+      <div className="border-t border-stone-200 p-5">{overviewDetails}</div>
+    </CollapsibleContentPanel> : <header className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
+      <h2 className="text-base font-semibold text-stone-900">Clinical overview</h2>
+      <div className="mt-3">{overviewDetails}</div>
+    </header>}
 
-    {hasEvidence ? <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-label="Insight metrics">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard value={representedSessions} label="Evidence sessions" detail="Sessions cited by the current workspace." />
+    {hasMetrics ? <section className="mt-4 rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="At-a-glance insight metrics">
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {themeCount > 0 ? <StatCard value={themeCount} label="Themes in view" detail="Themes supported across sessions." /> : null}
         {openThreadCount > 0 ? <StatCard value={openThreadCount} label="Open threads" detail="Items that may need follow-up." /> : null}
         {awaitingReview > 0 ? <StatCard value={awaitingReview} label="Awaiting review" detail="Proposals requiring therapist judgment." /> : null}
+        {acceptedJourney.length > 0 ? <StatCard value={acceptedJourney.length} label="Accepted evidence" detail={acceptedEvidenceDetail} /> : null}
       </div>
       {themeMetrics.length ? <ThemeRecurrence themes={themeMetrics} /> : null}
       <p className="mt-3 text-xs leading-5 text-stone-500">These counts organize the available record; they are not clinical scores or conclusions.</p>
     </section> : null}
 
-    <div className="mt-6 grid gap-4 lg:grid-cols-2">
-      {visibleGroups.map((group) => <InsightGroup key={group.title} title={group.title} description={group.description} items={group.items} onViewEvidence={onViewEvidence} />)}
-    </div>
+    {insightModules.length ? <section className="mt-6 rounded-2xl border border-stone-300 bg-stone-100 p-4 shadow-sm" aria-label="Clinical synthesis sections">
+      <div className="grid gap-4">{insightModules.map((module) => <InsightGroup key={module.kind} module={module} onViewEvidence={onViewEvidence} />)}</div>
+    </section> : null}
   </section>;
 }
 
@@ -284,6 +435,6 @@ export function ClientInsights({ onViewEvidence, recordContext }: Props) {
 
   if (!recordContext) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-stone-600">Open Insights from an authorized client workspace.</p></section>;
   if (error) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-red-700">{error}</p></section>;
-  if (loading) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-stone-600">Preparing the longitudinal record…</p></section>;
+  if (loading) return <InsightsLoadingSkeleton />;
   return <InsightsWorkspace snapshot={snapshot} entries={entries} onViewEvidence={onViewEvidence} />;
 }

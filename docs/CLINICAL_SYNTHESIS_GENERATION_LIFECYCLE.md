@@ -58,6 +58,12 @@ This policy should be tuned with observed generation latency, event frequency, c
 
 The interface should not ask therapists to perform routine system maintenance.
 
+The page's presentation and progressive-disclosure contract is defined in
+[Insights progressive disclosure architecture](INSIGHTS_PROGRESSIVE_DISCLOSURE.md).
+Insights uses a stable semantic hierarchy, hides unsupported modules, and places
+clinically useful current material above background context, orientation counts,
+and the accepted evidence record.
+
 - While work is queued or running, keep the last valid snapshot readable and show a quiet status such as **Updating insights**.
 - Do not expose a manual Insights regeneration control. Crossing a threshold should make the background worker run without transferring maintenance responsibility to the therapist.
 - Avoid an interruptive popup that says the therapist must refresh. Delayed or failed work may surface a quiet operational status and recover through the background retry and reconciliation paths.
@@ -78,6 +84,39 @@ An Insights refresh reads only eligible, client-scoped, versioned sources under 
 It must exclude or appropriately constrain hidden, stale, disputed, rejected, superseded, or unfinalized material. Every contextual evidence statement requires explicit source identifiers. The interface never guesses phrase anchors from lexical similarity.
 
 Incremental generation may update affected portions for responsiveness. A periodic full reconciliation from eligible canonical records should detect drift and confirm that the current snapshot still reflects all lifecycle controls.
+
+### Transcript proposal analysis
+
+New-session evidence proposals may use the current validated Insights snapshot as
+versioned comparison context when suggesting categories and a concise
+future-synthesis focus. The proposal must remain anchored to direct transcript
+evidence; prior Insights cannot become evidence for the new claim. Persist the
+source Insights snapshot ID and generator version with each proposal. Reviewing a
+proposal may advance Insights, but that new snapshot does not regenerate the same
+session's pending proposals unless their source transcript version changes. This
+keeps review stable and prevents a same-session model feedback loop.
+
+For each completed upload, the application creates one durable proposal-analysis
+job keyed to the exact transcript version. The job reads the complete normalized
+transcript in a single bounded pass, discovers a selective set of claims, assigns
+all directly useful review categories, and writes a concise future-synthesis focus
+for each claim. Every claim must cite one or more exact transcript segment IDs.
+The pass may compare against the current validated Insights snapshot, but Insights
+never substitutes for transcript evidence.
+
+Transcript persistence and the HealthScribe clinical-note draft do not wait for
+this secondary pass. Until it succeeds, source-linked HealthScribe proposals may
+remain available as a baseline. Successful publication atomically replaces only
+unreviewed baseline proposals; accepted or dismissed therapist decisions are never
+overwritten. Jobs are idempotent per transcript version, use bounded retries and a
+recoverable worker lease, and retain model, prompt-version, input-fingerprint,
+usage, response, failure, and source-snapshot provenance without logging clinical
+prompt content. Configuring both the OpenAI API key and proposal model opts that
+deployment into the pass for every completed transcript upload, regardless of
+account type. This keeps proof-of-concept uploads predictable and avoids
+per-client eligibility state. A production deployment must not configure that
+provider path for real clinical data until its external-model data flow, consent,
+contractual, retention, privacy, security, and clinical-policy controls are approved.
 
 ## 6. Pre-session brief contract
 

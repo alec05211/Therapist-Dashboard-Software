@@ -33,7 +33,10 @@ export function CollapsibleContentPanel({ title, preview, previewContent, childr
         <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-6"><span className="text-base font-semibold">{title}</span>{summary && <span className="text-sm text-stone-600">{summary}</span>}</span>
         {!expanded && !previewContent && <span className="collapsed-content-preview mt-3 block overflow-hidden text-sm leading-6 text-stone-600" style={{ height: collapsedPreviewHeight }}>{preview}</span>}
       </div>
-      {!expanded && previewContent && <div className="collapsed-content-preview overflow-hidden" style={{ height: collapsedPreviewHeight }} inert aria-hidden="true">{previewContent}</div>}
+      {!expanded && previewContent && <>
+        <span className="sr-only">{preview}</span>
+        <div className="collapsed-content-preview overflow-hidden" style={{ height: collapsedPreviewHeight }} inert aria-hidden="true">{previewContent}</div>
+      </>}
       {headerCenter && <div className="absolute left-1/2 top-2.5 z-20 flex -translate-x-1/2 items-center">{headerCenter}</div>}
       {headerActions && <div className="absolute right-12 top-2.5 z-20 flex items-center gap-2">{headerActions}</div>}
       <button type="button" onClick={toggle} aria-label={title} aria-expanded={expanded} aria-controls={contentId} className="absolute inset-0 z-10 w-full cursor-grab rounded-xl text-left transition-colors duration-200 ease-out hover:bg-stone-200/20 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700">

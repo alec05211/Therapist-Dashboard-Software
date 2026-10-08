@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { JOURNEY_CATEGORIES } from "@/lib/journey-categories";
+import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
 import type { BriefEvidence, ClientJourneyEntry, LongitudinalRecordContext } from "@/lib/types";
 
 type Props = {
@@ -106,7 +107,12 @@ export function ClientJourney({ recordContext, onViewEvidence }: Props) {
   return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Accepted evidence claims">
     <h2 className="text-lg font-semibold text-stone-900">Evidence and review</h2>
     <p className="mt-1 text-xs leading-5 text-stone-500">Therapist-accepted claims from transcript review, grouped by how they should inform future synthesis.</p>
-    {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <p className="mt-4 text-sm text-stone-600">Loading accepted evidence…</p> : groupedClaims.length ? <div className="mt-5 grid gap-3">
+    {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <div className="mt-5 grid gap-3" aria-busy="true">
+      {["Important statement", "Relevant context", "Follow-up for next session"].map((label, index) => <div key={label} className="rounded-xl border border-stone-300 bg-stone-50 px-4 py-3">
+        <div className="flex items-center justify-between gap-4"><span className="text-sm font-semibold text-stone-800">{label}</span><span aria-hidden="true" className="text-loading-streak block w-8" /></div>
+        {index === 0 ? <TextLoadingSkeleton className="mt-3" label="Loading accepted evidence" widths={["91%", "67%"]} /> : null}
+      </div>)}
+    </div> : groupedClaims.length ? <div className="mt-5 grid gap-3">
       {groupedClaims.map((group) => <details key={group.value} className="group rounded-xl border border-stone-300 bg-white">
         <summary className="flex cursor-grab list-none items-center justify-between gap-4 rounded-xl px-4 py-3 text-sm font-semibold text-stone-900 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
           <span>{group.label}</span>

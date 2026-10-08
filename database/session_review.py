@@ -7,6 +7,7 @@ from psycopg.types.json import Json
 
 from database.connection import connect
 from database import client_journey
+from database import journey_proposal_jobs
 from database import speaker_identification
 
 
@@ -63,7 +64,11 @@ def persist_result(storage, segments, clinical_note, source_artifact_id, raw_tra
                 (storage['organization_id'], storage['client_id'], storage['session_id'], version_id,
                  Json({'clinical_note': clinical_note})))
             if raw_transcript is not None and raw_note is not None:
-                client_journey.propose_from_healthscribe(cursor, storage, raw_transcript, raw_note, version_id)
+                client_journey.propose_from_healthscribe(
+                    cursor, storage, raw_transcript, raw_note, version_id,
+                    generator_name='Amazon HealthScribe', generator_version='source-summary-v1',
+                    analysis_status='awaiting_full_transcript_analysis')
+                journey_proposal_jobs.enqueue(cursor, storage, version_id)
         else:
             version_id = existing['id']
         speaker_identification.store_samples(cursor, storage, version_id)

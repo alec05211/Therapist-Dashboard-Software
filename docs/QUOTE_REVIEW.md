@@ -3,11 +3,22 @@
 Current product work: make existing source-linked proposals reviewable in the
 transcript and make the pre-session brief easier to scan.
 
-The transcript bolds passages cited by proposed or accepted journey entries.
+The transcript bolds passages cited by still-proposed journey entries.
 It requires the session, segment index, and exact trimmed source text to match;
-it does not guess a quote from a generated summary. These are existing provider
-evidence links, not a new model's ranking of important quotations. Review controls
-are available only in the therapist workspace with a relationship context.
+it does not guess a quote from generated wording. Accepting or dismissing the
+proposal immediately returns the passage to ordinary transcript styling. The
+header reports the remaining passage-level proposal count. Review controls are
+available only in the therapist workspace with a relationship context.
+
+For new HealthScribe results, the application extracts a bounded set of
+source-linked candidates and may run structured proposal analysis before they
+are persisted. The analyzer selects every directly useful `Use as` category and
+writes a concise future-synthesis focus. It may compare the new passage with the
+current accepted Insights snapshot, but that snapshot is context rather than
+evidence: the proposal remains linked only to its exact transcript passages.
+Each proposal stores the snapshot revision and generator provenance that
+informed it. Model enrichment defaults to explicitly synthetic portal cases;
+real-data use requires an approved data policy and explicit configuration.
 
 Selecting a passage opens one interpretation editor even when several provider
 summaries cite that segment. `Use as` is a checkmarked multi-select, allowing one
@@ -40,9 +51,10 @@ Next synthesis work should evaluate whether source context, corrected speaker
 roles, session dates, clinician priorities, and contrasting evidence improve
 faithfulness and preparation usefulness. Live primary-insights regeneration is
 not implemented by this change. Existing external-provider governance remains in
-force; this work does not send clinical records to a frontier model.
+force.
 
 Validation uses synthetic browser fixtures for light/dark readability and inline
 save behavior, plus tests for accepted-only selection, immutable source wording,
-bounded guidance, relationship scoping, and denied access. No database migration
-is required.
+bounded guidance, relationship scoping, structured proposal output, and denied
+access. Migration `028_journey_proposal_analysis.sql` adds proposal-generation
+lineage without altering therapist review history.

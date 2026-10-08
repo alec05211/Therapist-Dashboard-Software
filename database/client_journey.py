@@ -1,46 +1,92 @@
 """Source-linked HealthScribe proposals and therapist-reviewed journey history."""
 
+from psycopg.types.json import Json
+
 CATEGORIES = {'context', 'theme', 'important_quote', 'resolution', 'breakthrough', 'open_thread'}
+CATEGORY_ORDER = ('important_quote', 'resolution', 'breakthrough', 'context', 'theme', 'open_thread')
 REVIEW_STATES = {'accepted', 'rejected', 'hidden', 'stale', 'disputed'}
 
 
-def propose_from_healthscribe(cursor, storage, raw_transcript, raw_note, transcript_version_id):
-    """Store source-linked note excerpts as proposals, never as accepted facts."""
-    source_indices = {}
+def extract_healthscribe_candidates(raw_transcript, raw_note, limit=15):
+    """Return bounded source-linked candidates without assigning clinical meaning."""
+    source_segments = {}
     sequence = 0
     for segment in raw_transcript.get('Conversation', {}).get('TranscriptSegments', []):
-        if not str(segment.get('Content') or '').strip():
+        content = str(segment.get('Content') or '').strip()
+        if not content:
             continue
         if segment.get('SegmentId'):
-            source_indices[segment['SegmentId']] = sequence
+            source_segments[segment['SegmentId']] = {
+                'sequence_number': sequence,
+                'quote': content,
+                'speaker': segment.get('ParticipantRole') or segment.get('SpeakerLabel'),
+            }
         sequence += 1
+    candidates = []
+    for section_index, section in enumerate(raw_note.get('ClinicalDocumentation', {}).get('Sections', [])):
+        section_name = str(section.get('SectionName') or 'OTHER')
+        for index, item in enumerate(section.get('Summary', [])):
+            content = str(item.get('SummarizedSegment') or '').strip()
+            evidence = [source_segments[link['SegmentId']]
+                        for link in item.get('EvidenceLinks', [])
+                        if link.get('SegmentId') in source_segments]
+            if not content or len(content) > 4000 or not evidence:
+                continue
+            candidates.append({
+                'proposal_key': f'{section_index}:{section_name}:{index}',
+                'section_name': section_name,
+                'source_summary': content,
+                'evidence': evidence[:6],
+            })
+            if len(candidates) >= limit:
+                return candidates
+    return candidates
+
+
+def propose_from_healthscribe(cursor, storage, raw_transcript, raw_note, transcript_version_id,
+                               analyses=None, source_insight_snapshot_id=None,
+                               generator_name=None, generator_version=None,
+                               analysis_status='baseline'):
+    """Store source-linked note excerpts as proposals, never as accepted facts."""
+    candidates = extract_healthscribe_candidates(raw_transcript, raw_note)
+    analyses = analyses or {}
     cursor.execute("""SELECT id, sequence_number FROM app.transcript_segments
         WHERE transcript_version_id=%s""", (transcript_version_id,))
     persisted = {row['sequence_number']: row['id'] for row in cursor.fetchall()}
     written = 0
-    for section_index, section in enumerate(raw_note.get('ClinicalDocumentation', {}).get('Sections', [])):
-        section_name = section.get('SectionName', 'OTHER')
-        for index, item in enumerate(section.get('Summary', [])):
-            content = str(item.get('SummarizedSegment') or '').strip()
-            cited = {persisted[source_indices[link['SegmentId']]]
-                     for link in item.get('EvidenceLinks', [])
-                     if link.get('SegmentId') in source_indices and source_indices[link['SegmentId']] in persisted}
-            if not content or len(content) > 4000 or not cited:
-                continue
-            cursor.execute("""INSERT INTO app.client_journey_entries
-                (organization_id, client_id, session_id, source_summary_key, source_provider, content)
-                VALUES (%s,%s,%s,%s,'amazon_healthscribe',%s)
-                ON CONFLICT (session_id, source_summary_key) DO NOTHING RETURNING id""",
-                (storage['organization_id'], storage['client_id'], storage['session_id'], f'{section_index}:{section_name}:{index}', content))
-            proposal = cursor.fetchone()
-            if proposal:
-                for segment_id in cited:
-                    cursor.execute("""INSERT INTO app.client_journey_evidence
-                        (journey_entry_id, transcript_segment_id) VALUES (%s,%s)""",
-                        (proposal['id'], segment_id))
-                written += 1
-            if written >= 15:
-                return written
+    for candidate in candidates:
+        cited = {persisted[source['sequence_number']]
+                 for source in candidate['evidence'] if source['sequence_number'] in persisted}
+        if not cited:
+            continue
+        analysis = analyses.get(candidate['proposal_key']) or {}
+        categories = [value for value in CATEGORY_ORDER
+                      if value in set(analysis.get('categories') or [])]
+        if not categories:
+            categories = ['context']
+        content = str(analysis.get('synthesis_focus') or candidate['source_summary']).strip()
+        proposal_analysis = {
+            'source_summary': candidate['source_summary'],
+            'section_name': candidate['section_name'],
+            'analysis_status': analysis_status,
+            **{key: analysis[key] for key in ('relationship', 'related_insight_item_ids') if key in analysis},
+        }
+        cursor.execute("""INSERT INTO app.client_journey_entries
+            (organization_id, client_id, session_id, source_summary_key, source_provider,
+             category, categories, content, source_insight_snapshot_id,
+             proposal_generator_name, proposal_generator_version, proposal_analysis)
+            VALUES (%s,%s,%s,%s,'amazon_healthscribe',%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (session_id, source_summary_key) DO NOTHING RETURNING id""",
+            (storage['organization_id'], storage['client_id'], storage['session_id'],
+             candidate['proposal_key'], categories[0], categories, content,
+             source_insight_snapshot_id, generator_name, generator_version, Json(proposal_analysis)))
+        proposal = cursor.fetchone()
+        if proposal:
+            for segment_id in cited:
+                cursor.execute("""INSERT INTO app.client_journey_evidence
+                    (journey_entry_id, transcript_segment_id) VALUES (%s,%s)""",
+                    (proposal['id'], segment_id))
+            written += 1
     return written
 
 

@@ -46,6 +46,40 @@ class ClientJourneyTests(unittest.TestCase):
         self.assertTrue(any('INSERT INTO app.client_journey_entry_revisions' in call.args[0]
                             for call in cursor.execute.call_args_list))
 
+    def test_generated_analysis_prefills_categories_and_focus(self):
+        cursor = MagicMock()
+        segment_id = uuid4()
+        proposal_id = uuid4()
+        cursor.fetchall.return_value = [{'id': segment_id, 'sequence_number': 0}]
+        cursor.fetchone.return_value = {'id': proposal_id}
+        raw_transcript = {'Conversation': {'TranscriptSegments': [{
+            'Content': 'I notice I keep carrying work home.', 'SegmentId': 'source-a',
+            'ParticipantRole': 'PATIENT_0',
+        }]}}
+        raw_note = {'ClinicalDocumentation': {'Sections': [{'SectionName': 'HISTORY', 'Summary': [{
+            'SummarizedSegment': 'Work pressure extends into home life.',
+            'EvidenceLinks': [{'SegmentId': 'source-a'}],
+        }]}]}}
+        storage = {key: str(uuid4()) for key in ('organization_id', 'client_id', 'session_id')}
+        analysis = {'0:HISTORY:0': {
+            'categories': ['theme', 'open_thread'],
+            'synthesis_focus': 'Compare whether work pressure continues to affect recovery time.',
+            'relationship': 'reinforces',
+            'related_insight_item_ids': ['insight-1'],
+        }}
+
+        client_journey.propose_from_healthscribe(
+            cursor, storage, raw_transcript, raw_note, uuid4(), analyses=analysis,
+            source_insight_snapshot_id=str(uuid4()), generator_name='test-generator',
+            generator_version='test-v1', analysis_status='generated')
+
+        insert = next(call for call in cursor.execute.call_args_list
+                      if 'INSERT INTO app.client_journey_entries' in call.args[0])
+        self.assertEqual(insert.args[1][4], 'theme')
+        self.assertEqual(insert.args[1][5], ['theme', 'open_thread'])
+        self.assertEqual(insert.args[1][6], 'Compare whether work pressure continues to affect recovery time.')
+        self.assertEqual(insert.args[1][-1].obj['analysis_status'], 'generated')
+
     def test_grouped_review_rejects_same_passage_duplicates(self):
         connection = MagicMock()
         cursor = connection.cursor.return_value.__enter__.return_value

@@ -39,12 +39,36 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 - Use backdrop blur only to soften a deliberate transition between visible and concealed content, such as collapsed previews and carousel edges. Pair it with a gradient mask, keep it subtle (`3–5px`), and never blur information that must be read or acted upon.
 - Avoid decorative entrance animations, continuous motion, and glass effects. The product should feel composed rather than attention-seeking.
 
+## Loading surfaces
+
+Content-loading states preserve the final page geometry. Insights and Clinical
+workspace render their normal section cards immediately, replacing unavailable
+copy with softly blurred neutral text streaks that resolve in place when data
+arrives. Do not substitute a blank workspace and centered spinner for these
+page-level retrieval states. Keep section names visible so the therapist can
+understand what is loading.
+
+The pre-session brief follows the same text-level loading treatment inside its
+existing disclosure card. Keep its title, card geometry, and session capture
+controls stable while the brief copy resolves; only the unavailable brief text
+is marked busy and replaced by neutral streaks.
+
+Use one restrained horizontal sweep across neutral streaks and disable it under
+`prefers-reduced-motion`. Skeletons are `aria-busy`, expose a concise loading
+label to assistive technology, and keep decorative streaks hidden. They must not
+contain invented clinical copy. Explicit operations such as upload, save,
+finalize, or recording processing retain determinate or labeled progress
+feedback rather than using content skeletons.
+
 ## Interface copy
 
 - The authenticated therapist application uses one global top bar. Keep the product name at the left,
-  center Calendar, Client list, Practice, Billing, and Documents in the same row, and group icon-only
-  Settings, Inbox, and account controls at the right. Unimplemented destinations are plainly disabled;
+  right-align Calendar, Client list, Practice, Billing, and Documents immediately before the icon-only
+  Settings, Inbox, and account controls. Unimplemented destinations are plainly disabled;
   do not append `Soon` badges to global navigation labels.
+- Therapist-facing client care navigation uses this fixed order and spelling: `Clinical Workspace`,
+  `Insights`, `Documents`, `Billing`, `Chat`, and `Client Care Settings`. Keep unimplemented tabs such
+  as Billing disabled without appending a `Soon` badge.
 - Use one meaningful heading per panel. Omit redundant context labels such as “Scheduled session” above a preparation heading, and avoid stacked headings that describe the same content.
 - The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.
@@ -65,9 +89,10 @@ The entire collapsed card is one disclosure button, with a visible SVG down-chev
   panel so controls and text inside remain usable.
 Transcripts and clinical notes supply `previewContent` using the same content
 rendering as their expanded view, clipped to the preview height and inert while collapsed. Playback labels
-and dialogue share the same first-line baseline, including wrapped segments. Use the same fixed 64px
-bottom fade and 56px blur band for every preview so component-specific height overrides do not stretch
-or dilute the concealment treatment. The clinical-note
+and dialogue share the same first-line baseline, including wrapped segments. Use the same fixed 72px
+multi-stop bottom fade and 64px blur band for every preview so component-specific height overrides do not stretch
+or dilute the concealment treatment. Keep the blur itself at a restrained 3px and taper its mask below
+full opacity at the bottom, producing a gradual dissolve rather than an abrupt fog band. The clinical-note
 preview renders the current Tiptap document structure rather than flattened plain text, preserving
 its headings, lists, paragraph spacing, and inline emphasis. Its collapsed and expanded document
 surfaces use a 56px left inset aligned with the transcript timestamp rail and a 16px right inset.
@@ -82,7 +107,7 @@ and its draft status, rather than adding a second toolbar row. Keep finalization
 Do not show persistent autosave helper copy: after an edit, briefly show an animated
 `Saving...` followed by `Saved`, then remove the indicator. Finalized records remain locked until the therapist explicitly starts a linked
 amendment. Show an
-uppercase, italic amber `AI DRAFT` or `DRAFT` status without appending autosave copy;
+  uppercase, italic amber `DRAFT` status without appending autosave copy;
 keep save feedback in the editing toolbar. The finalization checkmark appears only
 while the editor is active. Support paragraph, heading, subheading, bold,
 italic, strikethrough, bulleted and numbered lists, undo, and redo; omit decorative
@@ -109,9 +134,15 @@ reduced-motion mode shows a static ellipsis. Completed-session review begins dir
 the standard 24px workspace-section gap, without a redundant completed-session
 heading or uploaded-session label.
 
-The session carousel uses symmetrical 2px blur over the outer 12% on each side,
-keeping adjacent session labels sharp. Its schedule action is a calendar/edit
-icon with an accessible label and hover description.
+The session carousel uses its symmetrical outer 12% edges as full-height previous
+and next controls. Each edge applies a directional 4px blur and surface fade that
+blocks interaction with the obscured card beneath it; only a chevron is visible,
+positioned close to the outer border and growing slightly on hover or keyboard
+focus. The edge controls span the carousel panel's complete height. Do not place a separate circular
+button over the blur. Cards outside the readable center area are removed from
+pointer and keyboard interaction until the carousel moves them into view. Its
+schedule action remains above the right edge as the only separately interactive
+boundary, using a calendar/edit icon with an accessible label and hover description.
 
 Document grids begin with a slightly compact upload tile, when authorized,
 matching the document preview ratio and footer height. Download controls appear
@@ -198,7 +229,7 @@ revealed.
   additional categories are selected. On narrow screens it becomes a fixed bottom sheet. Keep the
   selected transcript row visibly highlighted so its relationship to the inspector
   remains clear. Clicking anywhere else in the row plays or pauses that segment. Hover uses a faint full-row inset
-  surface, while active playback uses a slightly stronger neutral surface. Give
+  surface, standard boundary, and restrained soft shadow, while active playback uses a slightly stronger neutral surface. Give
   each row rounded-xl corners and a small vertical gap so adjacent state surfaces
   remain visually separate; do not box the timestamp/name group. Make
   timestamps semibold. Place the play/pause icon before
@@ -208,10 +239,26 @@ revealed.
   visible; only scroll an offscreen segment into view using nearest alignment. Keep row spacing tight for long transcripts. Accepted evidence category groups start
   collapsed in Insights.
 
-- The therapist Insights page begins with its generated longitudinal overview,
-  without a decorative accent bar. Four compact orientation metrics follow:
-  evidence-linked sessions, themes in view, open threads, and items awaiting
-  review. Follow them with a compact theme-recurrence view that compares each
+- The therapist Insights page begins with its generated clinical overview,
+  without a decorative accent bar. A compact, untitled metrics panel follows it
+  immediately, then the page progresses through current focus, changes over
+  time, recurring themes, relevant context, and the accepted evidence record.
+  Empty modules remain hidden.
+  Clinical usefulness and evidence maturity determine exposure; session count
+  establishes eligibility but never forces a section to appear. Large overview
+  and module bodies use `CollapsibleContentPanel`, keeping the first useful
+  takeaway readable while its standard fade and blur conceal supporting depth.
+  Collapsed synthesis modules show one short section-level paragraph followed by
+  a two-column grid of the included insight names. Expanding restores those
+  named insights as distinct evidence-linked cards; do not make the preview
+  tiles independent nested disclosures.
+  Current focus, Changes over time, Recurring themes, and Relevant context sit
+  inside one quiet raised synthesis-collection card. Their individual borders,
+  disclosure behavior, and internal surfaces remain unchanged; the parent card
+  communicates that they are facets of the same generated synthesis.
+  The metrics panel uses short inline value/label typography, includes accepted
+  evidence with a latest-session delta, and retains a compact theme-recurrence
+  view that compares each
   current theme by distinct cited sessions and cited record moments. Its bars
   show relative evidence coverage for navigation, not severity or clinical
   importance. These are record-navigation counts rather than clinical scores. A

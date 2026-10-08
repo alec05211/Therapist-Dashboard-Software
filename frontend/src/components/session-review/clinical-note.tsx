@@ -171,7 +171,7 @@ export function ClinicalNote({ sections, recordContext, sessionId, editable = fa
   const finalized = note?.status === "finalized";
   const summary = finalized
     ? <span className="font-medium text-emerald-800">FINALIZED</span>
-    : <span className="font-medium italic tracking-wide text-amber-700">{note ? "DRAFT" : "AI DRAFT"}</span>;
+    : <span className="font-medium italic tracking-wide text-amber-700">DRAFT</span>;
   const saveIndicatorVisible = saveState === "unsaved" || saveState === "saving" || savedIndicatorVisible;
   const openFinalize = () => { setExpanded(true); setFinalizeOpen(true); };
   const finalize = async () => {

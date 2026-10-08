@@ -22,6 +22,7 @@ from database.auth import validate_access_token
 from database.connection import connect
 from database import organization_storage
 from database import client_journey
+from database import journey_proposal_jobs
 from database import speaker_identification
 from database import document_workflow
 from database import synthesis_refresh
@@ -2030,6 +2031,8 @@ def process_job(session_id: str, job_name: str, input_key: str, storage: dict | 
             update_status("SAVING_SESSION")
             organization_storage.publish_results(storage, directory, segments, clinical_note, raw_transcript, raw_note)
         update_status("COMPLETED")
+        if storage:
+            journey_proposal_jobs.process_one(session_id=storage['session_id'])
     except (BotoCoreError, ClientError, KeyError, OSError, ValueError, RuntimeError, PsycopgError) as exc:
         try:
             directory.mkdir(parents=True, exist_ok=True)
@@ -2123,6 +2126,13 @@ def transcription_jobs(background_tasks: BackgroundTasks, request: Request):
             job['job_name'],
             storage['audio_key'],
             storage,
+        )
+    context = request.state.care_context
+    if context.get('organization_id') and context.get('client_id'):
+        background_tasks.add_task(
+            journey_proposal_jobs.process_due_for_client,
+            context['organization_id'],
+            context['client_id'],
         )
     return [{key: (str(job.get(key)) if key == 'appointment_id' and job.get(key) else job.get(key))
              for key in ('id', 'status', 'detail', 'appointment_id', 'created_at', 'updated_at')} for job in jobs]

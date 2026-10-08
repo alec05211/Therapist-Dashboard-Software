@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
+import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
 import { RecordingControls } from "@/components/session-review/recording-controls";
 import { AudioUploadButton } from "@/components/session-review/audio-upload-button";
 import { ApiError, api } from "@/lib/api";
@@ -121,9 +122,10 @@ export function ScheduledSessionLayout({ isRecording, isBusy, processingState, p
       : brief.status === "NO PRIOR CONTEXT"
         ? "No prior context or history. Record or upload the first session to begin."
         : brief.sections.flatMap((section) => section.items.map((item) => item.text)).join(" ") || brief.review_note);
+  const briefLoading = !brief && !briefError;
   const briefContent = <div className="px-4 pb-4 pt-1">
     {briefError ? <p className="text-sm text-red-700">{briefError}</p> : null}
-    {!brief && !briefError ? <p className="text-sm text-stone-600">Preparing cited context…</p> : null}
+    {briefLoading ? <TextLoadingSkeleton label="Loading pre-session brief…" widths={["94%", "86%", "68%"]} className="py-1" /> : null}
     {brief ? <>
       <BriefNarrative brief={brief} onViewEvidence={onViewEvidence} />
       <p className="mt-4 text-xs leading-5 text-stone-500">{brief.review_note}</p>
@@ -132,9 +134,11 @@ export function ScheduledSessionLayout({ isRecording, isBusy, processingState, p
 
   return (
     <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm" aria-label="Scheduled session preparation" aria-busy={isBusy}>
-      <CollapsibleContentPanel title="Pre-session Brief" preview={briefPreview} previewContent={briefContent}>
-        {briefContent}
-      </CollapsibleContentPanel>
+      <div aria-busy={briefLoading}>
+        <CollapsibleContentPanel title="Pre-session Brief" preview={briefPreview} previewContent={briefContent}>
+          {briefContent}
+        </CollapsibleContentPanel>
+      </div>
 
       {processingError ? <p role="alert" className="mt-3 text-sm text-red-700">{processingError}</p> : null}
 

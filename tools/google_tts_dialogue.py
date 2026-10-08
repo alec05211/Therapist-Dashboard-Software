@@ -5,8 +5,10 @@ import argparse
 import io
 import json
 import re
+import shutil
 import sys
 import tempfile
+import time
 import wave
 from pathlib import Path
 
@@ -119,21 +121,45 @@ def main() -> int:
         prompt = args.prompt or default_prompt
 
         rendered: list[tuple[wave._wave_params, bytes]] = []
-        with tempfile.TemporaryDirectory(prefix="gemini-tts-dialogue-") as temporary_directory:
-            temporary_path = Path(temporary_directory)
-            for index, part in enumerate(parts, 1):
-                print(f"Synthesizing part {index}/{len(parts)}...", flush=True)
-                response = client.synthesize_speech(
-                    input=texttospeech.SynthesisInput(text=part, prompt=prompt),
-                    voice=voice,
-                    audio_config=texttospeech.AudioConfig(
-                        audio_encoding=texttospeech.AudioEncoding.LINEAR16,
-                        sample_rate_hertz=24_000,
-                    ),
-                )
-                part_path = temporary_path / f"part-{index:02d}.wav"
-                part_path.write_bytes(response.audio_content)
-                rendered.append(read_wave(response.audio_content))
+        cache_dir = output_path.parent / f".parts_{output_path.stem}"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        for index, part in enumerate(parts, 1):
+            part_path = cache_dir / f"part-{index:02d}.wav"
+            if part_path.exists() and part_path.stat().st_size > 44:
+                try:
+                    params, frames = read_wave(part_path.read_bytes())
+                    rendered.append((params, frames))
+                    print(f"Part {index}/{len(parts)} loaded from cache.", flush=True)
+                    continue
+                except Exception:
+                    part_path.unlink(missing_ok=True)
+
+            print(f"Synthesizing part {index}/{len(parts)}...", flush=True)
+            max_retries = 5
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = client.synthesize_speech(
+                        input=texttospeech.SynthesisInput(text=part, prompt=prompt),
+                        voice=voice,
+                        audio_config=texttospeech.AudioConfig(
+                            audio_encoding=texttospeech.AudioEncoding.LINEAR16,
+                            sample_rate_hertz=24_000,
+                        ),
+                    )
+                    part_path.write_bytes(response.audio_content)
+                    rendered.append(read_wave(response.audio_content))
+                    break
+                except Exception as exc:
+                    if attempt < max_retries:
+                        backoff = 4 * attempt
+                        print(
+                            f"Part {index} attempt {attempt} failed ({exc}); retrying in {backoff}s...",
+                            flush=True,
+                        )
+                        time.sleep(backoff)
+                    else:
+                        raise
 
         expected = rendered[0][0]
         comparable = (expected.nchannels, expected.sampwidth, expected.framerate, expected.comptype)
@@ -152,6 +178,7 @@ def main() -> int:
                 if index:
                     output.writeframes(silence)
                 output.writeframes(frames)
+        shutil.rmtree(cache_dir, ignore_errors=True)
         print(f"Created {output_path}")
         return 0
     except Exception as exc:

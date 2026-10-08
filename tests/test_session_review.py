@@ -41,6 +41,21 @@ class SessionReviewTests(unittest.TestCase):
         segment_call = next(call for call in cursor.execute.call_args_list if 'INSERT INTO app.transcript_segments' in call.args[0])
         self.assertEqual(segment_call.args[1][2:4], (Decimal('0.123'), Decimal('1.200')))
 
+    def test_ingestion_enqueues_full_transcript_analysis_when_raw_outputs_are_available(self):
+        connection = MagicMock()
+        cursor = connection.__enter__.return_value.cursor.return_value.__enter__.return_value
+        version_id = uuid4()
+        cursor.fetchone.side_effect = [{'id': uuid4()}, None, {'id': version_id}]
+        cursor.rowcount = 1
+        with patch.object(session_review, 'connect', return_value=connection), \
+                patch.object(session_review.client_journey, 'propose_from_healthscribe'), \
+                patch.object(session_review.journey_proposal_jobs, 'enqueue') as enqueue:
+            session_review.persist_result(
+                self.storage,
+                [{'start': 0, 'end': 1, 'speaker': 'PATIENT', 'text': 'Hello.'}],
+                [], str(uuid4()), {}, {})
+        enqueue.assert_called_once_with(cursor, self.storage, version_id)
+
     def test_review_endpoint_returns_database_result_without_s3_restore(self):
         result = {'segments': [{'start': 0, 'end': 1, 'text': 'Hello.'}], 'clinical_note': [], 'speakers': {}}
         request = SimpleNamespace(state=SimpleNamespace(storage_job={'storage': self.storage}))

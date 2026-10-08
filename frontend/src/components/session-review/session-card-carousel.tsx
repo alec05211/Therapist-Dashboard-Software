@@ -63,6 +63,8 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
   const [hasInteracted, setHasInteracted] = useState(false);
   const cardWidth = "((100cqw - 48px) / 3.4)";
   const trackOffset = `calc(50cqw - ${cardWidth} / 2 - ${centerIndex} * (${cardWidth} + 12px))`;
+  const canMoveOlder = cards.length > 0 && centerIndex > 0;
+  const canMoveNewer = cards.length > 0 && centerIndex < cards.length - 1;
   const move = (direction: -1 | 1) => {
     const nextIndex = Math.max(0, Math.min(cards.length - 1, centerIndex + direction));
     setHasInteracted(true);
@@ -81,20 +83,26 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
       <div className="relative -mx-5">
         <div className="session-carousel-viewport overflow-hidden" style={{ containerType: "inline-size" }}>
           {cards.length === 0 ? <div className="mx-5 flex min-h-28 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 px-4 pt-7 text-sm text-stone-600">No sessions scheduled yet.</div> : <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset})`, transition: hasInteracted ? undefined : "none" }}>
-            {cards.map((card, index) => <button key={card.id} type="button" onClick={() => selectCard(index, card)} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative min-h-28 min-w-0 shrink-0 cursor-grab rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
+            {cards.map((card, index) => {
+              const isReadable = Math.abs(index - centerIndex) <= 1;
+              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative min-h-28 min-w-0 shrink-0 rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
               {card.isProcessing ? <span aria-hidden="true" className="absolute right-3 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
               <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
               <strong className="mt-0.5 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
               {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : <span className="mt-2 block truncate text-xs font-medium text-stone-600">{card.isAvailable ? card.label : "Session details pending"}</span>}
-            </button>)}
+            </button>})}
           </div>}
         </div>
-        <button type="button" onClick={() => move(-1)} disabled={centerIndex === 0} className="absolute left-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-300 bg-stone-100 text-xl text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show older sessions">‹</button>
-        <button type="button" onClick={() => move(1)} disabled={cards.length === 0 || centerIndex === cards.length - 1} className="absolute right-4 top-1/2 z-10 grid size-10 -translate-y-1/2 cursor-grab place-items-center rounded-full border border-stone-300 bg-stone-100 text-xl text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label="Show more recent sessions">›</button>
       </div>
-      <div className="absolute inset-x-5 top-3 z-10 flex items-start justify-between gap-4">
+      <button type="button" onClick={() => move(-1)} disabled={!canMoveOlder} className="session-carousel-edge session-carousel-edge--older group absolute inset-y-0 left-0 z-10 flex w-[12%] min-w-14 cursor-grab items-center justify-start pl-3 text-stone-700 active:cursor-grabbing disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700" aria-label="Show older sessions">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`relative z-10 size-7 transition-transform duration-200 ease-out motion-reduce:transition-none ${canMoveOlder ? "group-hover:scale-110 group-focus-visible:scale-110" : "opacity-30"}`}><path d="m15 18-6-6 6-6" /></svg>
+      </button>
+      <button type="button" onClick={() => move(1)} disabled={!canMoveNewer} className="session-carousel-edge session-carousel-edge--newer group absolute inset-y-0 right-0 z-10 flex w-[12%] min-w-14 cursor-grab items-center justify-end pr-3 text-stone-700 active:cursor-grabbing disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700" aria-label="Show more recent sessions">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`relative z-10 size-7 transition-transform duration-200 ease-out motion-reduce:transition-none ${canMoveNewer ? "group-hover:scale-110 group-focus-visible:scale-110" : "opacity-30"}`}><path d="m9 18 6-6-6-6" /></svg>
+      </button>
+      <div className="pointer-events-none absolute inset-x-5 top-3 z-20 flex items-start justify-between gap-4">
         <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
-        {onEditSchedule && <button type="button" onClick={onEditSchedule} aria-label="Edit session schedule" title="Edit session dates and recurring schedule" className="inline-flex size-9 cursor-grab items-center justify-center rounded-xl border border-stone-300 bg-stone-100 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon /></button>}
+        {onEditSchedule && <button type="button" onClick={onEditSchedule} aria-label="Edit session schedule" title="Edit session dates and recurring schedule" className="pointer-events-auto inline-flex size-9 cursor-grab items-center justify-center rounded-xl border border-stone-300 bg-stone-100 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon /></button>}
       </div>
     </section>
   );

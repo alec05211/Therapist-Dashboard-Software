@@ -518,7 +518,7 @@ class LongitudinalRecordRepository:
         for row in rows:
             item_id = str(row["id"])
             item = items.setdefault(item_id, {
-                "kind": row["item_kind"], "content": row["content"], "evidence": [],
+                "id": item_id, "kind": row["item_kind"], "content": row["content"], "evidence": [],
             })
             if row["transcript_segment_id"]:
                 item["evidence"].append({
