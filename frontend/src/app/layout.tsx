@@ -4,8 +4,8 @@ import { ThemeInitializer } from "@/components/theme-initializer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Therapist Sidekick",
-  description: "A trusted workspace for therapy session review and practice operations.",
+  title: "Therapist Sidekick | See the full story of care",
+  description: "Longitudinal mental health insights, session review, scheduling, billing, and insurance in one clinician-guided workspace.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
