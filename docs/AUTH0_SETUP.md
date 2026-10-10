@@ -20,6 +20,19 @@ For local development, set these values in the Auth0 Dashboard:
 
 Enable a development database connection for email/password sign-up. Require email verification before treating an account as eligible for practice onboarding. Keep social sign-in and enterprise connections out of the first development flow unless they are intentionally being tested.
 
+For the synthetic EC2 demo, retain the localhost entries and add the hosted
+origin to the same development application:
+
+| Setting | Additional synthetic-demo value |
+| --- | --- |
+| Allowed Callback URLs | `https://therapist-dashboard-demo.duckdns.org/auth/callback` |
+| Allowed Logout URLs | `https://therapist-dashboard-demo.duckdns.org` |
+| Allowed Web Origins | `https://therapist-dashboard-demo.duckdns.org` |
+
+Auth0 accepts comma-separated entries in each field. This temporary DuckDNS
+origin is for synthetic demonstrations only; create a separately reviewed
+tenant/application boundary before real clinical use.
+
 ## 3. Configure the frontend locally
 
 Copy `frontend/.env.example` to `frontend/.env.local`, then fill in the Auth0 application values:

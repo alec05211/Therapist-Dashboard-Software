@@ -1,0 +1,5 @@
+domain_name = "therapist-dashboard-demo.duckdns.org"
+
+# Generate the remaining values from the applied demo data stack:
+# powershell -ExecutionPolicy Bypass -File ../../tools/export-demo-app-tfvars.ps1 `
+#   -DomainName therapist-dashboard-demo.duckdns.org

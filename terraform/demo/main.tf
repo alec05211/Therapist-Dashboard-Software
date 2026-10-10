@@ -69,8 +69,29 @@ resource "aws_security_group" "database" {
     cidr_blocks = [var.demo_allowed_cidr]
   }
 
+  ingress {
+    description     = "TLS PostgreSQL from the hosted demo application"
+    protocol        = "tcp"
+    from_port       = 5432
+    to_port         = 5432
+    security_groups = [aws_security_group.database_client.id]
+  }
+
   # RDS does not initiate network connections.
   egress = []
+}
+
+# This security group is a persistent identity for workloads that may connect
+# to the synthetic demo database. The replaceable EC2 stack attaches it to its
+# instance; destroying that stack removes the workload without changing RDS.
+# Egress is supplied by the workload's own security group.
+resource "aws_security_group" "database_client" {
+  name        = "${var.project_name}-database-client"
+  description = "Identifies hosted demo workloads permitted to connect to PostgreSQL."
+  vpc_id      = aws_vpc.demo.id
+
+  ingress = []
+  egress  = []
 }
 
 resource "aws_kms_key" "database" {
@@ -84,6 +105,23 @@ resource "aws_kms_alias" "database" {
   target_key_id = aws_kms_key.database.key_id
 }
 
+# The secret metadata belongs to the persistent demo environment so replacing
+# the EC2 stack does not discard application credentials. Secret values are
+# populated out of band and never enter Terraform configuration or state.
+resource "aws_secretsmanager_secret" "hosted_app_runtime" {
+  name                    = "${var.project_name}/hosted-app-runtime"
+  description             = "Auth0 runtime credentials for the synthetic hosted demo"
+  recovery_window_in_days = 30
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = {
+    DataClassification = "synthetic-demo-credentials"
+  }
+}
+
 resource "aws_db_parameter_group" "database" {
   name   = "${var.project_name}-postgres16"
   family = "postgres16"
@@ -91,7 +129,7 @@ resource "aws_db_parameter_group" "database" {
   parameter {
     name         = "rds.force_ssl"
     value        = "1"
-    apply_method = "immediate"
+    apply_method = "pending-reboot"
   }
 
   parameter {
@@ -113,9 +151,9 @@ resource "aws_db_instance" "database" {
   storage_encrypted     = true
   kms_key_id            = aws_kms_key.database.arn
 
-  db_name                     = var.database_name
-  username                    = "database_admin"
-  manage_master_user_password = true
+  db_name                       = var.database_name
+  username                      = "database_admin"
+  manage_master_user_password   = true
   master_user_secret_kms_key_id = aws_kms_key.database.arn
 
   db_subnet_group_name   = aws_db_subnet_group.demo.name
@@ -124,12 +162,14 @@ resource "aws_db_instance" "database" {
   publicly_accessible    = true
   multi_az               = false
 
-  backup_retention_period = 1
-  deletion_protection     = false
-  skip_final_snapshot     = !var.take_final_snapshot
+  backup_retention_period   = 1
+  deletion_protection       = true
+  skip_final_snapshot       = !var.take_final_snapshot
   final_snapshot_identifier = var.take_final_snapshot ? var.final_snapshot_identifier : null
 
   lifecycle {
+    prevent_destroy = true
+
     precondition {
       condition     = !var.take_final_snapshot || length(trimspace(var.final_snapshot_identifier)) > 0
       error_message = "Set a unique final_snapshot_identifier when take_final_snapshot is true."
@@ -255,7 +295,7 @@ data "aws_iam_policy_document" "healthscribe_batch" {
   }
 
   statement {
-    actions = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey*", "kms:DescribeKey"]
+    actions   = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey*", "kms:DescribeKey"]
     resources = [aws_kms_key.artifacts.arn]
   }
 }

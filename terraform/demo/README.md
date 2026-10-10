@@ -8,7 +8,8 @@ private, production-oriented Terraform stack in the repository root.
 The database is intentionally publicly addressable so a locally running FastAPI
 server can reach it. It is still protected by TLS, encryption at rest, a
 managed RDS secret, and a security group that admits exactly one required
-operator CIDR. It will not accept `0.0.0.0/0`.
+operator CIDR plus the dedicated security-group identity used by the hosted
+synthetic demo application. It will not accept `0.0.0.0/0`.
 
 Do not put real client, recording, transcript, or other clinical data in this
 environment. Public reachability is a demo convenience, not a production
@@ -69,13 +70,23 @@ not yet written into RDS by the application; today HealthScribe files are
 uploaded to S3 and then also organized in local demo folders. That application
 integration is the next step for account-scoped demo records.
 
+## Hosted demo application
+
+The separate `terraform/demo-app` root can create and destroy the EC2-hosted
+application without owning this database, its VPC, or its artifact buckets.
+Run `tools/export-demo-app-tfvars.ps1` after applying this stack to export only
+non-secret identifiers into the app root. The RDS-managed secret value is never
+written to that file.
+
 ## Teardown
 
-RDS deletion protection is disabled in this demo root so the stack is actually
-disposable. By default Terraform will refuse to delete non-empty artifact
-buckets. Review their contents, then either empty them intentionally or run
-destroy with `-var="force_destroy_artifact_buckets=true"` only for synthetic
-demo objects.
+RDS deletion protection and Terraform `prevent_destroy` are enabled because the
+hosted application now has an independent lifecycle. A deliberate database
+teardown requires a reviewed code change that removes both protections before a
+destroy plan can succeed. Terraform will also refuse to delete non-empty
+artifact buckets. Review their contents, then either empty them intentionally
+or run destroy with `-var="force_destroy_artifact_buckets=true"` only for
+synthetic demo objects.
 
 By default RDS does not create a final snapshot. To retain one, apply with
 `take_final_snapshot=true` and a unique `final_snapshot_identifier` before

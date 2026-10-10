@@ -11,7 +11,8 @@ RUN pip install --no-cache-dir -r /app/requirements.txt \
     && chown -R appuser:appuser /app
 
 COPY database /app/database
-COPY server.py index.html synthetic_conversation.json /app/
+COPY ai_harness /app/ai_harness
+COPY server.py index.html /app/
 
 USER appuser
 EXPOSE 8000

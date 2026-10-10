@@ -44,6 +44,25 @@ Caddy is not the frontend host. The Next.js process is the frontend host. Caddy 
 
 The recent working estimate for this compact environment is approximately **$36–38 per month before HealthScribe usage, domain registration, tax, and unusual traffic**. Recalculate prices before implementation.
 
+For the synthetic demo phase, the hosted environment may use a temporary
+DuckDNS subdomain instead of committing to the final product domain. The
+hostname is an environment concern rather than a product or database identity;
+replacing it later requires updating DNS, Caddy, Auth0 URLs, and deployment
+configuration, but does not require replacing RDS or changing browser API
+paths. Do not carry the shared free-domain dependency into real clinical use.
+
+The synthetic demo infrastructure has two Terraform lifecycle boundaries:
+
+- `terraform/demo` owns the persistent demo VPC, public mock-data-only RDS,
+  encrypted artifact buckets, KMS keys, and the security-group identity trusted
+  by RDS;
+- `terraform/demo-app` owns the replaceable EC2 host, Elastic IP, public web
+  security group, Caddy bootstrap, instance profile, and application IAM role.
+
+Destroying `terraform/demo-app` must not destroy or recreate the data stack.
+The later real-data environment remains a separate private deployment rather
+than an in-place conversion of the public synthetic database.
+
 ## Development workflow before and after hosting
 
 Hosting should not replace the local development loop.

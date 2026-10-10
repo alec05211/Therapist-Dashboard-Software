@@ -50,8 +50,11 @@ previous IDs so an archived organization is not accidentally removed from state.
 Set `ORGANIZATION_STORAGE_ENABLED=true` in the API environment **after** successful
 registration, then restart the API. The application fails closed if an enabled
 organization has no registered storage. Local administrators can use existing
-credentials; for a deployed API, set `application_role_name` to attach the
-generated bucket-specific caller policies to its runtime role.
+credentials. The replaceable demo-app stack receives the generated
+`application_policy_arn` values through `organization_storage_policy_arns` and
+owns their attachment to its runtime role. For a different deployed API,
+`application_role_name` remains available, but do not let two Terraform states
+own the same role-policy attachment.
 
 New organizations require this provision/register step before uploads are enabled;
 web onboarding does not receive permission to create buckets or IAM roles.
