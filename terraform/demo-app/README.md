@@ -70,8 +70,9 @@ terraform -chdir=terraform/demo-app output -raw caddy_health_url
 
 ## GitHub Actions prerequisites
 
-The repository now exposes two manual workflows: `Terraform - Demo Data` and
-`Terraform - Demo Hosted App`. Before using them, configure:
+The repository exposes three manual workflows: `Terraform - Demo Data`,
+`Terraform - Demo Hosted App`, and `Deploy - Hosted Demo`. Before using them,
+configure:
 
 - repository variable `AWS_TERRAFORM_APP_ROLE_ARN` with the application OIDC
   role output by `terraform/bootstrap`;
@@ -122,6 +123,23 @@ sudo git clone https://github.com/alec05211/Therapist-Dashboard-Software.git /op
 cd /opt/therapist-dashboard/source
 sudo bash deploy/hosted-demo/deploy.sh
 ```
+
+After the GitHub application role includes the SSM deployment permissions from
+`terraform/bootstrap`, the normal checkpoint path is the manual
+`Deploy - Hosted Demo` workflow. Run it from the `main` branch and supply a
+branch, tag, or commit in this repository. The workflow resolves that input to
+an immutable commit SHA, reads the current instance ID from remote Terraform
+state, and invokes the same deployment script through Systems Manager Run
+Command. It waits for container health checks and then verifies the public
+infrastructure and login endpoints. The protected `demo-app` environment can
+require a reviewer before AWS credentials are issued.
+
+The workflow does not place application secrets in GitHub. The EC2 instance
+continues to resolve its narrowly scoped Secrets Manager values at process
+launch through its instance role. GitHub receives only the SSM command output;
+the deployment script and application logs must therefore continue to avoid
+printing tokens, transcripts, recordings, clinical notes, or other sensitive
+content.
 
 The script builds the migration, API, and frontend images before replacing
 either running container. It applies ordered database migrations, checks the

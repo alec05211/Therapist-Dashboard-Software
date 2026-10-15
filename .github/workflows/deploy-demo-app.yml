@@ -1,0 +1,196 @@
+name: Deploy - Hosted Demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Git branch, tag, or commit to deploy
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-hosted-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: demo-app
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+
+    steps:
+      - name: Check out the trusted deployment workflow source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Check out the requested application revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision }}
+          path: requested-revision
+          persist-credentials: false
+
+      - name: Resolve the immutable revision
+        id: revision
+        shell: bash
+        run: |
+          revision="$(git -C requested-revision rev-parse HEAD)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Could not resolve a full commit SHA." >&2; exit 1; }
+          echo "sha=$revision" >> "$GITHUB_OUTPUT"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.2"
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_APP_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Read the hosted-demo target
+        id: target
+        shell: bash
+        run: |
+          test -n "$TF_STATE_BUCKET" || { echo "Missing TF_STATE_BUCKET repository variable." >&2; exit 1; }
+          terraform -chdir=terraform/demo init \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=therapist-dashboard/demo-data.tfstate" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+          runtime_secret_arn="$(terraform -chdir=terraform/demo output -raw hosted_app_runtime_secret_arn)"
+          terraform -chdir=terraform/demo-app init \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=therapist-dashboard/demo-app.tfstate" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+          instance_id="$(terraform -chdir=terraform/demo-app output -raw instance_id)"
+          application_url="$(terraform -chdir=terraform/demo-app output -raw application_url)"
+          [[ "$instance_id" =~ ^i-[0-9a-f]+$ ]] || { echo "Terraform returned an invalid EC2 instance ID." >&2; exit 1; }
+          [[ "$application_url" == https://*.duckdns.org ]] || { echo "Terraform returned an unexpected application URL." >&2; exit 1; }
+          [[ "$runtime_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+$ ]] || { echo "Terraform returned an invalid runtime secret ARN." >&2; exit 1; }
+          echo "instance_id=$instance_id" >> "$GITHUB_OUTPUT"
+          echo "application_url=$application_url" >> "$GITHUB_OUTPUT"
+          echo "runtime_secret_arn=$runtime_secret_arn" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy the revision through Systems Manager
+        id: deploy
+        shell: bash
+        env:
+          APPLICATION_URL: ${{ steps.target.outputs.application_url }}
+          APP_RUNTIME_SECRET_ARN: ${{ steps.target.outputs.runtime_secret_arn }}
+          DEPLOY_REVISION: ${{ steps.revision.outputs.sha }}
+          INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
+        run: |
+          cat > "$RUNNER_TEMP/deploy-hosted-demo.sh" <<EOF
+          set -euo pipefail
+          revision="$DEPLOY_REVISION"
+          source_directory="/opt/therapist-dashboard/source"
+          repository_url="https://github.com/alec05211/Therapist-Dashboard-Software.git"
+          runtime_identifiers="/etc/therapist-dashboard/runtime-identifiers.env"
+          runtime_secret_arn="$APP_RUNTIME_SECRET_ARN"
+
+          [[ "\$revision" =~ ^[0-9a-f]{40}\$ ]] || { echo "Invalid deployment revision." >&2; exit 1; }
+          [[ "\$runtime_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+\$ ]] || { echo "Invalid runtime secret ARN." >&2; exit 1; }
+          [[ -f "\$runtime_identifiers" ]] || { echo "Missing runtime identifier file." >&2; exit 1; }
+          if grep -q '^APP_RUNTIME_SECRET_ARN=' "\$runtime_identifiers"; then
+            sed -i "s|^APP_RUNTIME_SECRET_ARN=.*|APP_RUNTIME_SECRET_ARN=\$runtime_secret_arn|" "\$runtime_identifiers"
+          else
+            printf '\nAPP_RUNTIME_SECRET_ARN=%s\n' "\$runtime_secret_arn" >> "\$runtime_identifiers"
+          fi
+          chmod 0640 "\$runtime_identifiers"
+          chown root:ec2-user "\$runtime_identifiers"
+          install -d -m 0755 /opt/therapist-dashboard
+          if [[ ! -d "\$source_directory/.git" ]]; then
+            git clone --filter=blob:none "\$repository_url" "\$source_directory"
+          fi
+          git -C "\$source_directory" remote set-url origin "\$repository_url"
+          git -C "\$source_directory" fetch --force --depth=1 origin "\$revision"
+          git -C "\$source_directory" checkout --detach --force "\$revision"
+          git -C "\$source_directory" clean -ffdx
+          bash "\$source_directory/deploy/hosted-demo/deploy.sh" "\$revision"
+          EOF
+
+          parameters="$(jq -n --rawfile command "$RUNNER_TEMP/deploy-hosted-demo.sh" \
+            '{commands: [$command], executionTimeout: ["2400"]}')"
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Deploy Therapist Dashboard $DEPLOY_REVISION" \
+            --parameters "$parameters" \
+            --timeout-seconds 120 \
+            --query 'Command.CommandId' \
+            --output text)"
+          [[ "$command_id" =~ ^[0-9a-f-]{36}$ ]] || { echo "Systems Manager returned an invalid command ID." >&2; exit 1; }
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+          status="Pending"
+          invocation=''
+          for _ in $(seq 1 180); do
+            if invocation="$(aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --output json 2>"$RUNNER_TEMP/get-command-error")"; then
+              status="$(jq -r '.Status' <<<"$invocation")"
+              case "$status" in
+                Success|Cancelled|TimedOut|Failed|Cancelling) break ;;
+              esac
+            elif ! grep -q 'InvocationDoesNotExist' "$RUNNER_TEMP/get-command-error"; then
+              cat "$RUNNER_TEMP/get-command-error" >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+          if [[ -n "$invocation" ]]; then
+            jq -r '.StandardOutputContent // empty' <<<"$invocation"
+          fi
+          if [[ "$status" != "Success" ]]; then
+            if [[ -n "$invocation" ]]; then
+              jq -r '.StandardErrorContent // empty' <<<"$invocation" >&2
+            fi
+            echo "Deployment command finished with status: $status" >&2
+            exit 1
+          fi
+
+      - name: Verify the public application
+        shell: bash
+        env:
+          APPLICATION_URL: ${{ steps.target.outputs.application_url }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 5 --retry-all-errors \
+            "$APPLICATION_URL/infra-healthz" >/dev/null
+          page="$(curl --fail --silent --show-error \
+            --retry 12 --retry-delay 5 --retry-all-errors \
+            "$APPLICATION_URL/login")"
+          grep -q 'Sign in securely' <<<"$page" || { echo "The login smoke test did not find the expected page content." >&2; exit 1; }
+
+      - name: Record the deployment summary
+        shell: bash
+        env:
+          APPLICATION_URL: ${{ steps.target.outputs.application_url }}
+          COMMAND_ID: ${{ steps.deploy.outputs.command_id }}
+          DEPLOY_REVISION: ${{ steps.revision.outputs.sha }}
+        run: |
+          {
+            echo "## Hosted demo deployed"
+            echo
+            echo "- Revision: \`$DEPLOY_REVISION\`"
+            echo "- Application: $APPLICATION_URL"
+            echo "- SSM command: \`$COMMAND_ID\`"
+          } >> "$GITHUB_STEP_SUMMARY"

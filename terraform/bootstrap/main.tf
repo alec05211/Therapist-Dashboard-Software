@@ -343,6 +343,48 @@ data "aws_iam_policy_document" "github_app_deployment" {
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/therapist-dashboard-demo-healthscribe-caller",
     ]
   }
+
+  statement {
+    sid     = "RunHostedDemoDeploymentCommand"
+    actions = ["ssm:SendCommand"]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*",
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Project"
+      values   = ["therapist-dashboard-demo-app"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Environment"
+      values   = ["demo"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Stack"
+      values   = ["hosted-application"]
+    }
+  }
+
+  statement {
+    sid     = "UseAwsRunShellScriptDocument"
+    actions = ["ssm:SendCommand"]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript",
+    ]
+  }
+
+  # GetCommandInvocation does not support resource-level permissions. The
+  # workflow uses it only to wait for and report the command ID it just sent.
+  statement {
+    sid       = "ReadDeploymentCommandResult"
+    actions   = ["ssm:GetCommandInvocation"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "github_app_deployment" {

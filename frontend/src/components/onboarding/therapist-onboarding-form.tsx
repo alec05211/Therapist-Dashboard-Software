@@ -57,6 +57,10 @@ export function TherapistOnboardingForm({
           You can next invite therapists and staff, then grant client-specific
           access only where appropriate.
         </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <form action="/clients" method="get"><button type="submit" className="cursor-grab rounded-xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 active:cursor-grabbing">Open client list</button></form>
+          <form action="/calendar" method="get"><button type="submit" className="cursor-grab rounded-xl border border-emerald-700 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100 active:cursor-grabbing">Open calendar</button></form>
+        </div>
       </section>
     );
   }

@@ -159,6 +159,7 @@ resource "aws_instance" "application" {
     database_name                           = var.database_name
     database_secret_arn                     = var.database_secret_arn
     domain_name                             = var.domain_name
+    hosted_app_runtime_secret_arn           = var.hosted_app_runtime_secret_arn
     healthscribe_batch_data_access_role_arn = var.healthscribe_batch_data_access_role_arn
     healthscribe_input_bucket               = var.healthscribe_input_bucket
     healthscribe_output_bucket              = var.healthscribe_output_bucket
