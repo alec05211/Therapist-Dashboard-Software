@@ -24,10 +24,12 @@ never calls the model, and therapists do not edit or regenerate a brief.
 
 The current implementation still exposes
 POST /clinical-records/clients/{client_id}/pre-session-brief/generate?organization_id=...
-and uses accepted context directly. This endpoint is transitional infrastructure
-for synthetic development and must move behind the background worker. GET serves
-a generated brief only when its context fingerprint still matches; otherwise it
-returns current accepted context with sentence-level evidence links.
+as transitional synthetic-development infrastructure. The normal path is the
+leased clinical-synthesis worker, which validates Insights and the next brief
+before publishing both in one transaction. GET serves the atomically published
+appointment brief first; legacy generated content is used only when no published
+queue artifact exists, and otherwise falls back to current accepted context with
+sentence-level evidence links.
 
 Apply database/migrations/017_generated_pre_session_briefs.sql through
 `python -m tools.apply_session_review_migration`. Existing brief reads continue
@@ -35,10 +37,9 @@ working before migration. Configure OPENAI_API_KEY, PRE_SESSION_MODEL and the
 comma-separated PRE_SESSION_MODEL_APPROVED_CLIENT_IDS in the server environment.
 Client allowlisting is deployment configuration, not a substitute for approved
 provider/data handling terms. Do not enable real-client processing without that
-approval. Automatic background generation from a published Insights snapshot is
-not yet implemented. Do not add a therapist-facing regenerate control as a
-workaround; publishing a new Insights snapshot should enqueue any needed brief
-replacement automatically.
+approval. Run `python -m tools.run_clinical_synthesis_worker` as a separate worker
+service after applying migration 030. Do not add a therapist-facing regenerate
+control; clinical changes enqueue replacement work automatically.
 
 The stored response includes the original IDs, model, generating actor, time and
 context hash. Source edits or accepted-context changes invalidate it on read.

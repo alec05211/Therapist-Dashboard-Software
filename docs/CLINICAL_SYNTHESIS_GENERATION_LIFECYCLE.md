@@ -5,7 +5,7 @@
 **Status:** Approved direction  
 **Last updated:** 2026-10-05
 
-**Implementation status:** Migration `026_clinical_synthesis_refresh_queue.sql` and the queue control-plane module are checked in. Finalized notes and evidence-review decisions enqueue Insights revisions, and publishing an Insights revision queues the next appointment's brief. The model-running workers, daily scheduler, freshness UI, and deployment migration remain to be completed.
+**Implementation status:** The durable queue, leased model worker, atomic Insights/next-brief publication, freshness UI, and API-lifecycle worker dispatch are checked in. Finalized notes and evidence-review decisions enqueue Insights revisions; the worker keeps the last valid pair readable until its replacement validates and commits. A daily reconciliation scheduler remains to be configured in hosted infrastructure.
 
 ## 1. Authority and derived views
 
@@ -82,6 +82,8 @@ An Insights refresh reads only eligible, client-scoped, versioned sources under 
 - explicitly labeled source-linked proposals where the product permits an unreviewed state.
 
 It must exclude or appropriately constrain hidden, stale, disputed, rejected, superseded, or unfinalized material. Every contextual evidence statement requires explicit source identifiers. The interface never guesses phrase anchors from lexical similarity.
+
+Configuring the OpenAI API key plus the Insights and pre-session model names opts the deployment into background synthesis for every eligible client. Eligibility comes from the source lifecycle and authorization boundary, not a manually maintained client allowlist. The worker may be paused deployment-wide for incident response or policy review.
 
 Incremental generation may update affected portions for responsiveness. A periodic full reconciliation from eligible canonical records should detect drift and confirm that the current snapshot still reflects all lifecycle controls.
 

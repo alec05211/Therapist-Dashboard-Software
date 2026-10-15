@@ -30,6 +30,25 @@ class BriefProjectionTests(unittest.TestCase):
         self.assertEqual(item['sources'][0]['segment_index'], 4)
         self.assertNotIn('Unsupported statement.', str(brief))
 
+    def test_generated_analysis_and_context_are_available_to_brief_editor(self):
+        session_id = str(uuid4())
+        segment_id = str(uuid4())
+        packet = {
+            'snapshot_id': str(uuid4()), 'snapshot_version': 4,
+            'items': [{
+                'kind': 'theme',
+                'content': {
+                    'analysis': 'A possible pattern may be worth reviewing.',
+                    'contexts': [{'text': 'It appeared during a direct request.', 'claims': []}],
+                },
+                'evidence': [{'session_id': session_id, 'transcript_segment_id': segment_id,
+                              'segment_index': 3, 'start': 7.0, 'end': 9.0, 'quote': 'Can you help me prioritize?'}],
+            }],
+        }
+        brief = project_accepted_insights(packet)
+        self.assertIn('A possible pattern may be worth reviewing.', brief['sections'][0]['items'][0]['text'])
+        self.assertIn('It appeared during a direct request.', brief['sections'][0]['items'][0]['text'])
+
     def test_brief_route_uses_scoped_accepted_context_endpoint(self):
         packet = {'snapshot_id': str(uuid4()), 'snapshot_version': 1, 'items': []}
         with patch.object(server, 'connect'), patch.object(server, 'authorize_clinical_access') as authorize, patch.object(server.LongitudinalRecordRepository, 'build_pre_session_context_packet', return_value=packet), patch.object(server.client_journey, 'list_entries', return_value=[]):

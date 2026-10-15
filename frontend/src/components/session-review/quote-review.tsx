@@ -119,25 +119,28 @@ type InspectorPosition = { left: number; top: number };
 const viewportMargin = 16;
 const inspectorWidth = 640;
 
-const initialInspectorPosition = (): InspectorPosition => {
+const initialInspectorPosition = (stackIndex = 0): InspectorPosition => {
   if (typeof window === "undefined") return { left: viewportMargin, top: viewportMargin };
   const width = Math.min(inspectorWidth, window.innerWidth - viewportMargin * 2);
   return {
-    left: Math.max(viewportMargin, window.innerWidth - width - 24),
-    top: Math.max(viewportMargin, window.innerHeight - 560),
+    left: Math.max(viewportMargin, window.innerWidth - width - 24 - stackIndex * 28),
+    top: Math.max(viewportMargin, window.innerHeight - 560 + stackIndex * 28),
   };
 };
 
-export function FloatingQuoteInspector({ id, entries, recordContext, onSaved, onClose }: {
+export function FloatingQuoteInspector({ id, entries, recordContext, onSaved, onClose, stackIndex = 0, active = false, onActivate }: {
   id: string;
   entries: ClientJourneyEntry[];
   recordContext: LongitudinalRecordContext;
   onSaved: (entry: ClientJourneyEntry, dismissedEntryIds: string[]) => void;
   onClose: () => void;
+  stackIndex?: number;
+  active?: boolean;
+  onActivate?: () => void;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const drag = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null);
-  const [position, setPosition] = useState<InspectorPosition>(initialInspectorPosition);
+  const [position, setPosition] = useState<InspectorPosition>(() => initialInspectorPosition(stackIndex));
 
   const clampPosition = (left: number, top: number): InspectorPosition => {
     const bounds = panel.current?.getBoundingClientRect();
@@ -193,7 +196,7 @@ export function FloatingQuoteInspector({ id, entries, recordContext, onSaved, on
 
   if (typeof document === "undefined") return null;
   return createPortal(
-    <div ref={panel} id={id} role="dialog" aria-label="Evidence review" data-no-segment-playback style={{ left: position.left, top: position.top }} className="fixed z-[70] flex w-[min(40rem,calc(100vw-2rem))] flex-col overflow-visible rounded-2xl border border-stone-300 bg-white text-left shadow-xl max-md:!inset-x-0 max-md:!bottom-0 max-md:!top-auto max-md:!w-full max-md:!max-w-none max-md:max-h-[calc(100vh-2rem)] max-md:overflow-hidden max-md:rounded-b-none">
+    <div ref={panel} id={id} role="dialog" aria-label="Evidence review" data-no-segment-playback onPointerDown={onActivate} style={{ left: position.left, top: position.top }} className={`fixed ${active ? "z-[80] border-emerald-700" : "z-[70] border-stone-300"} flex w-[min(40rem,calc(100vw-2rem))] flex-col overflow-visible rounded-2xl border bg-white text-left shadow-xl transition-[border-color] duration-200 ease-out max-md:!inset-x-0 max-md:!bottom-0 max-md:!top-auto max-md:!w-full max-md:!max-w-none max-md:max-h-[calc(100vh-2rem)] max-md:overflow-hidden max-md:rounded-b-none`}>
       <div className="relative flex h-10 shrink-0 items-center justify-center border-b border-stone-200 bg-stone-50">
         <button type="button" aria-label="Move evidence inspector" title="Drag to move · Arrow keys also reposition" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} onKeyDown={moveWithKeyboard} className="flex h-full flex-1 touch-none cursor-grab items-center justify-center text-stone-500 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-emerald-700 max-md:cursor-default">
           <svg viewBox="0 0 28 12" className="h-3 w-7" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.25" /><circle cx="14" cy="3" r="1.25" /><circle cx="20" cy="3" r="1.25" /><circle cx="8" cy="9" r="1.25" /><circle cx="14" cy="9" r="1.25" /><circle cx="20" cy="9" r="1.25" /></svg>

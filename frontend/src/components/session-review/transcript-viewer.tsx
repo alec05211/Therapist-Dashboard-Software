@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } from "react";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { ClinicalNote } from "@/components/session-review/clinical-note";
-import type { LongitudinalRecordContext, Transcript } from "@/lib/types";
+import type { ClientJourneyEntry, LongitudinalRecordContext, Transcript } from "@/lib/types";
 import { FloatingQuoteInspector, useQuoteProposals } from "@/components/session-review/quote-review";
 
 type Props = {
@@ -28,7 +28,8 @@ const formatTime = (seconds: number) => {
 export function TranscriptViewer({ transcript, recordContext, sessionId, readOnly = false, showTranscript = true, showClinicalNote = true, activeSegment: controlledSegment, isPlaying: controlledPlaying, onPlaySegment, onAudioTimeUpdate, onAudioPlay, onAudioPause, onAudioEnded }: Props) {
   const transcriptId = useId();
   const quotes = useQuoteProposals(readOnly ? undefined : recordContext, sessionId);
-  const [selectedQuoteSegment, setSelectedQuoteSegment] = useState<number | null>(null);
+  const [openClaimIds, setOpenClaimIds] = useState<string[]>([]);
+  const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playingSegment, setPlayingSegment] = useState(-1);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -100,8 +101,22 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   const summary = transcript.segments.length
     ? `${transcript.segments.length} ${readOnly ? "segments" : "timestamped segments"}${readOnly ? "" : ` · ${proposedClaimCount} proposed evidence ${proposedClaimCount === 1 ? "claim" : "claims"}`}`
     : "No speech detected";
-  const selectedQuoteEntries = selectedQuoteSegment === null ? [] : quoteEntriesForSegment(selectedQuoteSegment);
-  const selectedReviewId = selectedQuoteSegment === null ? "" : `${transcriptId}-review-${selectedQuoteSegment}`;
+  const openClaimEntries = quotes.entries.filter((entry) => openClaimIds.includes(entry.id));
+  const activeClaim = quotes.entries.find((entry) => entry.id === activeClaimId) ?? null;
+  const claimIncludesSegment = (entry: ClientJourneyEntry | null, index: number) => Boolean(entry?.evidence.some(
+    (source) => source.session_id === sessionId && source.segment_index === index
+      && source.quote?.trim() === transcript.segments[index]?.text.trim(),
+  ));
+  const closeClaim = (claimId: string) => {
+    setOpenClaimIds((current) => current.filter((id) => id !== claimId));
+    setActiveClaimId((current) => current === claimId
+      ? openClaimIds.find((id) => id !== claimId) ?? null
+      : current);
+  };
+  const saveClaim = (entry: ClientJourneyEntry, dismissedEntryIds: string[]) => {
+    quotes.onSaved(entry, dismissedEntryIds);
+    closeClaim(entry.id);
+  };
 
   const previewOnly = !expanded;
   const transcriptRows = (
@@ -110,17 +125,17 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
               const active = activeSegment === index;
               const proposals = readOnly ? [] : quoteEntriesForSegment(index);
               const flagged = proposals.length > 0 && Boolean(recordContext);
-              const reviewOpen = !previewOnly && flagged && selectedQuoteSegment === index;
-              const reviewId = `${transcriptId}-review-${index}`;
+              const reviewOpen = !previewOnly && proposals.some((proposal) => openClaimIds.includes(proposal.id));
+              const claimHighlighted = !previewOnly && claimIncludesSegment(activeClaim, index);
               const canPlay = !readOnly && Boolean(transcript.recording_url);
               const interactive = canPlay || flagged;
               const speaker = segment.speaker ? transcript.speakers[segment.speaker] || segment.speaker : null;
               const playFromRow = (event: MouseEvent<HTMLLIElement>) => { if (!isGuidanceInteraction(event.target)) playSegment(index); };
               const playFromKeyboard = (event: KeyboardEvent<HTMLLIElement>) => { if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return; event.preventDefault(); playSegment(index); };
-              return <li key={`${segment.start}-${index}`} ref={active && !previewOnly ? activeSegmentElement : undefined} role={canPlay ? "button" : undefined} tabIndex={canPlay ? 0 : undefined} aria-label={canPlay ? `${active && isPlaying ? "Pause" : "Play"} segment at ${formatTime(segment.start)}` : undefined} onClick={canPlay ? playFromRow : undefined} onKeyDown={canPlay ? playFromKeyboard : undefined} className={`group/segment grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] items-start gap-x-3 rounded-xl px-2 py-1.5 text-sm leading-6 ${interactive ? "transcript-segment-row" : ""} ${canPlay ? "cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-700" : ""} ${reviewOpen ? "bg-[var(--surface-inset)]" : active ? "bg-[var(--surface-active)]" : interactive ? "hover:bg-[var(--surface-inset)]" : ""}`}>
+              return <li key={`${segment.start}-${index}`} ref={active && !previewOnly ? activeSegmentElement : undefined} role={canPlay ? "button" : undefined} tabIndex={canPlay ? 0 : undefined} aria-label={canPlay ? `${active && isPlaying ? "Pause" : "Play"} segment at ${formatTime(segment.start)}` : undefined} onClick={canPlay ? playFromRow : undefined} onKeyDown={canPlay ? playFromKeyboard : undefined} className={`group/segment grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] items-start gap-x-3 rounded-xl px-2 py-1.5 text-sm leading-6 transition-[background-color,box-shadow] duration-200 ease-out ${interactive ? "transcript-segment-row" : ""} ${canPlay ? "cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-700" : ""} ${claimHighlighted ? "bg-[var(--accent-surface)] shadow-sm" : reviewOpen ? "bg-[var(--surface-inset)]" : active ? "bg-[var(--surface-active)]" : interactive ? "hover:bg-[var(--surface-inset)]" : ""}`}>
                 <div className="inline-flex min-h-8 max-w-[45vw] items-baseline gap-2 px-2 py-[3px] text-sm font-semibold tabular-nums text-stone-700"><svg viewBox="0 0 16 16" fill="currentColor" className={`size-4 shrink-0 self-center text-emerald-800 transition-opacity duration-200 group-hover/segment:opacity-100 group-focus/segment:opacity-100 ${active ? "opacity-100" : "opacity-0"}`} aria-hidden="true">{active && isPlaying ? <><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></> : <path d="M3 2a.75.75 0 0 1 1.14-.64l9 5.25a1.6 1.6 0 0 1 0 2.78l-9 5.25A.75.75 0 0 1 3 14Z" />}</svg><time className="shrink-0">{formatTime(segment.start)}</time>{speaker && <span className="min-w-0 break-words text-left text-xs leading-6 font-normal text-stone-600">{speaker}:</span>}</div>
                 <div className="min-w-0 break-words pt-1 text-stone-800">
-                  {flagged ? <button type="button" data-no-segment-playback aria-expanded={reviewOpen} aria-controls={reviewId} title="Flagged passage — select to review guidance" onClick={(event) => { event.stopPropagation(); setSelectedQuoteSegment(index); }} className="inline cursor-grab rounded-sm text-left font-bold text-stone-800 transition-colors hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><span className="sr-only">Review flagged passage: </span>{segment.text.trim()}</button> : <span>{segment.text.trim()}</span>}
+                  {flagged ? <button type="button" data-no-segment-playback aria-expanded={reviewOpen} aria-controls={proposals.map((proposal) => `${transcriptId}-review-${proposal.id}`).join(" ")} title="Flagged passage — select to review guidance" onClick={(event) => { event.stopPropagation(); const ids = proposals.map((proposal) => proposal.id); setOpenClaimIds(ids); setActiveClaimId((current) => current && ids.includes(current) ? current : ids[0]); }} className="inline cursor-grab rounded-sm text-left font-bold text-stone-800 transition-colors hover:text-emerald-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><span className="sr-only">Review flagged passage: </span>{segment.text.trim()}</button> : <span>{segment.text.trim()}</span>}
                 </div>
               </li>;
             })}
@@ -132,12 +147,22 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
       {playbackError && <p role="alert" className="mb-3 text-sm text-red-700">{playbackError}</p>}
       <h3 className="text-base font-semibold text-stone-900">Associated materials</h3>
       {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} />}
-      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? transcriptRows : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) setSelectedQuoteSegment(null); }} className="mt-5">
+      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? transcriptRows : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
           {transcriptRows}
           {quotes.error && <p role="alert" className="px-4 pb-4 text-sm text-red-700">Suggested passages unavailable: {quotes.error}</p>}
           {!readOnly && transcript.recording_url ? <div className="border-t border-stone-200 bg-stone-50 px-4 py-3"><div className="flex flex-wrap items-center gap-3"><button type="button" onClick={togglePlayback} className="grid size-9 shrink-0 cursor-grab place-items-center rounded-full bg-emerald-800 text-sm text-white active:cursor-grabbing hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label={isPlaying ? "Pause recording" : "Play recording"}>{isPlaying ? "❚❚" : "▶"}</button><span className="w-10 shrink-0 text-xs tabular-nums text-stone-600">{formatTime(currentTime)}</span><input type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} onChange={(event) => seek(event.target.value)} className="h-1 min-w-24 flex-1 cursor-grab accent-emerald-800 active:cursor-grabbing" aria-label="Recording position" /><span className="w-10 shrink-0 text-right text-xs tabular-nums text-stone-600">{formatTime(duration)}</span><label className="flex items-center gap-1.5 text-xs text-stone-600"><span aria-hidden="true">◖</span><span className="sr-only">Volume</span><input type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => changeVolume(event.target.value)} className="h-1 w-16 cursor-grab accent-emerald-800 active:cursor-grabbing" aria-label="Volume" /></label><a href={transcript.recording_url} download className="cursor-grab rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 underline underline-offset-2 hover:bg-emerald-50 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Download</a></div></div> : null}
       </CollapsibleContentPanel>}
-      {expanded && selectedQuoteSegment !== null && selectedQuoteEntries.length > 0 && recordContext && <FloatingQuoteInspector key={selectedReviewId} id={selectedReviewId} entries={selectedQuoteEntries} recordContext={recordContext} onSaved={quotes.onSaved} onClose={() => setSelectedQuoteSegment(null)} />}
+      {expanded && recordContext ? openClaimEntries.map((entry, stackIndex) => <FloatingQuoteInspector
+        key={entry.id}
+        id={`${transcriptId}-review-${entry.id}`}
+        entries={[entry]}
+        recordContext={recordContext}
+        onSaved={saveClaim}
+        onClose={() => closeClaim(entry.id)}
+        stackIndex={stackIndex}
+        active={entry.id === activeClaimId}
+        onActivate={() => setActiveClaimId(entry.id)}
+      />) : null}
       {!readOnly && transcript.recording_url ? <audio ref={audio} className="sr-only" src={transcript.recording_url} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onTimeUpdate={(event) => { setCurrentTime(event.currentTarget.currentTime); setPlayingSegment(transcript.segments.findIndex(segment => event.currentTarget.currentTime >= segment.start && event.currentTarget.currentTime < segment.end)); onAudioTimeUpdate?.(event); }} onPlay={() => { setPlaying(true); onAudioPlay?.(); }} onPause={() => { setPlaying(false); onAudioPause?.(); }} onEnded={() => { setPlaying(false); setPlayingSegment(-1); onAudioEnded?.(); }} onError={() => setPlaybackError("Recording unavailable or sharing access has changed.")} /> : null}
     </section>
   );
