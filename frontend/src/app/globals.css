@@ -191,6 +191,24 @@ html[data-theme="dark"] .text-loading-streak::after {
   display: none;
 }
 
+/* Softens the continuous landing-page thread only where it passes behind copy. */
+.landing-thread-copy {
+  position: relative;
+  isolation: isolate;
+}
+
+.landing-thread-copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: -0.3em -0.45em;
+  content: "";
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 42%, rgb(0 0 0 / 74%) 68%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, #000 42%, rgb(0 0 0 / 74%) 68%, transparent 100%);
+}
+
 .calendar-shell {
   --calendar-base-width: min(94vw, 1280px);
   width: var(--calendar-base-width);

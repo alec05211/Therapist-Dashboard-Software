@@ -70,64 +70,44 @@ function JourneyIcon() {
   );
 }
 
-function WaveMark({ className = "" }: { className?: string }) {
-  return (
-    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 120 28">
-      <path d="M2 16c13 0 13-9 26-9s13 14 26 14S67 5 80 5s13 11 25 11c6 0 10-2 13-5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-type ThreadDirection = "right-left" | "left-left" | "left-right" | "right-right" | "right-center" | "left-center" | "center-center";
-
-type BraidTension = "wide" | "tight";
-
-type ThreadRoute = "upper" | "middle" | "lower";
-
-function ThreadSegment({ direction, braid, route = "middle" }: { direction: ThreadDirection; braid?: BraidTension; route?: ThreadRoute }) {
-  // Every path begins and ends with a vertical tangent. Adjacent sections share
-  // both their endpoint and tangent, so the thread remains C1-continuous.
-  const crossPaths: Record<ThreadRoute, Pick<Record<ThreadDirection, string>, "right-left" | "left-right">> = {
-    upper: {
-      "right-left": "M88 0 C88 10 85 18 78 24 C66 34 50 38 34 42 C20 46 11 58 10 72 C9 82 10 94 10 100",
-      "left-right": "M10 0 C10 10 13 18 20 24 C32 34 48 38 64 42 C78 46 87 58 88 72 C89 82 88 94 88 100",
-    },
-    middle: {
-      "right-left": "M88 0 C88 18 90 36 84 44 C76 51 60 53 43 53 C28 53 17 54 12 58 C9 64 10 90 10 100",
-      "left-right": "M10 0 C10 18 8 36 14 44 C22 51 38 53 55 53 C70 53 81 54 86 58 C89 64 88 90 88 100",
-    },
-    lower: {
-      "right-left": "M88 0 C88 22 91 43 88 58 C85 72 72 78 56 81 C38 84 18 84 12 90 C10 93 10 97 10 100",
-      "left-right": "M10 0 C10 22 7 43 10 58 C13 72 26 78 42 81 C60 84 80 84 86 90 C88 93 88 97 88 100",
-    },
-  };
-  const paths: Record<ThreadDirection, string> = {
-    ...crossPaths[route],
-    "left-left": "M10 0 C10 14 16 27 14 40 C12 54 5 68 7 80 C9 89 10 95 10 100",
-    "right-right": "M88 0 C88 14 82 27 84 40 C86 54 93 68 91 80 C89 89 88 95 88 100",
-    "right-center": "M88 0 C88 18 90 32 86 43 C81 56 67 67 55 78 C51 84 50 94 50 100",
-    "left-center": "M10 0 C10 18 8 32 12 43 C17 56 31 67 43 78 C49 84 50 94 50 100",
-    "center-center": "M50 0 C50 14 55 27 53 40 C51 54 46 68 48 80 C50 89 50 95 50 100",
-  };
-  const braidPaths: Record<BraidTension, Partial<Record<ThreadDirection, string[]>>> = {
-    wide: {
-      "right-right": [
-        "M88 0 C88 15 84 27 83 40 C82 55 88 68 89 81 C89 89 88 95 88 100",
-        "M88 0 C88 15 92 27 93 40 C94 55 88 68 87 81 C87 89 88 95 88 100",
-      ],
-    },
-    tight: {
-      "right-right": [
-        "M88 0 C88 15 86 28 86 41 C86 55 89 69 89 81 C89 89 88 95 88 100",
-        "M88 0 C88 15 90 28 90 41 C90 55 87 69 87 81 C87 89 88 95 88 100",
-      ],
-    },
-  };
+function PageThread() {
+  const unspooledStrands = [
+    "M760 900 C720 1180 690 1450 510 1780",
+    "M760 900 C670 1200 650 1530 510 1780",
+    "M300 3750 C340 4100 600 4250 640 4580",
+    "M300 3750 C450 4000 470 4380 640 4580",
+    "M780 5700 C810 6100 610 6350 530 6650",
+    "M780 5700 C700 6000 720 6400 530 6650",
+  ];
 
   return (
-    <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 hidden size-full text-[var(--border-strong)] md:block" preserveAspectRatio="none" viewBox="0 0 100 100">
-      <path d={paths[direction]} fill="none" opacity="0.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-      {braid && braidPaths[braid][direction]?.map((path) => <path d={path} fill="none" key={path} opacity="0.23" stroke="currentColor" strokeLinecap="round" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-10 hidden size-full text-[var(--border-strong)] md:block"
+      preserveAspectRatio="none"
+      viewBox="0 0 1000 11000"
+    >
+      <path
+        d="M850 0 C845 250 820 550 760 900 C700 1250 620 1500 510 1780 C430 1980 350 2120 300 2280 C250 2440 280 2590 410 2620 C545 2650 625 2530 590 2410 C555 2290 415 2280 335 2390 C255 2500 240 2630 220 2700 C160 2910 160 3400 300 3750 C390 4050 520 4300 640 4580 C720 4770 750 4920 690 5030 C625 5145 480 5110 455 5000 C430 4890 535 4800 640 4860 C745 4920 800 5200 780 5700 C755 6070 650 6340 530 6650 C440 6880 355 7070 315 7260 C280 7430 335 7550 455 7540 C575 7530 625 7400 565 7300 C505 7200 375 7230 300 7380 C225 7530 220 7810 290 8140 C360 8450 495 8730 620 9020 C700 9210 710 9380 635 9460 C555 9545 425 9490 425 9375 C425 9260 555 9205 665 9290 C775 9375 815 9680 780 9950 C750 10190 710 10350 650 10520 C575 10725 515 10900 500 11000"
+        fill="none"
+        opacity="0.42"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
+      {unspooledStrands.map((strand) => (
+        <path
+          d={strand}
+          fill="none"
+          key={strand}
+          opacity="0.24"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="0.9"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
     </svg>
   );
 }
@@ -151,14 +131,12 @@ function CareFlow() {
     { kind: "synthesize" as const, title: "Synthesize", body: "Bring possible changes, recurring themes, and open threads into view." },
     { kind: "prepare" as const, title: "Prepare", body: "Return only the context that may matter for the conversation ahead." },
   ];
-  const offsets = ["lg:mt-10", "lg:mt-24", "lg:mt-4", "lg:mt-20", "lg:mt-10"];
-
   return (
     <div className="relative mt-14 lg:mt-16">
       <div aria-hidden="true" className="absolute bottom-7 left-[21px] top-7 w-px bg-[var(--border-strong)] lg:hidden" />
-      <div className="grid lg:min-h-[330px] lg:grid-cols-5 lg:gap-0">
-        {steps.map((step, index) => (
-          <article className={`relative grid grid-cols-[auto_1fr] gap-4 border-b border-[var(--border)] py-5 last:border-b-0 lg:block lg:border-0 lg:px-5 lg:py-0 lg:text-center ${offsets[index]}`} key={step.title}>
+      <div className="grid lg:grid-cols-5 lg:items-start lg:gap-0">
+        {steps.map((step) => (
+          <article className="relative grid grid-cols-[auto_1fr] gap-4 border-b border-[var(--border)] py-5 last:border-b-0 lg:block lg:border-0 lg:px-5 lg:py-0 lg:text-center" key={step.title}>
             <span className="relative z-10 grid size-11 shrink-0 place-items-center rounded-full border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent-text)] shadow-sm lg:mx-auto">
               <FlowIcon kind={step.kind} />
             </span>
@@ -169,7 +147,7 @@ function CareFlow() {
           </article>
         ))}
       </div>
-      <div className="mx-auto mt-4 flex max-w-3xl items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500 lg:mt-0">
+      <div className="mx-auto mt-6 flex max-w-[980px] items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500 lg:mt-9">
         <span>Faithful record</span>
         <span className="h-px flex-1 bg-[linear-gradient(to_right,var(--border-strong),var(--accent-strong))]" />
         <span className="text-[var(--accent-text)]">Useful context</span>
@@ -245,22 +223,18 @@ function InsightPreview() {
 
 export function PublicLanding() {
   return (
-    <main className="overflow-hidden">
-      <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center border-b border-[var(--border)] px-4 py-16 sm:px-6 sm:py-20">
-        <div className="absolute inset-x-0 top-0 -z-10 h-[68%] bg-[radial-gradient(circle_at_16%_18%,var(--accent-surface),transparent_35%),radial-gradient(circle_at_82%_22%,var(--surface-inset),transparent_32%)] opacity-80" />
-        <div aria-hidden="true" className="absolute -right-24 bottom-10 -z-10 size-80 rounded-full border border-[var(--border)] opacity-50 sm:size-[30rem]" />
-        <ThreadSegment braid="wide" direction="right-right" />
-        <div className="relative z-10 mx-auto grid w-full max-w-[1240px] items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+    <main className="relative overflow-hidden">
+      <PageThread />
+      <section className="relative flex min-h-[calc(100svh-4rem)] items-center border-b border-[var(--border)] px-4 py-16 sm:px-6 sm:py-20">
+        <div className="absolute inset-x-0 top-0 z-0 h-[68%] bg-[radial-gradient(circle_at_16%_18%,var(--accent-surface),transparent_35%),radial-gradient(circle_at_82%_22%,var(--surface-inset),transparent_32%)] opacity-80" />
+        <div aria-hidden="true" className="absolute -right-24 bottom-10 z-0 size-80 rounded-full border border-[var(--border)] opacity-50 sm:size-[30rem]" />
+        <div className="relative z-20 mx-auto grid w-full max-w-[1240px] items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-              <SparkIcon />
-              Longitudinal mental health synthesis
-            </p>
-            <h1 className="mt-7 max-w-[680px] text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-stone-900 sm:text-6xl lg:text-[4.6rem]">
+            <h1 className="landing-thread-copy max-w-[740px] text-5xl font-semibold leading-[1.02] tracking-[-0.035em] text-stone-900 sm:text-6xl lg:text-[4.6rem]">
               See the full course of care. Carry the right context forward.
             </h1>
-            <p className="mt-7 max-w-[600px] text-lg leading-8 text-stone-600 sm:text-xl">
-              A longitudinal care workspace that helps mental health professionals understand the clinical journey across sessions—and manage the practice around it, from scheduling and coordination to billing, insurance, documents, and consent.
+            <p className="landing-thread-copy mt-7 max-w-[640px] text-lg leading-8 text-stone-600 sm:text-xl">
+              The clinical journey should remain understandable across sessions, with the context of care and the responsibilities surrounding it held together rather than scattered apart.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a className="inline-flex cursor-grab items-center justify-center gap-2 rounded-xl bg-emerald-800 px-5 py-3.5 text-sm font-semibold text-white transition-colors duration-200 ease-out hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing" href="#longitudinal-insights">
@@ -280,37 +254,23 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="right-left" route="middle" />
-        <div className="relative z-10 mx-auto w-full max-w-[1180px]">
-          <div className="grid gap-8 lg:grid-cols-[0.42fr_1.58fr] lg:items-end lg:gap-16">
-            <div className="max-w-xs text-[var(--accent-text)]">
-              <WaveMark className="w-28" />
-              <p className="mt-5 text-sm font-semibold">The work between the words</p>
-            </div>
-            <h2 className="max-w-[900px] text-balance text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">A full caseload asks a great deal of human memory.</h2>
-          </div>
-          <div className="mt-14 grid gap-8 border-t border-[var(--border)] pt-8 md:grid-cols-2 lg:ml-[28%] lg:gap-14">
-            <p className="max-w-xl text-lg leading-8 text-stone-600 sm:text-xl">
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1180px]">
+          <h2 className="landing-thread-copy mx-auto max-w-[1080px] text-center text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">A full caseload asks a great deal of human memory.</h2>
+          <div className="mx-auto mt-14 grid max-w-[980px] gap-8 border-t border-[var(--border)] pt-8 md:grid-cols-2 lg:gap-14">
+            <p className="landing-thread-copy max-w-xl text-lg leading-8 text-stone-600 sm:text-xl">
               Good therapy depends on continuity: remembering what carried weight, what changed, what remains unresolved, and how today connects to months of earlier work.
             </p>
-            <p className="max-w-xl text-lg leading-8 text-stone-600 sm:text-xl">
+            <p className="landing-thread-copy max-w-xl text-lg leading-8 text-stone-600 sm:text-xl">
               Every client has a distinct history, language, relationships, goals, and pace. Holding many evolving stories at once asks a great deal of human attention.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="left-left" />
-        <div className="relative z-10 mx-auto w-full max-w-[1180px]">
-          <div className="grid gap-8 lg:grid-cols-[0.45fr_1.55fr] lg:items-end lg:gap-16">
-            <div>
-              <p className="text-sm font-semibold text-emerald-800">Continuity is the challenge</p>
-              <WaveMark className="mt-6 w-36 text-[var(--border-strong)]" />
-            </div>
-            <h2 className="max-w-[900px] text-balance text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">The details accumulate. Their meaning keeps changing.</h2>
-          </div>
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1180px]">
+          <h2 className="landing-thread-copy mx-auto max-w-[1080px] text-center text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">The details accumulate. Their meaning keeps changing.</h2>
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] md:grid-cols-3">
               {[
                 ["Across the record", "Important context lives across sessions, finalized notes, transcript moments, documents, and clinician observations."],
@@ -326,14 +286,12 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="left-right" route="middle" />
-        <div className="relative z-10 mx-auto w-full max-w-[1120px]">
-          <p className="text-sm font-semibold text-emerald-800">A gentler kind of support</p>
-          <div className="mt-5 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-20">
-            <h2 className="text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">Not a substitute for memory. A way to return prepared.</h2>
-            <p className="text-lg leading-8 text-stone-600 sm:text-xl">
-              The product keeps relevant history, possible patterns, open threads, and supporting evidence close enough to review—so the therapist can spend less time reconstructing and more attention with the person in the room.
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1120px]">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)] lg:items-end lg:gap-16">
+            <h2 className="landing-thread-copy max-w-[780px] text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">Not a substitute for memory. A way to return prepared.</h2>
+            <p className="landing-thread-copy text-lg leading-8 text-stone-600 sm:text-xl">
+              Relevant history, possible patterns, open threads, and supporting evidence should remain close enough in proximity to review—so the therapist can spend less time reconstructing and more attention with the person in the room.
             </p>
           </div>
           <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -351,13 +309,11 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section id="longitudinal-insights" className="relative isolate flex min-h-[85svh] scroll-mt-8 items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="right-left" route="lower" />
-        <div className="relative z-10 mx-auto grid w-full max-w-[1180px] gap-14 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-20">
+      <section id="longitudinal-insights" className="relative flex min-h-[85svh] scroll-mt-8 items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto grid w-full max-w-[1240px] gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-16">
           <div>
-            <p className="text-sm font-semibold text-emerald-800">The clinical journey, made visible</p>
-            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">See what changes between the sessions.</h2>
-            <p className="mt-6 text-lg leading-8 text-stone-600">
+            <h2 className="landing-thread-copy max-w-[580px] text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">See what changes between the sessions.</h2>
+            <p className="landing-thread-copy mt-6 max-w-[560px] text-lg leading-8 text-stone-600">
               Therapist-controlled synthesis turns a collection of finalized sessions into a reviewable clinical journey: meaningful changes, recurring themes, relevant context, and open threads.
             </p>
           </div>
@@ -367,30 +323,22 @@ export function PublicLanding() {
 
       <section id="care-flow" className="relative flex min-h-[85svh] scroll-mt-8 items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
         <div aria-hidden="true" className="absolute -left-40 top-1/2 size-[30rem] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,var(--accent-surface),transparent_68%)] opacity-70" />
-        <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 hidden size-full text-[var(--border-strong)] lg:block" preserveAspectRatio="none" viewBox="0 0 1000 900">
-          <path d="M100 0 C100 84 82 132 108 205 C132 272 112 328 98 382 C88 421 106 475 165 475 C242 475 274 535 330 535 C397 535 423 455 495 455 C566 455 590 520 660 520 C733 520 760 475 825 475 C918 475 934 574 895 668 C862 748 880 814 880 900" fill="none" opacity="0.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-        </svg>
-        <div className="relative z-10 mx-auto w-full max-w-[1180px]">
-          <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-20">
-            <div>
-              <p className="text-sm font-semibold text-emerald-800">From session to useful context</p>
-              <h2 className="mt-5 max-w-[860px] text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">A record becomes useful through review—not accumulation alone.</h2>
-            </div>
-            <p className="max-w-md text-base leading-7 text-stone-600 lg:pb-2">Each step adds judgment, structure, and restraint. The result is not more information—it is a clearer way back into the work.</p>
+        <div className="relative z-20 mx-auto w-full max-w-[1180px]">
+          <div>
+            <h2 className="landing-thread-copy max-w-[940px] text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">A record becomes useful through review—not accumulation alone.</h2>
+            <p className="landing-thread-copy mt-6 max-w-[1100px] text-lg leading-8 text-stone-600">Each step adds judgment, structure, and restraint. The result is not more information—it is a clearer way back into the work.</p>
           </div>
           <CareFlow />
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment braid="tight" direction="right-right" />
-        <div className="relative z-10 mx-auto w-full max-w-[1240px]">
-          <div className="grid gap-8 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:gap-20">
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1240px]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.5fr)] lg:items-end lg:gap-16">
             <div>
-              <p className="text-sm font-semibold text-emerald-800">Trust is part of the interface</p>
-              <h2 className="mt-5 text-balance text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">Useful because it stays reviewable.</h2>
+              <h2 className="landing-thread-copy max-w-[900px] text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">Useful because it stays reviewable.</h2>
             </div>
-            <p className="max-w-md text-lg leading-8 text-stone-600">
+            <p className="landing-thread-copy max-w-md text-lg leading-8 text-stone-600">
               AI-assisted context should offer a place to look—not declare what is clinically true.
             </p>
           </div>
@@ -399,7 +347,7 @@ export function PublicLanding() {
               ["Finalized records first", "Longitudinal context is grounded in therapist-reviewed source material."],
               ["Evidence stays close", "Important statements can be traced to the relevant session, transcript, and recording context."],
               ["Corrections carry forward", "Therapists can correct, dismiss, pin, or mark remembered context outdated."],
-              ["Judgment stays human", "The system supports review; it does not diagnose, determine risk, or make treatment decisions."],
+              ["Judgment stays human", "Review should be supported without diagnosing, determining risk, or making treatment decisions."],
             ].map(([title, body]) => (
               <article className="bg-[var(--surface-subtle)] p-5 lg:min-h-56 lg:p-6" key={title}>
                 <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><ShieldIcon /></span>
@@ -411,19 +359,17 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="right-left" route="middle" />
-        <div className="relative z-10 mx-auto w-full max-w-[1240px]">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.7fr_0.7fr] lg:items-end lg:gap-12">
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1240px]">
+          <div className="grid gap-8 lg:grid-cols-[1.35fr_0.575fr_0.575fr] lg:items-end lg:gap-12">
             <div>
-              <p className="text-sm font-semibold text-emerald-800">One connected practice</p>
-              <h2 className="mt-5 text-balance text-3xl font-semibold tracking-[-0.035em] text-stone-900 sm:text-5xl">The clinical journey and the work around it belong together.</h2>
+              <h2 className="landing-thread-copy max-w-[700px] text-3xl font-semibold leading-[1.1] tracking-[-0.025em] text-stone-900 sm:text-5xl">The clinical journey and the work around it belong together.</h2>
             </div>
-            <p className="border-t border-[var(--border)] pt-5 text-base leading-7 text-stone-600">
+            <p className="landing-thread-copy border-t border-[var(--border)] pt-5 text-base leading-7 text-stone-600">
               Context weakens when the session record, preparation, messages, calendars, and files live in separate systems.
             </p>
-            <p className="border-t border-[var(--border)] pt-5 text-base leading-7 text-stone-600">
-              The platform brings those responsibilities back into one coherent client relationship.
+            <p className="landing-thread-copy border-t border-[var(--border)] pt-5 text-base leading-7 text-stone-600">
+              Those responsibilities should return to one coherent client relationship.
             </p>
           </div>
 
@@ -443,15 +389,13 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="left-left" />
-        <div className="relative z-10 mx-auto w-full max-w-[1240px]">
-          <div className="grid gap-8 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:gap-20">
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden border-y border-[var(--border)] bg-[var(--surface)] px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1240px]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.5fr)] lg:items-end lg:gap-16">
             <div>
-              <p className="text-sm font-semibold text-emerald-800">The practice around care</p>
-              <h2 className="mt-5 text-balance text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">Fewer handoffs between care and administration.</h2>
+              <h2 className="landing-thread-copy max-w-[920px] text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">Fewer handoffs between care and administration.</h2>
             </div>
-            <p className="max-w-md text-lg leading-8 text-stone-600">The operational record stays connected to the same client relationship instead of becoming a second, fragmented story.</p>
+            <p className="landing-thread-copy max-w-md text-lg leading-8 text-stone-600">The operational record stays connected to the same client relationship instead of becoming a second, fragmented story.</p>
           </div>
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -470,11 +414,9 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="left-center" />
-        <div className="relative z-10 mx-auto w-full max-w-[1120px]">
-          <p className="text-sm font-semibold text-emerald-800">Built for the people carrying the work</p>
-          <h2 className="mt-5 max-w-[860px] text-4xl font-semibold tracking-[-0.045em] text-stone-900 sm:text-6xl">A calmer workspace for practices that cannot afford to lose the thread.</h2>
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1120px]">
+          <h2 className="landing-thread-copy mx-auto max-w-[1040px] text-center text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-stone-900 sm:text-6xl">A calmer place for practices that cannot afford to lose the thread.</h2>
           <div className="mt-12 grid gap-4 md:grid-cols-3">
             {[
               ["Solo practitioners", "A single place to move from the clinical conversation to preparation and practice administration."],
@@ -490,13 +432,10 @@ export function PublicLanding() {
         </div>
       </section>
 
-      <section className="relative isolate flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
-        <ThreadSegment direction="center-center" />
-        <div className="relative z-10 mx-auto w-full max-w-[1120px] overflow-hidden rounded-[2rem] border border-[var(--border-strong)] bg-[var(--accent-strong)] px-6 py-14 text-center text-white shadow-[0_22px_60px_rgba(41,37,36,0.16)] sm:px-12 sm:py-20">
-          <WaveMark className="mx-auto w-32 text-white/50" />
-          <p className="mt-6 text-sm font-semibold text-white/75">A more connected view of care</p>
-          <h2 className="mx-auto mt-5 max-w-[760px] text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">Hold onto the thread without losing the human story.</h2>
-          <p className="mx-auto mt-5 max-w-[640px] text-sm leading-6 text-white/80 sm:text-base">
+      <section className="relative flex min-h-[85svh] items-center overflow-hidden px-4 py-20 sm:min-h-[calc(100svh-4rem)] sm:px-6 sm:py-24">
+        <div className="relative z-20 mx-auto w-full max-w-[1120px] overflow-hidden rounded-[2rem] border border-[var(--border-strong)] bg-[var(--accent-strong)] px-6 py-14 text-center text-white shadow-[0_22px_60px_rgba(41,37,36,0.16)] sm:px-12 sm:py-20">
+          <h2 className="mx-auto max-w-[900px] text-3xl font-semibold leading-[1.1] tracking-[-0.025em] sm:text-5xl">Hold onto the thread without losing the human story.</h2>
+          <p className="mx-auto mt-5 max-w-[720px] text-sm leading-6 text-white/80 sm:text-base">
             One client relationship. One continuous record of care and practice activity. A private, clinician-guided workspace for understanding the journey and managing what comes next.
           </p>
           <Link className="mt-8 inline-flex cursor-grab items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-emerald-900 transition-colors duration-200 ease-out hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:cursor-grabbing" href="/login">
