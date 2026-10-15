@@ -53,7 +53,11 @@ class AudioUploadTests(unittest.TestCase):
             self.assertEqual(json.loads(server.status_path('session-test').read_text())['status'], 'COMPLETED')
 
     def test_completed_upload_reports_application_owned_processing_stages(self):
-        storage = {'bucket': 'output', 'region': 'us-east-1'}
+        storage = {
+            'bucket': 'output',
+            'region': 'us-east-1',
+            'session_id': 'session-test',
+        }
         with tempfile.TemporaryDirectory() as directory, patch.object(server, 'RECORDINGS_DIRECTORY', Path(directory)), patch.object(server.boto3, 'client') as aws, patch.object(server, 'segments_from_healthscribe', return_value=[]), patch.object(server, 'summary_from_healthscribe', return_value=[]), patch.object(server.organization_storage, 'set_job_status') as set_status, patch.object(server.organization_storage, 'publish_results'), patch.object(server.journey_proposal_jobs, 'process_one'):
             session = Path(directory) / 'session-test'
             session.mkdir()

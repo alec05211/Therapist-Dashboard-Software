@@ -70,9 +70,9 @@ terraform -chdir=terraform/demo-app output -raw caddy_health_url
 
 ## GitHub Actions prerequisites
 
-The repository exposes three manual workflows: `Terraform - Demo Data`,
-`Terraform - Demo Hosted App`, and `Deploy - Hosted Demo`. Before using them,
-configure:
+The repository exposes two manual infrastructure workflows, `Terraform - Demo
+Data` and `Terraform - Demo Hosted App`, plus the `Deploy - Hosted Demo`
+application workflow. Before using them, configure:
 
 - repository variable `AWS_TERRAFORM_APP_ROLE_ARN` with the application OIDC
   role output by `terraform/bootstrap`;
@@ -125,14 +125,16 @@ sudo bash deploy/hosted-demo/deploy.sh
 ```
 
 After the GitHub application role includes the SSM deployment permissions from
-`terraform/bootstrap`, the normal checkpoint path is the manual
-`Deploy - Hosted Demo` workflow. Run it from the `main` branch and supply a
-branch, tag, or commit in this repository. The workflow resolves that input to
-an immutable commit SHA, reads the current instance ID from remote Terraform
-state, and invokes the same deployment script through Systems Manager Run
-Command. It waits for container health checks and then verifies the public
-infrastructure and login endpoints. The protected `demo-app` environment can
-require a reviewer before AWS credentials are issued.
+`terraform/bootstrap`, every push to `main` automatically runs `Deploy - Hosted
+Demo` for the pushed commit. The workflow can also be started manually from the
+`main` branch with a branch, tag, or commit for an explicit redeploy or rollback.
+It first lints, type-checks, and builds the frontend and runs the Python test
+suite. Only a validated revision proceeds to deployment. The workflow resolves
+that revision to an immutable commit SHA, reads the current instance ID from
+remote Terraform state, and invokes the same deployment script through Systems
+Manager Run Command. It waits for container health checks and then verifies the
+public infrastructure and login endpoints. The protected `demo-app` environment
+can require a reviewer before AWS credentials are issued.
 
 The workflow does not place application secrets in GitHub. The EC2 instance
 continues to resolve its narrowly scoped Secrets Manager values at process
