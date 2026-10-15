@@ -5,8 +5,10 @@ locals {
   data_state_key = "${local.state_prefix}/demo-data.tfstate"
   app_state_key  = "${local.state_prefix}/demo-app.tfstate"
 
-  github_oidc_host = "token.actions.githubusercontent.com"
-  github_oidc_url  = "https://${local.github_oidc_host}"
+  github_oidc_host       = "token.actions.githubusercontent.com"
+  github_oidc_url        = "https://${local.github_oidc_host}"
+  github_repository_path = split("/", var.github_repository)
+  github_oidc_repository = "${local.github_repository_path[0]}@${var.github_owner_id}/${local.github_repository_path[1]}@${var.github_repository_id}"
 
   app_role_name  = "therapist-dashboard-demo-app-github"
   data_role_name = "therapist-dashboard-demo-data-github"
@@ -112,7 +114,7 @@ data "aws_iam_policy_document" "github_app_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "${local.github_oidc_host}:sub"
-      values   = ["repo:${var.github_repository}:environment:demo-app"]
+      values   = ["repo:${local.github_oidc_repository}:environment:demo-app"]
     }
   }
 }
@@ -137,8 +139,8 @@ data "aws_iam_policy_document" "github_data_assume_role" {
       test     = "StringEquals"
       variable = "${local.github_oidc_host}:sub"
       values = [
-        "repo:${var.github_repository}:environment:demo-data",
-        "repo:${var.github_repository}:environment:demo-data-destroy",
+        "repo:${local.github_oidc_repository}:environment:demo-data",
+        "repo:${local.github_oidc_repository}:environment:demo-data-destroy",
       ]
     }
   }
