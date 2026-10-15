@@ -37,8 +37,29 @@ def migration_files() -> list[Path]:
     return files
 
 
+def canonical_migration_bytes(path: Path) -> bytes:
+    """Normalize text line endings so migrations hash identically on every OS."""
+    return path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def checksum(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(canonical_migration_bytes(path)).hexdigest()
+
+
+def compatible_checksums(path: Path) -> set[str]:
+    """Return canonical and legacy platform-specific checksums for one file.
+
+    Early demo migrations were hashed from the checkout bytes. A migration
+    first applied from Windows therefore recorded CRLF bytes, while the same
+    Git object checked out on Linux uses LF. Accept only those newline variants
+    so a real SQL change continues to fail closed.
+    """
+    canonical = canonical_migration_bytes(path)
+    crlf = canonical.replace(b"\n", b"\r\n")
+    return {
+        hashlib.sha256(canonical).hexdigest(),
+        hashlib.sha256(crlf).hexdigest(),
+    }
 
 
 def main() -> int:
@@ -66,7 +87,7 @@ def main() -> int:
                     )
                     existing = cursor.fetchone()
                     if existing:
-                        if existing[0] != digest:
+                        if existing[0] not in compatible_checksums(path):
                             raise RuntimeError(
                                 f"Migration {name} was changed after it was applied. "
                                 "Create a new migration instead."
