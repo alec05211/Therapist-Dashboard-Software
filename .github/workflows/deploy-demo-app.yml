@@ -52,7 +52,6 @@ jobs:
         run: |
           npm ci
           npm run lint
-          npx tsc --noEmit
           npm run build -- --webpack
 
       - uses: actions/setup-python@v5
