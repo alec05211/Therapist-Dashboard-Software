@@ -386,7 +386,7 @@ class LongitudinalRecordRepository:
         items: Iterable[InsightItem],
         generator_name: str,
         selection_policy_version: str,
-        actor_user_id: str,
+        actor_user_id: str | None,
         status: str = "draft",
         generator_version: str | None = None,
         source_cutoff_session_id: str | None = None,
@@ -547,14 +547,18 @@ class LongitudinalRecordRepository:
         }
 
     def get_latest_insight_snapshot(self, *, organization_id: str, client_id: str) -> dict[str, Any] | None:
-        """Read the newest review workspace with its source lineage intact."""
+        """Read the current validated workspace with its source lineage intact.
+
+        Draft rows may be written while generation or manual review is in
+        progress. They are never eligible for the live Insights workspace.
+        """
         with self.connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT id, version_number, status, generator_name, generator_version,
                        selection_policy_version, content, created_at, reviewed_at
                 FROM app.longitudinal_insight_snapshots
-                WHERE organization_id = %s AND client_id = %s
+                WHERE organization_id = %s AND client_id = %s AND status = 'accepted'
                 ORDER BY version_number DESC
                 LIMIT 1
                 """,
@@ -643,6 +647,7 @@ class LongitudinalRecordRepository:
         status: str = "draft",
         generator_version: str | None = None,
         upcoming_session_id: str | None = None,
+        appointment_id: str | None = None,
         source_insight_snapshot_id: str | None = None,
         actor_user_id: str | None = None,
     ) -> str:
@@ -653,15 +658,54 @@ class LongitudinalRecordRepository:
             cursor.execute(
                 """
                 INSERT INTO app.pre_session_brief_snapshots (
-                  organization_id, client_id, upcoming_session_id, source_insight_snapshot_id,
+                  organization_id, client_id, upcoming_session_id, appointment_id, source_insight_snapshot_id,
                   status, generator_name, generator_version, context_packet, content, created_by_user_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (organization_id, client_id, upcoming_session_id, source_insight_snapshot_id, status,
+                (organization_id, client_id, upcoming_session_id, appointment_id, source_insight_snapshot_id, status,
                  generator_name, generator_version, Json(dict(context_packet)), Json(dict(content)), actor_user_id),
             )
             row = cursor.fetchone()
             if not row:
                 raise RuntimeError("Could not persist the pre-session brief snapshot.")
             return str(row["id"])
+
+    def get_published_pre_session_brief(
+        self,
+        *,
+        organization_id: str,
+        client_id: str,
+    ) -> dict[str, Any] | None:
+        """Return only the brief atomically published for the next appointment."""
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT EXISTS (
+                     SELECT 1 FROM information_schema.columns
+                     WHERE table_schema='app'
+                       AND table_name='pre_session_brief_refresh_state'
+                       AND column_name='published_brief_snapshot_id'
+                   ) AS ready"""
+            )
+            schema = cursor.fetchone()
+            if not schema or not schema["ready"]:
+                return None
+            cursor.execute(
+                """
+                SELECT brief.content
+                FROM app.pre_session_brief_refresh_state AS state
+                JOIN app.appointments AS appointment ON appointment.id = state.appointment_id
+                JOIN app.pre_session_brief_snapshots AS brief
+                  ON brief.id = state.published_brief_snapshot_id
+                WHERE state.organization_id = %s AND state.client_id = %s
+                  AND state.published_insights_revision > 0
+                  AND appointment.status IN ('scheduled', 'confirmed')
+                  AND appointment.ends_at > CURRENT_TIMESTAMP
+                  AND brief.status = 'accepted'
+                ORDER BY appointment.starts_at
+                LIMIT 1
+                """,
+                (organization_id, client_id),
+            )
+            row = cursor.fetchone()
+        return row["content"] if row else None

@@ -33,8 +33,17 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
         if selected >= 8:
             break
         content = item['content']
-        text = next((content[key].strip() for key in ('text', 'summary', 'narrative', 'title')
+        text = next((content[key].strip() for key in ('text', 'summary', 'narrative', 'analysis', 'title', 'label')
                      if isinstance(content.get(key), str) and content[key].strip()), None)
+        contexts = content.get('contexts')
+        if text and isinstance(contexts, list):
+            context_text = ' '.join(
+                context['text'].strip() for context in contexts
+                if isinstance(context, dict) and isinstance(context.get('text'), str)
+                and context['text'].strip()
+            )
+            if context_text:
+                text = f"{text} {context_text}"
         if not text:
             continue
         sources = []

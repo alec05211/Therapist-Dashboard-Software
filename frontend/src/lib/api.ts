@@ -1,4 +1,4 @@
-import type { ClientJourneyEntry, ClinicalNoteVersion, JobStatus, PersistedInsightSnapshot, PreSessionBrief, ProcessingJob, Transcript, TranscriptListItem } from "@/lib/types";
+import type { ClientJourneyEntry, ClinicalNoteVersion, InsightsRefreshStatus, JobStatus, PersistedInsightSnapshot, PreSessionBrief, ProcessingJob, Transcript, TranscriptListItem } from "@/lib/types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
@@ -42,7 +42,12 @@ export const api = {
     request<PreSessionBrief>(`/clinical-records/clients/${encodeURIComponent(clientId)}/pre-session-brief?organization_id=${encodeURIComponent(organizationId)}`, { cache: "no-store" }),
   getLatestInsightSnapshot: (organizationId: string, clientId: string) =>
     request<PersistedInsightSnapshot>(
-      `/clinical-records/clients/${encodeURIComponent(clientId)}/insight-snapshots/latest?organization_id=${encodeURIComponent(organizationId)}`,
+      `/clinical-records/clients/${encodeURIComponent(clientId)}/insights/latest?organization_id=${encodeURIComponent(organizationId)}`,
+    ),
+  getInsightsRefreshStatus: (organizationId: string, clientId: string) =>
+    request<InsightsRefreshStatus>(
+      `/clinical-records/clients/${encodeURIComponent(clientId)}/insights/status?organization_id=${encodeURIComponent(organizationId)}`,
+      { cache: "no-store" },
     ),
   getClientJourney: (organizationId: string, clientId: string) =>
     request<{ entries: ClientJourneyEntry[] }>(`/clinical-records/clients/${encodeURIComponent(clientId)}/journey-entries?organization_id=${encodeURIComponent(organizationId)}`),

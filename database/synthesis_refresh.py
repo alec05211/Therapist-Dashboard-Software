@@ -27,6 +27,15 @@ EVENT_TYPES = {
     "reprocess_requested",
 }
 
+PROMPT_EVENT_TYPES = {
+    "clinical_note_finalized",
+    "clinical_note_amended",
+    "transcript_finalized",
+    "transcript_corrected",
+    "evidence_claim_accepted",
+    "evidence_claim_dismissed",
+}
+
 
 def enqueue_next_appointment_brief(
     connection: Any,
@@ -101,6 +110,7 @@ def enqueue_insights_refresh(
         raise ValueError("Maximum queue age must be between 60 seconds and one day.")
     if not 1 <= event_count_threshold <= 100:
         raise ValueError("Refresh event threshold must be between 1 and 100.")
+    effective_debounce_seconds = 0 if event_type in PROMPT_EVENT_TYPES else debounce_seconds
 
     with connection.cursor() as cursor:
         cursor.execute(
@@ -140,9 +150,9 @@ def enqueue_insights_refresh(
             (
                 organization_id,
                 client_id,
-                debounce_seconds,
+                effective_debounce_seconds,
                 event_count_threshold,
-                debounce_seconds,
+                effective_debounce_seconds,
                 maximum_queue_age_seconds,
             ),
         )
@@ -216,6 +226,198 @@ def claim_due_insights_refresh(
             (worker_token, lease_seconds),
         )
         return cursor.fetchone()
+
+
+def next_appointment(
+    connection: Any,
+    *,
+    organization_id: str,
+    client_id: str,
+) -> dict[str, Any] | None:
+    """Return the appointment that should receive the next materialized brief."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id, starts_at, ends_at
+            FROM app.appointments
+            WHERE organization_id = %s AND client_id = %s
+              AND status IN ('scheduled', 'confirmed')
+              AND ends_at > CURRENT_TIMESTAMP
+            ORDER BY starts_at
+            LIMIT 1
+            """,
+            (organization_id, client_id),
+        )
+        return cursor.fetchone()
+
+
+def get_refresh_status(
+    connection: Any,
+    *,
+    organization_id: str,
+    client_id: str,
+) -> dict[str, Any]:
+    """Return non-clinical queue and freshness metadata for the workspace."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT state.status, state.desired_insights_revision,
+                   state.published_insights_revision,
+                   state.published_insight_snapshot_id,
+                   state.pending_event_count, state.pending_since,
+                   state.last_event_at, state.last_published_at,
+                   state.last_error_code
+            FROM app.clinical_synthesis_refresh_state AS state
+            WHERE state.organization_id = %s AND state.client_id = %s
+            """,
+            (organization_id, client_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            cursor.execute(
+                """
+                SELECT id AS published_insight_snapshot_id, created_at AS last_published_at
+                FROM app.longitudinal_insight_snapshots
+                WHERE organization_id = %s AND client_id = %s AND status = 'accepted'
+                ORDER BY version_number DESC LIMIT 1
+                """,
+                (organization_id, client_id),
+            )
+            snapshot = cursor.fetchone()
+            row = {
+                "status": "idle",
+                "desired_insights_revision": 0,
+                "published_insights_revision": 0,
+                "published_insight_snapshot_id": snapshot["published_insight_snapshot_id"] if snapshot else None,
+                "pending_event_count": 0,
+                "pending_since": None,
+                "last_event_at": None,
+                "last_published_at": snapshot["last_published_at"] if snapshot else None,
+                "last_error_code": None,
+            }
+    return {
+        **row,
+        "published_insight_snapshot_id": (
+            str(row["published_insight_snapshot_id"])
+            if row.get("published_insight_snapshot_id") else None
+        ),
+        "pending_since": row["pending_since"].isoformat() if row.get("pending_since") else None,
+        "last_event_at": row["last_event_at"].isoformat() if row.get("last_event_at") else None,
+        "last_published_at": row["last_published_at"].isoformat() if row.get("last_published_at") else None,
+    }
+
+
+def complete_synthesis_bundle(
+    connection: Any,
+    *,
+    organization_id: str,
+    client_id: str,
+    worker_token: str,
+    published_revision: int,
+    insight_snapshot_id: str,
+    appointment_id: str | None,
+    brief_snapshot_id: str | None,
+) -> None:
+    """Atomically expose a validated Insights snapshot and its next brief.
+
+    The caller must create both snapshot rows in this same transaction before
+    invoking this function. A lost lease rolls the transaction back, so neither
+    half of the generated pair becomes visible on its own.
+    """
+    if bool(appointment_id) != bool(brief_snapshot_id):
+        raise ValueError("An appointment and brief snapshot must be published together.")
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT desired_insights_revision, processing_insights_revision
+            FROM app.clinical_synthesis_refresh_state
+            WHERE organization_id = %s AND client_id = %s AND status = 'running'
+              AND worker_token = %s
+            FOR UPDATE
+            """,
+            (organization_id, client_id, worker_token),
+        )
+        state = cursor.fetchone()
+        if not state or int(state["processing_insights_revision"]) != published_revision:
+            raise ValueError("The Insights refresh lease is stale or no longer owned by this worker.")
+
+        cursor.execute(
+            """
+            UPDATE app.longitudinal_insight_snapshots
+            SET status = 'superseded'
+            WHERE organization_id = %s AND client_id = %s AND status = 'accepted'
+              AND id <> %s
+            """,
+            (organization_id, client_id, insight_snapshot_id),
+        )
+        if appointment_id and brief_snapshot_id:
+            cursor.execute(
+                """
+                UPDATE app.pre_session_brief_snapshots
+                SET status = 'superseded'
+                WHERE organization_id = %s AND client_id = %s
+                  AND appointment_id = %s AND status = 'accepted' AND id <> %s
+                """,
+                (organization_id, client_id, appointment_id, brief_snapshot_id),
+            )
+
+        cursor.execute(
+            """
+            UPDATE app.clinical_synthesis_refresh_events
+            SET consumed_at = CURRENT_TIMESTAMP
+            WHERE organization_id = %s AND client_id = %s
+              AND desired_insights_revision <= %s AND consumed_at IS NULL
+            """,
+            (organization_id, client_id, published_revision),
+        )
+        still_pending = int(state["desired_insights_revision"]) > published_revision
+        cursor.execute(
+            """
+            UPDATE app.clinical_synthesis_refresh_state
+            SET published_insights_revision = %s,
+                published_insight_snapshot_id = %s,
+                processing_insights_revision = NULL,
+                status = %s,
+                pending_event_count = (
+                  SELECT count(*) FROM app.clinical_synthesis_refresh_events
+                  WHERE organization_id = %s AND client_id = %s AND consumed_at IS NULL
+                ),
+                pending_since = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                not_before = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                worker_token = NULL, lease_expires_at = NULL,
+                attempt_count = 0, last_published_at = CURRENT_TIMESTAMP,
+                last_error_code = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE organization_id = %s AND client_id = %s
+            """,
+            (
+                published_revision, insight_snapshot_id,
+                "pending" if still_pending else "idle",
+                organization_id, client_id, still_pending, still_pending,
+                organization_id, client_id,
+            ),
+        )
+        if appointment_id and brief_snapshot_id:
+            cursor.execute(
+                """
+                INSERT INTO app.pre_session_brief_refresh_state AS brief_state (
+                  appointment_id, organization_id, client_id, source_insight_snapshot_id,
+                  desired_insights_revision, published_insights_revision, status,
+                  published_brief_snapshot_id, last_published_at, not_before
+                ) VALUES (%s,%s,%s,%s,%s,%s,'idle',%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+                ON CONFLICT (appointment_id) DO UPDATE SET
+                  source_insight_snapshot_id = EXCLUDED.source_insight_snapshot_id,
+                  desired_insights_revision = EXCLUDED.desired_insights_revision,
+                  published_insights_revision = EXCLUDED.published_insights_revision,
+                  status = 'idle', published_brief_snapshot_id = EXCLUDED.published_brief_snapshot_id,
+                  last_published_at = CURRENT_TIMESTAMP, worker_token = NULL,
+                  lease_expires_at = NULL, attempt_count = 0, last_error_code = NULL,
+                  updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    appointment_id, organization_id, client_id, insight_snapshot_id,
+                    published_revision, published_revision, brief_snapshot_id,
+                ),
+            )
 
 
 def complete_insights_refresh(

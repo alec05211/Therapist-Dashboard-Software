@@ -1,5 +1,6 @@
 """Local recorder server backed by Amazon HealthScribe batch jobs."""
 import json
+import logging
 import os
 import re
 import threading
@@ -26,6 +27,7 @@ from database import journey_proposal_jobs
 from database import speaker_identification
 from database import document_workflow
 from database import synthesis_refresh
+from database.clinical_synthesis_worker import process_one as process_one_clinical_synthesis
 from database.scheduling import available_recurring_slots, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights, project_session_proposals
@@ -55,6 +57,55 @@ POLL_SECONDS = max(1, int(os.getenv("HEALTHSCRIBE_POLL_SECONDS", "5")))
 HEALTHSCRIBE_MAX_SPEAKERS = min(30, max(3, int(os.getenv("HEALTHSCRIBE_MAX_SPEAKERS", "6"))))
 PROCESSING_JOBS: set[str] = set()
 PROCESSING_JOBS_LOCK = threading.Lock()
+CLINICAL_SYNTHESIS_WORKER_STOP = threading.Event()
+CLINICAL_SYNTHESIS_WORKER_THREAD: threading.Thread | None = None
+LOGGER = logging.getLogger(__name__)
+
+
+def clinical_synthesis_worker_configured() -> bool:
+    """Return whether this deployment has explicitly enabled model synthesis."""
+    enabled = os.getenv("CLINICAL_SYNTHESIS_WORKER_ENABLED", "true").strip().lower()
+    return enabled in {"1", "true", "yes", "on"} and all(
+        os.getenv(name)
+        for name in ("OPENAI_API_KEY", "INSIGHTS_MODEL", "PRE_SESSION_MODEL")
+    )
+
+
+def clinical_synthesis_worker_loop() -> None:
+    """Continuously drain due client revisions without blocking API requests."""
+    while not CLINICAL_SYNTHESIS_WORKER_STOP.is_set():
+        processed = False
+        try:
+            processed = process_one_clinical_synthesis()
+        except Exception as exc:  # Queue state remains durable across transient runtime failures.
+            LOGGER.error("Clinical synthesis worker cycle failed (%s).", type(exc).__name__)
+        if not processed:
+            CLINICAL_SYNTHESIS_WORKER_STOP.wait(5)
+
+
+@app.on_event("startup")
+def start_clinical_synthesis_worker() -> None:
+    global CLINICAL_SYNTHESIS_WORKER_THREAD
+    if not clinical_synthesis_worker_configured():
+        return
+    if CLINICAL_SYNTHESIS_WORKER_THREAD and CLINICAL_SYNTHESIS_WORKER_THREAD.is_alive():
+        return
+    CLINICAL_SYNTHESIS_WORKER_STOP.clear()
+    CLINICAL_SYNTHESIS_WORKER_THREAD = threading.Thread(
+        target=clinical_synthesis_worker_loop,
+        name="clinical-synthesis-worker",
+        daemon=True,
+    )
+    CLINICAL_SYNTHESIS_WORKER_THREAD.start()
+
+
+@app.on_event("shutdown")
+def stop_clinical_synthesis_worker() -> None:
+    global CLINICAL_SYNTHESIS_WORKER_THREAD
+    CLINICAL_SYNTHESIS_WORKER_STOP.set()
+    if CLINICAL_SYNTHESIS_WORKER_THREAD:
+        CLINICAL_SYNTHESIS_WORKER_THREAD.join(timeout=10)
+    CLINICAL_SYNTHESIS_WORKER_THREAD = None
 
 
 class TherapistOnboardingRequest(BaseModel):
@@ -1806,7 +1857,12 @@ def get_current_pre_session_brief(
         with connect() as connection:
             authorize_clinical_access(connection, authorization=authorization,
                                       organization_id=organization_id, client_id=client_id, require_write=False)
-            packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(
+            repository = LongitudinalRecordRepository(connection)
+            published_brief = repository.get_published_pre_session_brief(
+                organization_id=organization_id, client_id=client_id)
+            if isinstance(published_brief, dict):
+                return published_brief
+            packet = repository.build_pre_session_context_packet(
                 organization_id=organization_id, client_id=client_id)
             journey = client_journey.list_entries(connection, organization_id, client_id)
     except (RuntimeError, PsycopgError) as exc:
@@ -1875,6 +1931,31 @@ def generate_current_pre_session_brief(client_id: str, organization_id: str, aut
                 model=EXCLUDED.model, generated_by=EXCLUDED.generated_by, generated_at=CURRENT_TIMESTAMP""",
                 (organization_id, client_id, fingerprint, Json(generated), metadata['model'], actor))
     return resolved
+
+
+@app.get("/clinical-records/clients/{client_id}/insights-refresh-status")
+def get_insights_refresh_status(
+    client_id: str,
+    organization_id: str,
+    authorization: str | None = Header(default=None),
+):
+    """Return queue freshness without exposing clinical prompt or model data."""
+    try:
+        with connect() as connection:
+            authorize_clinical_access(
+                connection,
+                authorization=authorization,
+                organization_id=organization_id,
+                client_id=client_id,
+                require_write=False,
+            )
+            return synthesis_refresh.get_refresh_status(
+                connection,
+                organization_id=organization_id,
+                client_id=client_id,
+            )
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="The synthesis status is temporarily unavailable.") from exc
 
 
 @app.get("/clinical-records/clients/{client_id}/insight-snapshots/latest")

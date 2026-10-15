@@ -186,3 +186,15 @@ export type PersistedInsightSnapshot = {
     evidence: PersistedInsightEvidence[];
   }>;
 };
+
+export type InsightsRefreshStatus = {
+  status: "idle" | "pending" | "running" | "failed";
+  desired_insights_revision: number;
+  published_insights_revision: number;
+  published_insight_snapshot_id?: string | null;
+  pending_event_count: number;
+  pending_since?: string | null;
+  last_event_at?: string | null;
+  last_published_at?: string | null;
+  last_error_code?: string | null;
+};

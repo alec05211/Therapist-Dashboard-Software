@@ -92,6 +92,38 @@ class SynthesisRefreshQueueTests(unittest.TestCase):
         self.assertIn("desired_insights_revision > published_insights_revision", statement)
         self.assertIn("lease_expires_at < CURRENT_TIMESTAMP", statement)
 
+    def test_atomic_bundle_publication_advances_both_pointers(self):
+        connection, cursor = self.connection({
+            "desired_insights_revision": 4,
+            "processing_insights_revision": 4,
+        })
+        synthesis_refresh.complete_synthesis_bundle(
+            connection,
+            organization_id=str(uuid4()),
+            client_id=str(uuid4()),
+            worker_token="worker-a",
+            published_revision=4,
+            insight_snapshot_id=str(uuid4()),
+            appointment_id=str(uuid4()),
+            brief_snapshot_id=str(uuid4()),
+        )
+        statements = [call.args[0] for call in cursor.execute.call_args_list]
+        self.assertTrue(any("published_insight_snapshot_id" in sql for sql in statements))
+        self.assertTrue(any("published_brief_snapshot_id" in sql for sql in statements))
+        self.assertTrue(any("status = 'superseded'" in sql for sql in statements))
+
+    def test_high_value_review_event_is_due_immediately(self):
+        connection, cursor = self.connection({"desired_insights_revision": 1})
+        synthesis_refresh.enqueue_insights_refresh(
+            connection,
+            organization_id=str(uuid4()),
+            client_id=str(uuid4()),
+            event_type="evidence_claim_accepted",
+        )
+        state_call = next(call for call in cursor.execute.call_args_list
+                          if "INSERT INTO app.clinical_synthesis_refresh_state" in call.args[0])
+        self.assertEqual(state_call.args[1][2], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
 import { ApiError, api } from "@/lib/api";
-import type { BriefEvidence, ClientJourneyEntry, LongitudinalRecordContext, PersistedInsightSnapshot } from "@/lib/types";
+import type { BriefEvidence, ClientJourneyEntry, InsightsRefreshStatus, LongitudinalRecordContext, PersistedInsightSnapshot } from "@/lib/types";
 
 type Props = {
   onViewEvidence: (evidence: BriefEvidence) => void;
@@ -30,6 +30,41 @@ type ThemeMetric = {
 type InsightModuleKind = "current_focus" | "change" | "recurring_themes" | "context_history";
 type InsightMaturity = "single_session" | "emerging" | "longitudinal";
 type InsightPriorityBucket = "immediate" | "active" | "background";
+
+function insightTimestamp(value: string, now: number) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  const minutes = Math.max(0, Math.floor((now - date.getTime()) / 60_000));
+  const relative = minutes < 1
+    ? "less than a minute ago"
+    : minutes < 60
+      ? `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`
+      : `${Math.floor(minutes / 60)} ${Math.floor(minutes / 60) === 1 ? "hour" : "hours"} ago`;
+  const absolute = new Intl.DateTimeFormat(undefined, {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    hour: "numeric", minute: "2-digit",
+  }).format(date);
+  return { absolute, relative };
+}
+
+function InsightsFreshness({ status, snapshot }: { status: InsightsRefreshStatus | null; snapshot: PersistedInsightSnapshot | null }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const publishedAt = status?.last_published_at ?? snapshot?.created_at;
+  if (!publishedAt) return null;
+  const timestamp = insightTimestamp(publishedAt, now);
+  if (!timestamp) return null;
+  return (
+    <p role="status" className="mb-3 text-right text-xs leading-5 text-stone-500">
+      <time dateTime={publishedAt} title={timestamp.absolute} className="cursor-pointer">
+        Last updated {timestamp.relative}
+      </time>
+    </p>
+  );
+}
 
 type InsightModule = {
   kind: InsightModuleKind;
@@ -344,7 +379,7 @@ function InsightsLoadingSkeleton() {
   </section>;
 }
 
-function InsightsWorkspace({ snapshot, entries, onViewEvidence }: { snapshot: PersistedInsightSnapshot | null; entries: ClientJourneyEntry[]; onViewEvidence: Props["onViewEvidence"] }) {
+function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }: { snapshot: PersistedInsightSnapshot | null; entries: ClientJourneyEntry[]; refreshStatus: InsightsRefreshStatus | null; onViewEvidence: Props["onViewEvidence"] }) {
   const visibleItems = useMemo(() => snapshot?.items.filter((item) => {
     if (item.review_state === "hidden") return false;
     const sessionCount = new Set(item.evidence.map((source) => source.session_id).filter(Boolean)).size;
@@ -382,6 +417,7 @@ function InsightsWorkspace({ snapshot, entries, onViewEvidence }: { snapshot: Pe
   const overviewIsLong = overview.length > 420;
 
   return <section className="text-left" aria-label="Clinical insights workspace">
+    <InsightsFreshness status={refreshStatus} snapshot={snapshot} />
     {overviewIsLong ? <CollapsibleContentPanel
       title="Clinical overview"
       preview={overview}
@@ -415,26 +451,71 @@ function InsightsWorkspace({ snapshot, entries, onViewEvidence }: { snapshot: Pe
 export function ClientInsights({ onViewEvidence, recordContext }: Props) {
   const [snapshot, setSnapshot] = useState<PersistedInsightSnapshot | null>(null);
   const [entries, setEntries] = useState<ClientJourneyEntry[]>([]);
+  const [refreshStatus, setRefreshStatus] = useState<InsightsRefreshStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!recordContext) return;
-    let cancelled = false;
+  const loadWorkspace = useCallback(async () => {
+    if (!recordContext) return null;
     const snapshotRequest = api.getLatestInsightSnapshot(recordContext.organizationId, recordContext.clientId)
       .catch((reason: unknown) => {
         if (reason instanceof ApiError && reason.status === 404) return null;
         throw reason;
       });
-    void Promise.all([snapshotRequest, api.getClientJourney(recordContext.organizationId, recordContext.clientId)])
-      .then(([nextSnapshot, journey]) => { if (!cancelled) { setSnapshot(nextSnapshot); setEntries(journey.entries); setError(null); } })
+    const journeyRequest = api.getClientJourney(recordContext.organizationId, recordContext.clientId)
+      .catch((reason: unknown) => {
+        throw new Error(`Evidence could not be loaded: ${reason instanceof Error ? reason.message : "Unknown error"}`);
+      });
+    const statusRequest = api.getInsightsRefreshStatus(recordContext.organizationId, recordContext.clientId)
+      .catch((reason: unknown) => {
+        throw new Error(`Freshness could not be loaded: ${reason instanceof Error ? reason.message : "Unknown error"}`);
+      });
+    const [nextSnapshot, journey, nextStatus] = await Promise.all([
+      snapshotRequest,
+      journeyRequest,
+      statusRequest,
+    ]);
+    return { nextSnapshot, journey, nextStatus };
+  }, [recordContext]);
+
+  useEffect(() => {
+    if (!recordContext) return;
+    let cancelled = false;
+    void loadWorkspace()
+      .then((result) => {
+        if (!cancelled && result) {
+          setSnapshot(result.nextSnapshot);
+          setEntries(result.journey.entries);
+          setRefreshStatus(result.nextStatus);
+          setError(null);
+        }
+      })
       .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load the clinical insights workspace."); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [recordContext]);
+  }, [loadWorkspace, recordContext]);
+
+  useEffect(() => {
+    if (!recordContext || loading) return;
+    let cancelled = false;
+    const interval = window.setInterval(() => {
+      void loadWorkspace().then((result) => {
+        if (cancelled || !result) return;
+        const publishedId = result.nextStatus.published_insight_snapshot_id;
+        if (publishedId && result.nextSnapshot?.id !== publishedId) return;
+        setSnapshot(result.nextSnapshot);
+        setEntries(result.journey.entries);
+        setRefreshStatus(result.nextStatus);
+        setError(null);
+      }).catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not refresh the clinical insights workspace.");
+      });
+    }, refreshStatus?.status === "pending" || refreshStatus?.status === "running" ? 4_000 : 30_000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [loadWorkspace, loading, recordContext, refreshStatus?.status]);
 
   if (!recordContext) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-stone-600">Open Insights from an authorized client workspace.</p></section>;
   if (error) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-red-700">{error}</p></section>;
   if (loading) return <InsightsLoadingSkeleton />;
-  return <InsightsWorkspace snapshot={snapshot} entries={entries} onViewEvidence={onViewEvidence} />;
+  return <InsightsWorkspace snapshot={snapshot} entries={entries} refreshStatus={refreshStatus} onViewEvidence={onViewEvidence} />;
 }
