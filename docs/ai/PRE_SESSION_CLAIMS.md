@@ -18,7 +18,7 @@ recording offsets and session labels come from the database, never the model.
 ## Generation and persistence
 
 The approved target lifecycle is defined in
-`docs/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Pre-session generation is a
+`docs/ai/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Pre-session generation is a
 background-only projection of the current validated Insights snapshot. Reading
 never calls the model, and therapists do not edit or regenerate a brief.
 

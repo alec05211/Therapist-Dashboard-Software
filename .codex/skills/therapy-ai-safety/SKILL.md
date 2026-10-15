@@ -27,4 +27,4 @@ Do not assume redaction or removal of direct identifiers makes therapy content s
 
 ## Evaluation
 
-Evaluate with representative, appropriately governed data. Include grounding, faithfulness, relevance, correction behavior, privacy, bias, and harmful-overreach failure modes—not only output fluency. Consult [AI/ML vision](../../../docs/AI_ML_VISION.md) for product-specific strategy and governance.
+Evaluate with representative, appropriately governed data. Include grounding, faithfulness, relevance, correction behavior, privacy, bias, and harmful-overreach failure modes—not only output fluency. Consult [AI/ML vision](../../../docs/ai/AI_ML_VISION.md) for product-specific strategy and governance.

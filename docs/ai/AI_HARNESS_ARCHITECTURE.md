@@ -3,7 +3,7 @@
 > A working architecture for clinician-facing longitudinal memory and synthesis. This document is a proposed design, not a claim of HIPAA compliance, clinical validation, or approval to process real clinical data with any particular model provider.
 
 **Status:** Proposed architecture — no production implementation yet  
-**Related:** [Project vision](PROJECT_VISION.md), [AI / ML vision](AI_ML_VISION.md), [clinical synthesis generation lifecycle](CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md), [storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md), [current HealthScribe implementation](HEALTHSCRIBE.md)
+**Related:** [Project vision](../product/PROJECT_VISION.md), [AI / ML vision](AI_ML_VISION.md), [clinical synthesis generation lifecycle](CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md), [storage architecture](../data/storage-architecture/STORAGE_ARCHITECTURE.md), [current HealthScribe implementation](HEALTHSCRIBE.md)
 
 ## 1. What “harness” means here
 

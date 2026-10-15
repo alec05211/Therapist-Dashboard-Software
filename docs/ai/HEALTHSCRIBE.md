@@ -17,7 +17,7 @@ It is effective enough for early development because it lets the project test th
 
 ## What the local application does today
 
-Organization storage is available through [the organization stack](../terraform/organizations/README.md).
+Organization storage is available through [the organization stack](../../terraform/organizations/README.md).
 When `ORGANIZATION_STORAGE_ENABLED=true`, new uploads create a database session,
 resolve its organization's private bucket, and use client/session prefixes for
 audio and canonical result artifacts. The catalog records object versions and
@@ -141,7 +141,7 @@ The application downloads both raw artifacts from S3. It then normalizes transcr
 
 ## AWS infrastructure provisioned by Terraform
 
-The infrastructure definition is [main.tf](../main.tf). Terraform manages the AWS resources that HealthScribe and the application need; HealthScribe jobs themselves are started dynamically by the application, not created as Terraform resources.
+The infrastructure definition is [main.tf](../../main.tf). Terraform manages the AWS resources that HealthScribe and the application need; HealthScribe jobs themselves are started dynamically by the application, not created as Terraform resources.
 
 | Component | Why it exists | Key characteristics in the current configuration |
 | --- | --- | --- |
@@ -167,7 +167,7 @@ The usual process is:
 5. Run `terraform apply` to create or update the infrastructure.
 6. Retrieve Terraform outputs and configure the local application's `.env` file.
 
-The detailed local commands and setup notes live in [startup.md](startup.md). In short:
+The detailed local commands and setup notes live in [startup.md](../deployment/startup.md). In short:
 
 ```powershell
 aws sso login --profile terraform

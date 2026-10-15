@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-09-08  
 **Status:** Approved direction — implementation in backlog  
-**Related:** [Project vision](../PROJECT_VISION.md), [AI / ML vision](../AI_ML_VISION.md), [current HealthScribe implementation](../HEALTHSCRIBE.md)
+**Related:** [Project vision](../../product/PROJECT_VISION.md), [AI / ML vision](../../ai/AI_ML_VISION.md), [current HealthScribe implementation](../../ai/HEALTHSCRIBE.md)
 
 **Schema diagram:** [PNG](schema-diagram.png) · [Mermaid source](schema-diagram.mmd)
 
@@ -212,7 +212,7 @@ Retention and deletion are policy-driven and must be approved through legal, cli
 7. Add transcript/synthesis versioning and provenance.
 8. Implement consent, retention, legal-hold, deletion, recovery, and production-readiness controls.
 
-The initial adaptable relational schema is maintained as [the first versioned migration](../../database/migrations/001_initial_schema.sql). It establishes the core tenant, client, therapist-access, session, artifact, transcript, synthesis, consent, and audit records without committing to a final practice workflow or demographic-data model.
+The initial adaptable relational schema is maintained as [the first versioned migration](../../../database/migrations/001_initial_schema.sql). It establishes the core tenant, client, therapist-access, session, artifact, transcript, synthesis, consent, and audit records without committing to a final practice workflow or demographic-data model.
 
 ## 14. Open decisions
 

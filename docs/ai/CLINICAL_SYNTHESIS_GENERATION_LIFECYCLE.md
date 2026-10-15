@@ -59,7 +59,7 @@ This policy should be tuned with observed generation latency, event frequency, c
 The interface should not ask therapists to perform routine system maintenance.
 
 The page's presentation and progressive-disclosure contract is defined in
-[Insights progressive disclosure architecture](INSIGHTS_PROGRESSIVE_DISCLOSURE.md).
+[Insights progressive disclosure architecture](../design/INSIGHTS_PROGRESSIVE_DISCLOSURE.md).
 Insights uses a stable semantic hierarchy, hides unsupported modules, and places
 clinically useful current material above background context, orientation counts,
 and the accepted evidence record.

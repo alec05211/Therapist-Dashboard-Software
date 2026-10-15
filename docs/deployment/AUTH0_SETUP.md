@@ -98,6 +98,6 @@ configuration error rather than storing any practice details locally.
 
 The current RDS instance is restricted to synthetic demonstrations. Before
 enabling real accounts or clinical data, provision a reviewed private database
-and an in-VPC migration path. See [the database migration guide](../database/README.md)
-and [the storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md)
+and an in-VPC migration path. See [the database migration guide](../../database/README.md)
+and [the storage architecture](../data/storage-architecture/STORAGE_ARCHITECTURE.md)
 for the required boundary.

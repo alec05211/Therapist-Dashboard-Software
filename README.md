@@ -3,10 +3,12 @@ Therapist Sidekick is an all-in-one digital platform designed to reduce the admi
 
 ## Project direction and architecture
 
-- [Product vision](docs/PROJECT_VISION.md)
-- [Hosted deployment architecture and readiness gate](docs/HOSTED_DEPLOYMENT_ARCHITECTURE.md)
-- [AI / ML vision](docs/AI_ML_VISION.md)
-- [Current HealthScribe implementation](docs/HEALTHSCRIBE.md)
+- [Documentation index](docs/README.md)
+- [Networking: DNS, HTTPS, EC2, and RDS](docs/networking/REQUEST_FLOW.md)
+- [Product vision](docs/product/PROJECT_VISION.md)
+- [Hosted deployment architecture and readiness gate](docs/deployment/HOSTED_DEPLOYMENT_ARCHITECTURE.md)
+- [AI / ML vision](docs/ai/AI_ML_VISION.md)
+- [Current HealthScribe implementation](docs/ai/HEALTHSCRIBE.md)
 
 ## HealthScribe microphone recorder
 
@@ -18,7 +20,7 @@ folder under `recordings`.
 
 1. Apply the Terraform infrastructure and add the three `HEALTHSCRIBE_*` values
    from `terraform output` to your local `.env` file. See
-   [the startup guide](docs/startup.md).
+   [the startup guide](docs/deployment/startup.md).
 2. Sign in to AWS IAM Identity Center and select the Terraform profile:
 
    ```powershell

@@ -5,7 +5,7 @@ description: Create or refine settings and permissions interfaces in Therapist D
 
 # Settings UI
 
-Read `docs/PROJECT_VISION.md` and `docs/DESIGN_LANGUAGE.md` before changing settings.
+Read `docs/product/PROJECT_VISION.md` and `docs/design/DESIGN_LANGUAGE.md` before changing settings.
 
 ## Interaction model
 
@@ -25,4 +25,4 @@ Read `docs/PROJECT_VISION.md` and `docs/DESIGN_LANGUAGE.md` before changing sett
 
 ## Validation
 
-Check keyboard behavior, disabled dependencies, persistence after reload, API filtering, and light/dark rendering. Update permission tests and `docs/CLIENT_SHARING.md` whenever the access model changes.
+Check keyboard behavior, disabled dependencies, persistence after reload, API filtering, and light/dark rendering. Update permission tests and `docs/features/CLIENT_SHARING.md` whenever the access model changes.

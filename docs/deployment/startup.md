@@ -121,7 +121,7 @@ not need an AWS access key or secret in `.env`.
 The database is private by design. Run schema changes as an explicitly invoked
 Fargate task inside the VPC, rather than from a laptop or through an SSM tunnel.
 The task receives the RDS-managed secret directly from Secrets Manager and
-connects with verified TLS. Follow [the database migration guide](../database/README.md).
+connects with verified TLS. Follow [the database migration guide](../../database/README.md).
 
 ## Configure Auth0 API access tokens
 

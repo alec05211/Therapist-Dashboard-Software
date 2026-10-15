@@ -163,10 +163,10 @@ Before running more than one backend instance, verify that job ownership, locks,
 
 ## Related documents
 
-- [Project vision](PROJECT_VISION.md)
-- [AI / ML vision](AI_ML_VISION.md)
-- [Current HealthScribe implementation](HEALTHSCRIBE.md)
-- [Clinical AI orchestration and evidence harness](AI_HARNESS_ARCHITECTURE.md)
-- [Longitudinal record lifecycle](LONGITUDINAL_RECORD_LIFECYCLE.md)
-- [Storage architecture](storage-architecture/STORAGE_ARCHITECTURE.md)
+- [Project vision](../product/PROJECT_VISION.md)
+- [AI / ML vision](../ai/AI_ML_VISION.md)
+- [Current HealthScribe implementation](../ai/HEALTHSCRIBE.md)
+- [Clinical AI orchestration and evidence harness](../ai/AI_HARNESS_ARCHITECTURE.md)
+- [Longitudinal record lifecycle](../ai/LONGITUDINAL_RECORD_LIFECYCLE.md)
+- [Storage architecture](../data/storage-architecture/STORAGE_ARCHITECTURE.md)
 - [Local startup guide](startup.md)

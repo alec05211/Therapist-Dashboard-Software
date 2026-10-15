@@ -202,4 +202,4 @@ Update this document when ML priorities, use cases, evidence, evaluation criteri
 - **Future direction** — valuable but not yet ready to build.
 - **Non-goal** — intentionally excluded.
 
-Keep [PROJECT_VISION.md](PROJECT_VISION.md) as the source of truth for overall product direction, and [HEALTHSCRIBE.md](HEALTHSCRIBE.md) as the current provider/infrastructure reference.
+Keep [PROJECT_VISION.md](../product/PROJECT_VISION.md) as the source of truth for overall product direction, and [HEALTHSCRIBE.md](HEALTHSCRIBE.md) as the current provider/infrastructure reference.
