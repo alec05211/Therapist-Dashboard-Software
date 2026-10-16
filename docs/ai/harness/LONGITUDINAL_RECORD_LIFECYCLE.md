@@ -58,6 +58,4 @@ Migration `002_longitudinal_insight_records.sql` adds:
 - `longitudinal_insight_evidence`
 - `pre_session_brief_snapshots`
 
-The migration is not deployed to a production database. Apply it to the
-synthetic demo only through the guarded demo migration process; a future
-production database requires a reviewed private migration path.
+The migration is not deployed to a production database. Apply it to the synthetic demo only through the guarded demo migration process; a future production database requires a reviewed private migration path.

@@ -7,7 +7,7 @@ Treat it as the source of truth for the product's long-term intent, strategic pr
 
 Before proposing, planning, or implementing AI/ML, transcription, diarization, clinical-synthesis, or longitudinal-insight work, also read `docs/ai/AI_ML_VISION.md`. For changes to the current Amazon HealthScribe integration or its AWS infrastructure, read `docs/ai/HEALTHSCRIBE.md` as well.
 
-Before changing draft-note finalization, Insights regeneration, synthesis queues, or pre-session brief generation, read `docs/ai/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Treat it as the source of truth for the approved generation hierarchy and refresh triggers: Insights is the primary longitudinal synthesis environment, and pre-session briefs are background-generated, read-only condensations of a validated Insights snapshot.
+Before changing draft-note finalization, Insights regeneration, synthesis queues, or pre-session brief generation, read `docs/ai/harness/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Treat it as the source of truth for the approved generation hierarchy and refresh triggers: Insights is the primary longitudinal synthesis environment, and pre-session briefs are background-generated, read-only condensations of a validated Insights snapshot.
 
 ## Interaction style
 

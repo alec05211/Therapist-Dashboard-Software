@@ -22,11 +22,11 @@ Start with the [product vision](product/PROJECT_VISION.md), [local startup guide
 ## AI and clinical synthesis
 
 - [AI / ML vision](ai/AI_ML_VISION.md)
-- [AI harness architecture](ai/AI_HARNESS_ARCHITECTURE.md)
+- [AI harness documentation](ai/harness/README.md)
 - [HealthScribe integration](ai/HEALTHSCRIBE.md)
-- [Clinical synthesis generation lifecycle](ai/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md)
-- [Longitudinal record lifecycle](ai/LONGITUDINAL_RECORD_LIFECYCLE.md)
-- [Pre-session claims](ai/PRE_SESSION_CLAIMS.md)
+- [Clinical synthesis generation lifecycle](ai/harness/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md)
+- [Longitudinal record lifecycle](ai/harness/LONGITUDINAL_RECORD_LIFECYCLE.md)
+- [Pre-session claims](ai/harness/PRE_SESSION_CLAIMS.md)
 - [Google text-to-speech tooling](ai/GOOGLE_TTS.md)
 
 ## Deployment
