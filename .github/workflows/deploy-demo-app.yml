@@ -122,6 +122,7 @@ jobs:
             -backend-config="encrypt=true" \
             -backend-config="use_lockfile=true"
           runtime_secret_arn="$(terraform -chdir=terraform/demo output -raw hosted_app_runtime_secret_arn)"
+          clinical_synthesis_secret_arn="$(terraform -chdir=terraform/demo output -raw clinical_synthesis_secret_arn)"
           terraform -chdir=terraform/demo-app init \
             -backend-config="bucket=$TF_STATE_BUCKET" \
             -backend-config="key=therapist-dashboard/demo-app.tfstate" \
@@ -133,9 +134,11 @@ jobs:
           [[ "$instance_id" =~ ^i-[0-9a-f]+$ ]] || { echo "Terraform returned an invalid EC2 instance ID." >&2; exit 1; }
           [[ "$application_url" == https://*.duckdns.org ]] || { echo "Terraform returned an unexpected application URL." >&2; exit 1; }
           [[ "$runtime_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+$ ]] || { echo "Terraform returned an invalid runtime secret ARN." >&2; exit 1; }
+          [[ "$clinical_synthesis_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+$ ]] || { echo "Terraform returned an invalid clinical synthesis secret ARN." >&2; exit 1; }
           echo "instance_id=$instance_id" >> "$GITHUB_OUTPUT"
           echo "application_url=$application_url" >> "$GITHUB_OUTPUT"
           echo "runtime_secret_arn=$runtime_secret_arn" >> "$GITHUB_OUTPUT"
+          echo "clinical_synthesis_secret_arn=$clinical_synthesis_secret_arn" >> "$GITHUB_OUTPUT"
 
       - name: Deploy the revision through Systems Manager
         id: deploy
@@ -143,6 +146,7 @@ jobs:
         env:
           APPLICATION_URL: ${{ steps.target.outputs.application_url }}
           APP_RUNTIME_SECRET_ARN: ${{ steps.target.outputs.runtime_secret_arn }}
+          CLINICAL_SYNTHESIS_SECRET_ARN: ${{ steps.target.outputs.clinical_synthesis_secret_arn }}
           DEPLOY_REVISION: ${{ steps.revision.outputs.sha }}
           INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
         run: |
@@ -153,14 +157,21 @@ jobs:
           repository_url="https://github.com/alec05211/Therapist-Dashboard-Software.git"
           runtime_identifiers="/etc/therapist-dashboard/runtime-identifiers.env"
           runtime_secret_arn="$APP_RUNTIME_SECRET_ARN"
+          clinical_synthesis_secret_arn="$CLINICAL_SYNTHESIS_SECRET_ARN"
 
           [[ "\$revision" =~ ^[0-9a-f]{40}\$ ]] || { echo "Invalid deployment revision." >&2; exit 1; }
           [[ "\$runtime_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+\$ ]] || { echo "Invalid runtime secret ARN." >&2; exit 1; }
+          [[ "\$clinical_synthesis_secret_arn" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+\$ ]] || { echo "Invalid clinical synthesis secret ARN." >&2; exit 1; }
           [[ -f "\$runtime_identifiers" ]] || { echo "Missing runtime identifier file." >&2; exit 1; }
           if grep -q '^APP_RUNTIME_SECRET_ARN=' "\$runtime_identifiers"; then
             sed -i "s|^APP_RUNTIME_SECRET_ARN=.*|APP_RUNTIME_SECRET_ARN=\$runtime_secret_arn|" "\$runtime_identifiers"
           else
             printf '\nAPP_RUNTIME_SECRET_ARN=%s\n' "\$runtime_secret_arn" >> "\$runtime_identifiers"
+          fi
+          if grep -q '^CLINICAL_SYNTHESIS_SECRET_ARN=' "\$runtime_identifiers"; then
+            sed -i "s|^CLINICAL_SYNTHESIS_SECRET_ARN=.*|CLINICAL_SYNTHESIS_SECRET_ARN=\$clinical_synthesis_secret_arn|" "\$runtime_identifiers"
+          else
+            printf '\nCLINICAL_SYNTHESIS_SECRET_ARN=%s\n' "\$clinical_synthesis_secret_arn" >> "\$runtime_identifiers"
           fi
           chmod 0640 "\$runtime_identifiers"
           chown root:ec2-user "\$runtime_identifiers"

@@ -38,6 +38,11 @@ output "hosted_app_runtime_secret_arn" {
   value       = aws_secretsmanager_secret.hosted_app_runtime.arn
 }
 
+output "clinical_synthesis_secret_arn" {
+  description = "Secret metadata ARN for the hosted clinical-synthesis API credential; the value is managed outside Terraform."
+  value       = aws_secretsmanager_secret.clinical_synthesis.arn
+}
+
 output "healthscribe_input_bucket" {
   value = aws_s3_bucket.input.bucket
 }

@@ -20,7 +20,7 @@ set -a
 source "$runtime_identifiers"
 set +a
 
-for required_identifier in APP_RUNTIME_SECRET_ARN DATABASE_SECRET_ARN DATABASE_HOST DATABASE_NAME; do
+for required_identifier in APP_RUNTIME_SECRET_ARN CLINICAL_SYNTHESIS_SECRET_ARN DATABASE_SECRET_ARN DATABASE_HOST DATABASE_NAME; do
   if [[ -z "${!required_identifier:-}" ]]; then
     echo "Missing required runtime identifier: $required_identifier" >&2
     exit 1
@@ -59,6 +59,11 @@ start_api() {
   export AUTH0_AUDIENCE="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_AUDIENCE}}"
   export ORGANIZATION_STORAGE_ENABLED="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:ORGANIZATION_STORAGE_ENABLED}}"
   export HEALTHSCRIBE_MAX_SPEAKERS="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:HEALTHSCRIBE_MAX_SPEAKERS}}"
+  export OPENAI_API_KEY="{{resolve:secretsmanager:$CLINICAL_SYNTHESIS_SECRET_ARN}}"
+  export INSIGHTS_MODEL="gpt-5"
+  export PRE_SESSION_MODEL="gpt-5"
+  export JOURNEY_PROPOSAL_MODEL="gpt-5"
+  export CLINICAL_SYNTHESIS_WORKER_ENABLED="true"
 
   python3 "$secret_resolver" -- docker run -d \
     --name therapist-dashboard-api \
@@ -69,8 +74,15 @@ start_api() {
     --env AUTH0_AUDIENCE \
     --env ORGANIZATION_STORAGE_ENABLED \
     --env HEALTHSCRIBE_MAX_SPEAKERS \
+    --env OPENAI_API_KEY \
+    --env INSIGHTS_MODEL \
+    --env PRE_SESSION_MODEL \
+    --env JOURNEY_PROPOSAL_MODEL \
+    --env CLINICAL_SYNTHESIS_WORKER_ENABLED \
     --mount type=volume,source=therapist_dashboard_recordings,target=/app/recordings \
     "$image" >/dev/null
+
+  unset OPENAI_API_KEY
 }
 
 start_frontend() {

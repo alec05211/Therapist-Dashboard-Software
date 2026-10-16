@@ -122,6 +122,23 @@ resource "aws_secretsmanager_secret" "hosted_app_runtime" {
   }
 }
 
+# The value is populated out of band so the OpenAI credential never enters
+# Terraform configuration or state. The hosted API resolves it only when the
+# clinical synthesis worker process starts.
+resource "aws_secretsmanager_secret" "clinical_synthesis" {
+  name                    = "${var.project_name}/clinical-synthesis"
+  description             = "OpenAI API credential for synthetic hosted-demo clinical synthesis"
+  recovery_window_in_days = 30
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = {
+    DataClassification = "synthetic-demo-credentials"
+  }
+}
+
 resource "aws_db_parameter_group" "database" {
   name   = "${var.project_name}-postgres16"
   family = "postgres16"

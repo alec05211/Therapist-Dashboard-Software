@@ -93,6 +93,11 @@ variable "hosted_app_runtime_secret_arn" {
   type        = string
 }
 
+variable "clinical_synthesis_secret_arn" {
+  description = "Persistent Secrets Manager ARN containing the hosted clinical-synthesis API credential."
+  type        = string
+}
+
 variable "healthscribe_input_bucket" {
   description = "Synthetic HealthScribe input bucket output by terraform/demo."
   type        = string

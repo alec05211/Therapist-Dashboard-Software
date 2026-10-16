@@ -111,6 +111,21 @@ resource "aws_iam_role_policy" "hosted_app_runtime" {
   policy = data.aws_iam_policy_document.hosted_app_runtime.json
 }
 
+data "aws_iam_policy_document" "clinical_synthesis_runtime" {
+  statement {
+    sid       = "ReadClinicalSynthesisCredential"
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [var.clinical_synthesis_secret_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "clinical_synthesis_runtime" {
+  name   = "clinical-synthesis-runtime"
+  role   = aws_iam_role.application.id
+  policy = data.aws_iam_policy_document.clinical_synthesis_runtime.json
+}
+
 resource "aws_security_group" "web" {
   name        = "${var.project_name}-web"
   description = "Public HTTPS entry point for the synthetic hosted demo."
@@ -160,6 +175,7 @@ resource "aws_instance" "application" {
     database_secret_arn                     = var.database_secret_arn
     domain_name                             = var.domain_name
     hosted_app_runtime_secret_arn           = var.hosted_app_runtime_secret_arn
+    clinical_synthesis_secret_arn           = var.clinical_synthesis_secret_arn
     healthscribe_batch_data_access_role_arn = var.healthscribe_batch_data_access_role_arn
     healthscribe_input_bucket               = var.healthscribe_input_bucket
     healthscribe_output_bucket              = var.healthscribe_output_bucket
