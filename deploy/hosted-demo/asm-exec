@@ -30,7 +30,12 @@ import urllib.request
 
 PATTERN = re.compile(r'\{\{resolve:secretsmanager:([^}]+)\}\}')
 SMA_ENDPOINT = os.environ.get('AWS_SECRETS_MANAGER_AGENT_ENDPOINT', 'http://localhost:2773')
-SSRF_TOKEN = os.environ.get('AWS_SESSION_TOKEN', os.environ.get('AWS_TOKEN', ''))
+SMA_TOKEN_FILE = os.environ.get(
+    'AWS_SECRETS_MANAGER_AGENT_TOKEN_FILE', '/var/run/awssmatoken'
+)
+REQUIRE_SMA = os.environ.get('ASM_EXEC_REQUIRE_SMA', '').lower() in (
+    '1', 'true', 'yes'
+)
 MCP_ENDPOINT = os.environ.get('ASM_EXEC_MCP_ENDPOINT', 'https://aws-mcp.us-east-1.api.aws/mcp')
 # run_script performs a server-side boto3 round trip (measured ~13s), and the
 # managed endpoint can occasionally take longer under load. Keep the transport
@@ -63,11 +68,36 @@ def _raise_mcp_error(prefix, message):
     raise error_type("%s: %s" % (prefix, detail))
 
 
+def _read_token_file(path):
+    try:
+        with open(path, encoding='utf-8') as token_file:
+            return token_file.read().strip()
+    except (OSError, UnicodeError):
+        return ''
+
+
+def _get_ssrf_token():
+    """Load the provider's SSRF token without logging or exporting it."""
+    for variable in ('AWS_TOKEN', 'AWS_SESSION_TOKEN'):
+        value = os.environ.get(variable, '')
+        if not value:
+            continue
+        if value.startswith('file://'):
+            return _read_token_file(value.removeprefix('file://'))
+        return value
+    return _read_token_file(SMA_TOKEN_FILE)
+
+
 def _check_sma():
     global _sma_available
     if _sma_available is None:
+        token = _get_ssrf_token()
+        if not token:
+            _sma_available = False
+            return _sma_available
         try:
             req = urllib.request.Request(f'{SMA_ENDPOINT}/ping', method='GET')
+            req.add_header('X-Aws-Parameters-Secrets-Token', token)
             urllib.request.urlopen(req, timeout=1)
             _sma_available = True
         except (urllib.error.URLError, OSError):
@@ -398,14 +428,23 @@ def resolve_one(ref):
     if value is None and _check_sma():
         url = f'{SMA_ENDPOINT}/secretsmanager/get?secretId={urllib.parse.quote(secret_name, safe="")}&versionStage={label}'
         req = urllib.request.Request(url, method='GET')
-        if SSRF_TOKEN:
-            req.add_header('X-Aws-Parameters-Secrets-Token', SSRF_TOKEN)
+        token = _get_ssrf_token()
+        if token:
+            req.add_header('X-Aws-Parameters-Secrets-Token', token)
         try:
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read())
                 value = data.get('SecretString')
         except (urllib.error.URLError, OSError, json.JSONDecodeError):
             pass
+
+    if not value and REQUIRE_SMA:
+        print(
+            'asm-exec: ERROR: The required local AWS Workload Credentials '
+            'Provider is unavailable or could not resolve the requested secret.',
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # 2. Resolve via Streamable HTTP MCP
     if not value:

@@ -70,9 +70,12 @@ resource "aws_iam_role_policy_attachment" "organization_storage" {
 # secret and its customer-managed KMS key.
 data "aws_iam_policy_document" "database_credentials" {
   statement {
-    sid       = "ReadDemoDatabaseCredential"
-    effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
+    sid    = "ReadDemoDatabaseCredential"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetSecretValue",
+    ]
     resources = [var.database_secret_arn]
   }
 
@@ -98,9 +101,12 @@ resource "aws_iam_role_policy" "database_credentials" {
 
 data "aws_iam_policy_document" "hosted_app_runtime" {
   statement {
-    sid       = "ReadHostedApplicationRuntime"
-    effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
+    sid    = "ReadHostedApplicationRuntime"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetSecretValue",
+    ]
     resources = [var.hosted_app_runtime_secret_arn]
   }
 }
@@ -113,9 +119,12 @@ resource "aws_iam_role_policy" "hosted_app_runtime" {
 
 data "aws_iam_policy_document" "clinical_synthesis_runtime" {
   statement {
-    sid       = "ReadClinicalSynthesisCredential"
-    effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
+    sid    = "ReadClinicalSynthesisCredential"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetSecretValue",
+    ]
     resources = [var.clinical_synthesis_secret_arn]
   }
 }

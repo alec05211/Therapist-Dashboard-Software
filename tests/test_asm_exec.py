@@ -1,9 +1,10 @@
 import importlib.machinery
 import importlib.util
 import json
+import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, mock_open, patch
 
 
 def load_asm_exec():
@@ -19,6 +20,48 @@ class AsmExecTests(unittest.TestCase):
     def setUp(self):
         self.module = load_asm_exec()
         self.module._secret_cache.clear()
+
+    def test_reads_the_local_provider_token_from_its_protected_file(self):
+        self.module.SMA_TOKEN_FILE = "/var/run/awssmatoken"
+        with patch.dict(os.environ, {}, clear=True), patch(
+            "builtins.open", mock_open(read_data="local-token\n")
+        ) as token_file:
+            token = self.module._get_ssrf_token()
+
+        self.assertEqual(token, "local-token")
+        token_file.assert_called_once_with("/var/run/awssmatoken", encoding="utf-8")
+
+    def test_reads_a_file_uri_token_without_exposing_it(self):
+        with patch.dict(
+            os.environ, {"AWS_TOKEN": "file:///run/provider-token"}, clear=True
+        ), patch("builtins.open", mock_open(read_data="file-token\n")) as token_file:
+            token = self.module._get_ssrf_token()
+
+        self.assertEqual(token, "file-token")
+        token_file.assert_called_once_with("/run/provider-token", encoding="utf-8")
+
+    def test_provider_health_check_sends_the_ssrf_token(self):
+        self.module._sma_available = None
+        response = MagicMock()
+        with patch.object(
+            self.module, "_get_ssrf_token", return_value="health-token"
+        ), patch.object(self.module.urllib.request, "urlopen", return_value=response) as open_url:
+            self.assertTrue(self.module._check_sma())
+
+        request = open_url.call_args.args[0]
+        self.assertEqual(
+            request.get_header("X-aws-parameters-secrets-token"), "health-token"
+        )
+
+    def test_required_provider_does_not_fall_back_to_remote_mcp(self):
+        self.module.REQUIRE_SMA = True
+        with patch.object(self.module, "_check_sma", return_value=False), patch.object(
+            self.module, "_resolve_via_mcp"
+        ) as resolve:
+            with self.assertRaises(SystemExit):
+                self.module.resolve_one("runtime")
+
+        resolve.assert_not_called()
 
     def test_reuses_one_secret_string_for_multiple_json_keys(self):
         secret = json.dumps({"AUTH0_DOMAIN": "example.auth0.com", "AUTH0_AUDIENCE": "example-api"})

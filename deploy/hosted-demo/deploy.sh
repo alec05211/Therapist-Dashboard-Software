@@ -27,10 +27,32 @@ for required_identifier in APP_RUNTIME_SECRET_ARN CLINICAL_SYNTHESIS_SECRET_ARN 
   fi
 done
 
+ensure_secret_provider() {
+  local token_file="/var/run/awssmatoken"
+
+  if ! rpm --query aws-workload-credentials-provider >/dev/null 2>&1; then
+    dnf install -y aws-workload-credentials-provider
+  fi
+
+  for _ in $(seq 1 30); do
+    if [[ -s "$token_file" ]] && timeout 1 bash -c '</dev/tcp/127.0.0.1/2773' 2>/dev/null; then
+      export AWS_SECRETS_MANAGER_AGENT_TOKEN_FILE="$token_file"
+      export ASM_EXEC_REQUIRE_SMA="true"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "The local AWS Workload Credentials Provider did not become ready." >&2
+  return 1
+}
+
 if [[ ! "$revision" =~ ^[A-Za-z0-9._-]+$ ]]; then
   echo "Revision may contain only letters, numbers, dots, underscores, and hyphens." >&2
   exit 1
 fi
+
+ensure_secret_provider
 
 api_image="therapist-dashboard-api:$revision"
 frontend_image="therapist-dashboard-frontend:$revision"
@@ -53,8 +75,9 @@ wait_for_url() {
   return 1
 }
 
-start_api() {
+create_api() {
   local image="$1"
+  local container_name="$2"
   export AUTH0_DOMAIN="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_DOMAIN}}"
   export AUTH0_AUDIENCE="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_AUDIENCE}}"
   export ORGANIZATION_STORAGE_ENABLED="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:ORGANIZATION_STORAGE_ENABLED}}"
@@ -67,8 +90,8 @@ start_api() {
   export INSURANCE_CARD_OPENAI_APPROVED="${INSURANCE_CARD_OPENAI_APPROVED:-false}"
   export CLINICAL_SYNTHESIS_WORKER_ENABLED="true"
 
-  python3 "$secret_resolver" -- docker run -d \
-    --name therapist-dashboard-api \
+  python3 "$secret_resolver" -- docker create \
+    --name "$container_name" \
     --network host \
     --restart unless-stopped \
     --env-file "$runtime_identifiers" \
@@ -89,8 +112,9 @@ start_api() {
   unset OPENAI_API_KEY
 }
 
-start_frontend() {
+create_frontend() {
   local image="$1"
+  local container_name="$2"
   export AUTH0_DOMAIN="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_DOMAIN}}"
   export AUTH0_CLIENT_ID="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_CLIENT_ID}}"
   export AUTH0_CLIENT_SECRET="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:AUTH0_CLIENT_SECRET}}"
@@ -99,8 +123,8 @@ start_frontend() {
   export APP_BASE_URL="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:APP_BASE_URL}}"
   export API_ORIGIN="{{resolve:secretsmanager:$APP_RUNTIME_SECRET_ARN:SecretString:API_ORIGIN}}"
 
-  python3 "$secret_resolver" -- docker run -d \
-    --name therapist-dashboard-frontend \
+  python3 "$secret_resolver" -- docker create \
+    --name "$container_name" \
     --network host \
     --restart unless-stopped \
     --env AUTH0_DOMAIN \
@@ -128,32 +152,98 @@ run_migrations() {
   unset DATABASE_USERNAME DATABASE_PASSWORD
 }
 
+container_exists() {
+  docker inspect "$1" >/dev/null 2>&1
+}
+
+recover_interrupted_rollout() {
+  local container_name="$1"
+  local previous_name="$2"
+
+  if ! container_exists "$container_name" && container_exists "$previous_name"; then
+    docker rename "$previous_name" "$container_name"
+    docker start "$container_name" >/dev/null
+  fi
+}
+
+promote_container() {
+  local container_name="$1"
+  local candidate_name="$2"
+  local previous_name="$3"
+  local health_url="$4"
+  local had_previous="false"
+
+  recover_interrupted_rollout "$container_name" "$previous_name"
+
+  if container_exists "$container_name"; then
+    docker rm -f "$previous_name" >/dev/null 2>&1 || true
+    docker stop "$container_name" >/dev/null
+    docker rename "$container_name" "$previous_name"
+    had_previous="true"
+  fi
+
+  if ! docker rename "$candidate_name" "$container_name" \
+    || ! docker start "$container_name" >/dev/null \
+    || ! wait_for_url "$health_url"; then
+    docker logs --tail 100 "$container_name" >&2 2>/dev/null || true
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    docker rm -f "$candidate_name" >/dev/null 2>&1 || true
+    if [[ "$had_previous" == "true" ]]; then
+      docker rename "$previous_name" "$container_name"
+      docker start "$container_name" >/dev/null
+    fi
+    return 1
+  fi
+
+  return 0
+}
+
+restore_previous_container() {
+  local container_name="$1"
+  local previous_name="$2"
+
+  if container_exists "$previous_name"; then
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    docker rename "$previous_name" "$container_name"
+    docker start "$container_name" >/dev/null
+  fi
+}
+
+discard_previous_container() {
+  docker rm -f "$1" >/dev/null 2>&1 || true
+}
+
 run_migrations
 
-previous_api_image="$(docker inspect --format '{{.Config.Image}}' therapist-dashboard-api 2>/dev/null || true)"
-docker rm -f therapist-dashboard-api >/dev/null 2>&1 || true
-start_api "$api_image"
-if ! wait_for_url http://127.0.0.1:8000/healthz; then
-  docker logs --tail 100 therapist-dashboard-api >&2 || true
-  docker rm -f therapist-dashboard-api >/dev/null 2>&1 || true
-  if [[ -n "$previous_api_image" ]]; then
-    start_api "$previous_api_image"
-  fi
-  echo "The new API did not become healthy; the previous API image was restored when available." >&2
+api_candidate="therapist-dashboard-api-candidate"
+api_previous="therapist-dashboard-api-previous"
+recover_interrupted_rollout therapist-dashboard-api "$api_previous"
+docker rm -f "$api_candidate" >/dev/null 2>&1 || true
+if ! create_api "$api_image" "$api_candidate"; then
+  echo "The API candidate could not be created; the current release was left running." >&2
+  exit 1
+fi
+if ! promote_container therapist-dashboard-api "$api_candidate" "$api_previous" http://127.0.0.1:8000/healthz; then
+  echo "The new API did not become healthy; the preserved API container was restored when available." >&2
   exit 1
 fi
 
-previous_frontend_image="$(docker inspect --format '{{.Config.Image}}' therapist-dashboard-frontend 2>/dev/null || true)"
-docker rm -f therapist-dashboard-frontend >/dev/null 2>&1 || true
-start_frontend "$frontend_image"
-if ! wait_for_url http://127.0.0.1:3000/; then
-  docker logs --tail 100 therapist-dashboard-frontend >&2 || true
-  docker rm -f therapist-dashboard-frontend >/dev/null 2>&1 || true
-  if [[ -n "$previous_frontend_image" ]]; then
-    start_frontend "$previous_frontend_image"
-  fi
-  echo "The new frontend did not become healthy; the previous frontend image was restored when available." >&2
+frontend_candidate="therapist-dashboard-frontend-candidate"
+frontend_previous="therapist-dashboard-frontend-previous"
+recover_interrupted_rollout therapist-dashboard-frontend "$frontend_previous"
+docker rm -f "$frontend_candidate" >/dev/null 2>&1 || true
+if ! create_frontend "$frontend_image" "$frontend_candidate"; then
+  restore_previous_container therapist-dashboard-api "$api_previous"
+  echo "The frontend candidate could not be created; the preserved release was restored when available." >&2
   exit 1
 fi
+if ! promote_container therapist-dashboard-frontend "$frontend_candidate" "$frontend_previous" http://127.0.0.1:3000/; then
+  restore_previous_container therapist-dashboard-api "$api_previous"
+  echo "The new frontend did not become healthy; the preserved frontend container was restored when available." >&2
+  exit 1
+fi
+
+discard_previous_container "$api_previous"
+discard_previous_container "$frontend_previous"
 
 echo "Deployed hosted demo revision $revision."
