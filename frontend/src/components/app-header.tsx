@@ -6,12 +6,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { canUseFeature } from "@/lib/role-capabilities";
 
-function Icon({ children, large = false }: { children: ReactNode; large?: boolean }) {
-  return <svg aria-hidden="true" className={large ? "size-5" : "size-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">{children}</svg>;
+function Icon({ children }: { children: ReactNode }) {
+  return <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">{children}</svg>;
 }
 
-function UserIcon() { return <Icon large><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.1a7.5 7.5 0 0 1 15 0" /></Icon>; }
-function CloseIcon() { return <Icon large><path strokeLinecap="round" strokeLinejoin="round" d="m6 6 12 12M18 6 6 18" /></Icon>; }
+function UserIcon() { return <Icon><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.1a7.5 7.5 0 0 1 15 0" /></Icon>; }
+function CloseIcon() { return <Icon><path strokeLinecap="round" strokeLinejoin="round" d="m6 6 12 12M18 6 6 18" /></Icon>; }
 function CalendarIcon() { return <Icon><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v3m10.5-3v3M4.5 9.75h15M5.63 4.5h12.74c.62 0 1.13.5 1.13 1.13v12.74c0 .62-.5 1.13-1.13 1.13H5.63c-.62 0-1.13-.5-1.13-1.13V5.63c0-.62.5-1.13 1.13-1.13Z" /></Icon>; }
 function ClientsIcon() { return <Icon><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.13a6.76 6.76 0 0 0-6 0M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM20.25 19.13a6.76 6.76 0 0 0-2.74-2.28M18 5.1a3.75 3.75 0 0 1 0 6.9M3.75 19.13a6.76 6.76 0 0 1 2.74-2.28M6 5.1a3.75 3.75 0 0 0 0 6.9" /></Icon>; }
 function PracticeIcon() { return <Icon><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 20.25h16.5M5.25 20.25V7.5L12 3.75l6.75 3.75v12.75M9 20.25v-4.5h6v4.5M8.25 9.75h.01M12 9.75h.01M15.75 9.75h.01" /></Icon>; }
@@ -25,15 +25,15 @@ type AccountRole = "therapist" | "client";
 type MenuLinkProps = { href: string; label: string; icon: ReactNode; active: boolean; badge?: number; onSelect: () => void };
 
 function MenuLink({ href, label, icon, active, badge, onSelect }: MenuLinkProps) {
-  return <Link href={href} onClick={onSelect} aria-current={active ? "page" : undefined} className={`group flex min-h-12 cursor-grab items-center gap-3 rounded-xl border px-4 py-3 text-base font-medium transition-[background-color,border-color,color,transform] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing active:scale-[0.99] ${active ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-transparent text-stone-800 hover:border-stone-300 hover:bg-stone-100"}`}>
-    <span className="grid size-7 place-items-center text-stone-600 group-hover:text-stone-900">{icon}</span><span className="flex-1">{label}</span>{badge ? <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-emerald-800 px-1.5 text-[10px] font-bold text-white">{badge > 9 ? "9+" : badge}</span> : null}
+  return <Link href={href} onClick={onSelect} aria-current={active ? "page" : undefined} className={`group flex min-h-11 w-full cursor-grab items-center justify-center px-3 py-2 text-base font-medium transition-[color,transform,font-size] duration-200 ease-out focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${active ? "scale-[1.025] text-emerald-800" : "text-stone-800 hover:scale-[1.025] hover:text-emerald-800"}`}>
+    <span className="relative grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center">{icon}</span><span>{label}</span>{badge ? <span className="absolute -right-7 grid min-h-5 min-w-5 place-items-center rounded-full bg-emerald-800 px-1.5 text-[10px] font-bold text-white">{badge > 9 ? "9+" : badge}</span> : null}</span>
   </Link>;
 }
 
-function PlannedMenuItem({ label, icon }: { label: string; icon: ReactNode }) {
-  return <div aria-disabled="true" className="flex min-h-12 cursor-not-allowed items-center gap-3 rounded-xl border border-transparent px-4 py-3 text-base font-medium text-stone-500">
-    <span className="grid size-7 place-items-center">{icon}</span><span className="flex-1">{label}</span><span className="text-[10px] font-semibold uppercase tracking-[0.12em]">Planned</span>
-  </div>;
+function DisabledMenuItem({ label, icon }: { label: string; icon: ReactNode }) {
+  return <button disabled type="button" className="flex min-h-11 w-full cursor-not-allowed items-center justify-center px-3 py-2 text-base font-medium text-stone-500 opacity-55">
+    <span className="grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center">{icon}</span><span>{label}</span></span>
+  </button>;
 }
 
 export function AppHeader() {
@@ -129,20 +129,20 @@ export function AppHeader() {
           <div className="min-h-0 overflow-hidden">
             <div className={`max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-stone-200 transition-opacity duration-300 ease-out motion-reduce:transition-none ${isOpen ? "opacity-100 delay-100" : "opacity-0"}`}>
               <div className="p-3">
-                {showTherapistNavigation ? <nav aria-label="Therapist workspace" className="space-y-0.5">
-                  <MenuLink href="/calendar" label="Calendar" icon={<CalendarIcon />} active={pathname.startsWith("/calendar")} onSelect={closeMenu} />
+                {showTherapistNavigation ? <nav aria-label="Therapist workspace" className="space-y-0.5 text-center">
+                  <MenuLink href="/inbox" label="Inbox" icon={<InboxIcon />} badge={unreadCount} active={pathname.startsWith("/inbox")} onSelect={closeMenu} />
                   <MenuLink href="/clients" label="Client list" icon={<ClientsIcon />} active={pathname.startsWith("/clients")} onSelect={closeMenu} />
+                  <MenuLink href="/calendar" label="Calendar" icon={<CalendarIcon />} active={pathname.startsWith("/calendar")} onSelect={closeMenu} />
                   <MenuLink href="/practice" label="Practice" icon={<PracticeIcon />} active={pathname.startsWith("/practice")} onSelect={closeMenu} />
-                  <PlannedMenuItem label="Billing" icon={<BillingIcon />} />
-                  <PlannedMenuItem label="Documents" icon={<DocumentsIcon />} />
+                  <DisabledMenuItem label="Billing" icon={<BillingIcon />} />
+                  <DisabledMenuItem label="Documents" icon={<DocumentsIcon />} />
                   <MenuLink href="/settings?section=appearance" label="Settings" icon={<SettingsIcon />} active={pathname.startsWith("/settings")} onSelect={closeMenu} />
+                </nav> : isAuthenticated ? <nav aria-label="Account navigation" className="space-y-0.5 text-center">
                   <MenuLink href="/inbox" label="Inbox" icon={<InboxIcon />} badge={unreadCount} active={pathname.startsWith("/inbox")} onSelect={closeMenu} />
-                </nav> : isAuthenticated ? <nav aria-label="Account navigation" className="space-y-0.5">
                   <MenuLink href="/settings?section=profile" label="Settings" icon={<SettingsIcon />} active={pathname.startsWith("/settings")} onSelect={closeMenu} />
-                  <MenuLink href="/inbox" label="Inbox" icon={<InboxIcon />} badge={unreadCount} active={pathname.startsWith("/inbox")} onSelect={closeMenu} />
                 </nav> : <a href="/login" className="flex min-h-12 cursor-grab items-center gap-3 rounded-xl border border-emerald-700 bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><span className="grid size-7 place-items-center"><UserIcon /></span>Sign in</a>}
               </div>
-              {isAuthenticated ? <div className="border-t border-stone-200 p-3"><a className="flex min-h-11 cursor-grab items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-stone-600 transition-colors duration-200 ease-out hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing" href="/auth/logout"><span className="grid size-7 place-items-center"><LogoutIcon /></span>Log out</a></div> : null}
+              {isAuthenticated ? <div className="border-t border-stone-200 p-3"><a className="group flex min-h-11 cursor-grab items-center justify-center px-3 py-2 text-sm font-medium text-stone-600 transition-[color,transform] duration-200 ease-out hover:scale-[1.025] hover:text-emerald-800 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing" href="/auth/logout"><span className="grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center"><LogoutIcon /></span><span>Log out</span></span></a></div> : null}
             </div>
           </div>
         </div>
