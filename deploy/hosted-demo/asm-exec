@@ -37,10 +37,30 @@ MCP_ENDPOINT = os.environ.get('ASM_EXEC_MCP_ENDPOINT', 'https://aws-mcp.us-east-
 # timeout generous and retry only transient failures. Operators may override
 # both values without changing the deployment script.
 MCP_TIMEOUT = float(os.environ.get('ASM_EXEC_MCP_TIMEOUT', '60'))
-MCP_ATTEMPTS = max(1, int(os.environ.get('ASM_EXEC_MCP_ATTEMPTS', '2')))
+MCP_ATTEMPTS = max(1, int(os.environ.get('ASM_EXEC_MCP_ATTEMPTS', '3')))
 
 _sma_available = None
 _secret_cache = {}
+
+
+class TransientMCPError(RuntimeError):
+    """An MCP service failure that is safe to retry without changing inputs."""
+
+
+def _raise_mcp_error(prefix, message):
+    detail = str(message or "unknown error")
+    normalized = detail.lower()
+    transient_markers = (
+        "internal error",
+        "please try again",
+        "temporarily unavailable",
+        "service unavailable",
+        "throttl",
+    )
+    error_type = TransientMCPError if any(
+        marker in normalized for marker in transient_markers
+    ) else RuntimeError
+    raise error_type("%s: %s" % (prefix, detail))
 
 
 def _check_sma():
@@ -240,7 +260,7 @@ def _resolve_via_mcp_once(secret_name, label, region):
                     "capabilities": {}}})
     err = _mcp_error(init_resp)
     if err:
-        raise RuntimeError("MCP initialize rejected: %s" % err)
+        _raise_mcp_error("MCP initialize rejected", err)
     _mcp_post({"jsonrpc": "2.0", "method": "notifications/initialized"},
               session_id)
 
@@ -257,7 +277,7 @@ def _resolve_via_mcp_once(secret_name, label, region):
         session_id)
     err = _mcp_error(resp)
     if err:
-        raise RuntimeError("aws___run_script call rejected: %s" % err)
+        _raise_mcp_error("aws___run_script call rejected", err)
     result = resp.get("result", {})
     envelopes = []
     if isinstance(result, dict) and "content" in result:
@@ -271,10 +291,10 @@ def _resolve_via_mcp_once(secret_name, label, region):
         envelopes.append(result)
     for envelope in envelopes:
         if isinstance(envelope, dict) and envelope.get("status") == "error":
-            raise RuntimeError(
-                "run_script reported an error: %s"
-                % (envelope.get("error") or envelope.get("stderr")
-                   or "unknown error"))
+            _raise_mcp_error(
+                "run_script reported an error",
+                envelope.get("error") or envelope.get("stderr")
+                or "unknown error")
         found = _extract_secret_string(envelope)
         if found:
             return found
@@ -310,6 +330,9 @@ def _resolve_via_mcp(secret_name, label, region):
         except urllib.error.URLError as exc:
             retryable = True
             reason = "cannot reach MCP endpoint: %s" % (exc.reason,)
+        except TransientMCPError as exc:
+            retryable = True
+            reason = "%s: %s" % (type(exc).__name__, exc)
         except (OSError, json.JSONDecodeError) as exc:
             retryable = True
             reason = "%s: %s" % (type(exc).__name__, exc)

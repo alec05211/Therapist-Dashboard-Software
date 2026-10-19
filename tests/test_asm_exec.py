@@ -47,6 +47,35 @@ class AsmExecTests(unittest.TestCase):
         self.assertEqual(resolve.call_count, 2)
         sleep.assert_called_once_with(1)
 
+    def test_retries_a_transient_internal_service_error(self):
+        self.module.MCP_ATTEMPTS = 2
+        service_error = self.module.TransientMCPError(
+            "run_script reported an error: An internal error occurred. Please try again."
+        )
+        with patch.object(
+            self.module,
+            "_resolve_via_mcp_once",
+            side_effect=[service_error, "resolved-secret"],
+        ) as resolve, patch.object(self.module.time, "sleep") as sleep:
+            value = self.module._resolve_via_mcp("runtime", "AWSCURRENT", "us-east-1")
+
+        self.assertEqual(value, "resolved-secret")
+        self.assertEqual(resolve.call_count, 2)
+        sleep.assert_called_once_with(1)
+
+    def test_classifies_access_denied_as_permanent(self):
+        with self.assertRaises(RuntimeError) as raised:
+            self.module._raise_mcp_error("run_script reported an error", "AccessDeniedException")
+
+        self.assertNotIsInstance(raised.exception, self.module.TransientMCPError)
+
+    def test_classifies_internal_error_as_transient(self):
+        with self.assertRaises(self.module.TransientMCPError):
+            self.module._raise_mcp_error(
+                "run_script reported an error",
+                "An internal error occurred. Please try again.",
+            )
+
     def test_does_not_retry_a_permission_failure(self):
         self.module.MCP_ATTEMPTS = 2
         with patch.object(
