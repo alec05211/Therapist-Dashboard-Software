@@ -11,6 +11,7 @@ on:
         options:
           - plan
           - apply
+          - apply-secret-provider-access
           - destroy
 
 permissions:
@@ -131,6 +132,17 @@ jobs:
         run: |
           terraform -chdir=terraform/demo-app plan -lock-timeout=5m -out=apply.tfplan
           terraform -chdir=terraform/demo-app apply -auto-approve apply.tfplan
+
+      - name: Apply secret-provider access during incident recovery
+        if: inputs.operation == 'apply-secret-provider-access'
+        shell: bash
+        run: |
+          terraform -chdir=terraform/demo-app plan -lock-timeout=5m \
+            -target=aws_iam_role_policy.database_credentials \
+            -target=aws_iam_role_policy.hosted_app_runtime \
+            -target=aws_iam_role_policy.clinical_synthesis_runtime \
+            -out=secret-provider-access.tfplan
+          terraform -chdir=terraform/demo-app apply -auto-approve secret-provider-access.tfplan
 
       - name: Update DuckDNS
         if: inputs.operation == 'apply'
