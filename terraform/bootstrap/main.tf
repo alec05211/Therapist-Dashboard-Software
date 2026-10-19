@@ -240,6 +240,7 @@ data "aws_iam_policy_document" "github_app_deployment" {
       "ec2:DescribeImages",
       "ec2:DescribeInstanceAttribute",
       "ec2:DescribeInstanceCreditSpecifications",
+      "ec2:DescribeInstanceTypes",
       "ec2:DescribeInstances",
       "ec2:DescribeInstanceStatus",
       "ec2:DescribeNetworkInterfaces",

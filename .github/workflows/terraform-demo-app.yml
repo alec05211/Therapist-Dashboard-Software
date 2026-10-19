@@ -69,7 +69,22 @@ jobs:
             -backend-config="encrypt=true" \
             -backend-config="use_lockfile=true"
           terraform -chdir=terraform/demo output -json > "$RUNNER_TEMP/demo-outputs.json"
-          jq --arg domain "$DUCKDNS_SUBDOMAIN.duckdns.org" --arg region "$AWS_REGION" '
+          if aws iam get-role --role-name therapist-dashboard-demo-app-instance >/dev/null 2>&1; then
+            aws iam list-attached-role-policies \
+              --role-name therapist-dashboard-demo-app-instance \
+              --query 'AttachedPolicies[].PolicyArn' \
+              --output json > "$RUNNER_TEMP/attached-application-policies.json"
+          else
+            echo '[]' > "$RUNNER_TEMP/attached-application-policies.json"
+          fi
+          jq '[
+            .[]
+            | select(test("^arn:aws:iam::[0-9]{12}:policy/td-[a-z0-9-]+-storage-[0-9a-f-]{36}$"))
+          ]' "$RUNNER_TEMP/attached-application-policies.json" > "$RUNNER_TEMP/organization-storage-policies.json"
+          jq \
+            --arg domain "$DUCKDNS_SUBDOMAIN.duckdns.org" \
+            --arg region "$AWS_REGION" \
+            --slurpfile organization_storage_policy_arns "$RUNNER_TEMP/organization-storage-policies.json" '
             {
               aws_region: $region,
               domain_name: $domain,
@@ -85,7 +100,8 @@ jobs:
               healthscribe_input_bucket: .healthscribe_input_bucket.value,
               healthscribe_output_bucket: .healthscribe_output_bucket.value,
               healthscribe_batch_data_access_role_arn: .healthscribe_batch_data_access_role_arn.value,
-              healthscribe_caller_policy_arn: .healthscribe_caller_policy_arn.value
+              healthscribe_caller_policy_arn: .healthscribe_caller_policy_arn.value,
+              organization_storage_policy_arns: $organization_storage_policy_arns[0]
             }
           ' "$RUNNER_TEMP/demo-outputs.json" > terraform/demo-app/terraform.auto.tfvars.json
 

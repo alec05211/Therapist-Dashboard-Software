@@ -7,6 +7,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parents[1]
 DEPLOY_SCRIPT = PROJECT_ROOT / "deploy" / "hosted-demo" / "deploy.sh"
 TERRAFORM_MAIN = PROJECT_ROOT / "terraform" / "demo-app" / "main.tf"
+TERRAFORM_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "terraform-demo-app.yml"
+BOOTSTRAP_MAIN = PROJECT_ROOT / "terraform" / "bootstrap" / "main.tf"
 
 
 class HostedDemoDeployTests(unittest.TestCase):
@@ -68,6 +70,17 @@ class HostedDemoDeployTests(unittest.TestCase):
 
         self.assertEqual(terraform.count('"secretsmanager:DescribeSecret"'), 3)
         self.assertEqual(terraform.count('"secretsmanager:GetSecretValue"'), 3)
+
+    def test_terraform_workflow_preserves_organization_storage_policies(self):
+        workflow = TERRAFORM_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("list-attached-role-policies", workflow)
+        self.assertIn("organization_storage_policy_arns", workflow)
+
+    def test_github_app_role_can_read_instance_type_metadata(self):
+        bootstrap = BOOTSTRAP_MAIN.read_text(encoding="utf-8")
+
+        self.assertIn('"ec2:DescribeInstanceTypes"', bootstrap)
 
 
 if __name__ == "__main__":
