@@ -63,6 +63,8 @@ start_api() {
   export INSIGHTS_MODEL="gpt-5"
   export PRE_SESSION_MODEL="gpt-5"
   export JOURNEY_PROPOSAL_MODEL="gpt-5"
+  export INSURANCE_CARD_MODEL="${INSURANCE_CARD_MODEL:-gpt-6-astra}"
+  export INSURANCE_CARD_OPENAI_APPROVED="${INSURANCE_CARD_OPENAI_APPROVED:-false}"
   export CLINICAL_SYNTHESIS_WORKER_ENABLED="true"
 
   python3 "$secret_resolver" -- docker run -d \
@@ -78,6 +80,8 @@ start_api() {
     --env INSIGHTS_MODEL \
     --env PRE_SESSION_MODEL \
     --env JOURNEY_PROPOSAL_MODEL \
+    --env INSURANCE_CARD_MODEL \
+    --env INSURANCE_CARD_OPENAI_APPROVED \
     --env CLINICAL_SYNTHESIS_WORKER_ENABLED \
     --mount type=volume,source=therapist_dashboard_recordings,target=/app/recordings \
     "$image" >/dev/null

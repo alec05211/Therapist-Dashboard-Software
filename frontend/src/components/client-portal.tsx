@@ -7,6 +7,7 @@ import { TranscriptViewer } from "@/components/session-review/transcript-viewer"
 import { ClientDocumentRelationships } from "@/components/client-document-relationships";
 import { CareChat } from "@/components/care-chat";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { BillingInsuranceSnapshot } from "@/components/billing-insurance-snapshot";
 import type { Appointment } from "@/lib/types";
 
 type Portal = {
@@ -49,10 +50,11 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     <CareRelationshipHeader profile={profile} activeAction={activeView} actions={[
       { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: () => { setActiveView("clinical-workspace"); setSelectedId(null); setScheduled(null); setWorkspaceVisit(value => value + 1); document.getElementById("client-clinical-workspace")?.focus(); } },
       { id: "documents", label: "Documents", icon: "documents", onSelect: () => setActiveView("documents") },
+      { id: "billing", label: "Billing", icon: "billing", onSelect: () => setActiveView("billing") },
       { id: "chat", label: "Chat", icon: "chat", onSelect: () => setActiveView("chat") },
       ...(portal?.permissions.can_view_prescriptions ? [{ id: "prescriptions", label: "Prescriptions", icon: "prescriptions" as const, onSelect: () => setActiveView("prescriptions") }] : []),
     ]} />
-    {activeView === "documents" ? <ClientDocumentRelationships /> : activeView === "chat" ? <CareChat partnerName={profile.name} /> : activeView === "prescriptions" ? <section className="rounded-2xl border border-stone-200 bg-stone-50 p-5"><h2 className="text-xl font-semibold">Prescriptions</h2><p className="mt-3 text-sm text-stone-600">No prescriptions have been shared.</p></section> : <section id="client-clinical-workspace" tabIndex={-1} className="outline-none">
+    {activeView === "documents" ? <ClientDocumentRelationships /> : activeView === "billing" ? <BillingInsuranceSnapshot role="client" /> : activeView === "chat" ? <CareChat partnerName={profile.name} /> : activeView === "prescriptions" ? <section className="rounded-2xl border border-stone-200 bg-stone-50 p-5"><h2 className="text-xl font-semibold">Prescriptions</h2><p className="mt-3 text-sm text-stone-600">No prescriptions have been shared.</p></section> : <section id="client-clinical-workspace" tabIndex={-1} className="outline-none">
     <p className="sr-only">{name}’s clinical workspace</p>
     {error && <p role="alert" className="mt-5">{error}</p>}{!portal && !error && <LoadingSpinner label="Loading shared materials…" />}
     {portal && <>

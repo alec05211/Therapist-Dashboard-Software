@@ -67,8 +67,8 @@ feedback rather than using content skeletons.
   Settings, Inbox, and account controls. Unimplemented destinations are plainly disabled;
   do not append `Soon` badges to global navigation labels.
 - Therapist-facing client care navigation uses this fixed order and spelling: `Clinical Workspace`,
-  `Insights`, `Documents`, `Billing`, `Chat`, and `Client Care Settings`. Keep unimplemented tabs such
-  as Billing disabled without appending a `Soon` badge.
+  `Insights`, `Documents`, `Billing`, `Chat`, and `Client Care Settings`. Billing presents a compact,
+  read-only insurance snapshot; editing remains in the client's account settings.
 - Use one meaningful heading per panel. Omit redundant context labels such as “Scheduled session” above a preparation heading, and avoid stacked headings that describe the same content.
 - The pre-session brief uses the full available panel width, with no status/version badge or manual refresh control.
 - Default to headings and controls without explanatory subtext above or below them. Avoid routine subtitles, eyebrow labels, and instructions that repeat an obvious action. Add supporting copy only when requested or needed for a meaningful error, empty state, consent, or otherwise unclear decision.

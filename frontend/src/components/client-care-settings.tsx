@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { SettingsLayout, settingsFieldClass, type SettingsSection } from "@/components/settings-layout";
 import { ClientScheduling } from "@/components/client-scheduling";
+import { TherapistInsuranceSummary } from "@/components/therapist-insurance-summary";
 
-type Section = "identification" | "scheduling" | "permissions";
+type Section = "identification" | "scheduling" | "insurance" | "permissions";
 type Permission = "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
 type AudioSample = { recordingUrl: string; start: number; end: number };
 type Participant = { name: string; pronouns: string; sample: AudioSample | null };
@@ -14,6 +15,7 @@ type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sess
 const sections: SettingsSection[] = [
   { id: "identification", title: "Identification" },
   { id: "scheduling", title: "Scheduling" },
+  { id: "insurance", title: "Insurance" },
   { id: "permissions", title: "Permissions" },
 ];
 
@@ -131,8 +133,8 @@ export function ClientCareSettings({ initialSection = "identification", clientId
 
   const sectionLoading = section === "identification" ? identificationLoading : section === "permissions" ? permissionsLoading : false;
   const sectionError = section === "identification" ? identificationError : section === "permissions" ? permissionsError : null;
-  const sectionReady = section === "scheduling" || (Boolean(context) && !sectionLoading && !sectionError);
-  const canSave = sectionReady && !busy && section !== "scheduling";
+  const sectionReady = section === "scheduling" || section === "insurance" || (Boolean(context) && !sectionLoading && !sectionError);
+  const canSave = sectionReady && !busy && section !== "scheduling" && section !== "insurance";
 
   const toggleSample = (id: string, sample: AudioSample | null) => {
     const player = audioRef.current;
@@ -171,6 +173,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
       })}</div> : <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">Speaker samples will appear after the first session finishes processing.</p>}
     </div> : null}
     {section === "scheduling" ? <ClientScheduling clientId={clientId} initiallyExpanded={expandRecurring} onChanged={onScheduleChanged} /> : null}
+    {section === "insurance" ? <TherapistInsuranceSummary clientId={clientId} /> : null}
     {sectionReady && section === "permissions" ? <div className="mt-6 text-left">
       <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-stone-50">{permissions.map((permission) => {
         const disabled = busy || (permission.id === "recordings" && !choices.transcript);
@@ -188,7 +191,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
         </label>;
       })}</div>
     </div> : null}
-    {section !== "scheduling" ? <div className="mt-6 flex justify-end border-t border-stone-200 pt-5"><button type="button" disabled={!canSave} onClick={() => void save()} className="cursor-grab rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">{busy ? "Saving…" : "Save changes"}</button></div> : null}
+    {section !== "scheduling" && section !== "insurance" ? <div className="mt-6 flex justify-end border-t border-stone-200 pt-5"><button type="button" disabled={!canSave} onClick={() => void save()} className="cursor-grab rounded-lg bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">{busy ? "Saving…" : "Save changes"}</button></div> : null}
     {error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : null}
     {saved ? <p className="mt-3 text-right text-sm font-medium text-emerald-800" role="status">Client care settings saved.</p> : null}
     <audio ref={audioRef} className="sr-only" onTimeUpdate={(event) => { if (activeSample && event.currentTarget.currentTime >= activeSample.end) { event.currentTarget.pause(); setActiveSample(null); } }} onEnded={() => setActiveSample(null)} onError={() => { if (activeSample) { setError("The speaker sample is unavailable."); setActiveSample(null); } }} />
