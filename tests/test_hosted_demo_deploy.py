@@ -8,7 +8,9 @@ PROJECT_ROOT = Path(__file__).parents[1]
 DEPLOY_SCRIPT = PROJECT_ROOT / "deploy" / "hosted-demo" / "deploy.sh"
 TERRAFORM_MAIN = PROJECT_ROOT / "terraform" / "demo-app" / "main.tf"
 TERRAFORM_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "terraform-demo-app.yml"
+DEPLOY_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "deploy-demo-app.yml"
 BOOTSTRAP_MAIN = PROJECT_ROOT / "terraform" / "bootstrap" / "main.tf"
+HOME_PAGE = PROJECT_ROOT / "frontend" / "src" / "app" / "page.tsx"
 
 
 class HostedDemoDeployTests(unittest.TestCase):
@@ -81,6 +83,18 @@ class HostedDemoDeployTests(unittest.TestCase):
         bootstrap = BOOTSTRAP_MAIN.read_text(encoding="utf-8")
 
         self.assertIn('"ec2:DescribeInstanceTypes"', bootstrap)
+
+    def test_session_aware_homepage_is_rendered_per_request(self):
+        homepage = HOME_PAGE.read_text(encoding="utf-8")
+
+        self.assertIn('export const dynamic = "force-dynamic";', homepage)
+        self.assertIn("auth0.getSession()", homepage)
+
+    def test_deployment_rejects_a_shared_cached_homepage(self):
+        workflow = DEPLOY_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("x-nextjs-prerender", workflow)
+        self.assertIn("s-maxage", workflow)
 
 
 if __name__ == "__main__":

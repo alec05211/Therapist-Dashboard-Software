@@ -236,6 +236,15 @@ jobs:
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 5 --retry-all-errors \
             "$APPLICATION_URL/infra-healthz" >/dev/null
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 5 --retry-all-errors \
+            --dump-header "$RUNNER_TEMP/homepage-headers" \
+            --output /dev/null \
+            "$APPLICATION_URL/"
+          if grep -Eiq '^cache-control:.*s-maxage|^x-nextjs-prerender:[[:space:]]*1' "$RUNNER_TEMP/homepage-headers"; then
+            echo "The session-aware homepage was deployed with shared prerender caching enabled." >&2
+            exit 1
+          fi
           page="$(curl --fail --silent --show-error \
             --retry 12 --retry-delay 5 --retry-all-errors \
             "$APPLICATION_URL/login")"
