@@ -4,6 +4,11 @@ import { TherapistOnboardingForm } from "@/components/onboarding/therapist-onboa
 import { isAuth0Configured } from "@/lib/auth-config";
 import { auth0 } from "@/lib/auth0";
 
+// Auth0 secrets are injected when the production container starts, after the
+// image has been built. Render per request so a build without those secrets
+// cannot freeze the configuration-required state into this page.
+export const dynamic = "force-dynamic";
+
 export default async function TherapistOnboardingPage() {
   if (!isAuth0Configured) {
     return <Auth0SetupRequired />;

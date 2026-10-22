@@ -2,6 +2,11 @@ import { ClientOnboardingForm } from "@/components/onboarding/client-onboarding-
 import { isAuth0Configured } from "@/lib/auth-config";
 import { auth0 } from "@/lib/auth0";
 
+// Auth0 secrets are injected when the production container starts, after the
+// image has been built. Render per request so a build without those secrets
+// cannot freeze the configuration-required state into this page.
+export const dynamic = "force-dynamic";
+
 export default async function ClientOnboardingPage() {
   if (!isAuth0Configured) return <main className="mx-auto w-[min(92vw,680px)] py-16"><h1 className="text-2xl font-semibold text-stone-900">Account setup unavailable</h1><p className="mt-3 text-stone-600">Connect the development Auth0 tenant before creating a client account.</p></main>;
   const session = await auth0.getSession();
