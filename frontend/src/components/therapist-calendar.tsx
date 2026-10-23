@@ -130,7 +130,7 @@ function DayTimeline({ date, appointments }: { date: Date; appointments: Appoint
   });
 
   return (
-    <div ref={scrollRef} className="max-h-[72vh] overflow-y-auto overscroll-contain" aria-label="Day timeline">
+    <div ref={scrollRef} className="calendar-scroll-surface max-h-[72vh] overflow-y-auto overscroll-contain" aria-label="Day timeline">
       {!appointments.length && <div className="px-4 py-3"><EmptyDay /></div>}
       <div className="relative ml-16 mr-4" style={{ height: 2880 }}>
         {Array.from({ length: 24 }, (_, hour) => (
