@@ -39,9 +39,11 @@ function insightTimestamp(value: string, now: number) {
     ? "less than a minute ago"
     : minutes < 60
       ? `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`
-      : `${Math.floor(minutes / 60)} ${Math.floor(minutes / 60) === 1 ? "hour" : "hours"} ago`;
+      : minutes < 1440
+        ? `${Math.floor(minutes / 60)} ${Math.floor(minutes / 60) === 1 ? "hour" : "hours"} ago`
+        : `${Math.floor(minutes / 1440)} ${Math.floor(minutes / 1440) === 1 ? "day" : "days"} ago`;
   const absolute = new Intl.DateTimeFormat(undefined, {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    year: "numeric", month: "short", day: "numeric",
     hour: "numeric", minute: "2-digit",
   }).format(date);
   return { absolute, relative };
@@ -58,9 +60,9 @@ function InsightsFreshness({ status, snapshot }: { status: InsightsRefreshStatus
   const timestamp = insightTimestamp(publishedAt, now);
   if (!timestamp) return null;
   return (
-    <p role="status" className="mb-3 text-right text-xs leading-5 text-stone-500">
-      <time dateTime={publishedAt} title={timestamp.absolute} className="cursor-pointer">
-        Last updated {timestamp.relative}
+    <p className="text-right text-xs leading-5 text-stone-500">
+      <time dateTime={publishedAt}>
+        Last updated {timestamp.relative} ({timestamp.absolute})
       </time>
     </p>
   );
@@ -312,7 +314,7 @@ function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: I
 
 function InsightModulePreview({ module }: { module: InsightModule }) {
   return <div className="px-4 pb-4">
-    <p className="max-w-4xl text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>
+    <p className="text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>
     <div className="mt-3 grid gap-2 sm:grid-cols-2">
       {module.items.map((item) => <span key={item.id} className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
         {insightLabel(item.content)}
@@ -354,12 +356,12 @@ function InsightSectionLoadingSkeleton({ title }: { title: string }) {
 }
 
 function InsightsLoadingSkeleton() {
-  return <section className="text-left" aria-label="Loading clinical insights workspace" aria-busy="true">
-    <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-stone-900">Clinical overview</h2>
-      <TextLoadingSkeleton className="mt-4" label="Loading clinical overview" widths={["96%", "89%", "71%"]} />
+  return <section className="space-y-4 text-left" aria-label="Loading clinical insights workspace" aria-busy="true">
+    <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
+    <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
+      <TextLoadingSkeleton label="Loading clinical overview" widths={["96%", "89%", "71%"]} />
     </section>
-    <section className="mt-4 rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="Loading at-a-glance insight metrics">
+    <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="Loading at-a-glance insight metrics">
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {["Themes in view", "Open threads", "Awaiting review", "Accepted evidence"].map((label, index) => <article key={label} className="rounded-xl border border-stone-300 bg-stone-50 px-3.5 py-3">
           <div className="flex items-center gap-2"><span className="text-loading-streak block w-6" /><span className="text-sm font-semibold text-stone-800">{label}</span></div>
@@ -371,7 +373,7 @@ function InsightsLoadingSkeleton() {
         <TextLoadingSkeleton className="mt-3" label="Loading theme recurrence" widths={["88%", "76%"]} />
       </div>
     </section>
-    <section className="mt-6 rounded-2xl border border-stone-300 bg-stone-100 p-4 shadow-sm" aria-label="Loading synthesis sections">
+    <section aria-label="Loading synthesis sections">
       <div className="grid gap-4">
         {["Current focus", "Changes over time", "Recurring themes", "Relevant context"].map((title) => <InsightSectionLoadingSkeleton key={title} title={title} />)}
       </div>
@@ -411,27 +413,30 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
   const hasMetrics = themeCount > 0 || openThreadCount > 0 || awaitingReview > 0 || acceptedJourney.length > 0;
   const overview = snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet.";
   const overviewDetails = snapshot ? <>
-    <p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p>
+    <p className="text-[15px] leading-7 text-stone-700">{overview}</p>
     <p className="mt-4 text-xs leading-5 text-stone-500">Workspace {snapshot.status} · version {snapshot.version} · generated by {snapshot.generator_name}. Review the cited evidence before relying on generated observations.</p>
-  </> : <p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p>;
+  </> : <p className="text-[15px] leading-7 text-stone-700">{overview}</p>;
   const overviewIsLong = overview.length > 420;
 
-  return <section className="text-left" aria-label="Clinical insights workspace">
-    <InsightsFreshness status={refreshStatus} snapshot={snapshot} />
+  return <section className="space-y-4 text-left" aria-label="Clinical insights workspace">
+    <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+      <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
+      <InsightsFreshness status={refreshStatus} snapshot={snapshot} />
+    </header>
     {overviewIsLong ? <CollapsibleContentPanel
       title="Clinical overview"
+      hideTitle
       preview={overview}
-      previewContent={<div className="px-4 pb-4"><p className="max-w-4xl text-[15px] leading-7 text-stone-700">{overview}</p></div>}
+      previewContent={<div className="px-4 pb-4"><p className="text-[15px] leading-7 text-stone-700">{overview}</p></div>}
       collapsedPreviewHeight={112}
       className="rounded-2xl border-stone-300 bg-white shadow-sm"
     >
       <div className="border-t border-stone-200 p-5">{overviewDetails}</div>
-    </CollapsibleContentPanel> : <header className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-stone-900">Clinical overview</h2>
-      <div className="mt-3">{overviewDetails}</div>
-    </header>}
+    </CollapsibleContentPanel> : <section aria-label="Clinical overview content" className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
+      {overviewDetails}
+    </section>}
 
-    {hasMetrics ? <section className="mt-4 rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="At-a-glance insight metrics">
+    {hasMetrics ? <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="At-a-glance insight metrics">
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {themeCount > 0 ? <StatCard value={themeCount} label="Themes in view" detail="Themes supported across sessions." /> : null}
         {openThreadCount > 0 ? <StatCard value={openThreadCount} label="Open threads" detail="Items that may need follow-up." /> : null}
@@ -442,7 +447,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
       <p className="mt-3 text-xs leading-5 text-stone-500">These counts organize the available record; they are not clinical scores or conclusions.</p>
     </section> : null}
 
-    {insightModules.length ? <section className="mt-6 rounded-2xl border border-stone-300 bg-stone-100 p-4 shadow-sm" aria-label="Clinical synthesis sections">
+    {insightModules.length ? <section aria-label="Clinical synthesis sections">
       <div className="grid gap-4">{insightModules.map((module) => <InsightGroup key={module.kind} module={module} onViewEvidence={onViewEvidence} />)}</div>
     </section> : null}
   </section>;

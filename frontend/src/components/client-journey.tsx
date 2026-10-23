@@ -104,7 +104,7 @@ export function ClientJourney({ recordContext, onViewEvidence }: Props) {
     entries: accepted.filter((entry) => entry.categories.includes(category.value)),
   })).filter((group) => group.entries.length > 0);
 
-  return <section className="mt-6 rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Accepted evidence claims">
+  return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm" aria-label="Accepted evidence claims">
     <h2 className="text-lg font-semibold text-stone-900">Evidence and review</h2>
     <p className="mt-1 text-xs leading-5 text-stone-500">Therapist-accepted claims from transcript review, grouped by how they should inform future synthesis.</p>
     {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : !entries ? <div className="mt-5 grid gap-3" aria-busy="true">
