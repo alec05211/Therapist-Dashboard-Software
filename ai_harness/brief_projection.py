@@ -59,7 +59,9 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
                 'session_id': f'session-{session_id}',
                 'session_label': evidence.get('session_label') or 'Completed session',
             }
-            if 'segment_index' in evidence:
+            if evidence.get('clinical_note_version_id'):
+                source.update(clinical_note_version_id=evidence['clinical_note_version_id'], note_text=evidence.get('note_text'))
+            if evidence.get('segment_index') is not None:
                 source.update(segment_index=evidence['segment_index'], start=evidence['start'],
                               end=evidence['end'], quote=evidence['quote'])
             sources.append(source)

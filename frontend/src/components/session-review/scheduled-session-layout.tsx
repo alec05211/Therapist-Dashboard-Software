@@ -33,8 +33,9 @@ function ClaimLink({ phrase, sources, onViewEvidence, fallback = false }: { phra
       <span className="my-4 block text-base leading-7">{phrase}</span>
       {sources.map(source => <span key={source.evidence_id} className="mt-3 block rounded-xl border border-stone-300 p-4 text-sm leading-6">
         <span className="block font-semibold">{source.session_label}</span>
+        {source.clinical_note_version_id && <span className="mt-2 block whitespace-pre-wrap">Finalized clinical note: {source.note_text}</span>}
         {source.quote && <span className="mt-2 block">“{source.quote}”</span>}
-        <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 px-3 py-1 font-semibold text-emerald-800 hover:bg-stone-100 active:cursor-grabbing">Open transcript evidence</button>
+        {!source.clinical_note_version_id && <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 px-3 py-1 font-semibold text-emerald-800 hover:bg-stone-100 active:cursor-grabbing">Open transcript evidence</button>}
       </span>)}
     </dialog>, document.body)}
   </>;

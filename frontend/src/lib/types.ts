@@ -72,6 +72,8 @@ export type SessionProcessingState = {
 };
 
 export type BriefEvidence = {
+  clinical_note_version_id?: string;
+  note_text?: string;
   evidence_id: string;
   session_id: string;
   session_label: string;
@@ -145,6 +147,7 @@ export type ClientJourneyEntry = {
 };
 
 export type PersistedInsightEvidence = {
+  note_text?: string;
   evidence_role: "supporting" | "contrasting" | "context";
   transcript_segment_id?: string;
   clinical_note_version_id?: string;

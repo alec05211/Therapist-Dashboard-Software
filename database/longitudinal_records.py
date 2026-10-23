@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+import json
 from typing import Any
 
 from psycopg import Connection
@@ -78,9 +79,13 @@ class InsightItem:
         claims = self.content.get("claims")
         if claims is not None:
             validate_claims(claims, self.content.get("text"))
+        if "analysis_claims" in self.content:
+            if not self.content["analysis_claims"]:
+                raise ValueError("Analytical claims require evidence anchors.")
+            validate_claims(self.content["analysis_claims"], self.content.get("analysis"))
         contexts = self.content.get("contexts")
         if contexts is not None:
-            if not isinstance(contexts, list) or not contexts:
+            if not isinstance(contexts, list) or (not contexts and not self.content.get("analysis_claims")):
                 raise ValueError("Insight contexts must be a non-empty list.")
             for context in contexts:
                 if not isinstance(context, Mapping) or not isinstance(context.get("text"), str) or not context["text"].strip():
@@ -500,7 +505,8 @@ class LongitudinalRecordRepository:
                        segment.ends_at_seconds, segment.content AS transcript_quote,
                        COALESCE(session.id, note.session_id) AS session_id, session.started_at,
                        COALESCE(job.storage->>'label', 'Completed session') AS session_label,
-                       note.id AS clinical_note_version_id
+                       note.id AS clinical_note_version_id, note.content AS note_content,
+                       note.version_number AS note_version_number
                 FROM selected_items AS item
                 LEFT JOIN app.longitudinal_insight_evidence AS evidence ON evidence.insight_item_id = item.id
                 LEFT JOIN app.transcript_segments AS segment ON segment.id = evidence.transcript_segment_id
@@ -536,6 +542,9 @@ class LongitudinalRecordRepository:
                     "evidence_role": row["evidence_role"],
                     "clinical_note_version_id": str(row["clinical_note_version_id"]),
                     "session_id": str(row["session_id"]),
+                    "session_label": row["session_label"],
+                    "note_text": (row.get("note_content") or {}).get("plain_text") or json.dumps(row.get("note_content") or {}, ensure_ascii=False),
+                    "note_version_number": row.get("note_version_number"),
                 })
 
         return {
@@ -573,10 +582,11 @@ class LongitudinalRecordRepository:
                        item.content, evidence.evidence_role,
                        segment.id AS transcript_segment_id, segment.sequence_number,
                        segment.starts_at_seconds, segment.ends_at_seconds,
-                       segment.content AS transcript_quote, session.id AS session_id,
+                       segment.content AS transcript_quote, COALESCE(session.id, note.session_id) AS session_id,
                        session.started_at,
                        COALESCE(job.storage->>'label', 'Completed session') AS session_label,
-                       note.id AS clinical_note_version_id
+                       note.id AS clinical_note_version_id, note.content AS note_content,
+                       note.version_number AS note_version_number
                 FROM app.longitudinal_insight_items AS item
                 LEFT JOIN app.longitudinal_insight_evidence AS evidence
                   ON evidence.insight_item_id = item.id
@@ -621,6 +631,10 @@ class LongitudinalRecordRepository:
                 item["evidence"].append({
                     "evidence_role": row["evidence_role"],
                     "clinical_note_version_id": str(row["clinical_note_version_id"]),
+                    "session_id": str(row["session_id"]),
+                    "session_label": row["session_label"],
+                    "note_text": (row.get("note_content") or {}).get("plain_text") or json.dumps(row.get("note_content") or {}, ensure_ascii=False),
+                    "note_version_number": row.get("note_version_number"),
                 })
 
         return {

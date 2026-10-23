@@ -14,7 +14,7 @@ from psycopg.types.json import Json
 
 from ai_harness.journey_proposals import ANALYZER_VERSION, discover_openai_evidence_claims
 from database.connection import connect
-from database.longitudinal_records import LongitudinalRecordRepository
+from database.clinical_context import build_clinical_context
 
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,7 @@ def _claim_job(session_id=None, organization_id=None, client_id=None):
 
 def _input_bundle(job):
     with connect() as connection, connection.cursor() as cursor:
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
         cursor.execute("""SELECT sequence_number, starts_at_seconds, ends_at_seconds,
                 speaker_label, content
             FROM app.transcript_segments
@@ -106,14 +107,15 @@ def _input_bundle(job):
             'speaker': row['speaker_label'],
             'text': row['content'],
         } for row in cursor.fetchall()]
-        packet = LongitudinalRecordRepository(connection).build_pre_session_context_packet(
-            organization_id=job['organization_id'], client_id=job['client_id'], limit=12)
+        packet = build_clinical_context(connection,
+            organization_id=job['organization_id'], client_id=job['client_id'],
+            exclude_session_id=job['session_id'])
     if not segments:
         raise ValueError('The transcript has no analyzable segments.')
     fingerprint = hashlib.sha256(json.dumps({
         'analyzer_version': ANALYZER_VERSION,
         'segments': segments,
-        'insight_snapshot_id': (packet or {}).get('snapshot_id'),
+        'clinical_context': packet,
     }, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
     return segments, packet, fingerprint
 

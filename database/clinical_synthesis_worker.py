@@ -10,33 +10,20 @@ from uuid import uuid4
 
 from ai_harness.brief_projection import project_accepted_insights
 from ai_harness.brief_service import brief_input
-from ai_harness.longitudinal_insights import generate_openai_longitudinal_insights, to_snapshot_content
+from ai_harness.longitudinal_insights import INSIGHTS_GENERATOR_VERSION, generate_openai_longitudinal_insights, to_snapshot_content
 from ai_harness.pre_session import generate_openai_pre_session_brief, resolve_brief
-from database import client_journey, synthesis_refresh
+from database import synthesis_refresh
+from database.clinical_context import build_clinical_context, fingerprint
 from database.connection import connect
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 
 
-INSIGHT_KINDS = ("trajectory", "theme", "open_thread", "relevant_history")
 
 
 def _accepted_evidence(connection: Any, organization_id: str, client_id: str) -> list[dict[str, Any]]:
-    """Flatten therapist-accepted claims into a bounded, source-linked bundle."""
-    entries = client_journey.list_entries(connection, organization_id, client_id, status="accepted")
-    sources: dict[str, dict[str, Any]] = {}
-    for entry in entries:
-        for source in entry["evidence"]:
-            evidence_id = source["evidence_id"]
-            selected = sources.setdefault(evidence_id, {**source, "accepted_guidance": [], "categories": []})
-            if entry["text"] not in selected["accepted_guidance"]:
-                selected["accepted_guidance"].append(entry["text"])
-            selected["categories"] = list(dict.fromkeys([*selected["categories"], *entry["categories"]]))
-    ordered = sorted(
-        sources.values(),
-        key=lambda source: (source.get("session_label", ""), source.get("segment_index", 0), source["evidence_id"]),
-    )
-    # Bound provider input without severing any selected source from its exact ID.
-    return ordered[-120:]
+    """Compatibility helper: use the same eligible sources as discovery."""
+    return build_clinical_context(connection, organization_id=organization_id,
+                                  client_id=client_id)['source_evidence']
 
 
 def _input_fingerprint(evidence: list[dict[str, Any]]) -> str:
@@ -46,6 +33,7 @@ def _input_fingerprint(evidence: list[dict[str, Any]]) -> str:
 def _generate_bundle(
     evidence: list[dict[str, Any]],
     *,
+    clinical_context: dict[str, Any] | None = None,
     insights_model: str,
     brief_model: str,
     insight_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_longitudinal_insights,
@@ -56,24 +44,17 @@ def _generate_bundle(
         {**source, "evidence_id": alias}
         for alias, source in zip(aliases, evidence, strict=True)
     ]
-    batches: list[dict[str, Any]] = []
-    insight_metadata: list[dict[str, Any]] = []
-    for kind in INSIGHT_KINDS:
-        generated, metadata = insight_generator(
-            evidence=model_evidence,
-            api_key=os.environ["OPENAI_API_KEY"],
-            model=insights_model,
-            kind=kind,
-        )
-        batches.append(generated)
-        insight_metadata.append(metadata)
-    combined = {
-        "overview": batches[0]["overview"],
-        "items": [item for batch in batches for item in batch["items"]],
-    }
-    snapshot_content, generated_items = to_snapshot_content(combined)
+    generated, insight_metadata = insight_generator(
+        evidence=model_evidence,
+        clinical_context=clinical_context,
+        api_key=os.environ["OPENAI_API_KEY"],
+        model=insights_model,
+    )
+    snapshot_content, generated_items = to_snapshot_content(generated)
     for item in generated_items:
         item["evidence_ids"] = [aliases[value] for value in item["evidence_ids"]]
+        for claim in item["content"].get("analysis_claims", []):
+            claim["evidence_ids"] = [aliases[value] for value in claim["evidence_ids"]]
         for context in item["content"]["contexts"]:
             for claim in context["claims"]:
                 claim["evidence_ids"] = [aliases[value] for value in claim["evidence_ids"]]
@@ -89,7 +70,9 @@ def _generate_bundle(
                 "evidence": [
                     {
                         "evidence_role": "supporting",
-                        "transcript_segment_id": evidence_id,
+                        "transcript_segment_id": evidence_id if evidence_by_id[evidence_id].get("source_type") != "finalized_clinical_note" else None,
+                        "clinical_note_version_id": evidence_by_id[evidence_id].get("clinical_note_version_id"),
+                        "note_text": (evidence_by_id[evidence_id].get("content") or {}).get("plain_text") or json.dumps(evidence_by_id[evidence_id].get("content") or {}, ensure_ascii=False),
                         "session_id": evidence_by_id[evidence_id]["session_id"].removeprefix("session-"),
                         "session_label": evidence_by_id[evidence_id]["session_label"],
                         "segment_index": evidence_by_id[evidence_id].get("segment_index"),
@@ -115,12 +98,14 @@ def _generate_bundle(
         "snapshot_content": {
             **snapshot_content,
             "review_note": "Generated review workspace. Verify linked evidence before relying on observations.",
-            "input_fingerprint": _input_fingerprint(evidence),
+            "input_fingerprint": fingerprint(clinical_context) if clinical_context else _input_fingerprint(evidence),
+            "generator_version": insight_metadata.get("generator_version", INSIGHTS_GENERATOR_VERSION),
+            "context_policy_version": (clinical_context or {}).get("policy_version"),
         },
         "generated_items": generated_items,
         "packet": packet,
         "brief": resolved_brief,
-        "insights_model": insight_metadata[0].get("model", insights_model),
+        "insights_model": insight_metadata.get("model", insights_model),
         "brief_model": brief_metadata.get("model", brief_model),
     }
 
@@ -144,7 +129,10 @@ def process_one() -> bool:
             raise RuntimeError("synthesis_provider_not_configured")
 
         with connect() as connection:
-            evidence = _accepted_evidence(connection, organization_id, client_id)
+            with connection.cursor() as cursor:
+                cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+            context = build_clinical_context(connection, organization_id=organization_id, client_id=client_id)
+            evidence = context['source_evidence']
             appointment = synthesis_refresh.next_appointment(
                 connection, organization_id=organization_id, client_id=client_id,
             )
@@ -169,16 +157,20 @@ def process_one() -> bool:
 
         bundle = _generate_bundle(
             evidence,
+            clinical_context=context,
             insights_model=insights_model,
             brief_model=brief_model,
         )
-        evidence_ids = {source["evidence_id"] for source in evidence}
+        source_by_id = {source["evidence_id"]: source for source in evidence}
+        evidence_ids = set(source_by_id)
         items = tuple(
             InsightItem(
                 item_kind=item["kind"],
                 content=item["content"],
                 evidence=tuple(
-                    InsightEvidence(transcript_segment_id=evidence_id)
+                    InsightEvidence(
+                        transcript_segment_id=evidence_id if source_by_id[evidence_id].get('source_type') != 'finalized_clinical_note' else None,
+                        clinical_note_version_id=source_by_id[evidence_id].get('clinical_note_version_id'))
                     for evidence_id in item["evidence_ids"] if evidence_id in evidence_ids
                 ),
                 review_state="draft",
@@ -195,8 +187,8 @@ def process_one() -> bool:
                 content=bundle["snapshot_content"],
                 items=items,
                 generator_name="Queued longitudinal synthesis",
-                generator_version=bundle["insights_model"],
-                selection_policy_version="accepted-evidence-v1",
+                generator_version=f"{bundle['snapshot_content']['generator_version']}:{bundle['insights_model']}",
+                selection_policy_version="clinical-context-v1",
                 actor_user_id=actor_user_id,
                 status="accepted",
                 parent_snapshot_id=str(previous["id"]) if previous else None,

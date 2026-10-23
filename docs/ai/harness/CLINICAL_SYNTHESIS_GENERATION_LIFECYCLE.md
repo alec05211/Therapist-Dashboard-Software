@@ -3,7 +3,7 @@
 > Product and architecture decision for draft clinical notes, the Insights workspace, and pre-session briefs.
 
 **Status:** Approved direction
-**Last updated:** 2026-10-05
+**Last updated:** 2026-10-23
 
 **Implementation status:** The durable queue, leased model worker, atomic Insights/next-brief publication, freshness UI, and API-lifecycle worker dispatch are checked in. Finalized notes and evidence-review decisions enqueue Insights revisions; the worker keeps the last valid pair readable until its replacement validates and commits. A daily reconciliation scheduler remains to be configured in hosted infrastructure.
 
@@ -82,6 +82,14 @@ It must exclude or appropriately constrain hidden, stale, disputed, rejected, su
 Configuring the OpenAI API key plus the Insights and pre-session model names opts the deployment into background synthesis for every eligible client. Eligibility comes from the source lifecycle and authorization boundary, not a manually maintained client allowlist. The worker may be paused deployment-wide for incident response or policy review.
 
 Incremental generation may update affected portions for responsiveness. A periodic full reconciliation from eligible canonical records should detect drift and confirm that the current snapshot still reflects all lifecycle controls.
+
+### Shared clinical context
+
+Transcript discovery and Insights synthesis use the [shared clinical context and memory contract](SHARED_CLINICAL_CONTEXT.md). Their packets distinguish eligible source evidence (including current finalized notes), clinician decisions, pending proposals, generated interpretations, and review constraints. History supports orientation and comparison without filtering out novel or contradictory evidence. Pending proposals and prior interpretations cannot become accepted evidence through repetition. Pre-session briefs continue to inherit validated Insights only.
+
+### Coordinated Insights generation
+
+Generate the complete Insights document in one request, with distinct trajectory, theme, open-thread, and history sections coordinated over the same shared context. Do not independently generate each section. Omit unsupported sections, avoid repeated interpretations, and repair invalid drafts with the whole document available. Analytical phrases may link to multiple source records through explicit `analysis_claims`; optional contextual prose should add detail rather than paraphrase the same evidence again. These links identify support for cautious interpretations, not verbatim speech or established conclusions. See the [shared context contract](SHARED_CLINICAL_CONTEXT.md#coordinated-insights-and-analytical-evidence-links).
 
 ### Transcript proposal analysis
 

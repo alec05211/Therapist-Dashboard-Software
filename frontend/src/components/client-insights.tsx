@@ -160,15 +160,21 @@ function contentContexts(content: Record<string, unknown>): Array<Record<string,
 
 function evidenceSources(item: InsightItem, evidenceIds?: string[]): BriefEvidence[] {
   const allowed = evidenceIds ? new Set(evidenceIds) : null;
-  return item.evidence.flatMap((source) => source.transcript_segment_id && source.session_id && (!allowed || allowed.has(source.transcript_segment_id)) ? [{
-    evidence_id: source.transcript_segment_id,
-    session_id: `session-${source.session_id}`,
-    session_label: source.session_label ?? "Completed session",
-    segment_index: source.segment_index,
-    start: source.start,
-    end: source.end,
-    quote: source.quote,
-  }] : []);
+  return item.evidence.flatMap((source) => {
+    const evidenceId = source.transcript_segment_id || source.clinical_note_version_id;
+    if (!evidenceId || !source.session_id || (allowed && !allowed.has(evidenceId))) return [];
+    return [{
+      evidence_id: evidenceId,
+      clinical_note_version_id: source.clinical_note_version_id,
+      note_text: source.note_text,
+      session_id: `session-${source.session_id}`,
+      session_label: source.session_label ?? "Completed session",
+      segment_index: source.segment_index,
+      start: source.start,
+      end: source.end,
+      quote: source.quote,
+    }];
+  });
 }
 
 function evidenceLabel(label: string) {
@@ -188,7 +194,7 @@ function contentClaims(content: Record<string, unknown>): InsightClaim[] {
   });
 }
 
-function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false }: { phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean }) {
+function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false }: { phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const sourceLabel = sources.length === 1 ? "1 source" : `${sources.length} sources`;
@@ -198,15 +204,15 @@ function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false 
     </a>
     {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
       <div className="flex items-start justify-between gap-4">
-        <div><h3 id={`${titleId}-heading`} className="text-base font-semibold">Evidence in context</h3><p className="mt-1 text-xs text-stone-500">Supporting slices for this linked statement.</p></div>
+        <div><h3 id={`${titleId}-heading`} className="text-base font-semibold">Evidence in context</h3><p className="mt-1 text-xs text-stone-500">{interpretation ? "These records support a generated interpretation for clinician review; the interpretation is not a verbatim statement or established conclusion." : "Supporting slices for this linked statement."}</p></div>
         <button type="button" onClick={() => dialog.current?.close()} aria-label="Close evidence" className="cursor-grab rounded-lg px-2 text-xl active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">×</button>
       </div>
       <p className="my-4 border-l-2 border-emerald-300 pl-4 text-base font-semibold leading-7 text-stone-800">{phrase}</p>
       <div className="grid gap-3">
         {sources.map((source) => <article key={source.evidence_id} className="rounded-xl border border-stone-300 bg-stone-50 p-4 text-sm leading-6">
           <p className="font-semibold text-stone-800">{evidenceLabel(source.session_label)}</p>
-          {source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
-          <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Open transcript evidence</button>
+          {source.clinical_note_version_id ? <p className="mt-2 whitespace-pre-wrap text-stone-700">Finalized clinical note: {source.note_text}</p> : source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
+          {!source.clinical_note_version_id && <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Open transcript evidence</button>}
         </article>)}
       </div>
     </dialog>, document.body)}
@@ -231,7 +237,7 @@ function phraseForSentencePosition(phrase: string, precedingText: string) {
   return phrase.slice(0, firstLetter) + casedLetter + phrase.slice(firstLetter + letter.length);
 }
 
-function EvidenceLinkedText({ content, item, onViewEvidence }: { content: Record<string, unknown>; item: InsightItem; onViewEvidence: Props["onViewEvidence"] }) {
+function EvidenceLinkedText({ content, item, onViewEvidence, interpretation = false }: { interpretation?: boolean; content: Record<string, unknown>; item: InsightItem; onViewEvidence: Props["onViewEvidence"] }) {
   const text = savedContentText(content);
   const spans = contentClaims(content).map((claim) => {
     let start = -1;
@@ -245,7 +251,7 @@ function EvidenceLinkedText({ content, item, onViewEvidence }: { content: Record
 
   if (!valid) {
     const sources = evidenceSources(item);
-    return <>{text}{sources.length ? <> <EvidenceDialogLink phrase={text} sources={sources} onViewEvidence={onViewEvidence} fallback /></> : null}</>;
+    return <>{text}{sources.length ? <> <EvidenceDialogLink phrase={text} sources={sources} onViewEvidence={onViewEvidence} interpretation={interpretation} fallback /></> : null}</>;
   }
 
   return <>
@@ -255,7 +261,7 @@ function EvidenceLinkedText({ content, item, onViewEvidence }: { content: Record
       const displayPhrase = phraseForSentencePosition(span.phrase, text.slice(0, span.start));
       return <span key={`${span.start}-${span.end}`}>
         {before}{needsInlineSpace(before, displayPhrase) ? " " : null}
-        <EvidenceDialogLink phrase={displayPhrase} sources={span.sources} onViewEvidence={onViewEvidence} />
+        <EvidenceDialogLink phrase={displayPhrase} sources={span.sources} onViewEvidence={onViewEvidence} interpretation={interpretation} />
         {needsInlineSpace(displayPhrase, after) ? " " : null}
       </span>;
     })}
@@ -302,7 +308,7 @@ function InsightCard({ item, onViewEvidence }: { item: InsightItem; onViewEviden
   return <article className="rounded-xl border border-stone-300 bg-stone-50 p-4">
     <h3 className="text-sm font-semibold text-stone-800">{insightLabel(item.content)}</h3>
     <div className="mt-3 text-[15px] leading-7 text-stone-800 [text-wrap:pretty]">
-      <p>{analysis}{contexts.length && !useSecondParagraph ? <> {contextualProse}</> : null}{!contexts.length && legacySources.length ? <> The supporting record is available across {legacySources.length === 1 ? "one cited moment" : `${legacySources.length} cited moments`}. <EvidenceDialogLink phrase={analysis} sources={legacySources} onViewEvidence={onViewEvidence} fallback /></> : null}</p>
+      <p>{Array.isArray(item.content.analysis_claims) ? <EvidenceLinkedText content={{ text: analysis, claims: item.content.analysis_claims }} item={item} onViewEvidence={onViewEvidence} interpretation /> : analysis}{contexts.length && !useSecondParagraph ? <> {contextualProse}</> : null}{!contexts.length && !Array.isArray(item.content.analysis_claims) && legacySources.length ? <> The supporting record is available across {legacySources.length === 1 ? "one cited moment" : `${legacySources.length} cited moments`}. <EvidenceDialogLink phrase={analysis} sources={legacySources} onViewEvidence={onViewEvidence} fallback /></> : null}</p>
       {contexts.length && useSecondParagraph ? <p className="mt-3">{contextualProse}</p> : null}
     </div>
   </article>;
