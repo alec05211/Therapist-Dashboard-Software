@@ -25,13 +25,13 @@ type AccountRole = "therapist" | "client";
 type MenuLinkProps = { href: string; label: string; icon: ReactNode; active: boolean; badge?: number; onSelect: () => void };
 
 function MenuLink({ href, label, icon, active, badge, onSelect }: MenuLinkProps) {
-  return <Link href={href} onClick={onSelect} aria-current={active ? "page" : undefined} className={`group flex min-h-11 w-full cursor-grab items-center justify-center px-3 py-2 text-base font-medium transition-[color,transform,font-size] duration-200 ease-out focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${active ? "scale-[1.025] text-emerald-800" : "text-stone-800 hover:scale-[1.025] hover:text-emerald-800"}`}>
+  return <Link href={href} onClick={onSelect} aria-current={active ? "page" : undefined} className={`group flex min-h-11 w-full cursor-grab items-center justify-start pl-12 pr-3 py-2 text-left text-base font-medium transition-[color,transform,font-size] duration-200 ease-out focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${active ? "scale-[1.025] text-emerald-800" : "text-stone-800 hover:scale-[1.025] hover:text-emerald-800"}`}>
     <span className="relative grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center">{icon}</span><span>{label}</span>{badge ? <span className="absolute -right-7 grid min-h-5 min-w-5 place-items-center rounded-full bg-emerald-800 px-1.5 text-[10px] font-bold text-white">{badge > 9 ? "9+" : badge}</span> : null}</span>
   </Link>;
 }
 
 function DisabledMenuItem({ label, icon }: { label: string; icon: ReactNode }) {
-  return <button disabled type="button" className="flex min-h-11 w-full cursor-not-allowed items-center justify-center px-3 py-2 text-base font-medium text-stone-500 opacity-55">
+  return <button disabled type="button" className="flex min-h-11 w-full cursor-not-allowed items-center justify-start pl-12 pr-3 py-2 text-left text-base font-medium text-stone-500 opacity-55">
     <span className="grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center">{icon}</span><span>{label}</span></span>
   </button>;
 }
@@ -129,7 +129,7 @@ export function AppHeader() {
           <div className="min-h-0 overflow-hidden">
             <div className={`max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-stone-200 transition-opacity duration-300 ease-out motion-reduce:transition-none ${isOpen ? "opacity-100 delay-100" : "opacity-0"}`}>
               <div className="p-3">
-                {showTherapistNavigation ? <nav aria-label="Therapist workspace" className="space-y-0.5 text-center">
+                {showTherapistNavigation ? <nav aria-label="Therapist workspace" className="space-y-0.5 text-left">
                   <MenuLink href="/inbox" label="Inbox" icon={<InboxIcon />} badge={unreadCount} active={pathname.startsWith("/inbox")} onSelect={closeMenu} />
                   <MenuLink href="/clients" label="Client list" icon={<ClientsIcon />} active={pathname.startsWith("/clients")} onSelect={closeMenu} />
                   <MenuLink href="/calendar" label="Calendar" icon={<CalendarIcon />} active={pathname.startsWith("/calendar")} onSelect={closeMenu} />
@@ -137,12 +137,12 @@ export function AppHeader() {
                   <DisabledMenuItem label="Billing" icon={<BillingIcon />} />
                   <DisabledMenuItem label="Documents" icon={<DocumentsIcon />} />
                   <MenuLink href="/settings?section=appearance" label="Settings" icon={<SettingsIcon />} active={pathname.startsWith("/settings")} onSelect={closeMenu} />
-                </nav> : isAuthenticated ? <nav aria-label="Account navigation" className="space-y-0.5 text-center">
+                </nav> : isAuthenticated ? <nav aria-label="Account navigation" className="space-y-0.5 text-left">
                   <MenuLink href="/inbox" label="Inbox" icon={<InboxIcon />} badge={unreadCount} active={pathname.startsWith("/inbox")} onSelect={closeMenu} />
                   <MenuLink href="/settings?section=profile" label="Settings" icon={<SettingsIcon />} active={pathname.startsWith("/settings")} onSelect={closeMenu} />
                 </nav> : <a href="/login" className="flex min-h-12 cursor-grab items-center gap-3 rounded-xl border border-emerald-700 bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><span className="grid size-7 place-items-center"><UserIcon /></span>Sign in</a>}
               </div>
-              {isAuthenticated ? <div className="border-t border-stone-200 p-3"><a className="group flex min-h-11 cursor-grab items-center justify-center px-3 py-2 text-sm font-medium text-stone-600 transition-[color,transform] duration-200 ease-out hover:scale-[1.025] hover:text-emerald-800 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing" href="/auth/logout"><span className="grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center"><LogoutIcon /></span><span>Log out</span></span></a></div> : null}
+              {isAuthenticated ? <div className="border-t border-stone-200 p-3"><a className="group flex min-h-11 cursor-grab items-center justify-start pl-12 pr-3 py-2 text-left text-sm font-medium text-stone-600 transition-[color,transform] duration-200 ease-out hover:scale-[1.025] hover:text-emerald-800 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing" href="/auth/logout"><span className="grid grid-cols-[1.75rem_auto] items-center gap-2.5"><span className="grid size-7 place-items-center"><LogoutIcon /></span><span>Log out</span></span></a></div> : null}
             </div>
           </div>
         </div>
