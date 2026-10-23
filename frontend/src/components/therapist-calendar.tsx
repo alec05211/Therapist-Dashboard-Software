@@ -39,6 +39,8 @@ const startOfMonth = (value: Date) => {
   return date;
 };
 
+const startOfMonthWeek = (value: Date) => addDays(startOfDay(value), -value.getDay());
+
 const dayKey = (value: Date | string) =>
   new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
 
@@ -58,9 +60,9 @@ function datesInRange({ start, end }: DateRange) {
 
 function rangeForMonth(value: Date): DateRange {
   const monthStart = startOfMonth(value);
-  const start = startOfWeek(monthStart);
+  const start = startOfMonthWeek(monthStart);
   const lastDay = addDays(addMonths(monthStart, 1), -1);
-  return { start, end: addDays(startOfWeek(lastDay), 7) };
+  return { start, end: addDays(startOfMonthWeek(lastDay), 7) };
 }
 
 function weeksForMonth(value: Date) {
@@ -95,6 +97,62 @@ function AppointmentCard({ appointment, compact = false }: { appointment: Appoin
 
 function EmptyDay() {
   return <p className="text-xs text-stone-500">No appointments</p>;
+}
+
+function DayTimeline({ date, appointments }: { date: Date; appointments: Appointment[] }) {
+  const [now, setNow] = useState(() => new Date());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isToday = dayKey(date) === dayKey(now);
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const current = new Date();
+    const minutes = dayKey(date) === dayKey(current) ? current.getHours() * 60 + current.getMinutes() : 8 * 60;
+    scrollRef.current?.scrollTo({ top: Math.max(0, minutes * 2 - 160) });
+  }, [date]);
+
+  const laneEnds: number[] = [];
+  const positioned = appointments.map(appointment => {
+    const start = new Date(appointment.starts_at);
+    const end = new Date(appointment.ends_at);
+    const minutes = start.getHours() * 60 + start.getMinutes();
+    const endMinutes = dayKey(end) !== dayKey(date) ? 1440 : end.getHours() * 60 + end.getMinutes();
+    const duration = Math.min(1440 - minutes, Math.max(36, endMinutes - minutes));
+    let lane = laneEnds.findIndex(laneEnd => laneEnd <= minutes);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = minutes + duration;
+    return { appointment, minutes, duration, lane };
+  });
+
+  return (
+    <div ref={scrollRef} className="max-h-[72vh] overflow-y-auto overscroll-contain" aria-label="Day timeline">
+      {!appointments.length && <div className="px-4 py-3"><EmptyDay /></div>}
+      <div className="relative ml-16 mr-4" style={{ height: 2880 }}>
+        {Array.from({ length: 24 }, (_, hour) => (
+          <div key={hour} className="absolute inset-x-0 border-t border-stone-200" style={{ top: hour * 120 }}>
+            <span className="absolute -left-14 top-1 w-12 text-right text-[11px] text-stone-500">
+              {hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`}
+            </span>
+          </div>
+        ))}
+        {positioned.map(({ appointment, minutes, duration, lane }) => (
+          <div key={appointment.id} className="absolute overflow-hidden pr-1" style={{ top: minutes * 2, height: duration * 2, left: `${lane / laneEnds.length * 100}%`, width: `${100 / laneEnds.length}%` }}>
+            <AppointmentCard appointment={appointment} compact />
+          </div>
+        ))}
+        {isToday && (
+          <div role="img" aria-label={`Current time: ${timeFormatter.format(now)}`} className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500" style={{ top: minutesNow * 2 }}>
+            <span className="absolute -left-1 -top-1.5 size-2.5 rounded-full bg-red-500" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ViewControls({ view, onViewChange }: { view: CalendarView; onViewChange: (view: CalendarView) => void }) {
@@ -219,7 +277,7 @@ export function TherapistCalendar() {
     const container = monthScrollRef.current;
     if (!container) return;
     const monthSection = container.querySelector<HTMLElement>(`[data-month="${monthKey(date)}"]`);
-    const week = monthSection?.querySelector<HTMLElement>(`[data-week="${dayKey(startOfWeek(date))}"]`);
+    const week = monthSection?.querySelector<HTMLElement>(`[data-week="${dayKey(startOfMonthWeek(date))}"]`);
     const target = week || monthSection;
     if (!target) return;
     container.scrollTo({ top: target.offsetTop - container.clientHeight / 2 + target.clientHeight / 2, behavior });
@@ -342,9 +400,7 @@ export function TherapistCalendar() {
               <h2 className="text-sm font-semibold text-stone-900">{new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(anchorDate)}</h2>
               <span className={`grid size-8 place-items-center rounded-full text-sm font-semibold ${dayKey(anchorDate) === todayKey ? "bg-emerald-800 text-white" : "text-stone-700"}`}>{anchorDate.getDate()}</span>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {itemsForDay(anchorDate).length ? itemsForDay(anchorDate).map(item => <AppointmentCard key={item.id} appointment={item} />) : <EmptyDay />}
-            </div>
+            <DayTimeline date={anchorDate} appointments={itemsForDay(anchorDate)} />
           </div>
         ) : view === "week" ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-7">
@@ -366,7 +422,7 @@ export function TherapistCalendar() {
           <div className={`grid ${agendaDate ? "calendar-month-layout--agenda" : ""} ${selectedDate ? "calendar-month-layout--agenda-open" : ""}`}>
             <div ref={monthScrollRef} onScroll={handleMonthScroll} className={`calendar-scroll-surface relative max-h-[72vh] min-h-[520px] overflow-auto overscroll-contain scroll-smooth border-stone-300 ${agendaDate ? "lg:border-r" : ""}`}>
               <div className="sticky top-0 z-20 grid min-w-[700px] grid-cols-7 border-b border-stone-300 bg-stone-50">
-                {Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(today), index)).map(day => (
+                {Array.from({ length: 7 }, (_, index) => addDays(startOfMonthWeek(today), index)).map(day => (
                   <div key={day.toISOString()} className="border-r border-stone-200 px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-stone-600 last:border-r-0">{weekdayFormatter.format(day)}</div>
                 ))}
               </div>
@@ -377,7 +433,7 @@ export function TherapistCalendar() {
                     <h2 className="bg-white px-4 pb-2 pt-5 text-base font-semibold text-stone-900">{monthFormatter.format(month)}</h2>
                     {(monthWeeks.get(monthKey(month)) || []).map(week => {
                       const weekStartKey = dayKey(week[0]);
-                      const isCurrentWeek = weekStartKey === dayKey(startOfWeek(today));
+                      const isCurrentWeek = weekStartKey === dayKey(startOfMonthWeek(today));
                       return (
                         <div key={weekStartKey} data-week={weekStartKey} className={`grid grid-cols-7 border-t border-stone-200 ${isCurrentWeek ? "bg-emerald-50" : ""}`}>
                           {week.map(day => {
