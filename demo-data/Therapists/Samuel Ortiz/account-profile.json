@@ -1,0 +1,16 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "role": "therapist",
+  "display_name": "Samuel Ortiz, LMFT",
+  "email": "samuel.ortiz@example.com",
+  "auth0_subject": null,
+  "practice": "North Grove Therapy",
+  "license": {
+    "type": "LMFT",
+    "jurisdiction": "Pennsylvania",
+    "identifier": "DEMO-PA-LMFT-20816",
+    "verification_status": "not_verified"
+  },
+  "connected_demo_clients": ["Avery Chen"]
+}

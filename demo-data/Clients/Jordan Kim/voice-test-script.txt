@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Jordan Kim
+# Client speaker: JORDAN | Client voice: Puck
+# Therapist voice fixture: therapist-calm-01 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: When did work end yesterday, if it ended at all?
+
+JORDAN: Officially? Six. In the version where I tell the truth, probably eleven-thirty.
+
+THERAPIST: What kept the day open?
+
+JORDAN: A message I did not need to answer. I knew that. I answered it anyway, and then there was another one.
+
+THERAPIST: What did answering promise you in that moment?
+
+JORDAN: That no one could be disappointed before I woke up. [pause] Which sounds impossible when I say it out loud.
+
+THERAPIST: Impossible, and still compelling.
+
+JORDAN: Exactly. I am not confused about the logic. I am trapped by how convincing it feels at ten forty-five.
+
+THERAPIST: Could we study that moment instead of asking you to win it every night?
+
+JORDAN: That feels less like homework. Yes. I can write down what I think will happen if I leave the message alone.
+
+THERAPIST: And what actually happens by morning.
+
+JORDAN: Right. Data, but not a performance review. Please put that in bold.

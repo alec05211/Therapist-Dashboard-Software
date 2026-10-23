@@ -1,0 +1,55 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "purpose": "Clinical trajectory, synthetic dialogue, speech, diarization, and longitudinal-synthesis testing",
+  "clients": [
+    {
+      "name": "Jordan Kim",
+      "folder": "Jordan Kim",
+      "complexity": "Lower acuity",
+      "planned_sessions": 6,
+      "client_voice": "Puck",
+      "therapist_voice_fixture": "therapist-calm-01"
+    },
+    {
+      "name": "Avery Chen",
+      "folder": "Avery Chen",
+      "complexity": "Moderate",
+      "planned_sessions": 8,
+      "client_voice": "Aoede",
+      "therapist_voice_fixture": "therapist-calm-02"
+    },
+    {
+      "name": "Priya Nair",
+      "folder": "Priya Nair",
+      "complexity": "Moderate",
+      "planned_sessions": 8,
+      "client_voice": "Kore",
+      "therapist_voice_fixture": "therapist-calm-03"
+    },
+    {
+      "name": "Luis Mendoza",
+      "folder": "Luis Mendoza",
+      "complexity": "Moderate to high complexity",
+      "planned_sessions": 8,
+      "client_voice": "Orus",
+      "therapist_voice_fixture": "therapist-calm-01"
+    },
+    {
+      "name": "Keisha Ward",
+      "folder": "Keisha Ward",
+      "complexity": "High acuity",
+      "planned_sessions": 10,
+      "client_voice": "Sulafat",
+      "therapist_voice_fixture": "therapist-calm-02"
+    },
+    {
+      "name": "Owen Park",
+      "folder": "Owen Park",
+      "complexity": "High complexity",
+      "planned_sessions": 10,
+      "client_voice": "Sadachbia",
+      "therapist_voice_fixture": "therapist-calm-03"
+    }
+  ]
+}

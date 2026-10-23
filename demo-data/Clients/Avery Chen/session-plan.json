@@ -1,0 +1,73 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Avery Chen",
+  "non_diagnostic": true,
+  "clinical_complexity": "Moderate",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The family switchboard",
+      "focus": "Avery inventories the calls, appointments, and decisions that route through her.",
+      "possible_movement": "She distinguishes tasks only she can do from tasks she automatically absorbs.",
+      "carry_forward": "Bring one recent week of examples.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "Anger before the phone rings",
+      "focus": "A missed sibling callback triggers a disproportionate argument.",
+      "possible_movement": "Avery identifies anger as information about overload, not a verdict on the relationship.",
+      "carry_forward": "Draft one specific request.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "The request without the case",
+      "focus": "She rehearses asking a sibling to own medication pickup every Thursday.",
+      "possible_movement": "Avery notices how much evidence she wants to present before making a simple request.",
+      "carry_forward": "Send a brief request without overexplaining.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "Help in someone else's style",
+      "focus": "The sibling follows through but organizes the task differently.",
+      "possible_movement": "Avery experiments with accepting adequate help rather than reclaiming control.",
+      "carry_forward": "Track urges to redo the task.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "What cannot be organized",
+      "focus": "A quiet moment with her father evokes sadness and fear.",
+      "possible_movement": "She stays with grief without moving immediately to the next appointment.",
+      "carry_forward": "Choose one low-demand ritual of connection.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "The canceled plan",
+      "focus": "A health change disrupts Avery's first evening out in weeks.",
+      "possible_movement": "The session separates a genuine emergency from the belief that rest is futile.",
+      "carry_forward": "Reschedule rather than abandon the plan.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "A family meeting with edges",
+      "focus": "Avery and her siblings discuss roles and money with mixed success.",
+      "possible_movement": "She holds one limit while acknowledging each sibling's constraints.",
+      "carry_forward": "Document agreements in plain language.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "Care without disappearance",
+      "focus": "They review remaining strain, grief, and the supports that now exist.",
+      "possible_movement": "Avery defines care as participation within limits rather than total availability.",
+      "carry_forward": "Use the plan as a living agreement.",
+      "status": "outline_only"
+    }
+  ]
+}

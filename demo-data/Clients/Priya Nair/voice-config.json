@@ -1,0 +1,16 @@
+{
+  "fixture_version": 1,
+  "provider": "Google Gemini TTS",
+  "model": "gemini-2.5-pro-tts",
+  "language_code": "en-US",
+  "client": {
+    "speaker_alias": "PRIYA",
+    "voice": "Kore",
+    "style_prompt": "Precise, bright voice; controlled rhythm; quickens during self-criticism; occasional dry understatement."
+  },
+  "therapist": {
+    "speaker_alias": "THERAPIST",
+    "voice_fixture_id": "therapist-calm-03",
+    "configuration_location": "../../Therapists/voice-fixtures.json"
+  }
+}

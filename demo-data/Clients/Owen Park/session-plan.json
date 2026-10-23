@@ -1,0 +1,89 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Owen Park",
+  "non_diagnostic": true,
+  "clinical_complexity": "High complexity",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The amount that kept changing",
+      "focus": "Owen gives several versions of his weekly alcohol use and notices the urge to secure reassurance.",
+      "possible_movement": "He agrees to a formal substance-use and medical assessment.",
+      "carry_forward": "Gather accurate history without punitive framing.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "The drive home",
+      "focus": "They address the driving episode directly and assess current access and likelihood of recurrence.",
+      "possible_movement": "Owen gives his partner the spare keys and defines alternatives.",
+      "carry_forward": "Use the no-driving plan immediately.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "Sleep is not the whole story",
+      "focus": "Owen describes drinking to sleep and waking unrefreshed.",
+      "possible_movement": "The therapist avoids medical advice beyond scope and coordinates evaluation.",
+      "carry_forward": "Attend the medical appointment.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "Five o'clock without a job",
+      "focus": "A daily cue emerges when the workday used to end.",
+      "possible_movement": "Owen builds external structure and contacts his sibling before the usual first drink.",
+      "carry_forward": "Test the alternate routine twice.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "The promise his partner no longer trusts",
+      "focus": "His partner responds cautiously to another declaration of change.",
+      "possible_movement": "Owen practices acknowledging impact without demanding immediate trust.",
+      "carry_forward": "Share actions rather than guarantees.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "Craving and the long evening",
+      "focus": "A difficult interview increases urge and self-criticism.",
+      "possible_movement": "He uses an agreed support and leaves the cue-rich environment.",
+      "carry_forward": "Review which supports were effective.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "Who he is without the pitch",
+      "focus": "Job loss grief surfaces beneath rehearsed optimism.",
+      "possible_movement": "Owen describes shame without making alcohol the only available relief.",
+      "carry_forward": "Schedule one non-job, non-drinking activity.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "The lapse he almost omitted",
+      "focus": "Owen reports drinking after two lower-use weeks and initially minimizes the amount.",
+      "possible_movement": "He corrects the record within session and reassesses driving and withdrawal risk.",
+      "carry_forward": "Update the care plan with specialists.",
+      "status": "outline_only"
+    },
+    {
+      "number": 9,
+      "title": "Repair without surveillance",
+      "focus": "Owen and his partner struggle over monitoring and privacy.",
+      "possible_movement": "He distinguishes consensual accountability from making his partner solely responsible.",
+      "carry_forward": "Clarify roles and professional supports.",
+      "status": "outline_only"
+    },
+    {
+      "number": 10,
+      "title": "A plan that includes bad weeks",
+      "focus": "They review risk, structure, specialized care, relationship repair, and employment uncertainty.",
+      "possible_movement": "Owen defines progress as earlier honesty and safer action, not a flawless story.",
+      "carry_forward": "Continue the appropriate level of care.",
+      "status": "outline_only"
+    }
+  ]
+}

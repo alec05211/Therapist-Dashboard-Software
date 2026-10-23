@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Avery Chen
+# Client speaker: AVERY | Client voice: Aoede
+# Therapist voice fixture: therapist-calm-02 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: What happened when your sister said she could take Thursdays?
+
+AVERY: I said thank you. Then I sent her a six-paragraph message explaining how to do it.
+
+THERAPIST: What were you hoping the message would prevent?
+
+AVERY: A mistake. A call from the pharmacy. My father getting confused. Me having to fix it at five-thirty.
+
+THERAPIST: Those are real possibilities.
+
+AVERY: Yes. That is the problem. I can always build a reasonable argument for taking everything back.
+
+THERAPIST: What would adequate help look like, as distinct from help delivered exactly your way?
+
+AVERY: [pause] She picks it up. She texts Dad. If there is a problem, she handles the first call before calling me.
+
+THERAPIST: Could that be the agreement?
+
+AVERY: It could. I do not like how exposed that makes me feel.
+
+THERAPIST: Exposed to what?
+
+AVERY: To finding out I am not actually the only person who can do it. And to how tired I am of being the one.

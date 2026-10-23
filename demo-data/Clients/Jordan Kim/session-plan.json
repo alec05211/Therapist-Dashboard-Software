@@ -1,0 +1,57 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Jordan Kim",
+  "non_diagnostic": true,
+  "clinical_complexity": "Lower acuity",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The moving finish line",
+      "focus": "Jordan describes a normal-looking life with no reliable off switch.",
+      "possible_movement": "They identify message checking as both relief and fuel for vigilance.",
+      "carry_forward": "Track two evenings without trying to change them.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "The hour before sleep",
+      "focus": "They map screens, unfinished tasks, and early waking without moralizing the routine.",
+      "possible_movement": "Jordan chooses one modest wind-down cue and refuses a complicated optimization plan.",
+      "carry_forward": "Compare sleep and urge-to-check notes.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "What counts as responsive",
+      "focus": "A manager's vague request triggers weekend work and resentment.",
+      "possible_movement": "Jordan rehearses a neutral question about deadlines and escalation channels.",
+      "carry_forward": "Send the clarification during work hours.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "Silence after the boundary",
+      "focus": "The manager responds briefly, and Jordan interprets the brevity as anger.",
+      "possible_movement": "They tolerate not sending an apologetic follow-up and examine alternative explanations.",
+      "carry_forward": "Notice the body response while waiting.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "A weekend that belongs to someone",
+      "focus": "Jordan accepts a friend's invitation but feels distracted and guilty.",
+      "possible_movement": "Pleasure and anxiety coexist without making the outing a failure.",
+      "carry_forward": "Choose one recurring non-work commitment.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "Enough for this season",
+      "focus": "They review gains, a recent late-night relapse, and remaining structural stress.",
+      "possible_movement": "Jordan names warning signs and a flexible reset plan rather than a perfect routine.",
+      "carry_forward": "Continue monitoring only when it is useful.",
+      "status": "outline_only"
+    }
+  ]
+}

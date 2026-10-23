@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Luis Mendoza
+# Client speaker: LUIS | Client voice: Orus
+# Therapist voice fixture: therapist-calm-01 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: What was the goal of the message you sent?
+
+LUIS: To confirm Friday. That was the goal when I started.
+
+THERAPIST: And by the fourth paragraph?
+
+LUIS: By then I was proving I have always been the responsible one. Friday had left the building.
+
+THERAPIST: What did proving that cost you?
+
+LUIS: Two hours. Sleep. And my daughter asking why I looked angry at breakfast.
+
+THERAPIST: What would a message in service of Friday have said?
+
+LUIS: I can pick her up at six. Please confirm the address. That is it.
+
+THERAPIST: What comes up when it is that short?
+
+LUIS: Like I am letting a lie stand.
+
+THERAPIST: Can the lie remain unresolved while the schedule becomes clear?
+
+LUIS: [long pause] I do not like it. But yes. Those can be two different jobs.

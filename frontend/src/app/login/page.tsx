@@ -1,2 +1,5 @@
-import { LoginLanding } from "@/components/auth/login-landing";
-export default function LoginPage() { return <LoginLanding />; }
+import { redirect } from "next/navigation";
+
+export default function LoginPage() {
+  redirect("/auth/login?returnTo=/");
+}

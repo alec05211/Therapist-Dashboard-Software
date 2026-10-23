@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Priya Nair
+# Client speaker: PRIYA | Client voice: Kore
+# Therapist voice fixture: therapist-calm-03 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: What made twenty minutes feel harder than four hours?
+
+PRIYA: Because twenty minutes admits I may stop before I have mastered anything.
+
+THERAPIST: And four hours promises mastery?
+
+PRIYA: It promises suffering. I have confused suffering with seriousness for a long time.
+
+THERAPIST: What did you notice in the shorter block?
+
+PRIYA: I learned two things. Then I wanted to keep going so I could turn it into a heroic story.
+
+THERAPIST: Did you?
+
+PRIYA: No. I stopped. I was furious for about ten minutes.
+
+THERAPIST: What happened after the anger?
+
+PRIYA: I made dinner with my roommate. The world continued despite my irresponsible behavior.
+
+THERAPIST: You sound amused.
+
+PRIYA: A little. Also terrified. But a little amused is new.

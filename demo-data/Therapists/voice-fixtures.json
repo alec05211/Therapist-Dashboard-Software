@@ -1,0 +1,28 @@
+{
+  "fixture_version": 1,
+  "provider": "Google Gemini TTS",
+  "model": "gemini-2.5-pro-tts",
+  "language_code": "en-US",
+  "source_url": "https://docs.cloud.google.com/text-to-speech/docs/gemini-tts",
+  "fictional": true,
+  "fixtures": [
+    {
+      "id": "therapist-calm-01",
+      "speaker_alias": "THERAPIST",
+      "voice": "Sadaltager",
+      "style_prompt": "Calm grounded adult voice, unhurried pace, concise reflections, natural pauses, and no theatrical soothing."
+    },
+    {
+      "id": "therapist-calm-02",
+      "speaker_alias": "THERAPIST",
+      "voice": "Achernar",
+      "style_prompt": "Steady attentive adult voice, warm but restrained, comfortable with silence, and clear during direct safety questions."
+    },
+    {
+      "id": "therapist-calm-03",
+      "speaker_alias": "THERAPIST",
+      "voice": "Charon",
+      "style_prompt": "Measured collaborative adult voice, low emotional exaggeration, precise questions, and a conversational rather than instructional delivery."
+    }
+  ]
+}

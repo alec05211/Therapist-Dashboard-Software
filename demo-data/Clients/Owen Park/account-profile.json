@@ -1,0 +1,15 @@
+{
+  "fixture_version": 2,
+  "fictional": true,
+  "role": "client",
+  "display_name": "Owen Park",
+  "email": "owen.park@example.com",
+  "auth0_subject": null,
+  "clinical_fixture": {
+    "complexity": "High complexity",
+    "planned_session_count": 10,
+    "trajectory_document": "clinical-trajectory-outline.docx",
+    "session_plan": "session-plan.json",
+    "voice_config": "voice-config.json"
+  }
+}

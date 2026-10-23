@@ -1,0 +1,15 @@
+{
+  "fixture_version": 2,
+  "fictional": true,
+  "role": "client",
+  "display_name": "Jordan Kim",
+  "email": "jordan.kim@example.com",
+  "auth0_subject": null,
+  "clinical_fixture": {
+    "complexity": "Lower acuity",
+    "planned_session_count": 6,
+    "trajectory_document": "clinical-trajectory-outline.docx",
+    "session_plan": "session-plan.json",
+    "voice_config": "voice-config.json"
+  }
+}

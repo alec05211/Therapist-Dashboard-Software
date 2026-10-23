@@ -72,7 +72,27 @@ roles, client access grants, session data, or other sensitive information into
 Auth0 token claims; the application database remains the authorization source
 of truth.
 
-## 5. Test the therapist flow
+## 5. Configure the branded login screen
+
+The application sends `/login` directly to Auth0. The custom Auth0-hosted login
+source is in [`auth0-login`](../../auth0-login/README.md); Auth0 still validates
+credentials, performs account recovery, creates the session, and issues tokens.
+
+Build and host the generated JavaScript and CSS on an HTTPS origin with CORS
+enabled. Then copy `auth0-login/settings.example.json`, replace the example
+asset URLs, and apply the settings to the combined login screen:
+
+```powershell
+auth0 ul customize --rendering-mode advanced --prompt login --screen login --file ./settings.json
+```
+
+Advanced Customizations for Universal Login requires an eligible Auth0 plan and
+a verified custom domain. Do not enable this initial login screen while Auth0
+bot-detection CAPTCHA is active; the first implementation deliberately fails
+closed until a CAPTCHA provider is added. Signup, MFA, and password reset keep
+Auth0's standard rendering.
+
+## 6. Test the therapist flow
 
 1. Start the FastAPI server and the frontend development server.
 2. Visit `http://localhost:3000/onboarding/therapist`.
@@ -86,7 +106,7 @@ authenticated owner membership, a practitioner profile, and an audit event in
 one database transaction. Until then, the form will correctly return a service
 configuration error rather than storing any practice details locally.
 
-## 6. Production decisions before enabling real accounts
+## 7. Production decisions before enabling real accounts
 
 - Obtain an appropriate Auth0 agreement/BAA and validate plan and deployment suitability before handling ePHI.
 - Enable MFA for therapist and organization-administrator accounts; define step-up requirements for exports, access-management changes, and account recovery.
@@ -94,7 +114,7 @@ configuration error rather than storing any practice details locally.
 - Keep Auth0 metadata and tokens free of client, session, transcript, audio, diagnosis, consent-document, and clinical-access information.
 - Implement RDS-backed user, organization, membership, practitioner, and audit records before granting any application clinical access.
 
-## 7. Production infrastructure prerequisite
+## 8. Production infrastructure prerequisite
 
 The current RDS instance is restricted to synthetic demonstrations. Before
 enabling real accounts or clinical data, provision a reviewed private database

@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Keisha Ward
+# Client speaker: KEISHA | Client voice: Sulafat
+# Therapist voice fixture: therapist-calm-02 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: I want to ask directly about today. Have you had thoughts that you would be better off dead or not here?
+
+KEISHA: Yes. Not all day. Last night, for maybe an hour, it was loud.
+
+THERAPIST: During that hour, did you intend to act on the thoughts?
+
+KEISHA: No. I wanted everything to stop. I did not make a plan.
+
+THERAPIST: What did you do next?
+
+KEISHA: I stared at my cousin's name for a long time. Then I called her. I hated making the call.
+
+THERAPIST: And you made it.
+
+KEISHA: Yes. She came into the kitchen and sat there. She did not give me a speech.
+
+THERAPIST: What is the risk like right now, here with me?
+
+KEISHA: Lower. The thoughts are not pushing. I can use the plan tonight.
+
+THERAPIST: Let's review the plan together and make sure it still fits, including when we would add more support.
+
+KEISHA: Okay. Just tell me what you are thinking while we do it. Do not decide around me.

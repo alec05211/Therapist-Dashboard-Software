@@ -245,10 +245,11 @@ jobs:
             echo "The session-aware homepage was deployed with shared prerender caching enabled." >&2
             exit 1
           fi
-          page="$(curl --fail --silent --show-error \
+          login_headers="$(curl --fail --silent --show-error \
             --retry 12 --retry-delay 5 --retry-all-errors \
+            --head \
             "$APPLICATION_URL/login")"
-          grep -q 'Sign in securely' <<<"$page" || { echo "The login smoke test did not find the expected page content." >&2; exit 1; }
+          grep -Fiq 'location: /auth/login?returnTo=/' <<<"$login_headers" || { echo "The login route did not redirect to Auth0." >&2; exit 1; }
 
       - name: Record the deployment summary
         shell: bash

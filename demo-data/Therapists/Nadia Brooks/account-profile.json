@@ -1,0 +1,16 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "role": "therapist",
+  "display_name": "Nadia Brooks, LCSW",
+  "email": "nadia.brooks@example.com",
+  "auth0_subject": null,
+  "practice": "Harborline Counseling Group",
+  "license": {
+    "type": "LCSW",
+    "jurisdiction": "New York",
+    "identifier": "DEMO-NY-LCSW-10427",
+    "verification_status": "not_verified"
+  },
+  "connected_demo_clients": ["Jordan Kim"]
+}

@@ -11,6 +11,13 @@ TERRAFORM_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "terraform-demo-ap
 DEPLOY_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "deploy-demo-app.yml"
 BOOTSTRAP_MAIN = PROJECT_ROOT / "terraform" / "bootstrap" / "main.tf"
 HOME_PAGE = PROJECT_ROOT / "frontend" / "src" / "app" / "page.tsx"
+LOGIN_PAGE = PROJECT_ROOT / "frontend" / "src" / "app" / "login" / "page.tsx"
+CLIENT_ONBOARDING_PAGE = (
+    PROJECT_ROOT / "frontend" / "src" / "app" / "onboarding" / "client" / "page.tsx"
+)
+THERAPIST_ONBOARDING_PAGE = (
+    PROJECT_ROOT / "frontend" / "src" / "app" / "onboarding" / "therapist" / "page.tsx"
+)
 
 
 class HostedDemoDeployTests(unittest.TestCase):
@@ -90,11 +97,25 @@ class HostedDemoDeployTests(unittest.TestCase):
         self.assertIn('export const dynamic = "force-dynamic";', homepage)
         self.assertIn("auth0.getSession()", homepage)
 
+    def test_session_aware_onboarding_pages_are_rendered_per_request(self):
+        for page_path in (CLIENT_ONBOARDING_PAGE, THERAPIST_ONBOARDING_PAGE):
+            with self.subTest(page=page_path.parent.name):
+                page = page_path.read_text(encoding="utf-8")
+                self.assertIn('export const dynamic = "force-dynamic";', page)
+                self.assertIn("auth0.getSession()", page)
+
     def test_deployment_rejects_a_shared_cached_homepage(self):
         workflow = DEPLOY_WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn("x-nextjs-prerender", workflow)
         self.assertIn("s-maxage", workflow)
+
+    def test_login_route_sends_users_directly_to_auth0(self):
+        login_page = LOGIN_PAGE.read_text(encoding="utf-8")
+        workflow = DEPLOY_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn('redirect("/auth/login?returnTo=/")', login_page)
+        self.assertIn("location: /auth/login?returnTo=/", workflow)
 
 
 if __name__ == "__main__":

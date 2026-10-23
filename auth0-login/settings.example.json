@@ -1,0 +1,32 @@
+{
+  "rendering_mode": "advanced",
+  "context_configuration": [
+    "branding.settings",
+    "branding.themes.default",
+    "screen.texts"
+  ],
+  "default_head_tags_disabled": false,
+  "head_tags": [
+    {
+      "tag": "meta",
+      "attributes": {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1"
+      }
+    },
+    {
+      "tag": "link",
+      "attributes": {
+        "rel": "stylesheet",
+        "href": "https://replace-with-cdn.example.com/auth0-login/assets/auth0-login.css"
+      }
+    },
+    {
+      "tag": "script",
+      "attributes": {
+        "src": "https://replace-with-cdn.example.com/auth0-login/assets/auth0-login.js",
+        "type": "module"
+      }
+    }
+  ]
+}

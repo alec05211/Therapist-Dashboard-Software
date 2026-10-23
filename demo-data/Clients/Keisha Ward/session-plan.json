@@ -1,0 +1,89 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Keisha Ward",
+  "non_diagnostic": true,
+  "clinical_complexity": "High acuity",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "What happens when I answer honestly",
+      "focus": "The therapist explains confidentiality and asks directly about current suicidal thoughts, intent, access, and supports.",
+      "possible_movement": "Keisha corrects an assumption and participates in updating the safety plan.",
+      "carry_forward": "Confirm follow-up contacts and immediate needs.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "The first night back",
+      "focus": "Sleep, meals, medication questions, and temporary housing are reviewed alongside risk.",
+      "possible_movement": "Keisha chooses two realistic anchors rather than a full recovery schedule.",
+      "carry_forward": "Coordinate with the prescriber as authorized.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "The hour that stretches",
+      "focus": "Evening isolation is identified as a predictable period of increased passive thoughts.",
+      "possible_movement": "She rehearses contacting her cousin before the intensity peaks.",
+      "carry_forward": "Use the written escalation sequence.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "Shame in the waiting room",
+      "focus": "Keisha worries coworkers and family now see her as fragile.",
+      "possible_movement": "The therapist separates privacy choices from secrecy driven by shame.",
+      "carry_forward": "Choose what, if anything, to share at work.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "Returning for four hours",
+      "focus": "A limited work shift brings competence and exhaustion.",
+      "possible_movement": "Keisha notices warning signs before pushing through them.",
+      "carry_forward": "Review the return-to-work pace.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "The difficult Tuesday",
+      "focus": "A housing setback and poor sleep bring back stronger suicidal thoughts without current intent.",
+      "possible_movement": "She tells the therapist and uses supports; the session reassesses safety directly.",
+      "carry_forward": "Increase contact and coordinate care.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "Anger at being watched",
+      "focus": "Keisha resents check-ins from loved ones and wants more privacy.",
+      "possible_movement": "She negotiates a support plan that includes boundaries and clear escalation signals.",
+      "carry_forward": "Share the revised plan with consent.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "The story she is not ready to tell",
+      "focus": "They approach the crisis without demanding a full narrative.",
+      "possible_movement": "Keisha identifies one point where options felt invisible and one point where connection returned.",
+      "carry_forward": "Stop before overwhelm and debrief.",
+      "status": "outline_only"
+    },
+    {
+      "number": 9,
+      "title": "A plan for the next accumulation",
+      "focus": "They map combinations of stressors rather than a single trigger.",
+      "possible_movement": "Keisha identifies earlier thresholds for sleep, isolation, and hopelessness.",
+      "carry_forward": "Add thresholds to the safety plan.",
+      "status": "outline_only"
+    },
+    {
+      "number": 10,
+      "title": "Continuing care without a finish line",
+      "focus": "The arc reviews current risk, supports, work, housing, and unresolved grief.",
+      "possible_movement": "Keisha defines stability as earlier response and more choice, not absence of difficult thoughts forever.",
+      "carry_forward": "Continue coordinated care.",
+      "status": "outline_only"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# Fictional Gemini TTS voice audition
+# Client: Owen Park
+# Client speaker: OWEN | Client voice: Sadachbia
+# Therapist voice fixture: therapist-calm-03 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: You have given me two different numbers today. What happens inside when I notice that?
+
+OWEN: I want to sell you the smaller one. I was good at sales-adjacent work for a reason.
+
+THERAPIST: What would the larger number ask us to take seriously?
+
+OWEN: That this is not just me having a rough month. And that stopping may not be as simple as deciding harder.
+
+THERAPIST: I agree that we need an accurate assessment, including medical safety. How does that land?
+
+OWEN: Embarrassing. Also, honestly, a little relieving.
+
+THERAPIST: Let's talk about the driving episode. What is the plan if you have been drinking and want the car?
+
+OWEN: My partner has the spare keys. I use a ride or call my brother. No exceptions because the distance is short.
+
+THERAPIST: How confident are you that you can follow that tonight?
+
+OWEN: Tonight, eight out of ten. If that changes, I call before I argue with myself.
+
+THERAPIST: And the assessment?
+
+OWEN: I will make the call here, before I leave. Otherwise I will turn it into research for three days.

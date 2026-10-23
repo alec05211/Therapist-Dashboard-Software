@@ -1,0 +1,73 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Luis Mendoza",
+  "non_diagnostic": true,
+  "clinical_complexity": "Moderate to high complexity",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The message thread",
+      "focus": "Luis reads a recent scheduling exchange and describes each escalation point.",
+      "possible_movement": "He notices how quickly he stops discussing the schedule and starts defending his character.",
+      "carry_forward": "Use a twenty-minute response delay.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "The night shift in his head",
+      "focus": "Rumination and poor sleep intensify certainty that he must respond.",
+      "possible_movement": "Luis creates an overnight rule for non-urgent messages.",
+      "carry_forward": "Move drafting out of bed.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "Facts, requests, and the old trial",
+      "focus": "They separate useful logistics from evidence about the marriage.",
+      "possible_movement": "Luis drafts a three-sentence response that does not litigate the past.",
+      "carry_forward": "Send only after reviewing the goal.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "His daughter's closed door",
+      "focus": "A rigid response to a changed plan leads his daughter to withdraw.",
+      "possible_movement": "Luis prepares an apology that owns impact without explaining it away.",
+      "carry_forward": "Make the repair without asking reassurance.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "The accusation left unanswered",
+      "focus": "A provocative message arrives before a school event.",
+      "possible_movement": "He attends the event without replying and discovers the urgency can pass.",
+      "carry_forward": "Record what helped him wait.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "What the anger has been carrying",
+      "focus": "Luis names grief, loneliness, and fear of becoming peripheral.",
+      "possible_movement": "Sadness appears without being converted into blame.",
+      "carry_forward": "Talk with his brother instead of sending a message.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "A schedule that changes",
+      "focus": "A work emergency requires flexibility from both parents.",
+      "possible_movement": "Luis negotiates a swap and notices cooperation without reading it as reconciliation.",
+      "carry_forward": "Confirm the agreement in neutral language.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "Parenting after the marriage",
+      "focus": "They consolidate boundaries, repair practices, and warning signs.",
+      "possible_movement": "Luis defines success as protecting his daughter and his conduct, not winning every interpretation.",
+      "carry_forward": "Return if escalation patterns reappear.",
+      "status": "outline_only"
+    }
+  ]
+}

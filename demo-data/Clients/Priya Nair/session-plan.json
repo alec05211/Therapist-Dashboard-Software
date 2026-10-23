@@ -1,0 +1,73 @@
+{
+  "fixture_version": 1,
+  "fictional": true,
+  "client": "Priya Nair",
+  "non_diagnostic": true,
+  "clinical_complexity": "Moderate",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The result she did not send",
+      "focus": "Priya describes the failed exam and delayed disclosure.",
+      "possible_movement": "She notices that secrecy increased the meaning of the result.",
+      "carry_forward": "Choose one safe person to consider telling.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "When the body becomes evidence",
+      "focus": "They reconstruct a panic-like episode and the conclusions attached to each sensation.",
+      "possible_movement": "Priya distinguishes a sensation from a prediction while retaining uncertainty.",
+      "carry_forward": "Track sensations and interpretations.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "The perfect study day",
+      "focus": "Her elaborate plan repeatedly collapses before noon.",
+      "possible_movement": "They design a deliberately modest twenty-minute study experiment.",
+      "carry_forward": "Complete three short blocks, not a marathon.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "An imperfect drawing",
+      "focus": "Priya brings a rough design exercise she would normally hide.",
+      "possible_movement": "She allows it to remain unfinished while discussing what she learned.",
+      "carry_forward": "Share one draft with a trusted colleague.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "Telling her cousin",
+      "focus": "Disclosure brings warmth and an unwanted suggestion to 'just relax.'",
+      "possible_movement": "Priya practices asking for listening rather than advice.",
+      "carry_forward": "Clarify the support she wants.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "The practice test spike",
+      "focus": "A low score triggers racing thoughts and a canceled weekend.",
+      "possible_movement": "She returns to the plan the next day without compensatory overwork.",
+      "carry_forward": "Use the recovery sequence once.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "Exam week without guarantees",
+      "focus": "They identify sleep, food, travel, and coping plans that do not depend on feeling calm.",
+      "possible_movement": "Priya accepts that anxiety can accompany competent action.",
+      "carry_forward": "Follow the flexible exam-week plan.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "After the attempt",
+      "focus": "The final session processes the exam experience without requiring the result.",
+      "possible_movement": "Priya defines progress by how she responded before, during, and after uncertainty.",
+      "carry_forward": "Continue care based on need, not outcome.",
+      "status": "outline_only"
+    }
+  ]
+}
