@@ -90,6 +90,10 @@ At the same illustrative 78,000 input/12,000 output token normal-cycle budget, G
 
 ## Costs still to price
 
+Client diagnostics adds an indexed operational event table with a 30-day trace window, pruning older rows on the next diagnostic write for that client. A successful worker attempt records seven stage events, with up to three additional Insights repair events; failed/retried attempts add their own traces. Each append performs an insert plus a client-scoped retention delete. Existing review/upload ledgers are read rather than copied. No clinical prompts, model responses, or source text are duplicated into diagnostic storage.
+
+While Diagnostics is open, visible, and unpaused, the UI polls once per ten seconds: up to 360 API reads and 1,800 bounded SQL SELECTs per active viewing hour (five SELECTs/read). Opening, reading, pausing, or resuming diagnostics never calls a model or queues work. As a storage sizing example only, assuming 1 KB per stage event including row/index overhead, four successful attempts/month/client would retain roughly 28 KB/client or 2.8 MB for 100 clients over 30 days, before extra reviews, repairs, retries, backups, and database overhead. These are unmeasured planning assumptions. Dollar impact remains unpriced until actual event size, polling-viewer hours, RDS capacity/I/O, backup retention, and API/network usage are measured against the selected hosting rates; existing model-call budget tables are unchanged.
+
 | Architecture cost | Why it affects the full operating total |
 | --- | --- |
 | PostgreSQL/RDS, API hosting, and workers | Instance sizes, uptime, concurrency, and deployment topology determine charges. |

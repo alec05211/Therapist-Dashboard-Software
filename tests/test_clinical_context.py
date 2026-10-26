@@ -210,10 +210,13 @@ class ClinicalContextTests(unittest.TestCase):
             generator = MagicMock(side_effect=insight)
             context = {'source_evidence': [note], 'generated_interpretations': [
                 {'evidence_refs': [{'clinical_note_version_id': 'note'}]}]}
+            events = MagicMock()
             bundle = _generate_bundle([note], clinical_context=context, insights_model='test', brief_model='test',
-                insight_generator=generator, brief_generator=lambda **kwargs: ({}, {}))
+                insight_generator=generator, brief_generator=lambda **kwargs: ({}, {}), on_event=events)
         generator.assert_called_once()
         self.assertNotIn('kind', generator.call_args.kwargs)
+        self.assertEqual([call.args[0] for call in events.call_args_list],
+                         ['insights_requested', 'insights_validated', 'brief_requested', 'brief_validated'])
         self.assertEqual(generator.call_args.kwargs['clinical_context']['generated_interpretations'][0]
                          ['evidence_refs'][0]['clinical_note_version_id'], 'E001')
         self.assertEqual(context['source_evidence'][0]['evidence_id'], 'note')

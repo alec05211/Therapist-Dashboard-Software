@@ -125,6 +125,8 @@ Each brief is tied to the appointment and exact Insights snapshot version that i
 
 ## 7. State and audit requirements
 
+Client Care Settings exposes a read-only Diagnostics timeline to users with existing client-care access, without a developer-role gate. The worker records allowlisted stage events, repair counts, token usage when supplied, publication, and stage-specific failure codes in `app.client_diagnostic_events`. Raw exceptions, provider bodies, and clinical prompts are never persisted there. Stage traces have a 30-day operational retention window; refresh-event audit history remains separate. Timeline reads never trigger generation or retries, and historical attempts without stage traces are labeled using only recorded state watermarks.
+
 At minimum, retain:
 
 - the refresh-event type, actor or system origin, affected record version, and creation time;

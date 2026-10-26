@@ -222,7 +222,7 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
     return {"text": generated["overview"]}, items
 
 
-def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api_key: str, model: str, kind: str | None = None, clinical_context: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
+def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api_key: str, model: str, kind: str | None = None, clinical_context: dict[str, Any] | None = None, on_repair=None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Generate one coordinated, source-linked Insights document."""
     clinical_context = synthesis_context(clinical_context, evidence)
     requested_kinds = {kind} if kind else INSIGHT_KINDS
@@ -267,6 +267,8 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     repair_attempt = 0
     while violations and repair_attempt < 3:
         repair_attempt += 1
+        if on_repair:
+            on_repair(repair_attempt, len(violations))
         repair_payload = {
             **payload,
             "instructions": payload["instructions"] + (

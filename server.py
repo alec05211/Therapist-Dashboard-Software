@@ -28,6 +28,7 @@ from database import speaker_identification
 from database import document_workflow
 from database import insurance_cards
 from database import synthesis_refresh
+from database import client_diagnostics
 from database.clinical_synthesis_worker import process_one as process_one_clinical_synthesis
 from database.scheduling import available_recurring_slots, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
@@ -1933,6 +1934,17 @@ def generate_current_pre_session_brief(client_id: str, organization_id: str, aut
                 model=EXCLUDED.model, generated_by=EXCLUDED.generated_by, generated_at=CURRENT_TIMESTAMP""",
                 (organization_id, client_id, fingerprint, Json(generated), metadata['model'], actor))
     return resolved
+
+
+@app.get("/client-diagnostics")
+def get_client_diagnostics(client_id: str, authorization: str | None = Header(default=None)):
+    """Read operational metadata using ordinary client-care access, no developer role."""
+    try:
+        with connect() as connection:
+            context = resolve_therapist_client_context(connection, authorization, client_id)
+            return client_diagnostics.read_timeline(connection, **context)
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="Client diagnostics are temporarily unavailable.") from exc
 
 
 @app.get("/clinical-records/clients/{client_id}/insights-refresh-status")

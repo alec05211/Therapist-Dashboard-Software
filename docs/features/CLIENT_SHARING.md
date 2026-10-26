@@ -53,3 +53,11 @@ The second command requires the configured synthetic database/AWS connection.
 It checks actual save/reload, portal filtering, role separation, and revoked
 access with token validation replaced by known database identities. All test
 writes roll back. It does not validate the external Auth0 login flow.
+
+## Client diagnostics
+
+Client Care Settings includes a read-only Diagnostics category for every user who already has client-care access. It has no developer/admin role requirement. `/client-diagnostics` resolves the signed-in user's existing organization and client relationship on the server; a client ID alone never grants access. This does not change clinical-sharing toggles or expose another client's records.
+
+The terminal-style panel lists the newest 200 timestamped operational events, refresh revision/status, and attempt count. It refreshes every ten seconds while visible and live, with a pause control. It projects upload, transcript-analysis, and review-trigger metadata from existing records. New worker stage events show context assembly, Insights requests/repairs/validation, brief generation/validation, publication, and failure. Earlier attempts cannot be reconstructed beyond their recorded watermarks.
+
+Diagnostic messages and numeric details are allowlisted on write and read. Prompts, source text, clinical note contents, raw provider responses, exception bodies, credentials, and actor contact details are excluded. Operational worker traces are retained for 30 days and pruned on the next client diagnostic write; canonical clinical records and their audit ledgers retain their existing lifecycle. Reading or pausing the panel never requests generation.

@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import logging
 from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
@@ -14,9 +15,12 @@ from ai_harness.clinical_context import alias_context_sources
 from ai_harness.longitudinal_insights import INSIGHTS_GENERATOR_VERSION, generate_openai_longitudinal_insights, to_snapshot_content
 from ai_harness.pre_session import generate_openai_pre_session_brief, resolve_brief
 from database import synthesis_refresh
+from database import client_diagnostics
 from database.clinical_context import build_clinical_context, fingerprint
 from database.connection import connect
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
+
+LOGGER = logging.getLogger(__name__)
 
 
 
@@ -39,18 +43,29 @@ def _generate_bundle(
     brief_model: str,
     insight_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_longitudinal_insights,
     brief_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_pre_session_brief,
+    on_event: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
+    def emit(event_type, **details):
+        if on_event:
+            on_event(event_type, details)
+
     aliases = {f"E{index:03d}": source["evidence_id"] for index, source in enumerate(evidence, 1)}
     model_evidence = [
         {**source, "evidence_id": alias}
         for alias, source in zip(aliases, evidence, strict=True)
     ]
+    emit('insights_requested', stage='insights')
+    repair_options = {'on_repair': lambda attempt, count: emit('insights_repair_requested',
+        stage='insights', repair_attempt=attempt, violation_count=count)} if on_event and insight_generator is generate_openai_longitudinal_insights else {}
     generated, insight_metadata = insight_generator(
         evidence=model_evidence,
         clinical_context=alias_context_sources(clinical_context, {value: key for key, value in aliases.items()}),
         api_key=os.environ["OPENAI_API_KEY"],
         model=insights_model,
+        **repair_options,
     )
+    usage = insight_metadata.get('usage') or {}
+    emit('insights_validated', stage='insights', input_tokens=usage.get('input_tokens'), output_tokens=usage.get('output_tokens'))
     snapshot_content, generated_items = to_snapshot_content(generated)
     for item in generated_items:
         item["evidence_ids"] = [aliases[value] for value in item["evidence_ids"]]
@@ -87,6 +102,7 @@ def _generate_bundle(
             for item in generated_items
         ],
     }
+    emit('brief_requested', stage='brief')
     projected = project_accepted_insights(packet, [])
     _, request = brief_input(projected)
     brief_response, brief_metadata = brief_generator(
@@ -95,6 +111,8 @@ def _generate_bundle(
         model=brief_model,
     )
     resolved_brief = resolve_brief(brief_response, request["evidence"])
+    usage = brief_metadata.get('usage') or {}
+    emit('brief_validated', stage='brief', input_tokens=usage.get('input_tokens'), output_tokens=usage.get('output_tokens'))
     return {
         "snapshot_content": {
             **snapshot_content,
@@ -122,6 +140,22 @@ def process_one() -> bool:
     organization_id = str(job["organization_id"])
     client_id = str(job["client_id"])
     revision = int(job["processing_insights_revision"])
+    stage = 'context'
+
+    def record(event_type, details):
+        nonlocal stage
+        stage = details.get('stage', stage)
+        try:
+            with connect() as diagnostic_connection:
+                client_diagnostics.append_event(diagnostic_connection, organization_id=organization_id,
+                    client_id=client_id, event_type=event_type,
+                    level='error' if event_type == 'synthesis_failed' else 'info',
+                    details={**details, 'revision': revision, 'attempt': int(job['attempt_count'])})
+        except Exception:
+            # Observability must not fail clinical processing or leak exception bodies.
+            LOGGER.warning('Could not persist client diagnostic event (%s).', event_type)
+
+    record('synthesis_claimed', {'stage': 'context'})
     try:
         api_key = os.getenv("OPENAI_API_KEY")
         insights_model = os.getenv("INSIGHTS_MODEL")
@@ -156,12 +190,17 @@ def process_one() -> bool:
         if not evidence:
             raise RuntimeError("no_accepted_source_evidence")
 
+        record('context_loaded', {'stage': 'context', 'source_count': len(evidence),
+                                 'context_bytes': len(json.dumps(context, ensure_ascii=False).encode('utf-8'))})
+
         bundle = _generate_bundle(
             evidence,
             clinical_context=context,
             insights_model=insights_model,
             brief_model=brief_model,
+            on_event=record,
         )
+        stage = 'publication'
         source_by_id = {source["evidence_id"]: source for source in evidence}
         evidence_ids = set(source_by_id)
         items = tuple(
@@ -217,14 +256,11 @@ def process_one() -> bool:
                 appointment_id=appointment_id,
                 brief_snapshot_id=brief_id,
             )
+        record('synthesis_published', {'stage': 'publication'})
         return True
     except Exception as exc:
-        if isinstance(exc, RuntimeError) and str(exc) in {
-            "synthesis_provider_not_configured", "no_accepted_source_evidence",
-        }:
-            error_code = str(exc)
-        else:
-            error_code = "synthesis_generation_failed"
+        error_code = client_diagnostics.failure_code(exc, stage)
+        record('synthesis_failed', {'stage': stage, 'error_code': error_code})
         with connect() as connection:
             synthesis_refresh.fail_insights_refresh(
                 connection,
