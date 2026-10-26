@@ -138,27 +138,48 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
               const dayEnd = atTime(day, DAY_END);
               const dayBusy = weekBusyTimes.filter(item => new Date(item.starts_at) < dayEnd && new Date(item.ends_at) > dayStart);
               const dayAppointments = weekAppointments.filter(item => new Date(item.starts_at) < dayEnd && new Date(item.ends_at) > dayStart);
-              return <div key={day.toISOString()} className="relative border-l border-stone-300 bg-stone-50" style={{ height: slots.length * SLOT_HEIGHT, backgroundImage: "repeating-linear-gradient(to bottom, transparent 0, transparent 33px, var(--border) 34px)" }}>
+              const dropStart = (element: HTMLDivElement, clientY: number) => {
+                const offset = Math.max(0, clientY - element.getBoundingClientRect().top);
+                const minute = DAY_START + Math.floor(offset / SLOT_HEIGHT * SLOT_MINUTES / SNAP_MINUTES) * SNAP_MINUTES;
+                return atTime(day, Math.min(DAY_END - SNAP_MINUTES, minute));
+              };
+              return <div key={day.toISOString()}
+                onDragOver={event => {
+                  if (!dragging || busy) return;
+                  const start = dropStart(event.currentTarget, event.clientY);
+                  if (validDrop(dragging, start)) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                    setHoveredSlot(start.toISOString());
+                  } else {
+                    event.dataTransfer.dropEffect = "none";
+                    setHoveredSlot(null);
+                  }
+                }}
+                onDragLeave={event => {
+                  if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setHoveredSlot(null);
+                }}
+                onDrop={event => {
+                  event.preventDefault();
+                  if (!dragging || busy) return;
+                  const start = dropStart(event.currentTarget, event.clientY);
+                  setHoveredSlot(null);
+                  setDraggingId(null);
+                  if (validDrop(dragging, start)) setPendingMove({ appointment: dragging, startsAt: start });
+                }}
+                className="relative border-l border-stone-300 bg-stone-50"
+                style={{ height: slots.length * SLOT_HEIGHT, backgroundImage: "repeating-linear-gradient(to bottom, transparent 0, transparent 67px, color-mix(in srgb, var(--border) 30%, transparent) 67px, color-mix(in srgb, var(--border) 30%, transparent) 68px)" }}>
+
                 {snapSlots.map(minute => {
                   const start = atTime(day, minute);
                   const key = start.toISOString();
-                  const allowed = dragging ? validDrop(dragging, start) : false;
                   const availableForNewSession = canPlace(start, durationMinutes);
-                  return <div key={key} onClick={() => { if (!dragging && availableForNewSession && !busy) setPendingCreate(start); }} onDragEnter={() => setHoveredSlot(allowed && !busy ? key : null)} onDragLeave={() => hoveredSlot === key && setHoveredSlot(null)} onDragOver={event => { if (allowed && !busy) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setHoveredSlot(key); } else { setHoveredSlot(null); } }} onDrop={event => {
-                    event.preventDefault();
-                    if (!dragging || !allowed || busy) return;
-                    setHoveredSlot(null);
-                    setDraggingId(null);
-                    setPendingMove({ appointment: dragging, startsAt: start });
-                  }} className={`absolute inset-x-0 z-10 ${allowed ? "transition-colors duration-150" : ""} ${!dragging && availableForNewSession ? "cursor-grab hover:bg-stone-100 active:cursor-grabbing" : ""}`} style={{ top: (minute - DAY_START) / SLOT_MINUTES * SLOT_HEIGHT, height: SNAP_MINUTES / SLOT_MINUTES * SLOT_HEIGHT }} />;
+                  return <div key={key} onClick={() => { if (!dragging && availableForNewSession && !busy) setPendingCreate(start); }} className={`absolute inset-x-0 z-10 ${!dragging && availableForNewSession ? "cursor-grab hover:bg-stone-100 active:cursor-grabbing" : ""}`} style={{ top: (minute - DAY_START) / SLOT_MINUTES * SLOT_HEIGHT, height: SNAP_MINUTES / SLOT_MINUTES * SLOT_HEIGHT }} />;
                 })}
                 {dayBusy.map(item => <div
                   key={`${item.starts_at}-${item.ends_at}`}
                   aria-label={`Unavailable time: reserved appointments and gaps shorter than ${durationMinutes} minutes`}
                   onClick={event => event.stopPropagation()}
-                  onDragEnter={() => setHoveredSlot(null)}
-                  onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "none"; }}
-                  onDrop={event => event.preventDefault()}
                   className="absolute inset-x-0 z-20 cursor-not-allowed bg-[var(--surface-inset)]"
                   style={{
                     top: (Math.max(dayStart.getTime(), Date.parse(item.starts_at)) - dayStart.getTime()) / 60_000 / SLOT_MINUTES * SLOT_HEIGHT,
@@ -170,7 +191,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
                   className="pointer-events-none absolute inset-x-1 z-40 rounded-lg border-2 border-emerald-700 bg-[color-mix(in_srgb,var(--accent-surface)_80%,transparent)] px-2 py-1 text-[10px] font-semibold text-emerald-800"
                   style={position(previewStart.toISOString(), new Date(previewStart.getTime() + draggingDuration * 60_000).toISOString())}
                 >{timeLabel(minutesIntoDay(previewStart))} – {timeLabel(minutesIntoDay(previewStart) + draggingDuration)}</div> : null}
-                {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-emerald-800 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "pointer-events-none opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
+                {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 select-none overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-emerald-800 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
                   <div className="flex items-start justify-between gap-1">
                     <div className="min-w-0"><p className="truncate text-[11px] font-bold">{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(item.starts_at))}</p><p className="truncate text-[10px] font-medium">{item.appointment_type.replace("_", "-")}</p></div>
                     <button type="button" disabled={busy} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); void onCancel(item); }} aria-label={`Cancel session on ${dayLabel(new Date(item.starts_at))}`} className="cursor-grab rounded px-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-50 active:cursor-grabbing disabled:cursor-wait">Cancel</button>
