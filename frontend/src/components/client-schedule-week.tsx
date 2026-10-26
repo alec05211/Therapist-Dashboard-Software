@@ -104,12 +104,12 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
 
   return <>
     <section className="rounded-xl border border-stone-300 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 px-4 py-3">
-        <div>
+      <div className="flex items-start justify-between gap-3 border-b border-stone-300 px-4 py-3">
+        <div className="min-w-0">
           <h4 className="font-semibold text-stone-900">Weekly schedule</h4>
           <p className="mt-0.5 text-xs text-stone-500">Drag this client’s sessions to an available time. Gray areas are unavailable, including gaps too short for a session.</p>
         </div>
-        <div className="flex items-center gap-1 rounded-xl border border-stone-300 bg-stone-50 p-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1 self-start rounded-xl border border-stone-300 bg-stone-50 p-1">
           <button type="button" onClick={() => setWeekStart(current => addDays(current, -7))} className="cursor-grab rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing">Previous</button>
           <button type="button" onClick={() => setWeekStart(startOfWeek(new Date()))} className="cursor-grab rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing">Today</button>
           <button type="button" onClick={() => setWeekStart(current => addDays(current, 7))} className="cursor-grab rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing">Next</button>
@@ -127,7 +127,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
         <div className="min-w-[760px]">
           <div className="grid grid-cols-[64px_repeat(5,minmax(0,1fr))] border-b border-stone-300 bg-stone-50">
             <div />
-            {days.map(day => <div key={day.toISOString()} className="border-l border-stone-200 px-2 py-2 text-center text-xs font-semibold text-stone-700">{dayLabel(day)}</div>)}
+            {days.map(day => <div key={day.toISOString()} className="px-2 py-2 text-center text-xs font-semibold text-stone-700">{dayLabel(day)}</div>)}
           </div>
           <div className="grid grid-cols-[64px_repeat(5,minmax(0,1fr))]">
             <div className="relative bg-stone-50" style={{ height: slots.length * SLOT_HEIGHT }}>
@@ -167,8 +167,8 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
                   setDraggingId(null);
                   if (validDrop(dragging, start)) setPendingMove({ appointment: dragging, startsAt: start });
                 }}
-                className="relative border-l border-stone-300 bg-stone-50"
-                style={{ height: slots.length * SLOT_HEIGHT, backgroundImage: "repeating-linear-gradient(to bottom, transparent 0, transparent 67px, color-mix(in srgb, var(--border) 30%, transparent) 67px, color-mix(in srgb, var(--border) 30%, transparent) 68px)" }}>
+                className="relative bg-stone-50"
+                style={{ height: slots.length * SLOT_HEIGHT, backgroundImage: "repeating-linear-gradient(to bottom, transparent 0, transparent 67px, color-mix(in srgb, var(--border) 10%, transparent) 67px, color-mix(in srgb, var(--border) 10%, transparent) 68px)" }}>
 
                 {snapSlots.map(minute => {
                   const start = atTime(day, minute);

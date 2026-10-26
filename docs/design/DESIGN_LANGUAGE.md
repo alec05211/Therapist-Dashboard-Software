@@ -181,7 +181,9 @@ from the therapist's other appointments use full-width neutral gray areas
 without visible labels or hover tooltips, with `cursor-not-allowed`,
 and open time remains a light neutral surface. Dragging preserves session length,
 snaps to 10-minute intervals, and remains backed by the manual reschedule controls.
-Keep gridlines faint and hourly; the finer snap intervals have no gridlines.
+Use barely visible hourly horizontal guides without vertical day dividers;
+the finer snap intervals have no lines. Keep Previous, Today, and Next together
+at the upper right of the scheduling interface.
 During dragging, a muted green fill and outline preview the appointment's full
 duration at the proposed start time without intercepting drop events. Gray
 unavailable regions exclude this client's appointment cards while preserving
