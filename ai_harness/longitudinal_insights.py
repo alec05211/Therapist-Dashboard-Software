@@ -7,10 +7,10 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS
+from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
 
-INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v2"
+INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v3"
 INSIGHT_KINDS = {"trajectory", "theme", "open_thread", "relevant_history"}
 
 
@@ -224,6 +224,7 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
 
 def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api_key: str, model: str, kind: str | None = None, clinical_context: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Generate one coordinated, source-linked Insights document."""
+    clinical_context = synthesis_context(clinical_context, evidence)
     requested_kinds = {kind} if kind else INSIGHT_KINDS
     category_direction = f"Return one or two distinct items of kind {kind} when supported. " if kind else (
         "Plan trajectory, theme, open_thread, and relevant_history together as one concise document. "
@@ -259,8 +260,8 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         "input": json.dumps({"task": "longitudinal_insight_draft", "generator_version": INSIGHTS_GENERATOR_VERSION, "requested_kind": kind, "evidence": evidence, "clinical_context": clinical_context}, ensure_ascii=False),
         "text": {"format": {"type": "json_schema", "name": "longitudinal_insights", "strict": True, "schema": response_schema(requested_kinds, [source["evidence_id"] for source in evidence])}},
     }
-    if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > 180_000:
-        raise RuntimeError("Insight request exceeds the synthetic testing input limit.")
+    if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
+        raise RuntimeError("Insight request exceeds the bounded input limit.")
     generated, response_data = _request_structured_response(payload, api_key)
     violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True)
     repair_attempt = 0
@@ -283,8 +284,8 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
                 "evidence": evidence,
             }, ensure_ascii=False),
         }
-        if len(json.dumps(repair_payload, ensure_ascii=False).encode("utf-8")) > 180_000:
-            raise RuntimeError("Insight repair request exceeds the synthetic testing input limit.")
+        if len(json.dumps(repair_payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
+            raise RuntimeError("Insight repair request exceeds the bounded input limit.")
         generated, response_data = _request_structured_response(repair_payload, api_key)
         violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True)
     if violations:

@@ -9,6 +9,7 @@ from ai_harness.longitudinal_insights import generate_openai_longitudinal_insigh
 from database.clinical_synthesis_worker import _generate_bundle
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights
+from ai_harness.clinical_context import MAX_CONTEXT_BYTES, synthesis_context
 
 
 class ClinicalContextTests(unittest.TestCase):
@@ -85,7 +86,8 @@ class ClinicalContextTests(unittest.TestCase):
                     clinical_context=packet, api_key='test', model='test', kind='theme')
         self.assertEqual(request.call_count, 4)
         for call in request.call_args_list:
-            self.assertEqual(json.loads(call.args[0]['input'])['clinical_context'], packet)
+            self.assertEqual(json.loads(call.args[0]['input'])['clinical_context'],
+                             synthesis_context(packet, [{'evidence_id': 'accepted'}]))
 
     def test_novel_topic_can_be_discovered_without_matching_an_existing_interpretation(self):
         packet = self.build(snapshot={'id': 'snapshot', 'version': 1, 'items': [
@@ -103,9 +105,75 @@ class ClinicalContextTests(unittest.TestCase):
 
     def test_oversized_context_fails_before_provider_submission(self):
         entry = self.entry('proposed')
-        entry['text'] = 'x' * 110_001
+        entry['text'] = 'x' * (MAX_CONTEXT_BYTES + 1)
         with self.assertRaisesRegex(ValueError, 'bounded input'):
             self.build([entry])
+
+    def test_larger_finalized_note_preserves_complete_text_and_lineage(self):
+        text = 'x' * 140_000
+        packet = self.build(notes=[dict(id='note', session_id='old', version_number=2,
+            content={'plain_text': text}, finalized_at=datetime.now(timezone.utc),
+            session_label='Old session')])
+        self.assertEqual(packet['source_evidence'][0]['content']['plain_text'], text)
+        self.assertEqual(packet['source_evidence'][0]['clinical_note_version_id'], 'note')
+
+    def test_repeated_sources_become_references_without_losing_unique_pending_evidence(self):
+        accepted = self.entry('accepted')
+        shared = self.entry('proposed')
+        shared['evidence'] = accepted['evidence']
+        unique = self.entry('proposed', 'another')
+        unique['evidence'][0]['quote'] = 'Unique unreviewed quotation'
+        packet = self.build([accepted, shared, unique], snapshot={'items': [dict(
+            id='prior', kind='theme', review_state='draft', content={'analysis': 'Tentative'},
+            evidence=[dict(transcript_segment_id='acceptedold', session_id='old',
+                           quote='Client statement', note_text='Repeated note body')])]})
+        self.assertEqual(packet['pending_proposals'][0]['evidence_refs'][0]['evidence_id'], 'acceptedold')
+        self.assertNotIn('evidence', packet['pending_proposals'][0])
+        self.assertEqual(packet['pending_proposals'][1]['evidence'][0]['quote'], 'Unique unreviewed quotation')
+        prior = packet['generated_interpretations'][0]
+        self.assertEqual(prior['content']['analysis'], 'Tentative')
+        self.assertEqual(prior['evidence_refs'][0]['transcript_segment_id'], 'acceptedold')
+        self.assertNotIn('Repeated note body', json.dumps(packet))
+        self.assertEqual(packet['source_evidence'][0]['quote'], 'Client statement')
+
+    def test_synthesis_sends_source_bodies_once_on_initial_and_repair_calls(self):
+        evidence = [{'evidence_id': 'source', 'quote': 'UNIQUE_SOURCE_BODY'}]
+        packet = {**self.build(), 'source_evidence': evidence}
+        with patch('ai_harness.longitudinal_insights._request_structured_response',
+                   return_value=({'overview': 'test', 'items': []}, {})) as request:
+            with self.assertRaises(RuntimeError):
+                generate_openai_longitudinal_insights(evidence=evidence,
+                    clinical_context=packet, api_key='test', model='test')
+        self.assertEqual(request.call_count, 4)
+        for call in request.call_args_list:
+            payload_input = json.loads(call.args[0]['input'])
+            self.assertEqual(call.args[0]['input'].count('UNIQUE_SOURCE_BODY'), 1)
+            self.assertEqual(payload_input['clinical_context']['source_evidence_ids'], ['source'])
+            self.assertNotIn('source_evidence', payload_input['clinical_context'])
+        self.assertEqual(packet['source_evidence'], evidence)
+
+    def test_request_above_previous_cap_reaches_provider_and_new_cap_still_rejects(self):
+        evidence = [{'evidence_id': 'source', 'quote': 'x' * 200_000}]
+        with patch('ai_harness.longitudinal_insights._request_structured_response',
+                   side_effect=RuntimeError('provider reached')) as request:
+            with self.assertRaisesRegex(RuntimeError, 'provider reached'):
+                generate_openai_longitudinal_insights(evidence=evidence,
+                    clinical_context={'source_evidence': evidence}, api_key='test', model='test')
+            request.assert_called_once()
+        evidence[0]['quote'] = 'x' * 350_001
+        with patch('ai_harness.longitudinal_insights._request_structured_response') as request:
+            with self.assertRaisesRegex(RuntimeError, 'bounded input'):
+                generate_openai_longitudinal_insights(evidence=evidence,
+                    clinical_context=None, api_key='test', model='test')
+            request.assert_not_called()
+
+    def test_oversized_repair_still_fails_before_resubmission(self):
+        with patch('ai_harness.longitudinal_insights._request_structured_response',
+                   return_value=({'overview': 'x' * 350_001, 'items': []}, {})) as request:
+            with self.assertRaisesRegex(RuntimeError, 'repair request exceeds the bounded input'):
+                generate_openai_longitudinal_insights(evidence=[{'evidence_id': 'source'}],
+                    clinical_context=None, api_key='test', model='test')
+            request.assert_called_once()
 
     def test_direct_contradiction_can_be_preserved_as_a_new_proposal(self):
         packet = self.build(snapshot={'id': 'snapshot', 'version': 1, 'items': [
@@ -140,10 +208,15 @@ class ClinicalContextTests(unittest.TestCase):
                 patch('database.clinical_synthesis_worker.resolve_brief', return_value={}), \
                 patch('database.clinical_synthesis_worker.brief_input', return_value=(None, {'evidence': []})):
             generator = MagicMock(side_effect=insight)
-            bundle = _generate_bundle([note], insights_model='test', brief_model='test',
+            context = {'source_evidence': [note], 'generated_interpretations': [
+                {'evidence_refs': [{'clinical_note_version_id': 'note'}]}]}
+            bundle = _generate_bundle([note], clinical_context=context, insights_model='test', brief_model='test',
                 insight_generator=generator, brief_generator=lambda **kwargs: ({}, {}))
         generator.assert_called_once()
         self.assertNotIn('kind', generator.call_args.kwargs)
+        self.assertEqual(generator.call_args.kwargs['clinical_context']['generated_interpretations'][0]
+                         ['evidence_refs'][0]['clinical_note_version_id'], 'E001')
+        self.assertEqual(context['source_evidence'][0]['evidence_id'], 'note')
         self.assertEqual(bundle['generated_items'][0]['content']['analysis_claims'][0]['evidence_ids'], ['note'])
         source = bundle['packet']['items'][0]['evidence'][0]
         self.assertEqual(source['clinical_note_version_id'], 'note')

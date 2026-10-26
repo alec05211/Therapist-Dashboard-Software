@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from ai_harness.brief_projection import project_accepted_insights
 from ai_harness.brief_service import brief_input
+from ai_harness.clinical_context import alias_context_sources
 from ai_harness.longitudinal_insights import INSIGHTS_GENERATOR_VERSION, generate_openai_longitudinal_insights, to_snapshot_content
 from ai_harness.pre_session import generate_openai_pre_session_brief, resolve_brief
 from database import synthesis_refresh
@@ -46,7 +47,7 @@ def _generate_bundle(
     ]
     generated, insight_metadata = insight_generator(
         evidence=model_evidence,
-        clinical_context=clinical_context,
+        clinical_context=alias_context_sources(clinical_context, {value: key for key, value in aliases.items()}),
         api_key=os.environ["OPENAI_API_KEY"],
         model=insights_model,
     )
@@ -188,7 +189,7 @@ def process_one() -> bool:
                 items=items,
                 generator_name="Queued longitudinal synthesis",
                 generator_version=f"{bundle['snapshot_content']['generator_version']}:{bundle['insights_model']}",
-                selection_policy_version="clinical-context-v1",
+                selection_policy_version=context["policy_version"],
                 actor_user_id=actor_user_id,
                 status="accepted",
                 parent_snapshot_id=str(previous["id"]) if previous else None,

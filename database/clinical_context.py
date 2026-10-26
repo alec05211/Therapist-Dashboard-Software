@@ -5,7 +5,7 @@ import hashlib
 import json
 from typing import Any
 
-from ai_harness.clinical_context import CONTEXT_POLICY_VERSION
+from ai_harness.clinical_context import CONTEXT_POLICY_VERSION, MAX_CONTEXT_BYTES, compact_context_record
 from database import client_journey
 from database.longitudinal_records import LongitudinalRecordRepository
 
@@ -69,14 +69,18 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
         if item['review_state'] in {'hidden', 'stale', 'disputed'}:
             constraints.append({'id': item['id'], 'status': item['review_state'], 'origin': 'insight'})
         elif item['kind'] in {'therapist_curated', 'client_context'}:
-            curated = {**item, 'origin': 'clinician_curated', 'status': item['review_state']}
+            curated = {**compact_context_record(item), 'origin': 'clinician_curated', 'status': item['review_state']}
             if item['review_state'] == 'accepted':
                 decisions.append(curated)
             else:
                 pending.append(curated)
         else:
-            interpretations.append(item)
+            interpretations.append(compact_context_record(item))
     ordered_sources = list(sources.values())
+    # Prefer finalized notes without letting transcript volume crowd them out.
+    selected_sources = ([s for s in ordered_sources if s['source_type'] == 'finalized_clinical_note']
+                        + [s for s in ordered_sources if s['source_type'] == 'transcript_segment'])[:120]
+    selected_source_ids = {source['evidence_id'] for source in selected_sources}
     packet = {
         'policy_version': CONTEXT_POLICY_VERSION,
         'snapshot_id': (snapshot or {}).get('id'),
@@ -87,9 +91,9 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
             item['review_state'] in {'hidden', 'stale', 'disputed'}
             for item in (snapshot or {}).get('items', [])) else None),
         'snapshot_created_at': (snapshot or {}).get('created_at'),
-        'source_evidence': ordered_sources[:120],
+        'source_evidence': selected_sources,
         'clinician_decisions': decisions[:120],
-        'pending_proposals': pending[:40],
+        'pending_proposals': [compact_context_record(item, selected_source_ids) for item in pending[:40]],
         'review_constraints': constraints,
         'generated_interpretations': interpretations[:30],
         'coverage': {
@@ -101,9 +105,6 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
             'snapshot_available': snapshot is not None,
         },
     }
-    # Prefer finalized notes without letting transcript volume crowd them out.
-    packet['source_evidence'] = ([s for s in ordered_sources if s['source_type'] == 'finalized_clinical_note']
-                                 + [s for s in ordered_sources if s['source_type'] == 'transcript_segment'])[:120]
-    if len(json.dumps(packet, ensure_ascii=False).encode('utf-8')) > 110_000:
+    if len(json.dumps(packet, ensure_ascii=False).encode('utf-8')) > MAX_CONTEXT_BYTES:
         raise ValueError('Clinical context exceeds the bounded input limit.')
     return packet

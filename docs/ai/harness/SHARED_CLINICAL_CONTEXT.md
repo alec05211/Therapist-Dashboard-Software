@@ -1,7 +1,7 @@
 # Shared clinical context and memory
 
 **Status:** Approved product direction; initial shared assembly implemented
-**Last updated:** 2026-10-23
+**Last updated:** 2026-10-26
 
 ## Product outcome
 
@@ -48,7 +48,9 @@ The evidence dialog explains that analytical links expose records supporting a g
 
 ## Initial implementation bounds and provenance
 
-`database/clinical_context.py` assembles both workers' packets in repeatable-read transactions. It includes at most 120 eligible sources (prioritizing up to 30 current finalized notes), 120 accepted claim decisions, 40 pending proposals, and 30 current interpretations. Review constraints are not silently truncated. Coverage metadata reports omitted records and missing snapshots. Oversized packets fail before provider submission rather than silently cutting clinical text; the current packet bound is 110,000 encoded bytes, with separate task request limits.
+`database/clinical_context.py` assembles both workers' packets in repeatable-read transactions. It includes at most 120 eligible sources (prioritizing up to 30 current finalized notes), 120 accepted claim decisions, 40 pending proposals, and 30 current interpretations. Review constraints are not silently truncated. Coverage metadata reports omitted records and missing snapshots. Oversized packets fail before provider submission rather than silently cutting clinical text; the packet bound is 250,000 UTF-8 encoded bytes. Initial and repair Insights requests have a separate 350,000-byte bound, including instructions, schema, evidence and repair material. These application safeguards are not the model's token context window; smaller-window providers require their own compatible budget.
+
+Context policy `clinical-context-v2` replaces repeated source bodies in prior interpretations and curated context with `evidence_refs`, retaining source identifiers and session lineage alongside the original interpretation prose and review state. Pending proposals reference eligible sources already present in the packet; unique unreviewed source text remains in the pending proposal and never becomes citable accepted evidence. Synthesis sends eligible source bodies only once in the task evidence list, replacing the nested context source table with `source_evidence_ids`. Request-local aliases are consistent across the evidence list and all context references; persisted citation IDs and the canonical context fingerprint remain unchanged by aliasing. Full finalized-note and accepted transcript text is preserved. This compaction also applies to every whole-document repair.
 
 Each packet carries a policy version and source IDs, note versions, review states, and snapshot identity. Discovery fingerprints the complete transcript/context input. Insights fingerprints the complete context and stores its policy version. Publication preserves existing leases, bounded retries, and therapist decisions. Ordinary logs must not contain clinical prompt content.
 
