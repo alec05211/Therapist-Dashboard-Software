@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { mergeReservedTimes } from "@/lib/reserved-time";
 import type { Appointment } from "@/lib/types";
 
 type BusyTime = { starts_at: string; ends_at: string };
@@ -68,7 +69,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
   const weekEnd = addDays(weekStart, DAYS);
   const activeAppointments = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed");
   const weekAppointments = activeAppointments.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
-  const weekBusyTimes = busyTimes.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
+  const weekBusyTimes = mergeReservedTimes(busyTimes).filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
   const dragging = activeAppointments.find(item => item.id === draggingId) || null;
 
   const canPlace = (start: Date, duration: number, excludeAppointmentId?: string) => {
@@ -99,7 +100,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-300 px-4 py-3">
         <div>
           <h4 className="font-semibold text-stone-900">Weekly schedule</h4>
-          <p className="mt-0.5 text-xs text-stone-500">Drag this client’s sessions to an available time. Gray blocks are appointments with another client.</p>
+          <p className="mt-0.5 text-xs text-stone-500">Drag this client’s sessions to an available time. Gray areas are unavailable, including gaps too short for a session.</p>
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-stone-300 bg-stone-50 p-1">
           <button type="button" onClick={() => setWeekStart(current => addDays(current, -7))} className="cursor-grab rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing">Previous</button>
@@ -110,8 +111,8 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-2.5">
         <p className="text-sm font-semibold text-stone-800">{weekLabel(weekStart)}</p>
         <div className="flex flex-wrap gap-3 text-[11px] font-medium text-stone-600" aria-label="Schedule legend">
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-emerald-400 bg-emerald-100" />Client session</span>
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-400 bg-stone-300" />Other client — unavailable</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-emerald-300 bg-emerald-50" />Client session</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-400 bg-[var(--surface-inset)]" />Unavailable</span>
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-stone-300 bg-stone-50" />Available</span>
         </div>
       </div>
@@ -142,26 +143,29 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
                     setHoveredSlot(null);
                     setDraggingId(null);
                     setPendingMove({ appointment: dragging, startsAt: start });
-                  }} className={`absolute inset-x-0 z-10 ${allowed ? "transition-colors duration-150" : ""} ${!dragging && availableForNewSession ? "cursor-grab hover:bg-stone-100 active:cursor-grabbing" : ""} ${hoveredSlot === key ? "bg-emerald-100/80" : ""}`} style={{ top: (minute - DAY_START) / SLOT_MINUTES * SLOT_HEIGHT, height: SLOT_HEIGHT }} />;
+                  }} className={`absolute inset-x-0 z-10 ${allowed ? "transition-colors duration-150" : ""} ${!dragging && availableForNewSession ? "cursor-grab hover:bg-stone-100 active:cursor-grabbing" : ""} ${hoveredSlot === key ? "bg-[var(--accent-surface)]" : ""}`} style={{ top: (minute - DAY_START) / SLOT_MINUTES * SLOT_HEIGHT, height: SLOT_HEIGHT }} />;
                 })}
                 {dayBusy.map(item => <div
                   key={`${item.starts_at}-${item.ends_at}`}
-                  aria-label="Unavailable time for another client appointment"
-                  title="Unavailable — another client appointment"
+                  aria-label="Unavailable time: reserved appointments and gaps shorter than 30 minutes"
+                  title="Unavailable — reserved appointments or a gap shorter than 30 minutes"
                   onClick={event => event.stopPropagation()}
                   onDragEnter={() => setHoveredSlot(null)}
                   onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "none"; }}
                   onDrop={event => event.preventDefault()}
-                  className="absolute inset-x-1 z-20 flex cursor-not-allowed items-start gap-1 overflow-hidden rounded-md border border-stone-400 bg-stone-300/90 px-1.5 py-1 text-[10px] font-semibold text-stone-700"
-                  style={position(item.starts_at, item.ends_at)}
+                  className="absolute inset-x-0 z-20 flex cursor-not-allowed items-center justify-center overflow-hidden bg-[var(--surface-inset)] text-[10px] font-medium text-stone-500"
+                  style={{
+                    top: (Math.max(dayStart.getTime(), Date.parse(item.starts_at)) - dayStart.getTime()) / 60_000 / SLOT_MINUTES * SLOT_HEIGHT,
+                    height: (Math.min(dayEnd.getTime(), Date.parse(item.ends_at)) - Math.max(dayStart.getTime(), Date.parse(item.starts_at))) / 60_000 / SLOT_MINUTES * SLOT_HEIGHT,
+                  }}
                 >
-                  <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="mt-px size-3 shrink-0"><circle cx="8" cy="8" r="5.5" stroke="currentColor" /><path d="m4.2 11.8 7.6-7.6" stroke="currentColor" strokeLinecap="round" /></svg>
+                  <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="mr-1 size-3 shrink-0"><circle cx="8" cy="8" r="5.5" stroke="currentColor" /><path d="m4.2 11.8 7.6-7.6" stroke="currentColor" strokeLinecap="round" /></svg>
                   <span>Unavailable</span>
                 </div>)}
-                {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 overflow-hidden rounded-lg border border-emerald-400 bg-emerald-100 px-2 py-1.5 text-emerald-950 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
+                {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-emerald-800 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
                   <div className="flex items-start justify-between gap-1">
                     <div className="min-w-0"><p className="truncate text-[11px] font-bold">{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(item.starts_at))}</p><p className="truncate text-[10px] font-medium">{item.appointment_type.replace("_", "-")}</p></div>
-                    <button type="button" disabled={busy} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); void onCancel(item); }} aria-label={`Cancel session on ${dayLabel(new Date(item.starts_at))}`} className="cursor-grab rounded px-1 text-[10px] font-bold text-emerald-950 hover:bg-emerald-200 active:cursor-grabbing disabled:cursor-wait">Cancel</button>
+                    <button type="button" disabled={busy} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); void onCancel(item); }} aria-label={`Cancel session on ${dayLabel(new Date(item.starts_at))}`} className="cursor-grab rounded px-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-50 active:cursor-grabbing disabled:cursor-wait">Cancel</button>
                   </div>
                 </article>)}
               </div>;
@@ -174,7 +178,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
       <section role="dialog" aria-modal="true" aria-labelledby="reschedule-title" aria-describedby="reschedule-description" className="w-full max-w-md rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-xl">
         <h3 id="reschedule-title" className="text-lg font-semibold text-stone-900">Reschedule this session?</h3>
         <p id="reschedule-description" className="mt-3 text-sm leading-6 text-stone-600">The session will move to:</p>
-        <p className="mt-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-950">{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(pendingMove.startsAt)}</p>
+        <p className="mt-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(pendingMove.startsAt)}</p>
         <p className="mt-3 text-xs leading-5 text-stone-500">{pendingMove.appointment.appointment_type === "recurring" ? "This change applies only to this session. Sessions will resume at the normal time next week." : "This change applies only to this session."}</p>
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" disabled={busy} onClick={() => setPendingMove(null)} className="cursor-grab rounded-xl border border-stone-300 bg-stone-50 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60">Keep current time</button>
@@ -185,7 +189,7 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
     {pendingCreate ? <div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !busy) setPendingCreate(null); }} onKeyDown={event => { if (event.key === "Escape" && !busy) setPendingCreate(null); }} className="fixed inset-0 z-50 grid place-items-center bg-stone-950/35 p-4 backdrop-blur-[3px]">
       <section role="dialog" aria-modal="true" aria-labelledby="create-session-title" className="w-full max-w-md rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-xl">
         <h3 id="create-session-title" className="text-lg font-semibold text-stone-900">Add a session?</h3>
-        <p className="mt-3 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-950">{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(pendingCreate)} – {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(pendingCreate.getTime() + durationMinutes * 60_000))}</p>
+        <p className="mt-3 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800">{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(pendingCreate)} – {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(pendingCreate.getTime() + durationMinutes * 60_000))}</p>
         <label className="mt-4 block text-xs font-semibold text-stone-700">Session type<select value={newAppointmentType} onChange={event => setNewAppointmentType(event.target.value as "one_time" | "make_up")} className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus-visible:border-stone-500"><option value="one_time">One-time</option><option value="make_up">Make-up</option></select></label>
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" disabled={busy} onClick={() => setPendingCreate(null)} className="cursor-grab rounded-xl border border-stone-300 bg-stone-50 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 active:cursor-grabbing disabled:cursor-wait disabled:opacity-60">Cancel</button>
