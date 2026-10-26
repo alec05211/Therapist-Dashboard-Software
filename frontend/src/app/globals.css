@@ -7,6 +7,7 @@
   --surface: #f6f6f4;
   --surface-subtle: #fbfbfa;
   --surface-inset: #e8e7e3;
+  --settings-backcard: #efefec;
   --surface-active: #dedcd6;
   --border: #c9c4bc;
   --border-strong: #a9a299;
@@ -43,6 +44,7 @@ html[data-theme="dark"] {
   --surface: #211f1d;
   --surface-subtle: #292724;
   --surface-inset: #34312d;
+  --settings-backcard: #292724;
   --surface-active: #403c37;
   --border: #625d57;
   --border-strong: #827b73;

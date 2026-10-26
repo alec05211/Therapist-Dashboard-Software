@@ -69,14 +69,17 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
   const weekEnd = addDays(weekStart, DAYS);
   const activeAppointments = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed");
   const weekAppointments = activeAppointments.filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
-  const weekBusyTimes = mergeReservedTimes(busyTimes).filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
+  const reservedTimes = (excludeAppointmentId?: string) => mergeReservedTimes([
+    ...busyTimes,
+    ...activeAppointments.filter(item => item.id !== excludeAppointmentId),
+  ], durationMinutes);
+  const weekBusyTimes = reservedTimes(draggingId ?? undefined).filter(item => new Date(item.starts_at) < weekEnd && new Date(item.ends_at) > weekStart);
   const dragging = activeAppointments.find(item => item.id === draggingId) || null;
 
   const canPlace = (start: Date, duration: number, excludeAppointmentId?: string) => {
     const end = new Date(start.getTime() + duration * 60_000);
     if (minutesIntoDay(end) > DAY_END || end.getDate() !== start.getDate()) return false;
-    if (weekBusyTimes.some(item => overlaps(start, end, item.starts_at, item.ends_at))) return false;
-    return !activeAppointments.some(item => item.id !== excludeAppointmentId && overlaps(start, end, item.starts_at, item.ends_at));
+    return !reservedTimes(excludeAppointmentId).some(item => overlaps(start, end, item.starts_at, item.ends_at));
   };
 
   const validDrop = (appointment: Appointment, start: Date) => {
@@ -147,21 +150,17 @@ export function ClientScheduleWeek({ appointments, busyTimes, busy, durationMinu
                 })}
                 {dayBusy.map(item => <div
                   key={`${item.starts_at}-${item.ends_at}`}
-                  aria-label="Unavailable time: reserved appointments and gaps shorter than 30 minutes"
-                  title="Unavailable — reserved appointments or a gap shorter than 30 minutes"
+                  aria-label={`Unavailable time: reserved appointments and gaps shorter than ${durationMinutes} minutes`}
                   onClick={event => event.stopPropagation()}
                   onDragEnter={() => setHoveredSlot(null)}
                   onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "none"; }}
                   onDrop={event => event.preventDefault()}
-                  className="absolute inset-x-0 z-20 flex cursor-not-allowed items-center justify-center overflow-hidden bg-[var(--surface-inset)] text-[10px] font-medium text-stone-500"
+                  className="absolute inset-x-0 z-20 cursor-not-allowed bg-[var(--surface-inset)]"
                   style={{
                     top: (Math.max(dayStart.getTime(), Date.parse(item.starts_at)) - dayStart.getTime()) / 60_000 / SLOT_MINUTES * SLOT_HEIGHT,
                     height: (Math.min(dayEnd.getTime(), Date.parse(item.ends_at)) - Math.max(dayStart.getTime(), Date.parse(item.starts_at))) / 60_000 / SLOT_MINUTES * SLOT_HEIGHT,
                   }}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="mr-1 size-3 shrink-0"><circle cx="8" cy="8" r="5.5" stroke="currentColor" /><path d="m4.2 11.8 7.6-7.6" stroke="currentColor" strokeLinecap="round" /></svg>
-                  <span>Unavailable</span>
-                </div>)}
+                />)}
                 {dayAppointments.map(item => <article key={item.id} draggable={!busy} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setDraggingId(item.id); }} onDragEnd={() => { setDraggingId(null); setHoveredSlot(null); }} className={`absolute inset-x-1 z-30 overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-emerald-800 shadow-sm ${busy ? "cursor-wait" : "cursor-grab active:cursor-grabbing"} ${draggingId === item.id ? "opacity-50" : ""}`} style={position(item.starts_at, item.ends_at)}>
                   <div className="flex items-start justify-between gap-1">
                     <div className="min-w-0"><p className="truncate text-[11px] font-bold">{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(item.starts_at))}</p><p className="truncate text-[10px] font-medium">{item.appointment_type.replace("_", "-")}</p></div>

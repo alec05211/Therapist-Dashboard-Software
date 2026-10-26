@@ -21,7 +21,7 @@ export function SettingsLayout({ title, sections, activeSection, onSelect, navig
 
   return <div>
     {title ? <Heading className="text-3xl font-semibold tracking-tight text-stone-900">{title}</Heading> : null}
-    <div className={`${title ? "mt-8" : ""} grid items-start gap-3 rounded-2xl border border-stone-300 bg-[var(--surface-inset)] p-3 md:grid-cols-[208px_minmax(0,1fr)] md:gap-4 md:p-4`}>
+    <div className={`${title ? "mt-8" : ""} grid items-start gap-3 rounded-2xl border border-stone-300 bg-[var(--settings-backcard)] p-3 md:grid-cols-[208px_minmax(0,1fr)] md:gap-4 md:p-4`}>
       <nav className="flex min-w-0 gap-1 overflow-x-auto p-1 md:block md:space-y-1" aria-label={navigationLabel}>
         {sections.map((section) => <button key={section.id} type="button" aria-current={activeSection === section.id ? "page" : undefined} onClick={() => onSelect(section.id)} className={`shrink-0 cursor-grab rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 md:w-full ${activeSection === section.id ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-[var(--surface)]"}`}>{section.title}</button>)}
       </nav>
