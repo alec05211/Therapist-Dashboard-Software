@@ -16,3 +16,19 @@ export function mergeReservedTimes(ranges: TimeRange[], durationMinutes: number)
   }
   return merged;
 }
+
+// Client appointments still participate in gap calculations, but only their
+// cards should be visible. Remove their occupied spans from the gray layer.
+export function subtractReservedTimes(ranges: TimeRange[], appointments: TimeRange[]): TimeRange[] {
+  return appointments.reduce((remaining, appointment) => remaining.flatMap(range => {
+    const start = Date.parse(range.starts_at);
+    const end = Date.parse(range.ends_at);
+    const appointmentStart = Date.parse(appointment.starts_at);
+    const appointmentEnd = Date.parse(appointment.ends_at);
+    if (appointmentStart >= end || appointmentEnd <= start) return [range];
+    return [
+      ...(start < appointmentStart ? [{ starts_at: range.starts_at, ends_at: appointment.starts_at }] : []),
+      ...(end > appointmentEnd ? [{ starts_at: appointment.ends_at, ends_at: range.ends_at }] : []),
+    ];
+  }), ranges);
+}

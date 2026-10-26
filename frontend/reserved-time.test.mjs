@@ -5,7 +5,7 @@ import ts from 'typescript';
 const compiled = ts.transpileModule(fs.readFileSync('src/lib/reserved-time.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const loaded = { exports: {} };
 new Function('module', 'exports', compiled)(loaded, loaded.exports);
-const { mergeReservedTimes } = loaded.exports;
+const { mergeReservedTimes, subtractReservedTimes } = loaded.exports;
 const range = (start, end) => ({ starts_at: `2026-10-26T${start}:00Z`, ends_at: `2026-10-26T${end}:00Z` });
 test('merges adjacent reservations and chains of gaps shorter than thirty minutes', () => {
   const input = [range('11:15', '12:00'), range('09:00', '10:00'), range('10:00', '11:00')];
@@ -29,4 +29,18 @@ test('a forty-minute gap is unavailable for fifty-minute sessions, but open for 
 test('a gap equal to the selected session length remains open', () => {
   const input = [range('11:00', '11:50'), range('12:40', '13:30')];
   assert.deepEqual(mergeReservedTimes(input, 50), input);
+});
+
+test('client cards have no gray underlay while short neighboring gaps remain shaded', () => {
+  const own = [range('11:00', '11:50')];
+  const reserved = mergeReservedTimes([...own, range('12:30', '13:20')], 50);
+  assert.deepEqual(subtractReservedTimes(reserved, own), [range('11:50', '13:20')]);
+  assert.deepEqual(subtractReservedTimes(own, own), []);
+});
+
+test('removing multiple client appointments preserves only the unavailable gaps', () => {
+  const own = [range('11:00', '11:50'), range('12:30', '13:20')];
+  assert.deepEqual(subtractReservedTimes([range('10:00', '14:00')], own), [
+    range('10:00', '11:00'), range('11:50', '12:30'), range('13:20', '14:00'),
+  ]);
 });

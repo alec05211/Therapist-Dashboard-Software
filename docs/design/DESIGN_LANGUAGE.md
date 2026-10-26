@@ -177,10 +177,14 @@ creation, and upcoming-session actions into distinct sections. Suggested
 recurring times must account for the therapist's other active appointments. A
 client-specific Monday–Friday week calendar supports direct rescheduling: the
 current client's sessions use interactive evergreen cards, anonymous conflicts
-from the therapist's other appointments use non-interactive neutral Unavailable blocks
-with a blocked icon and `cursor-not-allowed`,
+from the therapist's other appointments use full-width neutral gray areas
+without visible labels or hover tooltips, with `cursor-not-allowed`,
 and open time remains a light neutral surface. Dragging preserves session length,
-snaps to 30-minute slots, and remains backed by the manual reschedule controls.
+snaps to 10-minute intervals, and remains backed by the manual reschedule controls.
+During dragging, a muted green fill and outline preview the appointment's full
+duration at the proposed start time without intercepting drop events. Gray
+unavailable regions exclude this client's appointment cards while preserving
+gaps too short for the selected session length.
 A drop stages rather than commits the change: a confirmation
 dialog names the proposed date and time and clarifies that a moved recurring
 session returns to its normal time the following week.
