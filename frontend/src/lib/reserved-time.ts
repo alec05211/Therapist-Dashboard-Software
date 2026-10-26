@@ -1,6 +1,6 @@
 type TimeRange = { starts_at: string; ends_at: string };
 
-// Keep gaps that fit this client’s session length open; absorb shorter gaps
+// Keep gaps that fit this clientâ€™s session length open; absorb shorter gaps
 // into the unavailable region without changing the underlying reservations.
 export function mergeReservedTimes(ranges: TimeRange[], durationMinutes: number): TimeRange[] {
   const sorted = ranges.map(range => ({ ...range })).sort((a, b) =>
