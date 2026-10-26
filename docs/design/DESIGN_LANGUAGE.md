@@ -78,6 +78,12 @@ feedback rather than using content skeletons.
 
 ## Reusable content panels
 
+Settings screens share `SettingsLayout`: one inset backcard contains the category
+navigation and a raised, bordered controls card. Categories sit directly on the
+backcard rather than in a separate navigation card. On narrow screens the
+categories scroll horizontally above the controls card. Keep this composition
+consistent across account, client care, and practice settings.
+
 Use `CollapsibleContentPanel` for a compact text teaser that expands into richer
 content. Clinical notes and transcripts share this exact shell: title,
 optional summary, a faded preview, and a disclosure button. Its preview defaults

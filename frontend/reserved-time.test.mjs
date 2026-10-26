@@ -1,7 +1,7 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const ts = require('typescript');
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
 const compiled = ts.transpileModule(fs.readFileSync('src/lib/reserved-time.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const loaded = { exports: {} };
 new Function('module', 'exports', compiled)(loaded, loaded.exports);
