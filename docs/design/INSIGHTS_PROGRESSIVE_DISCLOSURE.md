@@ -3,7 +3,7 @@
 > Product and presentation contract for progressively revealing therapist-facing clinical synthesis.
 
 **Status:** Approved direction  
-**Last updated:** 2026-10-07
+**Last updated:** 2026-10-27
 
 ## 1. Purpose
 
@@ -58,6 +58,22 @@ not force a module to appear.
 Trajectory and recurring-theme modules require evidence from at least two
 distinct sessions. Single-session observations remain session-scoped and must
 not be phrased as longitudinal patterns.
+
+### Section orientation and topic transitions
+
+The clinical overview is always fully readable. Each synthesis section starts with
+its identifier and colon, followed by single-line white topic cards. A short,
+newly worded section summary stays visible below without a fade or height clamp.
+Summaries are generated with the topic analyses in the same coordinated request,
+limited to 280 characters per populated kind, and must not concatenate topic
+sentences or introduce new interpretations. Older snapshots use a label-based
+orientation until the next ordinary background refresh; viewing never generates.
+
+Expanding moves each topic card along the straight vector from its measured
+compact position to its own evidence-linked paragraph heading. Collapsing reverses
+the transition. Reduced-motion preferences skip the animation. Expanded cards use
+compact padding and paragraph gaps while preserving readable line spacing and
+all existing evidence links.
 
 ## 4. Module contract
 

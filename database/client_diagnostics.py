@@ -148,13 +148,15 @@ def read_timeline(connection, *, organization_id, client_id):
                 add('proposals-state-' + str(row['session_id']), row['updated_at'], messages[row['status']],
                     'error' if row['status'] == 'failed' else 'info', {'attempt': row['attempt_count']})
         cursor.execute('''SELECT status,desired_insights_revision,published_insights_revision,
-            processing_insights_revision,attempt_count,last_error_code,last_attempt_at,updated_at
+            processing_insights_revision,pending_event_count,attempt_count,last_error_code,last_attempt_at,updated_at
             FROM app.clinical_synthesis_refresh_state WHERE organization_id=%s AND client_id=%s''', scope)
         state = cursor.fetchone()
-    summary = dict(status='idle', desired_revision=0, published_revision=0, attempt_count=0, error=None)
+    summary = dict(status='idle', desired_revision=0, published_revision=0, queued_event_count=0, attempt_count=0, error=None)
     if state:
         summary = dict(status=state['status'], desired_revision=state['desired_insights_revision'],
-                       published_revision=state['published_insights_revision'], attempt_count=state['attempt_count'],
+                       published_revision=state['published_insights_revision'],
+                       queued_event_count=max(0, int(state['pending_event_count'])) if state['desired_insights_revision'] > state['published_insights_revision'] else 0,
+                       attempt_count=state['attempt_count'],
                        error=ERRORS.get(state['last_error_code'], 'Generation failed') if state['last_error_code'] else None)
         # Legacy attempts have only a last-attempt watermark, not a historical stage trace.
         if state['last_attempt_at']:
@@ -163,5 +165,5 @@ def read_timeline(connection, *, organization_id, client_id):
         if state['status'] == 'failed':
             add('current-failure', state['updated_at'], summary['error'] or 'Insights refresh failed', 'error')
     events.sort(key=lambda row: (row['timestamp'], row['id']), reverse=True)
-    return {'events': events[:200], 'summary': summary,
+    return {'events': list(reversed(events[:200])), 'summary': summary,
             'checked_at': datetime.now(timezone.utc).isoformat(), 'retention_days': 30}

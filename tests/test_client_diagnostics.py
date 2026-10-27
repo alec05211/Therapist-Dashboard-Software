@@ -36,13 +36,50 @@ class ClientDiagnosticsTests(unittest.TestCase):
         ]
         cursor.fetchone.return_value = None
         result = diagnostics.read_timeline(conn, organization_id='org', client_id='client')
-        self.assertEqual([e['id'] for e in result['events']], ['stage', 'refresh-queued'])
-        self.assertEqual(result['events'][0]['details'], {'revision': 4})
+        self.assertEqual([e['id'] for e in result['events']], ['refresh-queued', 'stage'])
+        self.assertEqual(result['events'][1]['details'], {'revision': 4})
         self.assertNotIn('private', str(result))
         for call in cursor.execute.call_args_list:
             self.assertEqual(call.args[1], ('org', 'client'))
             self.assertIn('organization_id=%s AND client_id=%s', call.args[0])
         self.assertLessEqual(len(result['events']), 200)
+
+    def test_queued_changes_track_outstanding_events_and_clear_after_publication(self):
+        for desired, published, pending, status, expected in (
+            (5, 3, 2, 'pending', 2),
+            (6, 3, 3, 'running', 3),
+            (6, 3, 3, 'failed', 3),
+            (6, 6, 0, 'idle', 0),
+            (6, 6, 3, 'idle', 0),
+        ):
+            with self.subTest(status=status, published=published, pending=pending):
+                conn = MagicMock()
+                cursor = conn.cursor.return_value.__enter__.return_value
+                cursor.fetchall.side_effect = [[], [], [], []]
+                cursor.fetchone.return_value = dict(
+                    status=status, desired_insights_revision=desired,
+                    published_insights_revision=published, pending_event_count=pending,
+                    processing_insights_revision=desired, attempt_count=1,
+                    last_error_code=None, last_attempt_at=None, updated_at=datetime.now(timezone.utc),
+                )
+                result = diagnostics.read_timeline(conn, organization_id='org', client_id='client')
+                self.assertEqual(result['summary']['queued_event_count'], expected)
+                self.assertEqual(result['summary']['published_revision'], published)
+
+    def test_only_latest_200_events_are_returned_in_terminal_order(self):
+        conn = MagicMock()
+        cursor = conn.cursor.return_value.__enter__.return_value
+        now = datetime.now(timezone.utc)
+        cursor.fetchall.side_effect = [[dict(
+            id=str(index), event_type='context_loaded', level='info',
+            created_at=now + timedelta(seconds=index), details={},
+        ) for index in range(210)], [], [], []]
+        cursor.fetchone.return_value = None
+        result = diagnostics.read_timeline(conn, organization_id='org', client_id='client')
+        self.assertEqual(len(result['events']), 200)
+        self.assertEqual(result['events'][0]['id'], '10')
+        self.assertEqual(result['events'][-1]['id'], '209')
+        self.assertEqual(result['summary']['queued_event_count'], 0)
 
     def test_append_never_saves_exception_bodies_and_retains_only_30_days(self):
         conn = MagicMock()

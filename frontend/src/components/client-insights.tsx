@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
@@ -101,10 +101,6 @@ function moduleMaturity(sessionCount: number): InsightMaturity {
   return "longitudinal";
 }
 
-function firstSentence(text: string) {
-  return text.trim().split(/(?<=[.!?])\s/u, 1)[0].trim();
-}
-
 function truncateAtWord(text: string, maximumLength: number) {
   if (text.length <= maximumLength) return text;
   const candidate = text.slice(0, Math.max(0, maximumLength - 1));
@@ -112,11 +108,13 @@ function truncateAtWord(text: string, maximumLength: number) {
   return `${candidate.slice(0, lastSpace > maximumLength * 0.6 ? lastSpace : candidate.length).trimEnd()}…`;
 }
 
-function modulePreviewSummary(items: InsightItem[]) {
-  return items.map((item) => firstSentence(savedContentText(item.content))).join(" ");
+function modulePreviewSummary(items: InsightItem[], summary?: unknown) {
+  if (typeof summary === "string" && summary.trim()) return summary;
+  // Older snapshots have no section synthesis; use topic labels, never stitched prose.
+  return `Topics for review: ${items.map((item) => insightLabel(item.content)).join("; ")}.`;
 }
 
-function buildInsightModules(items: InsightItem[]): InsightModule[] {
+function buildInsightModules(items: InsightItem[], summaries: Record<string, unknown> = {}): InsightModule[] {
   return moduleDefinitions.flatMap((definition) => {
     const moduleItems = items
       .filter((item) => definition.kinds.includes(item.kind))
@@ -128,7 +126,7 @@ function buildInsightModules(items: InsightItem[]): InsightModule[] {
     const sessions = sourceSessionCount(moduleItems);
     return [{
       ...definition,
-      previewSummary: modulePreviewSummary(moduleItems),
+      previewSummary: modulePreviewSummary(moduleItems, summaries[definition.kinds[0]]),
       maturity: moduleMaturity(sessions),
       sourceSessionCount: sessions,
       items: moduleItems,
@@ -323,36 +321,93 @@ function InsightCard({ item, onViewEvidence }: { item: InsightItem; onViewEviden
   const contextLength = contexts.reduce((length, context) => length + savedContentText(context).length, 0);
   const useSecondParagraph = analysis.length + contextLength > 620;
   const contextualProse = contexts.map((context, index) => <span key={index}>{index ? " " : null}<EvidenceLinkedText content={context} item={item} onViewEvidence={onViewEvidence} /></span>);
-  return <article className="rounded-xl border border-stone-300 bg-stone-50 p-4">
-    <h3 className="text-sm font-semibold text-stone-800">{insightLabel(item.content)}</h3>
-    <div className="mt-3 text-[15px] leading-7 text-stone-800 [text-wrap:pretty]">
+  return <article className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5">
+    <h3 className="flex min-w-0"><InsightTopicCard item={item} /></h3>
+    <div className="mt-2 text-[15px] leading-6 text-stone-800 [text-wrap:pretty]">
       <p>{Array.isArray(item.content.analysis_claims) ? <EvidenceLinkedText content={{ text: analysis, claims: item.content.analysis_claims }} item={item} onViewEvidence={onViewEvidence} interpretation /> : analysis}{contexts.length && !useSecondParagraph ? <> {contextualProse}</> : null}{!contexts.length && !Array.isArray(item.content.analysis_claims) && legacySources.length ? <> The supporting record is available across {legacySources.length === 1 ? "one cited moment" : `${legacySources.length} cited moments`}. <EvidenceDialogLink phrase={analysis} sources={legacySources} onViewEvidence={onViewEvidence} fallback /></> : null}</p>
-      {contexts.length && useSecondParagraph ? <p className="mt-3">{contextualProse}</p> : null}
+      {contexts.length && useSecondParagraph ? <p className="mt-2">{contextualProse}</p> : null}
     </div>
   </article>;
 }
 
 function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: InsightItem[]; onViewEvidence: Props["onViewEvidence"]; className?: string }) {
-  return <div className={`grid gap-3 ${className}`}>{items.map((item) => <InsightCard key={item.id} item={item} onViewEvidence={onViewEvidence} />)}</div>;
+  return <div className={`grid gap-2 ${className}`}>{items.map((item) => <InsightCard key={item.id} item={item} onViewEvidence={onViewEvidence} />)}</div>;
 }
 
-/** Complete orientation prose stays visible while evidence-linked details expand below. */
+function InsightTopicCard({ item }: { item: InsightItem }) {
+  return <span data-topic-card={item.id} title={insightLabel(item.content)} className="block max-w-full truncate rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+    {insightLabel(item.content)}
+  </span>;
+}
+
+/** Topic cards travel on the measured vector between compact and paragraph headers. */
 function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
-  return <CollapsibleContentPanel
+  const [expanded, setExpanded] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const origins = useRef(new Map<string, DOMRect>());
+  const movingCards = useRef(new Map<string, HTMLElement>());
+  const toggle = (next: boolean) => {
+    origins.current.clear();
+    root.current?.querySelectorAll<HTMLElement>("[data-topic-card]").forEach((card) => {
+      const id = card.dataset.topicCard!;
+      origins.current.set(id, (movingCards.current.get(id) ?? card).getBoundingClientRect());
+    });
+    setExpanded(next);
+  };
+  useLayoutEffect(() => {
+    if (!origins.current.size || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cleanups: Array<() => void> = [];
+    root.current?.querySelectorAll<HTMLElement>("[data-topic-card]").forEach((target) => {
+      const id = target.dataset.topicCard!;
+      const from = origins.current.get(id);
+      if (!from) return;
+      const to = target.getBoundingClientRect();
+      const floating = target.cloneNode(true) as HTMLElement;
+      floating.removeAttribute("data-topic-card");
+      floating.setAttribute("aria-hidden", "true");
+      Object.assign(floating.style, {
+        position: "fixed", left: `${from.left}px`, top: `${from.top}px`,
+        width: `${from.width}px`, height: `${from.height}px`, maxWidth: "none",
+        margin: "0", zIndex: "1000", pointerEvents: "none", boxSizing: "border-box",
+      });
+      document.body.append(floating);
+      movingCards.current.set(id, floating);
+      target.style.visibility = "hidden";
+      const animation = floating.animate([
+        { transform: "translate(0px, 0px)", width: `${from.width}px`, height: `${from.height}px` },
+        { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px)`, width: `${to.width}px`, height: `${to.height}px` },
+      ], { duration: 340, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" });
+      const cleanup = () => {
+        animation.cancel();
+        floating.remove();
+        target.style.visibility = "";
+        if (movingCards.current.get(id) === floating) movingCards.current.delete(id);
+      };
+      animation.onfinish = cleanup;
+      cleanups.push(cleanup);
+    });
+    const cleanup = () => cleanups.forEach((remove) => remove());
+    window.addEventListener("resize", cleanup, { once: true });
+    window.addEventListener("scroll", cleanup, { once: true, capture: true });
+    return () => {
+      cleanup();
+      window.removeEventListener("resize", cleanup);
+      window.removeEventListener("scroll", cleanup, true);
+    };
+  }, [expanded]);
+  return <div ref={root}><CollapsibleContentPanel
     title={`${module.title}:`}
-    summary={<span className="flex flex-wrap gap-2">
-      {module.items.map((item) => <span key={item.id} title={insightLabel(item.content)} className="block max-w-full truncate rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
-        {insightLabel(item.content)}
-      </span>)}
-    </span>}
+    expanded={expanded}
+    onExpandedChange={toggle}
+    summary={!expanded && <span className="flex flex-wrap gap-2">{module.items.map((item) => <InsightTopicCard key={item.id} item={item} />)}</span>}
     preview={module.previewSummary}
-    previewContent={<p className="px-4 pb-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
+    previewContent={<p className="px-4 pb-3 pr-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
     fullPreview
     className="rounded-2xl border-stone-300 bg-white shadow-sm"
     ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
   >
-    <div className="border-t border-stone-200"><InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-4" /></div>
-  </CollapsibleContentPanel>;
+    <div className="border-t border-stone-200"><InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-3" /></div>
+  </CollapsibleContentPanel></div>;
 }
 
 function InsightGroup({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
@@ -424,7 +479,9 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
   const acceptedEvidenceDetail = acceptedSessions.length > 1
     ? `${acceptedSincePreviousSession} added since previous session.`
     : `${acceptedSincePreviousSession} captured in the current record.`;
-  const insightModules = buildInsightModules(currentItems);
+  // Do not keep a generated section summary after any of its topics is withheld.
+  const sectionSummaries = snapshot && currentItems.length === snapshot.items.length ? snapshot.content.section_summaries : undefined;
+  const insightModules = buildInsightModules(currentItems, sectionSummaries && typeof sectionSummaries === "object" && !Array.isArray(sectionSummaries) ? sectionSummaries as Record<string, unknown> : {});
   const hasMetrics = themeCount > 0 || openThreadCount > 0 || awaitingReview > 0 || acceptedJourney.length > 0;
   const overview = snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet.";
   const overviewDetails = snapshot ? <>

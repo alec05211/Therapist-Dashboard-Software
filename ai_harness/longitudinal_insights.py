@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -10,7 +11,7 @@ from urllib.request import Request, urlopen
 from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
 
-INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v3"
+INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v4"
 INSIGHT_KINDS = {"trajectory", "theme", "open_thread", "relevant_history"}
 
 
@@ -78,9 +79,20 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     return {
         "type": "object",
         "additionalProperties": False,
-        "required": ["overview", "items"],
+        "required": ["overview", "section_summaries", "items"],
         "properties": {
             "overview": {"type": "string", "minLength": 1, "maxLength": 900},
+            "section_summaries": {
+                "type": "array", "minItems": 1, "maxItems": 4,
+                "items": {
+                    "type": "object", "additionalProperties": False,
+                    "required": ["kind", "summary"],
+                    "properties": {
+                        "kind": {"type": "string", "enum": sorted(kinds)},
+                        "summary": {"type": "string", "minLength": 1, "maxLength": 280},
+                    },
+                },
+            },
             "items": {
                 "type": "array", "minItems": 1, "maxItems": 2 if len(kinds) == 1 else 8,
                 "items": {
@@ -103,7 +115,7 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     }
 
 
-def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False) -> list[str]:
+def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False) -> list[str]:
     violations: list[str] = []
     allowed_ids = {source["evidence_id"] for source in evidence}
     kinds: set[str] = set()
@@ -186,6 +198,35 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                 if (not isinstance(ids, list) or not 1 <= len(ids) <= 4
                         or any(not isinstance(value, str) or value not in allowed_ids for value in ids)):
                     violations.append(f"item {item_index} context {context_index} claim {claim_index} cites unavailable evidence {ids!r}")
+    summaries = generated.get("section_summaries")
+    if require_section_summaries or summaries is not None:
+        if not isinstance(summaries, list):
+            violations.append("section_summaries must be a list")
+        else:
+            summary_kinds: set[str] = set()
+            for section in summaries:
+                if not isinstance(section, dict):
+                    violations.append("section summary must be an object")
+                    continue
+                kind, summary = section.get("kind"), section.get("summary")
+                if not isinstance(kind, str) or kind not in kinds or kind in summary_kinds:
+                    violations.append("section summaries must cover each populated kind exactly once")
+                    continue
+                summary_kinds.add(kind)
+                if not isinstance(summary, str) or not summary.strip() or len(summary) > 280:
+                    violations.append(f"section {kind} summary must contain 1 to 280 characters")
+                    continue
+                normalized = " ".join(summary.casefold().split())
+                for item in items:
+                    if not isinstance(item, dict) or item.get("kind") != kind:
+                        continue
+                    prose = " ".join(str(item.get("analysis", "")).casefold().split())
+                    sentences = re.split(r"(?<=[.!?])\s+", prose)
+                    if normalized in prose or any(len(sentence) > 30 and sentence in normalized for sentence in sentences):
+                        violations.append(f"section {kind} summary copies topic prose; write a distinct brief synthesis")
+                        break
+            if summary_kinds != kinds:
+                violations.append("section summaries must cover each populated kind exactly once")
     missing = required_kinds - kinds
     if missing:
         violations.append("missing insight kinds: " + ", ".join(sorted(missing)))
@@ -219,7 +260,9 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
                         **({"analysis_claims": analysis_claims} if analysis_claims else {})},
             "evidence_ids": list(dict.fromkeys(evidence_ids)),
         })
-    return {"text": generated["overview"]}, items
+    return {"text": generated["overview"], **({"section_summaries": {
+        section["kind"]: section["summary"] for section in generated["section_summaries"]
+    }} if "section_summaries" in generated else {})}, items
 
 
 def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api_key: str, model: str, kind: str | None = None, clinical_context: dict[str, Any] | None = None, on_repair=None) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -254,6 +297,11 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
             "sibling prose, with zero-based occurrence, no overlapping anchors, and only supplied evidence IDs. "
             "Keep prose free of Markdown and manually inserted links. Prefer multiple sessions for trajectories "
             "and recurring themes. Open threads are unresolved questions, not treatment instructions. "
+            "Write section_summaries after planning the topic paragraphs: exactly one summary for each populated kind. "
+            "Use one brief, newly worded sentence (at most 280 characters) that orients the therapist to the section's "
+            "shared focus or tension, based only on its topic analyses. Do not concatenate, quote, or paraphrase each "
+            "topic in turn; do not introduce new clinical claims or omit uncertainty. Keep detail and evidence in the "
+            "topic paragraphs. Omit summaries for empty sections. "
             "Before returning, review the complete document for repeated points and consolidate them."
 
         ),
@@ -263,7 +311,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
         raise RuntimeError("Insight request exceeds the bounded input limit.")
     generated, response_data = _request_structured_response(payload, api_key)
-    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True)
+    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True)
     repair_attempt = 0
     while violations and repair_attempt < 3:
         repair_attempt += 1
@@ -289,7 +337,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         if len(json.dumps(repair_payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
             raise RuntimeError("Insight repair request exceeds the bounded input limit.")
         generated, response_data = _request_structured_response(repair_payload, api_key)
-        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True)
+        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True)
     if violations:
         error = RuntimeError("OpenAI output did not satisfy the longitudinal evidence contract after three repairs: " + "; ".join(violations))
         error.generated_response = generated

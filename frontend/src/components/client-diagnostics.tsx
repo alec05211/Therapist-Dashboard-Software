@@ -1,52 +1,47 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 
 type Event = { id: string; timestamp: string; message: string; level: "info" | "warning" | "error"; details: Record<string, number | string> };
-type Timeline = { events: Event[]; checked_at: string; retention_days: number; summary: { status: string; desired_revision: number; published_revision: number; attempt_count: number; error: string | null } };
+type Timeline = { events: Event[]; checked_at: string; retention_days: number; summary: { status: string; desired_revision: number; published_revision: number; queued_event_count: number; attempt_count: number; error: string | null } };
 
 function timestamp(value: string) {
   return new Date(value).toLocaleString(undefined, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZoneName: "short" });
 }
 
 function DiagnosticRow({ event }: { event: Event }) {
-  const tooltipId = useId();
-  const row = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState<{ left: number; top: number; above: boolean } | null>(null);
   const details = Object.entries(event.details);
-  const description = `${timestamp(event.timestamp)}. ${event.level.toUpperCase()}. ${event.message}${details.length ? `. ${details.map(([key, value]) => `${key}: ${value}`).join(", ")}` : ""}`;
-  const show = () => {
-    const bounds = row.current?.getBoundingClientRect();
-    if (!bounds) return;
-    const above = bounds.top > window.innerHeight / 2;
-    setPosition({ left: Math.max(8, Math.min(bounds.left, window.innerWidth - Math.min(420, window.innerWidth - 16) - 8)), top: above ? bounds.top - 8 : bounds.bottom + 8, above });
+  const detailLabels: Record<string, string> = {
+    revision: "Insights revision", attempt: "Worker attempt", stage: "Processing stage",
+    source_count: "Source records", context_bytes: "Context size (bytes)",
+    request_bytes: "Request size (bytes)", input_tokens: "Input tokens", output_tokens: "Output tokens",
+    repair_attempt: "Validation repair attempt", violation_count: "Validation issues", error_code: "Error code",
   };
-  useEffect(() => {
-    if (!position) return;
-    const dismiss = () => setPosition(null);
-    window.addEventListener("scroll", dismiss, true);
-    window.addEventListener("resize", dismiss);
-    return () => { window.removeEventListener("scroll", dismiss, true); window.removeEventListener("resize", dismiss); };
-  }, [position]);
+  const description = [
+    `${event.level.toUpperCase()}: ${event.message}`,
+    new Date(event.timestamp).toLocaleString(undefined, { dateStyle: "full", timeStyle: "long" }),
+    ...details.map(([key, value]) => `${detailLabels[key] ?? key.replaceAll("_", " ")}: ${value}`),
+  ].join("\n");
 
-  return <>
-    <button ref={row} type="button" aria-label={description} aria-describedby={position ? tooltipId : undefined} onMouseEnter={show} onMouseLeave={() => { if (document.activeElement !== row.current) setPosition(null); }} onFocus={show} onBlur={() => setPosition(null)} onClick={show} onKeyDown={key => { if (key.key === "Escape") setPosition(null); }} className="grid w-full cursor-grab grid-cols-[9rem_minmax(0,1fr)] items-center gap-3 border-b border-[#29372f] py-2 text-left last:border-0 hover:bg-[#223029] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400 active:cursor-grabbing sm:grid-cols-[12rem_minmax(0,1fr)]">
-      <time dateTime={event.timestamp} className="truncate whitespace-nowrap text-[#94aa9b]">{timestamp(event.timestamp)}</time>
-      <span className={`truncate whitespace-nowrap ${event.level === "error" ? "text-[#ffb3a7]" : event.level === "warning" ? "text-[#efd39a]" : "text-[#d6e4dc]"}`}>[{event.level.toUpperCase()}] {event.message}</span>
-    </button>
-    {position ? createPortal(<div id={tooltipId} role="tooltip" className="pointer-events-none fixed z-[100] w-[420px] max-w-[calc(100vw-16px)] whitespace-normal rounded-lg border border-[#53675a] bg-[#202922] p-3 font-mono text-xs leading-5 text-[#d6e4dc] shadow-xl" style={{ left: position.left, top: position.top, transform: position.above ? "translateY(-100%)" : undefined }}>
-      <div className="text-[#a4b9ac]">{new Date(event.timestamp).toLocaleString(undefined, { dateStyle: "full", timeStyle: "long" })} · {event.level.toUpperCase()}</div>
-      <p className="mt-1 break-words">{event.message}</p>
-      {details.length ? <dl className="mt-2 border-t border-[#37433c] pt-2">{details.map(([key, value]) => <div key={key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3"><dt className="break-words text-[#a4b9ac]">{key.replaceAll("_", " ")}</dt><dd className="break-all">{value}</dd></div>)}</dl> : null}
-    </div>, document.body) : null}
-  </>;
+  return <div role="group" tabIndex={0} title={description} aria-label={description} className="block w-full cursor-text rounded-sm py-0.5 text-left hover:bg-[#223029] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400">
+    <time dateTime={event.timestamp} className="mr-2 whitespace-nowrap text-[#94aa9b]">{timestamp(event.timestamp)}</time>
+    <span className={`break-words ${event.level === "error" ? "text-[#ffb3a7]" : event.level === "warning" ? "text-[#efd39a]" : "text-[#d6e4dc]"}`}>[{event.level.toUpperCase()}] {event.message}</span>
+    {details.length > 0 && <span className="ml-2 break-words text-[#94aa9b]">{details.map(([key, value]) => `${key}=${value}`).join(" ")}</span>}
+  </div>;
 }
 
 export function ClientDiagnostics({ clientId }: { clientId?: string }) {
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
+  const viewport = useRef<HTMLDivElement>(null);
+  const followLatest = useRef(true);
+  const [following, setFollowing] = useState(true);
+  useEffect(() => {
+    if (followLatest.current && viewport.current) {
+      viewport.current.scrollTop = viewport.current.scrollHeight;
+    }
+  }, [timeline]);
 
   useEffect(() => {
     if (!clientId || paused) return;
@@ -76,16 +71,31 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
 
   return <section className="mt-4 text-left" aria-label="Client diagnostics">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-      <div className="text-sm text-stone-600">{timeline ? <>Insights: <span className="font-semibold text-stone-900">{timeline.summary.status}</span><span className="mx-2" aria-hidden="true">·</span>Published {timeline.summary.published_revision} / queued {timeline.summary.desired_revision}<span className="mx-2" aria-hidden="true">·</span>Attempt {timeline.summary.attempt_count}</> : "Connecting to event log…"}</div>
+      {timeline ? <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-stone-600">
+        <span>Insights: <span className="font-semibold text-stone-900">{timeline.summary.status}</span></span>
+        <dl className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="flex gap-2"><dt>Queued changes</dt><dd className="font-mono font-semibold tabular-nums text-stone-900">{timeline.summary.queued_event_count}</dd></div>
+          <div className="flex gap-2" title="Latest processed Insights revision. This cumulative version number does not reset."><dt>Published revision</dt><dd className="font-mono tabular-nums text-stone-900">{timeline.summary.published_revision}</dd></div>
+          <div className="flex gap-2"><dt>Attempt</dt><dd className="font-mono tabular-nums text-stone-900">{timeline.summary.attempt_count}</dd></div>
+        </dl>
+      </div> : <p className="text-sm text-stone-600">Connecting to event log…</p>}
       <button type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)} className="cursor-grab rounded-lg border border-stone-300 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">{paused ? "Resume live log" : "Pause live log"}</button>
     </div>
     {error ? <p role="alert" className="mb-3 text-sm text-red-700">{error}</p> : null}
     <div className="overflow-hidden rounded-xl border border-[#44403c] bg-[#171b19] text-[#d6e4dc] shadow-inner">
-      <div className="flex items-center justify-between gap-3 border-b border-[#37433c] px-4 py-3 font-mono text-xs text-[#a4b9ac]"><span>client / events</span><span>{paused ? "PAUSED" : "LIVE · 10s"}</span></div>
-      <div role="log" aria-label="Timestamped client events, newest first" aria-live="off" tabIndex={0} className="max-h-[32rem] min-h-64 overflow-x-hidden overflow-y-auto px-4 py-3 font-mono text-xs leading-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400">
+      <div className="flex items-center justify-between gap-3 border-b border-[#37433c] px-4 py-3 font-mono text-xs text-[#a4b9ac]"><span><span aria-hidden="true" className="mr-2 text-emerald-300">&gt;_</span>Client event stream</span><span>{paused ? "PAUSED" : "LIVE · 10s"}</span></div>
+      <div ref={viewport} onScroll={() => {
+        const node = viewport.current;
+        if (!node) return;
+        const atBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 48;
+        followLatest.current = atBottom;
+        setFollowing(atBottom);
+      }} role="log" aria-label="Timestamped client events, newest at the bottom" aria-live="off" tabIndex={0} className="max-h-[32rem] min-h-64 overflow-x-hidden overflow-y-auto px-4 py-3 font-mono text-xs leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400">
         {!timeline ? <p role="status">{error ? "Event log unavailable." : "Loading events…"}</p> : timeline.events.length === 0 ? <p>No recorded events for this client yet.</p> : timeline.events.map(event => <DiagnosticRow key={event.id} event={event} />)}
+        {timeline && <p aria-hidden="true" className="mt-2 text-[#94aa9b]"><span className="mr-2 text-emerald-300">&gt;</span>{paused ? "Live output paused" : "Waiting for events"}<span className="ml-2 inline-block h-3 w-1.5 translate-y-0.5 bg-emerald-300" /></p>}
       </div>
     </div>
-    <p className="mt-3 text-xs leading-5 text-stone-500">{timeline ? `Checked ${timestamp(timeline.checked_at)}. ` : ""}Newest 200 events. Worker stage logs cover the last 30 days; earlier attempts may show only their last status. Clinical content is excluded.</p>
+    {!following && <button type="button" onClick={() => { followLatest.current = true; setFollowing(true); if (viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight; }} className="mt-2 cursor-grab rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Jump to latest</button>}
+    <p className="mt-3 text-xs leading-5 text-stone-500">{timeline ? `Checked ${timestamp(timeline.checked_at)}. ` : ""}Latest 200 events, newest at the bottom. Queued changes includes work in progress and returns to zero once processed. Published revision is the cumulative processed version. Worker stage logs cover the last 30 days; earlier attempts may show only their last status. Clinical content is excluded.</p>
   </section>;
 }

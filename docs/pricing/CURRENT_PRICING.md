@@ -63,20 +63,22 @@ Token volumes are explicit planning assumptions, not measured application averag
 | Work per session cycle | Calls | Input tokens per call | Billed output tokens per call | Cost at Astra rates |
 | --- | ---: | ---: | ---: | ---: |
 | Transcript proposal analysis | 1 | 30,000 | 4,000 | $0.50 |
-| Coordinated Insights synthesis | 1 | 40,000 | 6,000 | $0.70 |
+| Coordinated Insights synthesis | 1 | 40,200 | 6,320 | $0.72 |
 | Downstream pre-session brief | 1 | 8,000 | 2,000 | $0.18 |
-| **Normal cycle** | **3** | **78,000 total** | **12,000 total** | **$1.38** |
-| Additional Insights + brief refresh | 2 | 48,000 total | 8,000 total | $0.88 |
+| **Normal cycle** | **3** | **78,200 total** | **12,320 total** | **$1.40** |
+| Additional Insights + brief refresh | 2 | 48,200 total | 8,320 total | $0.90 |
+
+Section-summary planning update (2026-10-27): the same coordinated Insights request now emits up to four distinct summaries of at most 280 characters each. Allow an additional 200 input tokens for instructions/schema and 320 output tokens per request (unmeasured planning estimates, not token ceilings). This adds $0.018 per Insights call at the published standard short-context Astra rates ($10/M input, $50/M output), or $0.072 over four normal cycles; tables round only final dollar amounts. The unrounded normal-cycle estimate is $1.398. No extra request, refresh trigger, retry allowance, or output cap is added. Actual usage and any downstream brief-context growth must be measured; the existing 8,000-token brief-input estimate is assumed to include this small metadata addition. Rates verified 2026-10-27 against [official OpenAI pricing](https://developers.openai.com/api/docs/pricing).
 
 Formula: `call cost = input tokens / 1,000,000 × input rate + billed output tokens / 1,000,000 × output rate`.
 
-At four normal cycles, this is **$5.52 per client/month** with Astra. The same assumed token volumes would cost **$1.104** with Sol or **$0.0552** with Luna; equal token volumes do not imply equal clinical quality or equivalent behavior.
+At four normal cycles, this is **$5.59 per client/month** with Astra. The same assumed token volumes would cost **$1.1184** with Sol or **$0.05592** with Luna; equal token volumes do not imply equal clinical quality or equivalent behavior.
 
 ### Repairs, retries, and growth
 
 Insights permits up to three additional whole-document repair calls. Its output cap is 30,000 tokens per request; proposal analysis caps output at 16,000 and the brief at 6,000. Caps are limits, not expected usage. See [Insights implementation](../../ai_harness/longitudinal_insights.py), [proposal analysis](../../ai_harness/journey_proposals.py), and [brief generation](../../ai_harness/pre_session.py).
 
-At the assumed 40,000 input and 6,000 output tokens, three extra Insights repairs add **$2.10** to a cycle. Actual repair inputs include the invalid document and errors, so this is a sensitivity example rather than a ceiling. Queue retries, edits after finalization, changed transcripts, and administrative reprocessing can add calls even if no usable result is published. An absent upcoming appointment can remove the brief call.
+At the assumed 40,200 input and 6,320 output tokens, three extra Insights repairs add **$2.15** to a cycle. Actual repair inputs include the invalid document and errors, so this is a sensitivity example rather than a ceiling. Queue retries, edits after finalization, changed transcripts, and administrative reprocessing can add calls even if no usable result is published. An absent upcoming appointment can remove the brief call.
 
 Replace these assumptions with observed calls and input/cached/output usage by task and model. Track normal generations separately from repairs and retries; reprice larger context packets as the client's history grows. The application currently sends ordinary model requests; background execution alone does not obtain OpenAI Batch pricing.
 

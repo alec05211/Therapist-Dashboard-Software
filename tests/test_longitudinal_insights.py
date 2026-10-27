@@ -49,7 +49,7 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertEqual(context["claims"][1]["phrase"], "named its effect")
 
     def analytical_document(self):
-        return {'overview': 'A cautious overview.', 'items': [{
+        return {'overview': 'A cautious overview.', 'section_summaries': [{'kind': 'open_thread', 'summary': 'An emerging shift remains an open question for review.'}], 'items': [{
             'kind': 'open_thread', 'label': 'A possible shift',
             'analysis': 'This may reflect greater tolerance of uncertainty, although persistence remains unclear.',
             'analysis_claims': [{'phrase': 'greater tolerance of uncertainty', 'occurrence': 0,
@@ -98,6 +98,27 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertIn('Plan trajectory, theme, open_thread, and relevant_history together', payload['instructions'])
         self.assertIn('Do not repeat an interpretation', payload['instructions'])
         self.assertEqual(payload['text']['format']['schema']['properties']['items']['minItems'], 1)
+
+    def test_section_summaries_are_persisted_without_copying_topic_prose(self):
+        document = self.analytical_document()
+        self.assertEqual(validate_response(document, self.evidence, set(), require_section_summaries=True), [])
+        content, _ = to_snapshot_content(document)
+        self.assertEqual(content['section_summaries']['open_thread'], document['section_summaries'][0]['summary'])
+        document['section_summaries'][0]['summary'] = document['items'][0]['analysis']
+        self.assertIn('copies topic prose', '; '.join(validate_response(document, self.evidence, set())))
+
+    def test_section_summaries_cover_only_populated_kinds_once(self):
+        document = self.analytical_document()
+        for summaries in ([], [{'kind': 'theme', 'summary': 'A different topic.'}], document['section_summaries'] * 2):
+            document['section_summaries'] = summaries
+            self.assertIn('exactly once', '; '.join(validate_response(document, self.evidence, set(), require_section_summaries=True)))
+        document.pop('section_summaries')
+        self.assertIn('must be a list', '; '.join(validate_response(document, self.evidence, set(), require_section_summaries=True)))
+
+    def test_section_summary_length_is_bounded(self):
+        document = self.analytical_document()
+        document['section_summaries'][0]['summary'] = 'x' * 281
+        self.assertIn('280 characters', '; '.join(validate_response(document, self.evidence, set())))
 
     def test_duplicate_document_is_repaired_with_all_sections_in_context(self):
         document = self.analytical_document()
