@@ -194,27 +194,47 @@ function contentClaims(content: Record<string, unknown>): InsightClaim[] {
   });
 }
 
+// Select verbatim note sentences locally; never invent a supporting quotation.
+function relevantNoteExcerpt(note: string | undefined, phrase: string) {
+  if (!note?.trim()) return null;
+  const words = (text: string) => text.toLocaleLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? [];
+  const terms = new Set(words(phrase));
+  const sentences = note.match(/[^.!?\n]+(?:[.!?]+|$)/gu) ?? [];
+  const ranked = sentences.map((text, index) => ({
+    text: text.trim(), index,
+    score: new Set(words(text).filter((word) => terms.has(word))).size,
+  })).filter((sentence) => sentence.score > 0).sort((a, b) => b.score - a.score || a.index - b.index);
+  const excerpt = ranked.slice(0, 2).sort((a, b) => a.index - b.index).map(({ text }) => text).join(" … ");
+  return excerpt ? truncateAtWord(excerpt, 700) : null;
+}
+
 function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false }: { phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [sourceIndex, setSourceIndex] = useState(0);
   const titleId = useId();
   const sourceLabel = sources.length === 1 ? "1 source" : `${sources.length} sources`;
   return <>
-    <a href={`#${titleId}`} onClick={(event) => { event.preventDefault(); dialog.current?.showModal(); }} aria-haspopup="dialog" aria-controls={titleId} aria-label={`View evidence for ${phrase}`} className={`${fallback ? "ml-1 align-baseline text-xs font-semibold text-stone-700 underline decoration-stone-400 underline-offset-3 hover:text-stone-950" : "font-bold text-inherit no-underline hover:text-stone-950"} cursor-grab rounded-sm text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>
+    <a href={`#${titleId}`} onClick={(event) => { event.preventDefault(); setSourceIndex(0); dialog.current?.showModal(); }} aria-haspopup="dialog" aria-controls={titleId} aria-label={`View evidence for ${phrase}`} className={`${fallback ? "ml-1 align-baseline text-xs font-semibold text-stone-700 underline decoration-stone-400 underline-offset-3 hover:text-stone-950" : "font-bold text-inherit no-underline hover:text-stone-950"} cursor-grab rounded-sm text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>
       {fallback ? `View ${sourceLabel}` : phrase}
     </a>
-    {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
+    {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
       <div className="flex items-start justify-between gap-4">
         <div><h3 id={`${titleId}-heading`} className="text-base font-semibold">Evidence in context</h3><p className="mt-1 text-xs text-stone-500">{interpretation ? "These records support a generated interpretation for clinician review; the interpretation is not a verbatim statement or established conclusion." : "Supporting slices for this linked statement."}</p></div>
         <button type="button" onClick={() => dialog.current?.close()} aria-label="Close evidence" className="cursor-grab rounded-lg px-2 text-xl active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">×</button>
       </div>
       <p className="my-4 border-l-2 border-emerald-300 pl-4 text-base font-semibold leading-7 text-stone-800">{phrase}</p>
       <div className="grid gap-3">
-        {sources.map((source) => <article key={source.evidence_id} className="rounded-xl border border-stone-300 bg-stone-50 p-4 text-sm leading-6">
+        {sources.slice(sourceIndex, sourceIndex + 1).map((source) => <article key={source.evidence_id} className="rounded-xl border border-stone-300 bg-stone-50 p-4 text-sm leading-6">
           <p className="font-semibold text-stone-800">{evidenceLabel(source.session_label)}</p>
-          {source.clinical_note_version_id ? <p className="mt-2 whitespace-pre-wrap text-stone-700">Finalized clinical note: {source.note_text}</p> : source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
+          {source.clinical_note_version_id ? <p className="mt-2 whitespace-pre-wrap text-stone-700">Finalized clinical note — relevant excerpt: {relevantNoteExcerpt(source.note_text, phrase) ?? "No specific matching passage is available for this claim. Review the finalized note in the session record."}</p> : source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
           {!source.clinical_note_version_id && <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Open transcript evidence</button>}
         </article>)}
       </div>
+      {sources.length > 1 && <nav aria-label="Evidence sources" className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <button type="button" disabled={sourceIndex === 0} onClick={() => setSourceIndex((index) => index - 1)} className="cursor-grab rounded-lg border border-stone-300 px-3 py-2 active:cursor-grabbing disabled:cursor-default disabled:opacity-40">Previous</button>
+        <span aria-live="polite">Source {sourceIndex + 1} of {sources.length}</span>
+        <button type="button" disabled={sourceIndex === sources.length - 1} onClick={() => setSourceIndex((index) => index + 1)} className="cursor-grab rounded-lg border border-stone-300 px-3 py-2 active:cursor-grabbing disabled:cursor-default disabled:opacity-40">Next</button>
+      </nav>}
     </dialog>, document.body)}
   </>;
 }
@@ -422,25 +442,15 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
     <p className="text-[15px] leading-7 text-stone-700">{overview}</p>
     <p className="mt-4 text-xs leading-5 text-stone-500">Workspace {snapshot.status} · version {snapshot.version} · generated by {snapshot.generator_name}. Review the cited evidence before relying on generated observations.</p>
   </> : <p className="text-[15px] leading-7 text-stone-700">{overview}</p>;
-  const overviewIsLong = overview.length > 420;
 
   return <section className="space-y-4 text-left" aria-label="Clinical insights workspace">
     <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
       <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
       <InsightsFreshness status={refreshStatus} snapshot={snapshot} />
     </header>
-    {overviewIsLong ? <CollapsibleContentPanel
-      title="Clinical overview"
-      hideTitle
-      preview={overview}
-      previewContent={<div className="px-4 pb-4"><p className="text-[15px] leading-7 text-stone-700">{overview}</p></div>}
-      collapsedPreviewHeight={112}
-      className="rounded-2xl border-stone-300 bg-white shadow-sm"
-    >
-      <div className="border-t border-stone-200 p-5">{overviewDetails}</div>
-    </CollapsibleContentPanel> : <section aria-label="Clinical overview content" className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
+    <section aria-label="Clinical overview content" className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
       {overviewDetails}
-    </section>}
+    </section>
 
     {hasMetrics ? <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm" aria-label="At-a-glance insight metrics">
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
