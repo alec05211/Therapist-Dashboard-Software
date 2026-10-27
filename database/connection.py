@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
@@ -17,10 +19,14 @@ from psycopg.rows import dict_row
 
 
 RDS_GLOBAL_CA_URL = "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem"
+_credential_refresh_lock = threading.Lock()
+_last_credential_refresh_at: float | None = None
+CREDENTIAL_REFRESH_COOLDOWN_SECONDS = 30
 
 
 def connect() -> psycopg.Connection:
     database_url = os.getenv("DATABASE_URL")
+    uses_managed_secret = not database_url and not os.getenv("DATABASE_USERNAME")
     if not database_url:
         database_url = (
             database_url_from_runtime_credentials()
@@ -29,7 +35,36 @@ def connect() -> psycopg.Connection:
         )
     if "sslmode=" not in database_url:
         raise RuntimeError("DATABASE_URL must explicitly require TLS.")
-    return psycopg.connect(database_url, row_factory=dict_row)
+    try:
+        return psycopg.connect(database_url, row_factory=dict_row)
+    except psycopg.OperationalError as exc:
+        # libpq connection failures may omit SQLSTATE. Match only the known
+        # password-rejection category, never network errors or SQL failures.
+        rejected_password = (exc.sqlstate == '28P01'
+                             or 'password authentication failed' in str(exc))
+        if not uses_managed_secret or not rejected_password:
+            raise
+        refreshed_url = _refresh_rejected_managed_credential(database_url)
+        if refreshed_url is None:
+            raise
+        # Only retry connection establishment once. Never replay a transaction.
+        return psycopg.connect(refreshed_url, row_factory=dict_row)
+
+
+def _refresh_rejected_managed_credential(rejected_url: str) -> str | None:
+    """Refresh the in-memory connection credential, serializing concurrent refreshes."""
+    global _last_credential_refresh_at
+    with _credential_refresh_lock:
+        current_url = database_url_from_local_aws_secret()
+        if current_url != rejected_url:
+            return current_url  # Another thread has already refreshed the cache.
+        now = time.monotonic()
+        if (_last_credential_refresh_at is not None
+                and now - _last_credential_refresh_at < CREDENTIAL_REFRESH_COOLDOWN_SECONDS):
+            return None
+        _last_credential_refresh_at = now
+        database_url_from_local_aws_secret.cache_clear()
+        return database_url_from_local_aws_secret()
 
 
 def database_url_from_runtime_credentials() -> str:
@@ -77,8 +112,9 @@ def database_url_from_local_aws_secret() -> str:
 
     The secret ARN, host, and database name are identifiers rather than
     credentials. The resolved URL is cached in memory for the lifetime of the
-    local API process so routine workspace requests do not depend on a live AWS
-    SSO session. The password is never written to an environment file.
+    API process so routine workspace requests do not depend on a live AWS SSO
+    session. A rejected password invalidates that cache with a bounded refresh.
+    The password is never written to an environment file.
     """
     secret_arn = os.getenv("DATABASE_SECRET_ARN")
     if not secret_arn:
