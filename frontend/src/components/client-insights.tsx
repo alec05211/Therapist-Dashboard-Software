@@ -85,10 +85,10 @@ const moduleDefinitions: Array<{
   priorityBucket: InsightPriorityBucket;
   kinds: InsightItem["kind"][];
 }> = [
-  { kind: "current_focus", title: "Current focus", priorityBucket: "immediate", kinds: ["open_thread"] },
-  { kind: "change", title: "Changes over time", priorityBucket: "active", kinds: ["trajectory"] },
-  { kind: "recurring_themes", title: "Recurring themes", priorityBucket: "active", kinds: ["theme"] },
-  { kind: "context_history", title: "Relevant context", priorityBucket: "background", kinds: ["relevant_history", "client_context", "therapist_curated"] },
+  { kind: "current_focus", title: "Current Focus", priorityBucket: "immediate", kinds: ["open_thread"] },
+  { kind: "change", title: "Changes Over Time", priorityBucket: "active", kinds: ["trajectory"] },
+  { kind: "recurring_themes", title: "Recurring Themes", priorityBucket: "active", kinds: ["theme"] },
+  { kind: "context_history", title: "Relevant Context", priorityBucket: "background", kinds: ["relevant_history", "client_context", "therapist_curated"] },
 ];
 
 function sourceSessionCount(items: InsightItem[]) {
@@ -113,9 +113,7 @@ function truncateAtWord(text: string, maximumLength: number) {
 }
 
 function modulePreviewSummary(items: InsightItem[]) {
-  const maximumTotalLength = 420;
-  const perItemLength = Math.max(88, Math.floor(maximumTotalLength / items.length));
-  return items.map((item) => truncateAtWord(firstSentence(savedContentText(item.content)), perItemLength)).join(" ");
+  return items.map((item) => firstSentence(savedContentText(item.content))).join(" ");
 }
 
 function buildInsightModules(items: InsightItem[]): InsightModule[] {
@@ -338,36 +336,27 @@ function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: I
   return <div className={`grid gap-3 ${className}`}>{items.map((item) => <InsightCard key={item.id} item={item} onViewEvidence={onViewEvidence} />)}</div>;
 }
 
-function InsightModulePreview({ module }: { module: InsightModule }) {
-  return <div className="px-4 pb-4">
-    <p className="text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>
-    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-      {module.items.map((item) => <span key={item.id} className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+/** Complete orientation prose stays visible while evidence-linked details expand below. */
+function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
+  return <CollapsibleContentPanel
+    title={`${module.title}:`}
+    summary={<span className="flex flex-wrap gap-2">
+      {module.items.map((item) => <span key={item.id} title={insightLabel(item.content)} className="block max-w-full truncate rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
         {insightLabel(item.content)}
       </span>)}
-    </div>
-  </div>;
+    </span>}
+    preview={module.previewSummary}
+    previewContent={<p className="px-4 pb-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
+    fullPreview
+    className="rounded-2xl border-stone-300 bg-white shadow-sm"
+    ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
+  >
+    <div className="border-t border-stone-200"><InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-4" /></div>
+  </CollapsibleContentPanel>;
 }
 
 function InsightGroup({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
-  if (module.displayMode === "collapsible") {
-    const body = <InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-4 pt-0" />;
-    return <CollapsibleContentPanel
-      title={module.title}
-      preview={`${module.previewSummary} ${module.items.map((item) => insightLabel(item.content)).join(". ")}`}
-      previewContent={<InsightModulePreview module={module} />}
-      collapsedPreviewHeight={152}
-      className="rounded-2xl border-stone-300 bg-white shadow-sm"
-      ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
-    >
-      <div className="border-t border-stone-200">{body}</div>
-    </CollapsibleContentPanel>;
-  }
-
-  return <section className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm">
-    <h2 className="text-base font-semibold text-stone-900">{module.title}</h2>
-    <InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="mt-4" />
-  </section>;
+  return <InsightProsePanel module={module} onViewEvidence={onViewEvidence} />;
 }
 
 function InsightSectionLoadingSkeleton({ title }: { title: string }) {

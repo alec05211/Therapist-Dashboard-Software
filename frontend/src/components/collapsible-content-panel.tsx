@@ -17,10 +17,11 @@ type Props = {
   headerActions?: ReactNode;
   keepMounted?: boolean;
   collapsedPreviewHeight?: number;
+  fullPreview?: boolean;
 };
 
 /** Shared compact text preview and disclosure shell; expanded content owns its controls. */
-export function CollapsibleContentPanel({ title, hideTitle = false, preview, previewContent, children, summary, ariaLabel, className = "", expanded: controlledExpanded, onExpandedChange, headerCenter, headerActions, keepMounted = false, collapsedPreviewHeight = 96 }: Props) {
+export function CollapsibleContentPanel({ title, hideTitle = false, preview, previewContent, children, summary, ariaLabel, className = "", expanded: controlledExpanded, onExpandedChange, headerCenter, headerActions, keepMounted = false, collapsedPreviewHeight = 96, fullPreview = false }: Props) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const expanded = controlledExpanded ?? internalExpanded;
   const contentId = useId();
@@ -31,12 +32,12 @@ export function CollapsibleContentPanel({ title, hideTitle = false, preview, pre
   return <section className={`relative overflow-hidden rounded-xl border border-stone-200 bg-stone-100 text-stone-900 ${className}`} aria-label={ariaLabel ?? title}>
     <div className="relative">
       <div className={hideTitle ? (expanded ? "min-h-12" : "pt-4") : "p-4"}>
-        <span className={hideTitle ? "sr-only" : "flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-6"}><span className="text-base font-semibold">{title}</span>{summary && <span className="text-sm text-stone-600">{summary}</span>}</span>
+        <span className={hideTitle ? "sr-only" : "flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-6"}><span className="text-base font-semibold">{title}</span>{summary && <span className="min-w-0 text-sm text-stone-600">{summary}</span>}</span>
         {!expanded && !previewContent && <span className="collapsed-content-preview mt-3 block overflow-hidden text-sm leading-6 text-stone-600" style={{ height: collapsedPreviewHeight }}>{preview}</span>}
       </div>
-      {!expanded && previewContent && <>
+      {(!expanded || fullPreview) && previewContent && <>
         <span className="sr-only">{preview}</span>
-        <div className="collapsed-content-preview overflow-hidden" style={{ height: collapsedPreviewHeight }} inert aria-hidden="true">{previewContent}</div>
+        <div className={fullPreview ? "" : "collapsed-content-preview overflow-hidden"} style={fullPreview ? undefined : { height: collapsedPreviewHeight }} inert={!fullPreview} aria-hidden={fullPreview ? undefined : true}>{previewContent}</div>
       </>}
       {headerCenter && <div className="absolute left-1/2 top-2.5 z-20 flex -translate-x-1/2 items-center">{headerCenter}</div>}
       {headerActions && <div className="absolute right-12 top-2.5 z-20 flex items-center gap-2">{headerActions}</div>}
