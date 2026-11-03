@@ -6,9 +6,13 @@ messaging. The client-only tab sits immediately before Clinical workspace.
 
 ## Implemented boundary
 
-Messages exist only in component memory and are discarded when leaving the tab
-or reloading. Replies are a fixed, explicitly labeled preview response. The UI
-does not yet call the operational endpoints or a model. No clinical retrieval,
+Chats exist only in portal memory and are discarded on page reload or leaving
+the portal. The history menu can reopen chats across portal tab switches. Replies are a fixed, explicitly labeled preview response. The UI
+does not yet call the operational endpoints or a model. The empty state uses the
+portal schedule and existing authenticated inbox/document-list endpoints for
+next-session information, pending-signature counts, and unread notifications.
+Failed reads remain unavailable rather than implying there is nothing to do.
+No client-side storage or model requests are introduced. No clinical retrieval,
 message persistence, or infrastructure is added. Existing portal sharing
 permissions are unchanged.
 

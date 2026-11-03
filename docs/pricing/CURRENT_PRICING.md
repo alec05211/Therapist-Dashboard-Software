@@ -16,6 +16,11 @@ When the chat runner is connected, budget the tool-selection and final-answer
 model requests, repeated tool schemas/history, returned JSON, maximum tool rounds,
 and retry policy using the selected model's [official OpenAI rates](https://developers.openai.com/api/docs/pricing).
 No model, turn volume, or token budget has been selected for this assistant.
+The assistant empty-state overview also reads the existing inbox and document
+relationships once on opening and on window-focus/inbox-change events, followed
+by one document-list read per authorized relationship. The schedule reuses the
+portal response. These reads add request/query load without model tokens; pricing
+needs observed overview visits, refresh frequency, and relationships per account.
 
 | Input | Working assumption |
 | --- | --- |

@@ -1,0 +1,39 @@
+.engraved {
+  color: var(--text-muted);
+  text-shadow: 0 1px 0 var(--surface-subtle);
+}
+
+.history {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  width: min(calc(100vw - 24px), 360px);
+  max-height: calc(100svh - 24px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 18%);
+  transform-origin: top left;
+  transition: width 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.history::backdrop {
+  background: rgb(0 0 0 / 20%);
+  backdrop-filter: blur(5px);
+}
+
+.historyContent {
+  opacity: 1;
+  transition: opacity 300ms ease-out 150ms;
+}
+
+@starting-style {
+  .history[open] { width: 64px; }
+  .history[open] .historyContent { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history, .historyContent { transition: none; }
+}
