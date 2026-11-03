@@ -6,6 +6,17 @@ This document estimates Auth0 Enterprise, recorded-session processing, and OpenA
 
 ## Planning assumptions
 
+Client assistant operational reads (2026-11-03): two authenticated, bounded
+scheduling/billing endpoints and a local tool-definition/dispatch contract are
+implemented. No model runner or automatic calls are enabled, so existing model
+token tables and totals are unchanged. Reads add API/authentication and PostgreSQL
+query load; incremental cost is unquantified, not assumed zero. Pricing requires
+request frequency, active-client volume, query latency, and deployment capacity.
+When the chat runner is connected, budget the tool-selection and final-answer
+model requests, repeated tool schemas/history, returned JSON, maximum tool rounds,
+and retry policy using the selected model's [official OpenAI rates](https://developers.openai.com/api/docs/pricing).
+No model, turn volume, or token budget has been selected for this assistant.
+
 | Input | Working assumption |
 | --- | --- |
 | Sessions per client | 4 per month; 48 per year. Weekly attendance averaged across 52 weeks costs more. |
