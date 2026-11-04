@@ -1,8 +1,9 @@
 import json
+import io
 import os
 import unittest
 from unittest.mock import MagicMock, patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 from fastapi import HTTPException, Response
 from pydantic import ValidationError
@@ -100,6 +101,56 @@ class ChatRunnerTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     runner.request_response({}, "test")
 
+    def test_output_budget_exhaustion_is_distinguished_without_logging_text(self):
+        response = MagicMock()
+        response.read.return_value = json.dumps({"status": "incomplete",
+            "incomplete_details": {"reason": "max_output_tokens"},
+            "usage": {"input_tokens": 10, "output_tokens": 2048},
+            "output": [{"private": "sensitive material"}]}).encode()
+        with patch.object(runner, "urlopen") as request, self.assertLogs(runner.LOGGER, level="WARNING") as logs:
+            request.return_value.__enter__.return_value = response
+            with self.assertRaises(runner.ChatFailure) as error:
+                runner.request_response({}, "test")
+        self.assertEqual(error.exception.kind, "output_limit")
+        self.assertNotIn("sensitive material", str(logs.output))
+        self.assertIn("2048", str(logs.output))
+
+    def test_provider_http_errors_are_categorized_without_raw_error_messages(self):
+        body = json.dumps({"error": {"code": "unsupported_value", "param": "reasoning.effort", "message": "private request text"}}).encode()
+        error = HTTPError("https://api.openai.com/v1/responses", 400, "Bad request", {}, io.BytesIO(body))
+        with patch.object(runner, "urlopen", side_effect=error), self.assertLogs(runner.LOGGER, level="WARNING") as logs:
+            with self.assertRaises(runner.ChatFailure) as caught:
+                runner.request_response({}, "test-key")
+        self.assertEqual(caught.exception.kind, "configuration")
+        self.assertIn("reasoning.effort", str(logs.output))
+        self.assertNotIn("private request text", str(logs.output))
+        self.assertNotIn("test-key", str(logs.output))
+
+    def test_socket_timeout_is_distinct_from_connection_failure(self):
+        with patch.object(runner, "urlopen", side_effect=TimeoutError("private")):
+            with self.assertRaises(runner.ChatFailure) as caught:
+                runner.request_response({}, "test")
+        self.assertEqual(caught.exception.kind, "timeout")
+
+    def test_exhausted_credits_are_not_reported_as_a_temporary_rate_limit(self):
+        for code in ("credit_balance_exhausted", None):
+            body = json.dumps({"error": {"code": code, "type": "insufficient_quota", "message": "private billing details"}}).encode()
+            error = HTTPError("https://api.openai.com/v1/responses", 429, "Quota", {}, io.BytesIO(body))
+            with patch.object(runner, "urlopen", side_effect=error) as request:
+                with self.assertRaises(runner.ChatFailure) as caught:
+                    runner.request_response({}, "test")
+            self.assertEqual(caught.exception.kind, "provider_quota")
+            self.assertNotIn("try again", str(caught.exception).lower())
+            request.assert_called_once()
+
+    def test_temporary_rate_limit_remains_retryable(self):
+        body = json.dumps({"error": {"code": "rate_limit_exceeded"}}).encode()
+        error = HTTPError("https://api.openai.com/v1/responses", 429, "Rate limit", {}, io.BytesIO(body))
+        with patch.object(runner, "urlopen", side_effect=error):
+            with self.assertRaises(runner.ChatFailure) as caught:
+                runner.request_response({}, "test")
+        self.assertEqual(caught.exception.kind, "provider_rate_limit")
+
 
 class ChatEndpointTests(unittest.TestCase):
     def setUp(self):
@@ -143,6 +194,17 @@ class ChatEndpointTests(unittest.TestCase):
             self.assertEqual(generate.call_args.kwargs["model"], "gpt-5")
             self.assertEqual(generate.call_args.kwargs["authorization"], "trusted")
             self.assertEqual(response.headers["cache-control"], "no-store")
+
+    def test_exhausted_provider_credits_return_service_unavailable(self):
+        payload = api.ChatRequest(messages=[{"role": "user", "content": "Hi"}])
+        with patch.object(api.client_operations, "authorized_read", return_value={"organization_id": "o", "client_id": "c"}), \
+             patch.dict(os.environ, {"OPENAI_API_KEY": "test", "INSIGHTS_MODEL": "gpt-5", "CLIENT_ASSISTANT_MODEL": ""}), \
+             patch.object(api, "generate_reply", side_effect=runner.ChatFailure("provider_quota")):
+            with self.assertRaises(HTTPException) as error:
+                api.chat(payload, Response(), "trusted")
+        self.assertEqual(error.exception.status_code, 503)
+        self.assertEqual(error.exception.detail, runner.ChatFailure.MESSAGES["provider_quota"])
+        self.assertFalse(api._active)
 
     def test_busy_and_rate_limits_release_after_failure(self):
         with api.chat_slot(("o", "a")):

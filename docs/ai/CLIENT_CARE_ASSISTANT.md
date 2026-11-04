@@ -9,7 +9,9 @@ messaging. The client-only tab sits immediately before Clinical workspace.
 Chats exist only in portal memory and are discarded on page reload or leaving
 the portal. The history menu reopens chats across portal tab switches; when empty,
 it shows only New chat under its centered heading. Empty-state information is
-centered, non-interactive text with a shallow engraved treatment in both themes.
+centered, non-interactive, non-selectable text with a shallow embossed treatment
+in both themes. Only an actual next appointment and positive signature/unread
+counts appear; missing data and zero counts produce no placeholder or filler.
 
 The composer posts to `POST /api/client-assistant/chat`, forwarded by the existing
 authenticated Next.js proxy to `POST /client-assistant/chat`. The server calls the
@@ -87,6 +89,13 @@ arbitrary reads. Previous assistant messages are untrusted conversation context.
 
 `store:false` is set on every provider request; response IDs are not used as
 persistent conversations. This does not itself guarantee zero provider retention.
+Failures are categorized as quota, temporary rate limit, configuration, transport,
+timeout, response size, or unfinished output. Provider credit exhaustion returns
+503 with a client-facing service-unavailable message, without suggesting repeated
+retries or exposing practice billing details. Logs record only allowlisted provider
+codes/parameters, HTTP status, safe failure categories and numeric token counts;
+raw provider error messages and response bodies are never logged.
+
 Only model name, call count, and aggregate token counts are logged, without chat
 text, tool payloads, client identifiers, or credentials. Sensitive-data governance
 for real clinical use remains governed by the AI/ML vision; this deployment is a
@@ -120,3 +129,19 @@ of private notes in model inputs. Evaluate attempts to reconstruct notes, prompt
 injection in messages and retrieved material, unsupported claims, diagnosis or
 treatment overreach, scheduling/billing accuracy, crisis escalation behavior,
 and unavailable sources. The assistant must not imply therapist monitoring.
+
+## November 4 runtime diagnosis
+
+Two synthetic requests from the deployed API container (no client data) reached
+OpenAI and returned HTTP 429. The detailed rejection was
+`credit_balance_exhausted`, type `insufficient_quota`, on the deployed `gpt-5`
+configuration. After the account balance was replenished, the same deployed
+request completed successfully in 3.17 seconds (521 input / 179 output tokens). No output budget, model,
+timeout, generation trigger, or retry policy was changed to mask this failure.
+[Official OpenAI error codes](https://developers.openai.com/api/docs/guides/error-codes).
+
+A second live check exercised the deployed full chat runner with a synthetic
+appointment fixture. It invoked `get_scheduling_information`, completed the tool
+continuation, and produced a non-empty reply in two model calls (1,185 input /
+174 output tokens). No client records or conversations were read during either
+verification. Unit tests cover quota-vs-rate-limit classification and redaction.

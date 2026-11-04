@@ -9,7 +9,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from ai_harness.client_assistant import generate_reply
+from ai_harness.client_assistant import ChatFailure, generate_reply
 from database import client_operations
 
 router = APIRouter(tags=["client assistant"])
@@ -77,6 +77,9 @@ def chat(payload: ChatRequest, response: Response, authorization: str | None = H
         try:
             result = generate_reply([message.model_dump() for message in payload.messages],
                 api_key=api_key, model=model, authorization=authorization, authorize=authorize)
+        except ChatFailure as exc:
+            LOGGER.warning("Client assistant request failed kind=%s", exc.kind)
+            raise HTTPException(503 if exc.kind in {"configuration", "provider_quota", "provider_rate_limit", "provider_unavailable"} else 502, str(exc)) from None
         except RuntimeError as exc:
             raise HTTPException(502, "The AI response could not be completed. Please try again.") from exc
     LOGGER.info("Client assistant usage model=%s calls=%s input_tokens=%s output_tokens=%s",

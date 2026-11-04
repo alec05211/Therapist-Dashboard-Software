@@ -14,9 +14,8 @@ async function readJson(url: string, signal: AbortSignal) {
   return response.json();
 }
 
-export function ClientCareAssistant({ appointments, scheduleError, chats, onChatsChange }: {
+export function ClientCareAssistant({ appointments, chats, onChatsChange }: {
   appointments?: Appointment[];
-  scheduleError: boolean;
   chats: AssistantChat[];
   onChatsChange: (chats: AssistantChat[]) => void;
 }) {
@@ -32,7 +31,6 @@ export function ClientCareAssistant({ appointments, scheduleError, chats, onChat
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [unread, setUnread] = useState<number | null>(null);
   const [pending, setPending] = useState<number | null>(null);
-  const [overviewLoaded, setOverviewLoaded] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const history = useRef<HTMLDialogElement>(null);
   const composer = useRef<HTMLInputElement>(null);
@@ -69,7 +67,7 @@ export function ClientCareAssistant({ appointments, scheduleError, chats, onChat
           }));
           if (!signal.aborted) setPending(results.reduce((sum, count) => sum + count, 0));
         }).catch(() => { if (!signal.aborted) setPending(null); }),
-      ]).then(() => { if (!signal.aborted) setOverviewLoaded(true); });
+      ]);
     };
     refresh();
     window.addEventListener("focus", refresh);
@@ -149,19 +147,16 @@ export function ClientCareAssistant({ appointments, scheduleError, chats, onChat
     </header>
 
     {messages.length === 0 ? <div className={`${styles.engraved} mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-7 px-2 py-9 text-center sm:px-5 sm:py-12`}>
-      <div>
+      {upcoming && <div>
         <span className="block text-sm">Next session</span>
-        <span className="mt-1 block text-2xl font-medium tracking-tight sm:text-3xl">{upcoming ? new Date(upcoming.starts_at).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) : scheduleError ? "Schedule unavailable" : appointments ? "Nothing scheduled" : "Loading…"}</span>
-        {upcoming && <span className="mt-2 block text-sm">{new Date(upcoming.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })} · {({ in_person: "In person", video: "Video", phone: "Phone" })[upcoming.meeting_mode]}</span>}
-      </div>
-      <div className="flex flex-col items-center gap-3 text-sm">
-        {!overviewLoaded ? <p role="status">Loading your updates…</p> : <>
-          {pending !== null && pending > 0 && <p>{pending} {pending === 1 ? "document needs" : "documents need"} your signature</p>}
-          {unread !== null && unread > 0 && <p>{unread} unread {unread === 1 ? "notification" : "notifications"}</p>}
-          {pending === 0 && unread === 0 && <p>You’re all caught up.</p>}
-          {(pending === null || unread === null) && <p className="text-xs">Some updates are unavailable.</p>}
-        </>}
-      </div>
+        <span className="mt-1 block text-2xl font-medium tracking-tight sm:text-3xl">{new Date(upcoming.starts_at).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+        <span className="mt-2 block text-sm">{new Date(upcoming.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</span>
+      </div>}
+      {(Boolean(pending) || Boolean(unread)) && <div className="flex flex-col items-center gap-3 text-sm">
+        {pending !== null && pending > 0 && <p>{pending} {pending === 1 ? "document needs" : "documents need"} your signature</p>}
+        {unread !== null && unread > 0 && <p>{unread} unread {unread === 1 ? "notification" : "notifications"}</p>}
+      </div>}
+
     </div> : <div role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions" className="flex-1 space-y-5 px-1 py-7 sm:px-4">
       {messages.map((message, index) => <div key={index} ref={index === messages.length - 1 ? latestMessage : undefined} className={`max-w-2xl text-sm leading-6 ${message.role === "user" ? "ml-auto w-fit rounded-2xl bg-[var(--surface-inset)] px-4 py-2.5" : "text-[var(--text-muted)]"}`}>
         <span className="sr-only">{message.role === "user" ? "You: " : "Assistant: "}</span><p className="whitespace-pre-wrap break-words">{message.text}</p>

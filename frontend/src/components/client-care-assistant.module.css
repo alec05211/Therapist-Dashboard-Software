@@ -1,19 +1,22 @@
 .engraved {
-  color: var(--text-muted);
-  /* A dark upper lip and light lower edge suggest shallow cuts in the surface. */
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  /* A surface-related fill and short opposing edges keep the type quietly embossed. */
+  color: color-mix(in srgb, var(--text-muted) 95%, var(--surface));
   text-shadow:
-    0 -0.6px 0.7px rgb(0 0 0 / 22%),
-    0 1px 0 rgb(255 255 255 / 85%);
+    0 -0.5px 0 rgb(255 255 255 / 85%),
+    0 0.8px 0.7px rgb(0 0 0 / 19%);
 }
 
 :global(html[data-theme="dark"]) .engraved {
   text-shadow:
-    0 -0.8px 1px rgb(0 0 0 / 65%),
-    0 0.8px 0 rgb(255 255 255 / 12%);
+    0 -0.5px 0 rgb(255 255 255 / 10%),
+    0 0.8px 1px rgb(0 0 0 / 65%);
 }
 
 @media (forced-colors: active) {
-  .engraved { text-shadow: none; }
+  .engraved { color: CanvasText; text-shadow: none; }
 }
 
 .history {
