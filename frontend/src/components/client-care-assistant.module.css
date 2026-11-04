@@ -1,6 +1,19 @@
 .engraved {
   color: var(--text-muted);
-  text-shadow: 0 1px 0 var(--surface-subtle);
+  /* A dark upper lip and light lower edge suggest shallow cuts in the surface. */
+  text-shadow:
+    0 -0.6px 0.7px rgb(0 0 0 / 22%),
+    0 1px 0 rgb(255 255 255 / 85%);
+}
+
+:global(html[data-theme="dark"]) .engraved {
+  text-shadow:
+    0 -0.8px 1px rgb(0 0 0 / 65%),
+    0 0.8px 0 rgb(255 255 255 / 12%);
+}
+
+@media (forced-colors: active) {
+  .engraved { text-shadow: none; }
 }
 
 .history {

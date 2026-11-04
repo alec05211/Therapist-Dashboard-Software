@@ -1,20 +1,22 @@
 # Client care assistant scaffold
 
-Status: UI preview, added November 3, 2026. Client participation is the product
+Status: OpenAI chat connected November 4, 2026; hosted demo scope. Client participation is the product
 goal; this is a private client-to-assistant conversation, separate from therapist
 messaging. The client-only tab sits immediately before Clinical workspace.
 
 ## Implemented boundary
 
 Chats exist only in portal memory and are discarded on page reload or leaving
-the portal. The history menu can reopen chats across portal tab switches. Replies are a fixed, explicitly labeled preview response. The UI
-does not yet call the operational endpoints or a model. The empty state uses the
-portal schedule and existing authenticated inbox/document-list endpoints for
-next-session information, pending-signature counts, and unread notifications.
-Failed reads remain unavailable rather than implying there is nothing to do.
-No client-side storage or model requests are introduced. No clinical retrieval,
-message persistence, or infrastructure is added. Existing portal sharing
-permissions are unchanged.
+the portal. The history menu reopens chats across portal tab switches; when empty,
+it shows only New chat under its centered heading. Empty-state information is
+centered, non-interactive text with a shallow engraved treatment in both themes.
+
+The composer posts to `POST /api/client-assistant/chat`, forwarded by the existing
+authenticated Next.js proxy to `POST /client-assistant/chat`. The server calls the
+OpenAI Responses API and returns plain-text replies. The empty state uses the
+portal schedule and existing authenticated inbox/document-list reads. No clinical
+retrieval, message persistence, file uploads, or new infrastructure is added.
+Existing portal sharing permissions are unchanged.
 
 ## Operational read API and harness contract
 
@@ -50,23 +52,45 @@ The HTTP routes and dispatcher call the same read functions. Internal dispatch
 does not need an HTTP round trip. These tools are separate from the clinical
 synthesis harness and cannot retrieve clinical records or modify operational data.
 
-### Connecting the eventual chat runner
+### Live chat runner
 
-Endpoints alone do not make a model aware of tools. The future server-side chat
-runner must pass `INSTRUCTIONS` as instructions and `tool_definitions()` as `tools`
-in its Responses request, with `tool_choice="auto"`. For each returned
-`function_call`, it must dispatch the name/arguments using trusted request auth,
-append the response output items and a `function_call_output` containing the same
-`call_id` and JSON-encoded result, and request the final answer. Tool definitions
-and instructions must remain available on continuation calls. See
+`database/client_assistant.py` authenticates the active client before provider
+access. `ai_harness/client_assistant.py` passes tool definitions and instructions
+on every Responses request, dispatches approved tool requests using server auth,
+and replays response items (including encrypted reasoning) and matching
+`function_call_output` items. This follows
 [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling).
 
-This contract is implemented; the live model runner is not. Before enabling it,
-add request limits, bounded tool rounds/output/history, timeouts, and usage
-accounting. Authentication failures must end the request without returning stale
-or previous-client data. Handle temporary failures with a small sanitized
-unavailable result; never pass raw exceptions, SQL, or credentials to the model.
-No generic URL fetcher, arbitrary SQL, or caller-supplied identity is exposed.
+Configuration uses the existing `OPENAI_API_KEY` runtime environment variable and
+`CLIENT_ASSISTANT_MODEL`, falling back to `INSIGHTS_MODEL`. The hosted deployment
+already configures `INSIGHTS_MODEL=gpt-5`; no new credential or runtime secret is
+needed. Missing configuration returns 503 rather than a fake assistant reply.
+The optional override must support Responses, function calling, and low reasoning.
+
+Limits: 11 input messages, alternating user/assistant and ending with user; 2,000
+characters per user message, 12,000 per assistant message, and 16,000 total
+conversation characters. The browser sends a bounded recent history. Each turn
+allows at most three model requests and two sequential tool reads. The last
+request disables tools. Each provider request caps output at 2,048 tokens and
+uses a 20-second socket timeout, 120 KB request bound and 256 KB response bound.
+There are no automatic retries. The browser times out after 90 seconds; aborting
+or leaving the tab does not guarantee cancellation of an already-running provider
+request or its charges. Failed sends restore the draft for an explicit retry.
+
+Per process, enforce 20 attempts per client per 10 minutes, one active turn per
+client, and eight globally active turns. Limits reset on process restart; multiple
+API replicas require a shared limiter before scaling. Authorization is rechecked
+before every provider call and tool read. Authentication failures end the turn;
+temporary operational failures become sanitized unavailable results, never empty
+records or zero balances. Unknown tool names and extra arguments cannot execute
+arbitrary reads. Previous assistant messages are untrusted conversation context.
+
+`store:false` is set on every provider request; response IDs are not used as
+persistent conversations. This does not itself guarantee zero provider retention.
+Only model name, call count, and aggregate token counts are logged, without chat
+text, tool payloads, client identifiers, or credentials. Sensitive-data governance
+for real clinical use remains governed by the AI/ML vision; this deployment is a
+hosted demo and does not add access to private clinical records.
 
 ## Future context and provider connection
 
@@ -84,12 +108,10 @@ from the authenticated client's identity. Do not accept a browser-supplied clien
 identity as authorization. Changes to appointments or payments are outside this
 initial scope. Answers must distinguish unavailable data from empty records.
 
-The existing server-side OpenAI integration is the intended provider boundary;
-no browser credentials or direct browser-to-provider requests. Before connecting,
-define approved sensitive-data handling, retention/deletion, consent, message
-limits, model choice, and client-facing safety behavior. Update CURRENT_PRICING.md
-with model rates, bounded context, turn-volume assumptions, and retry limits in
-the same change that enables requests.
+The model receives only submitted chat history and approved operational tool
+results. A future clinical context packet requires separate approved sensitive-data
+handling, consent, retention/deletion rules, and source-sharing checks. No prompt
+can grant access to the clinical record through the current tool registry.
 
 ## Validation before live use
 

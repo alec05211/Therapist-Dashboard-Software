@@ -1,4 +1,4 @@
-"""Tool contract for a future client chat runner. This module makes no model calls."""
+"""Tool contract for the client chat runner. This module makes no model calls."""
 import json
 
 from database import client_operations

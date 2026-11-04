@@ -28,6 +28,7 @@ from database import speaker_identification
 from database import document_workflow
 from database import insurance_cards
 from database import client_operations
+from database import client_assistant
 from database import synthesis_refresh
 from database import client_diagnostics
 from database.clinical_synthesis_worker import process_one as process_one_clinical_synthesis
@@ -43,6 +44,7 @@ app = FastAPI()
 app.include_router(document_workflow.router)
 app.include_router(insurance_cards.router)
 app.include_router(client_operations.router)
+app.include_router(client_assistant.router)
 # Kept explicit so Uvicorn's local reload watcher reloads the application
 # boundary when authentication behavior changes during development.
 load_dotenv(Path(__file__).with_name(".env"))

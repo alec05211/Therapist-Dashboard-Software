@@ -6,21 +6,9 @@ This document estimates Auth0 Enterprise, recorded-session processing, and OpenA
 
 ## Planning assumptions
 
-Client assistant operational reads (2026-11-03): two authenticated, bounded
-scheduling/billing endpoints and a local tool-definition/dispatch contract are
-implemented. No model runner or automatic calls are enabled, so existing model
-token tables and totals are unchanged. Reads add API/authentication and PostgreSQL
-query load; incremental cost is unquantified, not assumed zero. Pricing requires
-request frequency, active-client volume, query latency, and deployment capacity.
-When the chat runner is connected, budget the tool-selection and final-answer
-model requests, repeated tool schemas/history, returned JSON, maximum tool rounds,
-and retry policy using the selected model's [official OpenAI rates](https://developers.openai.com/api/docs/pricing).
-No model, turn volume, or token budget has been selected for this assistant.
-The assistant empty-state overview also reads the existing inbox and document
-relationships once on opening and on window-focus/inbox-change events, followed
-by one document-list read per authorized relationship. The schedule reuses the
-portal response. These reads add request/query load without model tokens; pricing
-needs observed overview visits, refresh frequency, and relationships per account.
+Client assistant (enabled 2026-11-04): operational reads and interactive OpenAI
+requests are priced separately from the session-synthesis tables below. See the
+client-assistant budget at the end of this document.
 
 | Input | Working assumption |
 | --- | --- |
@@ -138,3 +126,45 @@ Normal Astra usage is assumed at every session length below to isolate the effec
 Fleet totals use unrounded component costs. For the lengthy-session scenario of **100 clients, four 90-minute sessions each month**, the priced usage subtotal is **$4,152.72/month**, or **$49,832.64/year** at unchanged volume and rates.
 
 **Full monthly operating total = $4,152.72 + A + H + E**, where `A` is the monthly Auth0 Enterprise contract cost, `H` is hosting/storage/operations, and `E` is extra generations, retries, and other excluded usage. Per client, divide that full total by 100. A final all-in dollar total remains pending the Auth0 quote and infrastructure sizing.
+
+## Client assistant chat: additive budget (verified November 4, 2026)
+
+The chat uses `CLIENT_ASSISTANT_MODEL`, falling back to `INSIGHTS_MODEL`; the
+hosted demo currently sets the latter to `gpt-5`. Published GPT-5 standard rates
+are $1.25/M input tokens, $10/M output tokens, and $0.125/M cached input tokens.
+[Official GPT-5 pricing](https://developers.openai.com/api/docs/models/gpt-5).
+The model is marked deprecated in the official documentation; this change reuses
+the existing deployment configuration. Availability is account-dependent and must
+be verified in the deployed environment. Reprice any configured model override.
+
+Assumptions: 40 user turns/client/month, standard service, uncached input, no
+regional uplift, and output figures including reasoning tokens. These are planning
+estimates, not measured usage. Each user message triggers a model call; a tool
+request adds a continuation call with prior output and the tool result. User
+history, instructions, and tool schemas are billed as input on each call.
+
+| Turn scenario | Model calls | Total input tokens | Total output tokens | Cost/turn | 40 turns/month |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| No tools | 1 | 1,000 | 400 | $0.00525 | $0.21 |
+| One operational read | 2 | 2,500 | 550 | $0.008625 | $0.345 |
+| Two operational reads | 3 | 4,500 | 700 | $0.012625 | $0.505 |
+
+These costs are **additional** to session synthesis; no conversation mix is assumed
+and the session-synthesis totals are unchanged. Actual history growth and reasoning
+can exceed these estimates. Runtime limits are three model calls and two tool
+reads per turn, with 2,048 output tokens per call (6,144 maximum output tokens,
+$0.06144 output-only at GPT-5 rates, plus input). This is not a total-cost ceiling:
+input is bounded by characters/serialized bytes rather than exact token counts.
+No automatic retry is made. Explicit retries, aborted browser requests, failed or
+incomplete provider responses can still incur charges. Usage logging records
+aggregate tokens/call count without chat or tool content. There are no hosted
+search, file-storage, or container tools in this chat path.
+
+Reads add API/authentication and PostgreSQL query load, not zero infrastructure
+cost. The empty-state overview reads inbox and document relationships on opening
+and focus/inbox-change events, plus one document-list read per relationship;
+schedule data reuses the portal response. Incremental infrastructure cost remains
+unquantified pending observed request counts, query latency, active-client volume,
+and capacity. No new storage, credentials, retention, or infrastructure is added.
+Rate limits are process-local (20 attempts/client/10 minutes, one active turn per
+client, eight globally); distributed scaling would require pricing a shared limiter.
