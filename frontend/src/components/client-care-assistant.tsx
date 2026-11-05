@@ -6,7 +6,7 @@ import styles from "./client-care-assistant.module.css";
 
 export type AssistantChat = { id: string; title: string; messages: { role: "user" | "assistant"; text: string }[] };
 type Relationship = { organizationId: string; clientId: string; practitionerId: string };
-const circle = "grid size-10 shrink-0 cursor-grab place-items-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition-colors duration-200 hover:bg-[var(--surface-inset)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)] active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50";
+const circle = `${styles.embossedButton} grid size-11 shrink-0 cursor-grab place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--text-muted)] transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-[var(--border-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)] active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50`;
 
 async function readJson(url: string, signal: AbortSignal) {
   const response = await fetch(url, { cache: "no-store", signal });
@@ -139,20 +139,20 @@ export function ClientCareAssistant({ appointments, chats, onChatsChange }: {
     }
   }
 
-  return <section aria-label="Care assistant" className="flex min-h-[min(480px,65svh)] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
+  return <section aria-label="Care assistant" className="flex min-h-[min(680px,74svh)] flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
     <header className="flex items-center justify-between gap-3">
       <button ref={trigger} type="button" aria-label="Open chat history" aria-haspopup="dialog" aria-expanded={menuOpen} aria-controls={`${id}-history`} onClick={openHistory} disabled={sending} className={circle}>
         <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M5 7h14M5 12h10M5 17h14" /></svg>
       </button>
     </header>
 
-    {messages.length === 0 ? <div className={`${styles.engraved} mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-7 px-2 py-9 text-center sm:px-5 sm:py-12`}>
+    {messages.length === 0 ? <div className={`${styles.debossed} mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-9 px-2 py-12 text-center sm:px-5 sm:py-16`}>
       {upcoming && <div>
-        <span className="block text-sm">Next session</span>
-        <span className="mt-1 block text-2xl font-medium tracking-tight sm:text-3xl">{new Date(upcoming.starts_at).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
-        <span className="mt-2 block text-sm">{new Date(upcoming.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</span>
+        <span className="block text-base">Next session</span>
+        <span className="mt-1.5 block text-3xl font-medium tracking-tight sm:text-4xl">{new Date(upcoming.starts_at).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+        <span className="mt-2.5 block text-base">{new Date(upcoming.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</span>
       </div>}
-      {(Boolean(pending) || Boolean(unread)) && <div className="flex flex-col items-center gap-3 text-sm">
+      {(Boolean(pending) || Boolean(unread)) && <div className="flex flex-col items-center gap-3 text-base">
         {pending !== null && pending > 0 && <p>{pending} {pending === 1 ? "document needs" : "documents need"} your signature</p>}
         {unread !== null && unread > 0 && <p>{unread} unread {unread === 1 ? "notification" : "notifications"}</p>}
       </div>}
@@ -167,7 +167,7 @@ export function ClientCareAssistant({ appointments, chats, onChatsChange }: {
     {chatError && <p role="alert" className="px-4 pb-3 text-sm text-red-700">{chatError}</p>}
     <form onSubmit={submit} className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] p-1.5 pl-5 focus-within:border-[var(--border-strong)]">
       <input ref={composer} aria-label="Message care assistant" aria-describedby={`${id}-notice`} readOnly={sending} value={draft} onChange={event => setDraft(event.target.value)} maxLength={2000} placeholder="Message…" className="h-10 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[var(--text-muted)] sm:text-sm" />
-      <button type="submit" disabled={sending || !draft.trim()} aria-label="Send message" title="Send message" className="grid size-10 shrink-0 cursor-grab place-items-center rounded-full bg-[var(--accent-strong)] text-white transition-colors hover:bg-[var(--accent-strong-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)] active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">
+      <button type="submit" disabled={sending || !draft.trim()} aria-label="Send message" title="Send message" className={`${styles.embossedButton} grid size-11 shrink-0 cursor-grab place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--accent-strong)] transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-[var(--border-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)] active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70`}>
         <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m-6 6 6-6 6 6" /></svg>
       </button>
     </form>

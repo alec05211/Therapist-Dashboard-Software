@@ -1,22 +1,68 @@
-.engraved {
+.debossed {
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
-  /* A surface-related fill and short opposing edges keep the type quietly embossed. */
-  color: color-mix(in srgb, var(--text-muted) 95%, var(--surface));
+  /* A surface-related fill with a dark upper edge and light lower edge reads as letterpress. */
+  color: color-mix(in srgb, var(--text-muted) 74%, var(--surface));
   text-shadow:
-    0 -0.5px 0 rgb(255 255 255 / 85%),
-    0 0.8px 0.7px rgb(0 0 0 / 19%);
+    0 -1px 1px rgb(0 0 0 / 27%),
+    0 1px 1px rgb(255 255 255 / 78%);
 }
 
-:global(html[data-theme="dark"]) .engraved {
+:global(html[data-theme="dark"]) .debossed {
+  color: color-mix(in srgb, var(--text-muted) 72%, var(--surface));
   text-shadow:
-    0 -0.5px 0 rgb(255 255 255 / 10%),
-    0 0.8px 1px rgb(0 0 0 / 65%);
+    0 -1px 1px rgb(0 0 0 / 78%),
+    0 1px 1px rgb(255 255 255 / 12%);
+}
+
+.embossedButton {
+  box-shadow:
+    -3px -3px 7px rgb(255 255 255 / 82%),
+    4px 4px 9px rgb(82 75 66 / 18%),
+    inset 0 1px 0 rgb(255 255 255 / 64%);
+}
+
+.embossedButton:hover:not(:disabled) {
+  background: var(--surface);
+  box-shadow:
+    -4px -4px 9px rgb(255 255 255 / 88%),
+    5px 5px 11px rgb(82 75 66 / 22%),
+    inset 0 1px 0 rgb(255 255 255 / 70%);
+  transform: translateY(-1px);
+}
+
+.embossedButton:active:not(:disabled) {
+  background: var(--surface-inset);
+  box-shadow:
+    inset 2px 2px 5px rgb(82 75 66 / 20%),
+    inset -2px -2px 4px rgb(255 255 255 / 62%);
+  transform: translateY(0);
+}
+
+:global(html[data-theme="dark"]) .embossedButton {
+  box-shadow:
+    -3px -3px 7px rgb(255 255 255 / 5%),
+    4px 4px 10px rgb(0 0 0 / 46%),
+    inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+:global(html[data-theme="dark"]) .embossedButton:hover:not(:disabled) {
+  box-shadow:
+    -4px -4px 9px rgb(255 255 255 / 7%),
+    5px 5px 12px rgb(0 0 0 / 52%),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
+:global(html[data-theme="dark"]) .embossedButton:active:not(:disabled) {
+  box-shadow:
+    inset 2px 2px 6px rgb(0 0 0 / 58%),
+    inset -2px -2px 5px rgb(255 255 255 / 6%);
 }
 
 @media (forced-colors: active) {
-  .engraved { color: CanvasText; text-shadow: none; }
+  .debossed { color: CanvasText; text-shadow: none; }
+  .embossedButton { box-shadow: none; }
 }
 
 .history {
