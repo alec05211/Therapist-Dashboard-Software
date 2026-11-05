@@ -65,8 +65,15 @@ The clinical overview is always fully readable. Each synthesis section starts wi
 its identifier and colon, followed by single-line white topic cards. A short,
 newly worded section summary stays visible below without a fade or height clamp.
 Summaries are generated with the topic analyses in the same coordinated request,
-limited to 280 characters per populated kind, and must not concatenate topic
-sentences or introduce new interpretations. Older snapshots use a label-based
+limited to 600 characters per populated kind. With multiple topics, use a compact
+high-level explanation (normally two or three sentences) that explains every
+topic and their supported connections or differences. Preserve uncertainty and
+open questions without turning the summary into a list of labels, a generic
+teaser, or a repetition of topic sentences. The coordinated response includes an
+explicit index and exact summary phrase for each topic; validation rejects
+missing topics, cross-section coverage, duplicate coverage, absent phrases, and
+copied prose. This structural check does not prove semantic faithfulness; clinician
+review remains necessary. Summaries must not introduce new interpretations. Older snapshots use a label-based
 orientation until the next ordinary background refresh; viewing never generates.
 
 Expanding moves each topic card along the straight vector from its measured

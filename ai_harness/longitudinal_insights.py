@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
 
-INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v4"
+INSIGHTS_GENERATOR_VERSION = "coordinated-analysis-v5"
 INSIGHT_KINDS = {"trajectory", "theme", "open_thread", "relevant_history"}
 
 
@@ -86,10 +86,23 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
                 "type": "array", "minItems": 1, "maxItems": 4,
                 "items": {
                     "type": "object", "additionalProperties": False,
-                    "required": ["kind", "summary"],
+                    "required": ["kind", "summary", "topic_coverage"],
                     "properties": {
                         "kind": {"type": "string", "enum": sorted(kinds)},
-                        "summary": {"type": "string", "minLength": 1, "maxLength": 280},
+                        "summary": {"type": "string", "minLength": 1, "maxLength": 600},
+                        "topic_coverage": {
+                            "type": "array", "minItems": 1, "maxItems": 2,
+                            "items": {
+                                "type": "object", "additionalProperties": False,
+                                "required": ["topic_index", "phrase"],
+                                "properties": {
+                                    "topic_index": {"type": "integer", "minimum": 0, "maximum": 7,
+                                        "description": "Zero-based index in the complete items array of the topic explained by this summary phrase."},
+                                    "phrase": {"type": "string", "minLength": 1, "maxLength": 600,
+                                        "description": "Exact contiguous phrase from this section summary explaining this topic at a high level."},
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -115,7 +128,7 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     }
 
 
-def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False) -> list[str]:
+def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False) -> list[str]:
     violations: list[str] = []
     allowed_ids = {source["evidence_id"] for source in evidence}
     kinds: set[str] = set()
@@ -213,9 +226,34 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     violations.append("section summaries must cover each populated kind exactly once")
                     continue
                 summary_kinds.add(kind)
-                if not isinstance(summary, str) or not summary.strip() or len(summary) > 280:
-                    violations.append(f"section {kind} summary must contain 1 to 280 characters")
+                if not isinstance(summary, str) or not summary.strip() or len(summary) > 600:
+                    violations.append(f"section {kind} summary must contain 1 to 600 characters")
                     continue
+                coverage = section.get("topic_coverage")
+                if require_summary_coverage or coverage is not None:
+                    expected_topics = {index for index, item in enumerate(items)
+                                       if isinstance(item, dict) and item.get("kind") == kind}
+                    covered: set[int] = set()
+                    coverage_phrases: set[str] = set()
+                    if not isinstance(coverage, list):
+                        violations.append(f"section {kind} summary needs explicit coverage of every topic")
+                    else:
+                        for link in coverage:
+                            if not isinstance(link, dict):
+                                violations.append(f"section {kind} summary coverage is invalid")
+                                continue
+                            index, phrase = link.get("topic_index"), link.get("phrase")
+                            if type(index) is not int or index not in expected_topics or index in covered:
+                                violations.append(f"section {kind} summary must cover each of its topics exactly once")
+                            elif not isinstance(phrase, str) or not phrase.strip() or phrase not in summary:
+                                violations.append(f"section {kind} summary coverage phrase is absent")
+                            elif " ".join(phrase.casefold().split()) in coverage_phrases:
+                                violations.append(f"section {kind} summary reuses the same explanation for different topics")
+                            else:
+                                covered.add(index)
+                                coverage_phrases.add(" ".join(phrase.casefold().split()))
+                        if covered != expected_topics:
+                            violations.append(f"section {kind} summary must cover each of its topics exactly once")
                 normalized = " ".join(summary.casefold().split())
                 for item in items:
                     if not isinstance(item, dict) or item.get("kind") != kind:
@@ -298,10 +336,17 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
             "Keep prose free of Markdown and manually inserted links. Prefer multiple sessions for trajectories "
             "and recurring themes. Open threads are unresolved questions, not treatment instructions. "
             "Write section_summaries after planning the topic paragraphs: exactly one summary for each populated kind. "
-            "Use one brief, newly worded sentence (at most 280 characters) that orients the therapist to the section's "
-            "shared focus or tension, based only on its topic analyses. Do not concatenate, quote, or paraphrase each "
-            "topic in turn; do not introduce new clinical claims or omit uncertainty. Keep detail and evidence in the "
-            "topic paragraphs. Omit summaries for empty sections. "
+            "Write a compact high-level explanation, not a generic teaser or list of labels: name what EVERY topic "
+            "is about, why it belongs in this section, and how the topics connect or differ where supported. "
+            "For multiple topics, normally use two or three sentences (about 45-80 words, at most 600 characters); "
+            "for one topic use a shorter explanation without padding. Do not let a shared theme erase a distinct "
+            "topic. Retain clinically meaningful uncertainty, contrasts, and open questions. Explain in fresh "
+            "language rather than quoting or stitching together topic paragraphs; do not introduce new clinical "
+            "claims, diagnoses, recommendations, or unsupported causal connections. Leave examples and evidence "
+            "details in the paragraphs. Supply topic_coverage for EVERY item of this kind: its zero-based index "
+            "in the complete items array and an exact summary phrase that meaningfully explains that topic. "
+            "Use coverage to self-check that a reader understands all topics without expanding the section. "
+            "Omit summaries for empty sections. "
             "Before returning, review the complete document for repeated points and consolidate them."
 
         ),
@@ -311,7 +356,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
         raise RuntimeError("Insight request exceeds the bounded input limit.")
     generated, response_data = _request_structured_response(payload, api_key)
-    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True)
+    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True)
     repair_attempt = 0
     while violations and repair_attempt < 3:
         repair_attempt += 1
@@ -337,7 +382,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         if len(json.dumps(repair_payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
             raise RuntimeError("Insight repair request exceeds the bounded input limit.")
         generated, response_data = _request_structured_response(repair_payload, api_key)
-        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True)
+        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True)
     if violations:
         error = RuntimeError("OpenAI output did not satisfy the longitudinal evidence contract after three repairs: " + "; ".join(violations))
         error.generated_response = generated

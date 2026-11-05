@@ -14,6 +14,8 @@
   --text-muted: #6b665f;
   --accent-text: #465c4b;
   --accent-surface: #eaf2eb;
+  --accent-surface-hover: #dfeae0;
+  --accent-border: #a7c0ab;
   --accent-strong: #465c4b;
   --accent-strong-hover: #36483a;
   --document-action-bg: #57534e;
@@ -51,6 +53,8 @@ html[data-theme="dark"] {
   --text-muted: #c0bab3;
   --accent-text: #c7ddca;
   --accent-surface: #22372a;
+  --accent-surface-hover: #2b4533;
+  --accent-border: #71977a;
   /* Remains dark enough for the existing white primary-button labels. */
   --accent-strong: #4e6b54;
   --accent-strong-hover: #5c7a62;
@@ -91,15 +95,15 @@ html[data-theme="dark"] .hover\:bg-stone-200:hover { background-color: #45413c; 
 .bg-emerald-50 { background-color: var(--accent-surface); }
 .bg-emerald-800 { background-color: var(--accent-strong); }
 .bg-emerald-900, .hover\:bg-emerald-900:hover { background-color: var(--accent-strong-hover); }
-.hover\:bg-emerald-50:hover { background-color: #dfeae0; }
-.border-emerald-300 { border-color: #a7c0ab; }
+.hover\:bg-emerald-50:hover { background-color: var(--accent-surface-hover); }
+.border-emerald-300 { border-color: var(--accent-border); }
 .border-emerald-700 { border-color: var(--accent-strong); }
 .ring-emerald-700 { --tw-ring-color: var(--accent-strong); }
 .focus-visible\:outline-emerald-700:focus-visible { outline-color: var(--accent-strong); }
 .accent-emerald-700, .accent-emerald-800 { accent-color: var(--accent-strong); }
 
-html[data-theme="dark"] .hover\:bg-emerald-50:hover { background-color: #2b4533; }
-html[data-theme="dark"] .border-emerald-300 { border-color: #71977a; }
+html[data-theme="dark"] .hover\:bg-emerald-50:hover { background-color: var(--accent-surface-hover); }
+html[data-theme="dark"] .border-emerald-300 { border-color: var(--accent-border); }
 html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
 
 .collapsed-content-preview {

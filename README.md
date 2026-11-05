@@ -1,54 +1,7 @@
-# Therapist-Dashboard-Software
-Therapist Sidekick is an all-in-one digital platform designed to reduce the administrative and cognitive overhead associated with managing a psychotherapy practice.
+# Therapist Sidekick
 
-## Project direction and architecture
+Therapist Sidekick brings session recording, transcript review, clinical documentation, and practice management into one therapist-controlled workspace. The [product vision](docs/product/PROJECT_VISION.md) sets its direction, while the [design language](docs/design/DESIGN_LANGUAGE.md) guides the interface.
 
-- [Documentation index](docs/README.md)
-- [Networking: DNS, HTTPS, EC2, and RDS](docs/networking/REQUEST_FLOW.md)
-- [Product vision](docs/product/PROJECT_VISION.md)
-- [Hosted deployment architecture and readiness gate](docs/deployment/HOSTED_DEPLOYMENT_ARCHITECTURE.md)
-- [AI / ML vision](docs/ai/AI_ML_VISION.md)
-- [Current HealthScribe implementation](docs/ai/HEALTHSCRIBE.md)
+[Amazon HealthScribe](docs/ai/HEALTHSCRIBE.md) provides transcription and draft notes. Following the [AI/ML vision](docs/ai/AI_ML_VISION.md), a [shared clinical context](docs/ai/harness/SHARED_CLINICAL_CONTEXT.md) connects transcript discovery and coordinated Insights synthesis to accepted evidence, finalized notes, and clinician review decisions. The [generation lifecycle](docs/ai/harness/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md) explains how validated Insights feed read-only pre-session briefs, and [request examples](docs/ai/harness/REQUEST_EXAMPLES.md) illustrate the evidence-linked workflow.
 
-## HealthScribe microphone recorder
-
-This starter records from the browser microphone and sends the resulting file to
-Amazon HealthScribe for asynchronous transcription and draft clinical-note
-generation. The original recording plus HealthScribe's raw transcript, raw
-clinical note, and UI-ready transcript are saved together in a local session
-folder under `recordings`.
-
-1. Apply the Terraform infrastructure and add the three `HEALTHSCRIBE_*` values
-   from `terraform output` to your local `.env` file. See
-   [the startup guide](docs/deployment/startup.md).
-2. Sign in to AWS IAM Identity Center and select the Terraform profile:
-
-   ```powershell
-   aws sso login --profile terraform
-   $env:AWS_PROFILE = "terraform"
-   ```
-
-3. Create and activate a Python virtual environment, then install dependencies:
-
-   ```powershell
-   py -m venv .venv
-   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-   .\.venv\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   ```
-
-   The execution-policy command lasts only for the current PowerShell window.
-   You can also avoid activation entirely by using
-   `./.venv/Scripts/python.exe -m pip install -r requirements.txt`.
-
-4. Start the local server:
-
-   ```powershell
-   uvicorn server:app --reload
-   ```
-4. Visit `http://127.0.0.1:8000`, allow microphone access, and click **Record**. The button changes to **Stop**; stopping it displays the transcript.
-
-Each recording is saved locally in the `recordings` folder and is available for
-playback or download after processing. HealthScribe's generated content is a
-draft and must be reviewed before use. Treat this folder as sensitive client data
-and protect it accordingly.
+Use the [startup guide](docs/deployment/startup.md) to run the project. The [deployment architecture](docs/deployment/HOSTED_DEPLOYMENT_ARCHITECTURE.md), [storage architecture](docs/data/storage-architecture/STORAGE_ARCHITECTURE.md), and [networking walkthrough](docs/networking/REQUEST_FLOW.md) explain the infrastructure; the [documentation index](docs/README.md) covers additional features and implementation guides.

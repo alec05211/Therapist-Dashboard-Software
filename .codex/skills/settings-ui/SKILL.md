@@ -6,6 +6,7 @@ description: Create or refine settings and permissions interfaces in Therapist D
 # Settings UI
 
 Read `docs/product/PROJECT_VISION.md` and `docs/design/DESIGN_LANGUAGE.md` before changing settings.
+Always apply the design language to settings work: reuse `SettingsLayout` for the layered Client Care composition, use the shared semantic palette variables, and follow its viewport-first layout and scrollbar guidance. Read the reference on every settings task rather than relying on remembered styling.
 
 ## Interaction model
 

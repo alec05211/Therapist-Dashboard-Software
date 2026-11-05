@@ -9,7 +9,13 @@ Before proposing, planning, or implementing AI/ML, transcription, diarization, c
 
 Before changing draft-note finalization, Insights regeneration, synthesis queues, or pre-session brief generation, read `docs/ai/harness/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md`. Treat it as the source of truth for the approved generation hierarchy and refresh triggers: Insights is the primary longitudinal synthesis environment, and pre-session briefs are background-generated, read-only condensations of a validated Insights snapshot.
 
+## Pricing documentation maintenance
+
+Treat `docs/pricing/CURRENT_PRICING.md` as the living cost reference. Whenever an architecture, infrastructure, provider, model, prompt/context size, generation trigger, retry policy, storage/retention, or authentication change affects pricing or usage, update that document in the same change. Recalculate affected tables and totals, record assumptions and the verification date, and cite official vendor pricing. Distinguish published rates, planning estimates, and quote-only or unpriced costs; never count unknown costs as zero. If the impact cannot yet be quantified, document the cost driver and the information needed to price it.
+
 ## Interaction style
+
+Before proposing, implementing, or reviewing interface design, read and apply `docs/design/DESIGN_LANGUAGE.md`. It is the shared visual reference for all product UI. For settings work, also use `.codex/skills/settings-ui/SKILL.md`.
 
 The product owner prefers a grab-hand cursor for most directly manipulable or clickable interface elements. Use `cursor-grab` (and `active:cursor-grabbing`) by default for new interactive controls where it does not conflict with a more meaningful state such as disabled, waiting, or text entry.
 

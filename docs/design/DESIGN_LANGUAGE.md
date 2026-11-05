@@ -27,6 +27,83 @@ Light mode uses a light-gray broad-section layer rather than stark white; it mus
 
 ## Boundaries, elevation, and shape
 
+### Reference composition: Client Care Settings
+
+Use `frontend/src/components/settings-layout.tsx` (`SettingsLayout`), as consumed by
+`client-care-settings.tsx`, as the canonical layered-card composition. Reuse the
+component for settings; carry its surface hierarchy into other workspace panels
+without forcing category navigation into unrelated workflows.
+
+The effect is tonal layering, not a CSS gradient: a quiet neutral backcard sits on
+the page canvas, and a lighter bordered content card sits inside it. Category
+navigation rests directly on the backcard. A muted evergreen selection gives the
+active category a small, deliberate color cue. Borders define the layers; the
+content card's soft shadow provides only a little lift. Keep the current treatment;
+future refinements may reduce tonal contrast slightly while preserving readable
+boundaries in both themes. Do not add decorative gradients to reproduce it.
+
+- Backcard: `--settings-backcard`, `rounded-2xl`, 1px standard border,
+  12px padding/gap on small screens and 16px on desktop.
+- Content card: `--surface`, `rounded-xl`, 1px standard border, `shadow-sm`,
+  16px padding increasing to 24px from the small breakpoint.
+- Desktop navigation: 208px alongside a flexible `minmax(0, 1fr)` content column.
+  Narrow screens place the categories above the card.
+- Inner controls use the same neutral surface family and restrained dividers;
+  avoid adding a new card around every row.
+
+### Shared primary and accent palette
+
+The palette is already centralized in `frontend/src/app/globals.css`: `:root`
+defines light values and `html[data-theme="dark"]` overrides them. Keep this as
+the single implementation source; do not create per-component palettes.
+
+| Palette role | CSS variable | Light | Dark | Intended use |
+| --- | --- | --- | --- | --- |
+| Primary evergreen | `--accent-strong` | `#465c4b` | `#4e6b54` | Primary actions and strong selection |
+| Accent 2: quiet tint | `--accent-surface` | `#eaf2eb` | `#22372a` | Selected or softly colored substrate |
+| Accent 3: deeper tint | `--accent-surface-hover` | `#dfeae0` | `#2b4533` | Hover on a tinted substrate |
+| Accent 4: soft boundary | `--accent-border` | `#a7c0ab` | `#71977a` | Colored borders and restrained graphic accents |
+
+Use the existing `--accent-strong-hover` for primary-button hover and
+`--accent-text` for readable evergreen text. These are semantic roles, not four
+unrelated brand colors. Any brand-colored substrate must use these shared accent
+variables; ordinary cards remain neutral using the surface variables. Status
+colors such as recording red, warning amber, and destructive/error red retain
+their meaning and must not be replaced by evergreen or used decoratively.
+
+Access tokens directly with CSS `var(--accent-surface)` or Tailwind
+`bg-[var(--accent-surface)]`, `border-[var(--accent-border)]`, and
+`text-[var(--accent-text)]`. Existing emerald utility mappings remain compatible;
+prefer explicit semantic variables for new styling. Never assume a tint is suitable
+for body text or that `--accent-text` can replace a button fill.
+
+## Viewport-first layout and scrollbars
+
+Always design to avoid scrollbars and minimize the need for vertical scrolling.
+Make the current task's primary content and actions mostly visible in the initial
+desktop viewport. Achieve this through composition rather than hiding overflow:
+
+- Use category navigation, tabs, compact aligned rows, and responsive columns to
+  present one coherent task at a time. Reduce redundant headings and helper copy
+  before reducing useful content or comfortable spacing.
+- Collapse secondary detail behind explicit disclosures; reuse
+  `CollapsibleContentPanel` for content previews. Keep critical decisions, errors,
+  and primary actions discoverable without opening unrelated sections.
+- Avoid fixed-height cards with internal scrolling and nested vertical scroll
+  containers. Let ordinary content flow; long transcripts, calendars, expanded
+  detail, small screens, and zoom may still require scrolling.
+- Avoid visible scrollbar chrome on deliberately scrollable internal surfaces
+  when practical, while preserving wheel, touch, and keyboard access. Provide a
+  clear overflow cue or navigation controls when hidden scrollbars would conceal
+  discoverability. Never use global `overflow: hidden`, clipping, tiny type, or
+  inaccessible offscreen controls to satisfy the visual preference.
+- Check a compact desktop viewport (such as 1366 x 768), narrow mobile, and 200%
+  zoom. Ensure every field, expanded section, validation message, and action remains
+  reachable. Accessibility and complete content take priority when scrolling is
+  necessary; a scrollbar-free appearance alone does not count as a compact layout.
+
+## General surface rules
+
 - Use a `1px` divider for independent cards, fieldsets, selected rows, and structural separators. Do not rely solely on `shadow-sm` to define a component in light mode.
 - Use soft shadows only as secondary depth cues on raised cards and dialogs; borders carry the primary separation.
 - Prefer `rounded-xl` for contained controls and content groups; use `rounded-2xl` for primary panels and workspace sections. Keep the radius family consistent within a component.

@@ -49,7 +49,7 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertEqual(context["claims"][1]["phrase"], "named its effect")
 
     def analytical_document(self):
-        return {'overview': 'A cautious overview.', 'section_summaries': [{'kind': 'open_thread', 'summary': 'An emerging shift remains an open question for review.'}], 'items': [{
+        return {'overview': 'A cautious overview.', 'section_summaries': [{'kind': 'open_thread', 'summary': 'An emerging shift remains an open question for review.', 'topic_coverage': [{'topic_index': 0, 'phrase': 'An emerging shift'}]}], 'items': [{
             'kind': 'open_thread', 'label': 'A possible shift',
             'analysis': 'This may reflect greater tolerance of uncertainty, although persistence remains unclear.',
             'analysis_claims': [{'phrase': 'greater tolerance of uncertainty', 'occurrence': 0,
@@ -117,8 +117,37 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
 
     def test_section_summary_length_is_bounded(self):
         document = self.analytical_document()
-        document['section_summaries'][0]['summary'] = 'x' * 281
-        self.assertIn('280 characters', '; '.join(validate_response(document, self.evidence, set())))
+        document['section_summaries'][0]['summary'] = 'x' * 601
+        self.assertIn('600 characters', '; '.join(validate_response(document, self.evidence, set())))
+
+    def test_multi_topic_summary_requires_meaningful_phrase_for_every_topic(self):
+        document = self.analytical_document()
+        document['items'].append({**document['items'][0], 'label': 'Receiving care',
+                                 'analysis': 'Receiving help may still feel unfamiliar.',
+                                 'analysis_claims': [{'phrase': 'Receiving help', 'occurrence': 0, 'evidence_ids': ['e-1']}]})
+        section = document['section_summaries'][0]
+        self.assertIn('each of its topics', '; '.join(validate_response(
+            document, self.evidence, set(), require_summary_coverage=True)))
+        section['summary'] += ' Receiving support remains unfamiliar alongside that change.'
+        section['topic_coverage'].append({'topic_index': 1, 'phrase': 'Receiving support remains unfamiliar'})
+        self.assertEqual(validate_response(document, self.evidence, set(), require_summary_coverage=True), [])
+        section['topic_coverage'][1]['phrase'] = 'A phrase that is absent'
+        self.assertIn('coverage phrase is absent', '; '.join(validate_response(
+            document, self.evidence, set(), require_summary_coverage=True)))
+
+    def test_summary_cannot_reuse_one_phrase_to_hide_a_second_topic(self):
+        document = self.analytical_document()
+        document['items'].append({**document['items'][0], 'label': 'A second topic'})
+        document['section_summaries'][0]['topic_coverage'].append({'topic_index': 1, 'phrase': 'An emerging shift'})
+        self.assertIn('reuses the same explanation', '; '.join(validate_response(
+            document, self.evidence, set(), require_summary_coverage=True)))
+
+    def test_summary_cannot_claim_coverage_of_a_different_section(self):
+        document = self.analytical_document()
+        document['items'].append({**document['items'][0], 'kind': 'theme', 'analysis': 'A separate interpretation.'})
+        document['section_summaries'][0]['topic_coverage'].append({'topic_index': 1, 'phrase': 'An emerging shift'})
+        self.assertIn('each of its topics', '; '.join(validate_response(
+            document, self.evidence, set(), require_summary_coverage=True)))
 
     def test_duplicate_document_is_repaired_with_all_sections_in_context(self):
         document = self.analytical_document()
