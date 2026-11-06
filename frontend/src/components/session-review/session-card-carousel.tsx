@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import type { Appointment, SessionProcessingState, TranscriptListItem } from "@/lib/types";
 
 export type SessionCard = {
@@ -11,6 +11,7 @@ export type SessionCard = {
   isProcessing?: boolean;
   clinicalNoteStatus?: TranscriptListItem["clinical_note_status"];
   pendingClaimCount?: number;
+  durationSeconds?: number | null;
 };
 
 type Props = {
@@ -33,6 +34,7 @@ function sessionCards(transcripts: TranscriptListItem[], appointments: Appointme
     isAvailable: true,
     clinicalNoteStatus: transcript.clinical_note_status,
     pendingClaimCount: transcript.pending_claim_count,
+    durationSeconds: transcript.transcript_duration_seconds,
   }));
   const placeholders = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed" || item.id === processingAppointmentId).map(item => ({
     id: item.id,
@@ -40,6 +42,7 @@ function sessionCards(transcripts: TranscriptListItem[], appointments: Appointme
     date: new Date(item.starts_at),
     isAvailable: false,
     isProcessing: item.id === processingAppointmentId,
+    durationSeconds: (new Date(item.ends_at).getTime() - new Date(item.starts_at).getTime()) / 1000,
   }));
   return [...available, ...placeholders].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
@@ -53,20 +56,18 @@ export function nextScheduledSession(transcripts: TranscriptListItem[], appointm
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 
+const desktopCardsQuery = "(min-width: 1024px)";
+const subscribeToCardWidth = (onChange: () => void) => {
+  const query = window.matchMedia(desktopCardsQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const hasDesktopCards = () => window.matchMedia(desktopCardsQuery).matches;
+
 function CalendarIcon() {
   return (
     <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v4m8-4v4M4 10h14M10 20H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v5m-4 9 1-4 5-5 3 3-5 5-4 1Zm4-7 3 3" />
-    </svg>
-  );
-}
-
-function PendingClaimsIcon() {
-  return (
-    <svg aria-hidden="true" className="size-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="8.5" cy="8.5" r="6" />
-      <path d="m13 13 4.5 4.5M4.5 8.5c2-3 6-3 8 0-2 3-6 3-8 0Z" />
-      <circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -76,7 +77,8 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const cardWidth = "((100cqw - 48px) / 3.4)";
+  const desktopCards = useSyncExternalStore(subscribeToCardWidth, hasDesktopCards, () => false);
+  const cardWidth = desktopCards ? "((100cqw - 48px) / 4.8)" : "max(140px, (100cqw - 48px) / 3.4)";
   const trackOffset = `calc(50cqw - ${cardWidth} / 2 - ${centerIndex} * (${cardWidth} + 12px))`;
   const canMoveOlder = cards.length > 0 && centerIndex > 0;
   const canMoveNewer = cards.length > 0 && centerIndex < cards.length - 1;
@@ -95,18 +97,18 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
   return (
     <section className="session-history-carousel relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Session history">
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      <div className="relative -mx-5 mt-10">
+      <div className="relative -mx-5">
         <div className="session-carousel-viewport overflow-hidden" style={{ containerType: "inline-size" }}>
           {cards.length === 0 ? <div className="mx-5 flex min-h-28 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 px-4 pt-7 text-sm text-stone-600">No sessions scheduled yet.</div> : <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset})`, transition: hasInteracted ? undefined : "none" }}>
             {cards.map((card, index) => {
-              const isReadable = Math.abs(index - centerIndex) <= 1;
-              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative flex min-h-32 min-w-0 shrink-0 flex-col justify-center rounded-xl border px-5 py-9 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
+              const isReadable = Math.abs(index - centerIndex) <= (desktopCards ? 2 : 1);
+              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative flex min-h-40 min-w-0 shrink-0 flex-col justify-center rounded-xl border px-5 pb-8 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
               {card.isProcessing ? <span aria-hidden="true" className="absolute right-5 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
               <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--accent-text)] sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
-              <span className="mt-0.5 block truncate text-[11px] font-normal text-stone-600 sm:text-xs">{formatDate(card.date)}</span>
-              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="absolute right-5 top-3 flex items-center gap-2 text-[10px] font-medium text-[var(--accent-text)] sm:text-xs">
+              <span className="mt-0.5 block text-[11px] font-normal text-stone-600 sm:text-xs">{formatDate(card.date)}</span>{Number.isFinite(card.durationSeconds) && (card.durationSeconds ?? 0) > 0 ? <span className="mt-0.5 block text-[11px] font-normal tabular-nums text-stone-600 sm:text-xs" title={card.isAvailable ? "Approximate duration through the last transcribed passage" : "Estimated duration based on booked time"}>~{Math.max(1, Math.round(card.durationSeconds! / 60))}m</span> : null}
+              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="absolute right-5 top-3 flex flex-col items-end gap-0.5 text-[10px] font-medium text-[var(--accent-text)] sm:text-xs">
                 {card.clinicalNoteStatus !== undefined && card.clinicalNoteStatus !== "finalized" ? <span className="font-medium italic tracking-wide text-red-700" title="Clinical note awaiting finalization"><span aria-hidden="true">DRAFT</span><span className="sr-only">Draft clinical note awaiting finalization</span></span> : null}
-                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><PendingClaimsIcon /><span aria-hidden="true">{card.pendingClaimCount}</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
+                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><span aria-hidden="true">{card.pendingClaimCount} to review</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
               </span> : null}
             </button>})}
           </div>}
@@ -118,7 +120,7 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
       <button type="button" onClick={() => move(1)} disabled={!canMoveNewer} className="session-carousel-edge session-carousel-edge--newer group absolute inset-y-0 right-0 z-10 flex w-[12%] min-w-14 cursor-grab items-center justify-end pr-3 text-stone-700 active:cursor-grabbing disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700" aria-label="Show more recent sessions">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`relative z-10 size-7 transition-transform duration-200 ease-out motion-reduce:transition-none ${canMoveNewer ? "group-hover:scale-110 group-focus-visible:scale-110" : "opacity-30"}`}><path d="m9 18 6-6-6-6" /></svg>
       </button>
-      <div className="pointer-events-none absolute inset-x-5 top-3 z-20 flex items-start justify-between gap-4">
+      <div className="pointer-events-none absolute inset-x-5 top-1 z-20 flex items-start justify-between gap-4">
         <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
         {onEditSchedule && <button type="button" onClick={onEditSchedule} aria-label="Edit session schedule" title="Edit session dates and recurring schedule" className="pointer-events-auto inline-flex size-9 cursor-grab items-center justify-center rounded-xl border border-stone-300 bg-stone-100 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon /></button>}
       </div>

@@ -40,6 +40,7 @@ export type TranscriptListItem = {
   created_at: string;
   clinical_note_status?: "draft" | "reviewed" | "finalized" | "superseded" | null;
   pending_claim_count?: number;
+  transcript_duration_seconds?: number | null;
 };
 
 export type Appointment = {

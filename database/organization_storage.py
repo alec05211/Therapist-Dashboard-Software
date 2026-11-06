@@ -134,6 +134,13 @@ def completed_jobs(context):
         cursor.execute("""SELECT job.runtime_id AS id,
                 COALESCE(job.storage->>'label', 'Uploaded session') AS label,
                 note.status AS clinical_note_status,
+                (SELECT max(segment.ends_at_seconds)::double precision
+                 FROM app.transcript_segments segment
+                 WHERE segment.transcript_version_id=(
+                     SELECT id FROM app.transcript_versions
+                     WHERE session_id=session.id AND organization_id=job.organization_id AND client_id=job.client_id
+                     ORDER BY version_number DESC LIMIT 1
+                 )) AS transcript_duration_seconds,
                 (SELECT count(*) FROM app.client_journey_entries entry
                  WHERE entry.session_id=session.id AND entry.organization_id=job.organization_id
                    AND entry.client_id=job.client_id AND entry.status='proposed') AS pending_claim_count,

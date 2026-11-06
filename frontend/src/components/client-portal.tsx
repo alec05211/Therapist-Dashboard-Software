@@ -43,7 +43,7 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     const timer = window.setInterval(load, 60000);
     return () => { active = false; window.removeEventListener("focus", load); window.clearInterval(timer); };
   }, []);
-  const carouselSessions = (portal?.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "" }));
+  const carouselSessions = (portal?.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "", transcript_duration_seconds: session.segments?.reduce((end, segment) => Math.max(end, segment.end), 0) }));
   const scheduled = chosenScheduled ?? (!selectedId ? nextScheduledSession(carouselSessions, portal?.appointments ?? []) : null);
   const latestSession = portal?.sessions?.[0];
   const selectedSession = portal?.sessions?.find(session => session.id === selectedId) ?? latestSession;
