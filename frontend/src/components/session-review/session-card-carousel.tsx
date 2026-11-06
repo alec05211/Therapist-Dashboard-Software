@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { api } from "@/lib/api";
 import type { Appointment, SessionProcessingState, TranscriptListItem } from "@/lib/types";
 
 export type SessionCard = {
@@ -24,6 +25,7 @@ type Props = {
   onEditSchedule?: () => void;
   processingSession?: { appointmentId: string; state: SessionProcessingState } | null;
   audience?: "therapist" | "client";
+  clientId?: string;
 };
 
 function sessionCards(transcripts: TranscriptListItem[], appointments: Appointment[] = [], processingAppointmentId?: string): SessionCard[] {
@@ -34,7 +36,7 @@ function sessionCards(transcripts: TranscriptListItem[], appointments: Appointme
     isAvailable: true,
     clinicalNoteStatus: transcript.clinical_note_status,
     pendingClaimCount: transcript.pending_claim_count,
-    durationSeconds: transcript.transcript_duration_seconds,
+    durationSeconds: transcript.recording_duration_seconds,
   }));
   const placeholders = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed" || item.id === processingAppointmentId).map(item => ({
     id: item.id,
@@ -72,7 +74,27 @@ function CalendarIcon() {
   );
 }
 
-export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule, processingSession, audience = "client" }: Props) {
+function RecordingDuration({ card, clientId, visible }: { card: SessionCard; clientId?: string; visible: boolean }) {
+  const key = `${clientId ?? "client"}/${card.id}`;
+  const [result, setResult] = useState<{ key: string; duration: number | null }>({ key: "", duration: null });
+  const savedDuration = card.durationSeconds;
+  useEffect(() => {
+    if (!visible || (Number.isFinite(savedDuration) && (savedDuration ?? 0) > 0)) return;
+    let current = true;
+    void api.getRecordingDuration(card.id, clientId).then(data => {
+      if (current) setResult({ key, duration: data.recording_duration_seconds });
+    }).catch(() => { if (current) setResult({ key, duration: null }); });
+    return () => { current = false; };
+  }, [card.id, clientId, visible, savedDuration, key]);
+  const duration = savedDuration ?? (result.key === key ? result.duration : null);
+  if (!Number.isFinite(duration) || (duration ?? 0) <= 0) {
+    return <span className="mt-0.5 block text-[11px] text-stone-600 sm:text-xs">{result.key === key ? "Duration unavailable" : "Duration…"}</span>;
+  }
+  const seconds = Math.round(duration!);
+  return <span className="mt-0.5 block text-[11px] font-normal tabular-nums text-stone-600 sm:text-xs" title="Recording duration">{Math.floor(seconds / 60)}m {String(seconds % 60).padStart(2, "0")}s</span>;
+}
+
+export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule, processingSession, audience = "client", clientId }: Props) {
   const cards = useMemo(() => sessionCards(transcripts, appointments, processingSession?.appointmentId), [transcripts, appointments, processingSession?.appointmentId]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
@@ -102,13 +124,13 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
           {cards.length === 0 ? <div className="mx-5 flex min-h-28 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 px-4 pt-7 text-sm text-stone-600">No sessions scheduled yet.</div> : <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset})`, transition: hasInteracted ? undefined : "none" }}>
             {cards.map((card, index) => {
               const isReadable = Math.abs(index - centerIndex) <= (desktopCards ? 2 : 1);
-              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative flex min-h-40 min-w-0 shrink-0 flex-col justify-center rounded-xl border px-5 pb-8 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
+              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative flex min-h-32 min-w-0 shrink-0 flex-col justify-center rounded-xl border px-5 pb-4 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
               {card.isProcessing ? <span aria-hidden="true" className="absolute right-5 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
               <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--accent-text)] sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
-              <span className="mt-0.5 block text-[11px] font-normal text-stone-600 sm:text-xs">{formatDate(card.date)}</span>{Number.isFinite(card.durationSeconds) && (card.durationSeconds ?? 0) > 0 ? <span className="mt-0.5 block text-[11px] font-normal tabular-nums text-stone-600 sm:text-xs" title={card.isAvailable ? "Approximate duration through the last transcribed passage" : "Estimated duration based on booked time"}>~{Math.max(1, Math.round(card.durationSeconds! / 60))}m</span> : null}
+              <span className="mt-0.5 block text-[11px] font-normal text-stone-600 sm:text-xs">{formatDate(card.date)}</span>{card.isAvailable ? <RecordingDuration card={card} clientId={clientId} visible={isReadable} /> : Number.isFinite(card.durationSeconds) && (card.durationSeconds ?? 0) > 0 ? <span className="mt-0.5 block text-[11px] font-normal tabular-nums text-stone-600 sm:text-xs" title="Estimated duration based on booked time">~{Math.max(1, Math.round(card.durationSeconds! / 60))}m</span> : null}
               {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="absolute right-5 top-3 flex flex-col items-end gap-0.5 text-[10px] font-medium text-[var(--accent-text)] sm:text-xs">
                 {card.clinicalNoteStatus !== undefined && card.clinicalNoteStatus !== "finalized" ? <span className="font-medium italic tracking-wide text-red-700" title="Clinical note awaiting finalization"><span aria-hidden="true">DRAFT</span><span className="sr-only">Draft clinical note awaiting finalization</span></span> : null}
-                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><span aria-hidden="true">{card.pendingClaimCount} to review</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
+                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${card.pendingClaimCount} passages with pending evidence claims`}><span aria-hidden="true">{card.pendingClaimCount} to review</span><span className="sr-only">{card.pendingClaimCount} passages with pending evidence claims</span></span> : null}
               </span> : null}
             </button>})}
           </div>}
@@ -120,7 +142,7 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
       <button type="button" onClick={() => move(1)} disabled={!canMoveNewer} className="session-carousel-edge session-carousel-edge--newer group absolute inset-y-0 right-0 z-10 flex w-[12%] min-w-14 cursor-grab items-center justify-end pr-3 text-stone-700 active:cursor-grabbing disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700" aria-label="Show more recent sessions">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`relative z-10 size-7 transition-transform duration-200 ease-out motion-reduce:transition-none ${canMoveNewer ? "group-hover:scale-110 group-focus-visible:scale-110" : "opacity-30"}`}><path d="m9 18 6-6-6-6" /></svg>
       </button>
-      <div className="pointer-events-none absolute inset-x-5 top-1 z-20 flex items-start justify-between gap-4">
+      <div className="pointer-events-none absolute inset-x-5 top-6 z-20 flex items-start justify-between gap-4">
         <h2 className="text-base font-bold tracking-tight text-stone-900">Session History</h2>
         {onEditSchedule && <button type="button" onClick={onEditSchedule} aria-label="Edit session schedule" title="Edit session dates and recurring schedule" className="pointer-events-auto inline-flex size-9 cursor-grab items-center justify-center rounded-xl border border-stone-300 bg-stone-100 text-xs font-bold text-stone-700 shadow-sm hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><CalendarIcon /></button>}
       </div>

@@ -13,7 +13,7 @@ import type { Appointment } from "@/lib/types";
 
 type Portal = {
   permissions: Record<"can_view_session_history" | "can_view_shared_transcripts" | "can_view_insights" | "can_view_draft_notes" | "can_play_shared_recordings" | "can_view_prescriptions", boolean>;
-  sessions?: { id: string; label: string; created_at?: string; recording_url?: string; segments?: { speaker: string; text: string; start: number; end: number }[]; draft_note?: { name: string; items: string[] }[] }[];
+  sessions?: { id: string; label: string; created_at?: string; recording_duration_seconds?: number | null; recording_url?: string; segments?: { speaker: string; text: string; start: number; end: number }[]; draft_note?: { name: string; items: string[] }[] }[];
   appointments?: Appointment[];
   insights?: string[];
 };
@@ -43,7 +43,7 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
     const timer = window.setInterval(load, 60000);
     return () => { active = false; window.removeEventListener("focus", load); window.clearInterval(timer); };
   }, []);
-  const carouselSessions = (portal?.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "", transcript_duration_seconds: session.segments?.reduce((end, segment) => Math.max(end, segment.end), 0) }));
+  const carouselSessions = (portal?.sessions ?? []).map(session => ({ id: session.id, label: session.label, created_at: session.created_at ?? "", text: "", recording_duration_seconds: session.recording_duration_seconds }));
   const scheduled = chosenScheduled ?? (!selectedId ? nextScheduledSession(carouselSessions, portal?.appointments ?? []) : null);
   const latestSession = portal?.sessions?.[0];
   const selectedSession = portal?.sessions?.find(session => session.id === selectedId) ?? latestSession;

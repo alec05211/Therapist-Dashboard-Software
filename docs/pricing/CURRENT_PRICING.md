@@ -6,6 +6,20 @@ This document estimates Auth0 Enterprise, recorded-session processing, and OpenA
 
 ## Planning assumptions
 
+Recording-duration metadata (2026-11-06): new uploads measure the existing local
+audio without another provider call. Visible legacy session cards can lazily
+retrieve their catalogued, version-pinned recording once to measure duration;
+the derived seconds are saved in existing RDS job metadata, and temporary audio
+is removed after measurement. Concurrent first reads may duplicate retrievals.
+This adds S3 GET requests, possible KMS decrypt requests, transfer/retrieval
+charges where applicable, and bounded local FFprobe CPU work. Existing table
+totals do not include this one-time backfill: quantify it using the number and
+sizes of uncached recordings, storage classes, hosting Region and transfer path,
+concurrent cold reads, and measured probe time. Unknown backfill cost is not
+treated as zero. No model, HealthScribe, retention-policy, or instance-size change
+is introduced. Cost drivers verified against [official S3 pricing](https://aws.amazon.com/s3/pricing/)
+on 2026-11-06; no new per-unit rate is assumed here.
+
 Client assistant (enabled 2026-11-04): operational reads and interactive OpenAI
 requests are priced separately from the session-synthesis tables below. See the
 client-assistant budget at the end of this document.

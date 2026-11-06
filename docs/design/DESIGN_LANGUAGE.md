@@ -227,6 +227,17 @@ pointer and keyboard interaction until the carousel moves them into view. Its
 schedule action remains above the right edge as the only separately interactive
 boundary, using a calendar/edit icon with an accessible label and hover description.
 
+Session cards show a green state label, a smaller regular-weight gray date, and
+duration beneath the date. Completed duration comes from the recording and shows
+minutes and seconds; scheduled duration remains a booked-time estimate such as
+`~50m`. Never substitute the final transcript timestamp for recording length.
+Therapist-only `to review` counts match distinct passages highlighted for pending
+evidence review in the current transcript, rather than proposal-record counts:
+one proposal may cite several passages. Hide this count when none remain and
+hide the red italic draft label independently when the latest note is finalized.
+The heading and scheduling control overlay the outer cards with a small inset
+below their top boundary; retain symmetric outer top and bottom padding.
+
 Document grids begin with a slightly compact upload tile, when authorized,
 matching the document preview ratio and footer height. Download controls appear
 on card hover or keyboard focus and use theme-aware gray surfaces and icons so

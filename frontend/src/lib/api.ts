@@ -37,6 +37,10 @@ function normalizeTranscript(transcript: Transcript, clientId: string): Transcri
 
 export const api = {
   listTranscripts: (clientId: string) => request<TranscriptListItem[]>(`/transcripts?${clientQuery(clientId)}`),
+  getRecordingDuration: (id: string, clientId?: string) => request<{ recording_duration_seconds: number | null }>(
+    clientId ? `/transcripts/${encodeURIComponent(id)}/recording-duration?${clientQuery(clientId)}`
+      : `/client-portal/sessions/${encodeURIComponent(id)}/recording-duration`, { cache: "no-store" },
+  ),
   getTranscript: async (id: string, clientId: string) => normalizeTranscript(
     await request<Transcript>(`/transcripts/${encodeURIComponent(id)}?${clientQuery(clientId)}`), clientId,
   ),

@@ -4,6 +4,7 @@ Callers must authorize a client context before calling these functions. Bucket
 names and keys are resolved here, never accepted from a browser request.
 """
 import hashlib
+import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -12,6 +13,7 @@ from psycopg.types.json import Json
 
 from database.connection import connect
 from database import session_review
+from database.audio_metadata import recording_duration
 
 
 def session_prefix(client_id, session_id):
@@ -134,16 +136,18 @@ def completed_jobs(context):
         cursor.execute("""SELECT job.runtime_id AS id,
                 COALESCE(job.storage->>'label', 'Uploaded session') AS label,
                 note.status AS clinical_note_status,
-                (SELECT max(segment.ends_at_seconds)::double precision
-                 FROM app.transcript_segments segment
-                 WHERE segment.transcript_version_id=(
+                (job.storage->>'recording_duration_seconds')::double precision AS recording_duration_seconds,
+                (SELECT count(DISTINCT segment.id)
+                 FROM app.client_journey_entries entry
+                 JOIN app.client_journey_evidence evidence ON evidence.journey_entry_id=entry.id
+                 JOIN app.transcript_segments segment ON segment.id=evidence.transcript_segment_id
+                 WHERE entry.session_id=session.id AND entry.organization_id=job.organization_id
+                   AND entry.client_id=job.client_id AND entry.status='proposed'
+                   AND segment.transcript_version_id=(
                      SELECT id FROM app.transcript_versions
                      WHERE session_id=session.id AND organization_id=job.organization_id AND client_id=job.client_id
                      ORDER BY version_number DESC LIMIT 1
-                 )) AS transcript_duration_seconds,
-                (SELECT count(*) FROM app.client_journey_entries entry
-                 WHERE entry.session_id=session.id AND entry.organization_id=job.organization_id
-                   AND entry.client_id=job.client_id AND entry.status='proposed') AS pending_claim_count,
+                 )) AS pending_claim_count,
                 COALESCE(appointment.starts_at, session.started_at, job.created_at) AS created_at
             FROM app.session_storage_jobs job
             JOIN app.sessions session ON session.id=job.session_id
@@ -187,7 +191,33 @@ def put_artifact(storage, path, artifact_type, key, content_type, source='applic
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
             (storage['organization_id'], storage['client_id'], storage['session_id'], artifact_type, source,
              storage['bucket'], key, result.get('VersionId'), content_type, len(body), hashlib.sha256(body).hexdigest(), storage['kms_key_arn']))
-        return str(cursor.fetchone()['id'])
+        artifact_id = str(cursor.fetchone()['id'])
+        if artifact_type == 'audio_recording':
+            duration = recording_duration(path)
+            if duration is not None:
+                _save_recording_duration(cursor, storage, duration)
+        return artifact_id
+
+
+def _save_recording_duration(cursor, storage, duration):
+    cursor.execute("""UPDATE app.session_storage_jobs
+        SET storage=jsonb_set(storage, '{recording_duration_seconds}', to_jsonb(%s::double precision))
+        WHERE runtime_id=%s AND session_id=%s AND organization_id=%s AND client_id=%s""",
+        (duration, storage['runtime_id'], storage['session_id'], storage['organization_id'], storage['client_id']))
+
+
+def get_recording_duration(storage):
+    """Lazily measure a legacy recording; only derived length is persisted."""
+    cached = storage.get('recording_duration_seconds')
+    if isinstance(cached, (int, float)) and cached > 0:
+        return cached
+    with tempfile.TemporaryDirectory(prefix='session-duration-') as directory:
+        path = restore_artifact(storage, Path(storage['audio_key']).name, directory)
+        duration = recording_duration(path)
+    if duration is not None:
+        with connect() as connection, connection.cursor() as cursor:
+            _save_recording_duration(cursor, storage, duration)
+    return duration
 
 
 def publish_results(storage, directory, segments, clinical_note, raw_transcript=None, raw_note=None):

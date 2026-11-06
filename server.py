@@ -1138,7 +1138,8 @@ def shared_session_materials(context, permissions):
         data = organization_storage.session_review.read_result(job["storage"]) if needs_clinical_material else {}
         data = data or {}
         session_id = job["runtime_id"]
-        item = {"id": session_id, "label": job["label"], "created_at": job["created_at"].isoformat()}
+        item = {"id": session_id, "label": job["label"], "created_at": job["created_at"].isoformat(),
+                "recording_duration_seconds": job["storage"].get("recording_duration_seconds")}
         if permissions["can_view_shared_transcripts"]:
             item["segments"] = [{"speaker": data.get("speakers", {}).get(segment.get("speaker"), segment.get("speaker", "")), "text": segment.get("text", ""), "start": segment.get("start", 0), "end": segment.get("end", 0)} for segment in data.get("segments", [])]
         if permissions["can_play_shared_recordings"] and permissions["can_view_shared_transcripts"]:
@@ -1195,6 +1196,24 @@ def shared_session_recording(session_id: str, authorization: str | None = Header
     except (FileNotFoundError, BotoCoreError, ClientError) as exc:
         raise HTTPException(status_code=404, detail="Shared recording not found.") from exc
     return FileResponse(path, media_type=AUDIO_MIME_TYPES.get(path.suffix.lower(), "application/octet-stream"), filename=filename, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/client-portal/sessions/{session_id}/recording-duration")
+def shared_session_recording_duration(session_id: str, authorization: str | None = Header(default=None)):
+    with connect() as connection:
+        context = resolve_sharing_context(connection, authorization)
+        job = organization_storage.find_job(context, session_id)
+        if not job or job['status'] != 'COMPLETED':
+            raise HTTPException(status_code=404, detail="Session not found.")
+    return recording_duration_response(job)
+
+
+def recording_duration_response(job):
+    try:
+        duration = organization_storage.get_recording_duration(job['storage'])
+    except (FileNotFoundError, BotoCoreError, ClientError, OSError):
+        raise HTTPException(status_code=503, detail="Recording duration is unavailable.") from None
+    return {"recording_duration_seconds": duration}
 
 
 @app.middleware("http")
@@ -2196,6 +2215,14 @@ def transcript(session_id: str, request: Request = None):
     data = json.loads(path.read_text(encoding="utf-8"))
     data["recording_url"] = f"/recordings/{session_id}/{data['audio']['file']}"
     return data
+
+
+@app.get("/transcripts/{session_id}/recording-duration")
+def session_recording_duration(session_id: str, request: Request):
+    job = getattr(request.state, 'storage_job', None)
+    if not job or job['status'] != 'COMPLETED':
+        raise HTTPException(status_code=404, detail="Session not found.")
+    return recording_duration_response(job)
 
 
 @app.get("/transcripts/{session_id}/status")
