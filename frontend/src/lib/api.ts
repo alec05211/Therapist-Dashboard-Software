@@ -12,6 +12,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new ApiError(data.detail || "The request could not be completed.", response.status);
   }
 
+  if (options?.method && options.method !== "GET" && /\/(note-draft|note-versions\/[^/]+\/finalize|journey-entries\/[^/?]+)(\?|$)/.test(path)) {
+    window.dispatchEvent(new Event("session-materials-changed"));
+  }
+
   return data as T;
 }
 

@@ -347,11 +347,18 @@ revealed.
   disclosure behavior, and internal surfaces remain unchanged; the parent card
   communicates that they are facets of the same generated synthesis.
   The metrics panel uses short inline value/label typography, includes accepted
-  evidence with a latest-session delta, and retains a compact theme-recurrence
-  view that compares each
-  current theme by distinct cited sessions and cited record moments. Its bars
-  show relative evidence coverage for navigation, not severity or clinical
-  importance. These are record-navigation counts rather than clinical scores. A
+  evidence with a latest-session delta, and a compact theme-by-session matrix.
+  Each session is a narrow vertical pill: evergreen with + for supporting
+  citations, red with − for contrasting citations, red with ± when both exist,
+  and neutral gray for context-only or uncited sessions. Gray never establishes
+  absence or resolution. Cited pills open the existing evidence inspector.
+  Rows sort by distinct supporting sessions, then saved display order; recurrence
+  is evidence coverage rather than clinical importance. Columns use session-record
+  dates, oldest first, without visible session labels or numbering. Keep pill
+  columns vertically aligned across wrapped theme labels using shared grid rows.
+  Hovering or focusing a column reveals its timestamp above the matrix. Show the
+  latest 12 columns; full-height blurred edge chevrons move six columns at a time
+  through longer histories, matching the session carousel interaction. A
   longitudinal overview follows, then evidence-linked sections for trajectory,
   recurring themes, open threads, and client context. Keep proposed evidence
   review in the transcript rather than repeating session observations in

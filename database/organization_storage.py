@@ -133,10 +133,19 @@ def completed_jobs(context):
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute("""SELECT job.runtime_id AS id,
                 COALESCE(job.storage->>'label', 'Uploaded session') AS label,
+                note.status AS clinical_note_status,
+                (SELECT count(*) FROM app.client_journey_entries entry
+                 WHERE entry.session_id=session.id AND entry.organization_id=job.organization_id
+                   AND entry.client_id=job.client_id AND entry.status='proposed') AS pending_claim_count,
                 COALESCE(appointment.starts_at, session.started_at, job.created_at) AS created_at
             FROM app.session_storage_jobs job
             JOIN app.sessions session ON session.id=job.session_id
             LEFT JOIN app.appointments appointment ON appointment.id=session.appointment_id
+            LEFT JOIN LATERAL (
+                SELECT status FROM app.clinical_note_versions
+                WHERE session_id=session.id AND organization_id=job.organization_id AND client_id=job.client_id
+                ORDER BY version_number DESC LIMIT 1
+            ) note ON true
             WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
             ORDER BY COALESCE(appointment.starts_at, session.started_at, job.created_at) DESC""",
             (context['organization_id'], context['client_id']))

@@ -8,18 +8,22 @@
     {
       "number": 1,
       "title": "The amount that kept changing",
-      "focus": "Owen gives several versions of his weekly alcohol use and notices the urge to secure reassurance.",
-      "possible_movement": "He agrees to a formal substance-use and medical assessment.",
+      "focus": "Brief answers gradually reveal uncertain quantities, more frequent drinking, and a need for prompt qualified medical assessment.",
+      "possible_movement": "Owen agrees to a same-day medical call with Jeremy present; subsequent attendance remains unconfirmed until reported.",
       "carry_forward": "Gather accurate history without punitive framing.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-01-the-amount-that-kept-changing.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 2,
       "title": "The drive home",
       "focus": "They address the driving episode directly and assess current access and likelihood of recurrence.",
-      "possible_movement": "Owen gives his partner the spare keys and defines alternatives.",
-      "carry_forward": "Use the no-driving plan immediately.",
-      "status": "outline_only"
+      "possible_movement": "Owen reveals he retains his own keys despite his partner holding the spare, and arranges a handoff to his brother.",
+      "carry_forward": "Confirm the key handoff and safe transport; do not count an intention as a completed safeguard.",
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-02-the-drive-home.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 3,
@@ -27,31 +31,39 @@
       "focus": "Owen describes drinking to sleep and waking unrefreshed.",
       "possible_movement": "The therapist avoids medical advice beyond scope and coordinates evaluation.",
       "carry_forward": "Attend the medical appointment.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-03-sleep-is-not-the-whole-story.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 4,
       "title": "Five o'clock without a job",
       "focus": "A daily cue emerges when the workday used to end.",
-      "possible_movement": "Owen builds external structure and contacts his sibling before the usual first drink.",
+      "possible_movement": "After missing specialist assessment, Owen requests another appointment and proposes two calls before the usual drinking cue.",
       "carry_forward": "Test the alternate routine twice.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-04-five-oclock-without-a-job.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 5,
       "title": "The promise his partner no longer trusts",
-      "focus": "His partner responds cautiously to another declaration of change.",
+      "focus": "His partner remains cautious. Owen corrects the earlier timeline: concealed drinking preceded the layoff.",
       "possible_movement": "Owen practices acknowledging impact without demanding immediate trust.",
       "carry_forward": "Share actions rather than guarantees.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-05-the-promise-his-partner-no-longer-trusts.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 6,
       "title": "Craving and the long evening",
       "focus": "A difficult interview increases urge and self-criticism.",
-      "possible_movement": "He uses an agreed support and leaves the cue-rich environment.",
+      "possible_movement": "Owen reports using a library when support was unavailable Friday, then discloses drinking Saturday; progress and unresolved needs coexist.",
       "carry_forward": "Review which supports were effective.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-06-craving-and-the-long-evening.txt",
+      "audio_status": "not_generated"
     },
     {
       "number": 7,
@@ -85,5 +97,18 @@
       "carry_forward": "Continue the appropriate level of care.",
       "status": "outline_only"
     }
-  ]
+  ],
+  "character_direction": {
+    "updated": "2026-11-06",
+    "presentation": "Quiet, reserved, melancholy; short answers, hesitant pauses, slow and uneven disclosure. No diagnostic inference from delivery.",
+    "client_voice": "Orus",
+    "therapist": "Jeremy Heartwell",
+    "therapist_voice": "Sadaltager",
+    "draft_scope": "Sessions 1-6 are condensed fictional conversations in six continuous parts, not timed full-length recordings. Sessions 7-10 remain outlines.",
+    "audio_priority": [
+      1,
+      2,
+      6
+    ]
+  }
 }

@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { TextLoadingSkeleton } from "@/components/text-loading-skeleton";
 import { ApiError, api } from "@/lib/api";
-import type { BriefEvidence, ClientJourneyEntry, InsightsRefreshStatus, LongitudinalRecordContext, PersistedInsightSnapshot } from "@/lib/types";
+import type { BriefEvidence, ClientJourneyEntry, InsightsRefreshStatus, LongitudinalRecordContext, PersistedInsightSnapshot, TranscriptListItem } from "@/lib/types";
 
 type Props = {
   onViewEvidence: (evidence: BriefEvidence) => void;
   recordContext?: LongitudinalRecordContext;
+  sessions?: TranscriptListItem[];
 };
 
 type InsightItem = PersistedInsightSnapshot["items"][number];
@@ -18,13 +19,6 @@ type InsightClaim = {
   phrase: string;
   occurrence: number;
   evidenceIds: string[];
-};
-
-type ThemeMetric = {
-  key: string;
-  label: string;
-  sessionCount: number;
-  momentCount: number;
 };
 
 type InsightModuleKind = "current_focus" | "change" | "recurring_themes" | "context_history";
@@ -204,14 +198,14 @@ function relevantNoteExcerpt(note: string | undefined, phrase: string) {
   return excerpt ? truncateAtWord(excerpt, 700) : null;
 }
 
-function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false }: { phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean }) {
+function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false, children }: { children?: ReactNode; phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const titleId = useId();
   const sourceLabel = sources.length === 1 ? "1 source" : `${sources.length} sources`;
   return <>
-    <a href={`#${titleId}`} onClick={(event) => { event.preventDefault(); setSourceIndex(0); dialog.current?.showModal(); }} aria-haspopup="dialog" aria-controls={titleId} aria-label={`View evidence for ${phrase}`} className={`${fallback ? "ml-1 align-baseline text-xs font-semibold text-stone-700 underline decoration-stone-400 underline-offset-3 hover:text-stone-950" : "font-bold text-inherit no-underline hover:text-stone-950"} cursor-grab rounded-sm text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>
-      {fallback ? `View ${sourceLabel}` : phrase}
+    <a href={`#${titleId}`} onClick={(event) => { event.preventDefault(); setSourceIndex(0); dialog.current?.showModal(); }} aria-haspopup="dialog" aria-controls={titleId} aria-label={`View evidence for ${phrase}`} className={`${children ? "inline-flex h-9 w-5 items-center justify-center hover:bg-stone-200" : ""} ${fallback ? "ml-1 align-baseline text-xs font-semibold text-stone-700 underline decoration-stone-400 underline-offset-3 hover:text-stone-950" : "font-bold text-inherit no-underline hover:text-stone-950"} cursor-grab rounded-sm text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>
+      {children ?? (fallback ? `View ${sourceLabel}` : phrase)}
     </a>
     {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
       <div className="flex items-start justify-between gap-4">
@@ -295,22 +289,75 @@ function StatCard({ value, label, detail }: { value: number; label: string; deta
   </article>;
 }
 
-function ThemeRecurrence({ themes }: { themes: ThemeMetric[] }) {
-  const maximumMoments = Math.max(1, ...themes.map((theme) => theme.momentCount));
-  return <section className="mt-3 rounded-xl border border-stone-300 bg-stone-50 p-3.5" aria-labelledby="theme-recurrence-heading">
-    <div className="flex items-baseline justify-between gap-3">
-      <h3 id="theme-recurrence-heading" className="text-sm font-semibold text-stone-900">Theme recurrence</h3>
-      <span className="text-xs text-stone-500">Cited record moments</span>
+function ThemeRecurrence({ themes, sessions, onViewEvidence }: { themes: InsightItem[]; sessions: TranscriptListItem[]; onViewEvidence: Props["onViewEvidence"] }) {
+  const [offset, setOffset] = useState(0);
+  const orderedSessions = [...sessions].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id.localeCompare(b.id));
+  const normalizeId = (id: string) => id.replace(/^session-/, "");
+  const currentOffset = Math.min(offset, Math.max(0, orderedSessions.length - 12));
+  const end = orderedSessions.length - currentOffset;
+  const visibleSessions = orderedSessions.slice(Math.max(0, end - 12), end);
+  const canMoveOlder = end > 12;
+  const canMoveNewer = currentOffset > 0;
+  const supportCount = (item: InsightItem) => new Set(item.evidence.filter(source => source.evidence_role === "supporting" && source.session_id).map(source => normalizeId(source.session_id!))).size;
+  const sortedThemes = [...themes].sort((a, b) => supportCount(b) - supportCount(a) || a.display_order - b.display_order);
+  const headingId = useId();
+  const matrix = useRef<HTMLDivElement>(null);
+  const previousOffset = useRef(currentOffset);
+  useLayoutEffect(() => {
+    const direction = currentOffset > previousOffset.current ? -1 : 1;
+    const changed = currentOffset !== previousOffset.current;
+    previousOffset.current = currentOffset;
+    if (!changed || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const animations = Array.from(matrix.current?.querySelectorAll<HTMLElement>("[data-recurrence-column]") ?? []).map(column => column.animate([
+      { transform: `translateX(${direction * 10}px)`, opacity: 0.4 },
+      { transform: "translateX(0)", opacity: 1 },
+    ], { duration: 220, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }));
+    return () => animations.forEach(animation => animation.cancel());
+  }, [currentOffset]);
+  if (!visibleSessions.length) return null;
+  return <section className="mt-3 border-t border-stone-300 pt-3" aria-labelledby={headingId}>
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <h3 id={headingId} className="text-sm font-semibold text-stone-900">Theme recurrence</h3>
     </div>
-    {themes.length ? <div className="mt-3 grid gap-3">
-      {themes.map((theme) => <div key={theme.key} className="grid gap-2 sm:grid-cols-[minmax(150px,0.8fr)_minmax(180px,1.2fr)_auto] sm:items-center">
-        <p className="truncate text-sm font-medium text-stone-800" title={theme.label}>{theme.label}</p>
-        <div className="h-2 overflow-hidden rounded-full border border-stone-300 bg-white" aria-hidden="true">
-          <div className="h-full min-w-2 rounded-full bg-emerald-800/70" style={{ width: `${Math.max(8, (theme.momentCount / maximumMoments) * 100)}%` }} />
-        </div>
-        <p className="text-xs tabular-nums text-stone-600 sm:min-w-28 sm:text-right">{theme.sessionCount} {theme.sessionCount === 1 ? "session" : "sessions"} · {theme.momentCount} {theme.momentCount === 1 ? "moment" : "moments"}</p>
-      </div>)}
-    </div> : <p className="mt-3 text-sm text-stone-600">No recurring themes are in view yet.</p>}
+    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
+      <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-[var(--accent-strong)]" />Supporting</span>
+      <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-red-700" />Contrasting / ± mixed</span>
+      <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-stone-400" />No cited support</span>
+    </div>
+    <div className="mt-10 grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-x-3" style={{ gridTemplateRows: `repeat(${sortedThemes.length}, minmax(44px, auto))` }}>
+      {sortedThemes.map((item, row) => <div key={item.id} className="flex min-w-0 items-center border-b border-stone-200 py-2 text-sm font-medium text-stone-800 last:border-0" style={{ gridColumn: 1, gridRow: row + 1 }}>{insightLabel(item.content)}</div>)}
+      <div ref={matrix} className={`relative grid min-w-0 grid-rows-subgrid ${orderedSessions.length > 12 ? "px-5" : ""}`} style={{ gridColumn: 2, gridRow: `1 / span ${sortedThemes.length}`, gridTemplateColumns: `repeat(${visibleSessions.length}, minmax(0, 1fr))` }}>
+        {visibleSessions.map((session, column) => {
+          const date = new Date(session.created_at);
+          const timestamp = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date) : "Date unavailable";
+          return <div key={session.id} data-recurrence-column role="group" aria-label={`${session.label}, ${timestamp}`} tabIndex={0} className="group/column relative grid min-w-0 grid-rows-subgrid rounded-md hover:bg-stone-200/60 focus-within:bg-stone-200/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" style={{ gridColumn: column + 1, gridRow: `1 / span ${sortedThemes.length}` }}>
+            <span role="tooltip" className={`pointer-events-none absolute -top-9 z-20 hidden whitespace-nowrap rounded-lg border border-stone-300 bg-white px-2 py-1 text-xs text-stone-800 shadow-sm group-hover/column:block group-focus-within/column:block ${column < visibleSessions.length / 2 ? "left-0" : "right-0"}`}>{timestamp}</span>
+            {sortedThemes.map((item, row) => {
+              const citations = item.evidence.filter(source => source.session_id && normalizeId(source.session_id) === normalizeId(session.id));
+              const supporting = citations.some(source => source.evidence_role === "supporting");
+              const contrasting = citations.some(source => source.evidence_role === "contrasting");
+              const state = contrasting ? supporting ? "Mixed supporting and contrasting evidence" : "Contrasting evidence" : supporting ? "Supporting evidence" : citations.length ? "Context only; no cited support" : "No cited evidence";
+              const label = `${insightLabel(item.content)} · ${session.label}, ${timestamp}: ${state}`;
+              const sourceIds = citations.map(source => source.transcript_segment_id ?? source.clinical_note_version_id).filter((id): id is string => Boolean(id));
+              const sources = evidenceSources(item, sourceIds).filter(source => normalizeId(source.session_id) === normalizeId(session.id));
+              const pill = <span aria-hidden="true" className={`flex h-6 w-2.5 items-center justify-center rounded-full text-[9px] font-bold text-white ${contrasting ? "bg-red-700" : supporting ? "bg-[var(--accent-strong)]" : "border border-stone-400 bg-stone-300"}`}>{contrasting ? supporting ? "±" : "−" : supporting ? "+" : ""}</span>;
+              return <div key={item.id} className="flex min-w-0 items-center justify-center border-b border-stone-200 last:border-0" style={{ gridRow: row + 1 }}>
+                {sources.length ? <EvidenceDialogLink phrase={label} sources={sources} onViewEvidence={onViewEvidence}>{pill}</EvidenceDialogLink> : <span aria-label={label} role="img" className="flex h-9 items-center justify-center">{pill}</span>}
+              </div>;
+            })}
+          </div>;
+        })}
+        {orderedSessions.length > 12 && <>
+          <button type="button" disabled={!canMoveOlder} onClick={() => setOffset(Math.min(currentOffset + 6, orderedSessions.length - 12))} aria-label="Show older dates" className="session-carousel-edge session-carousel-edge--older group absolute inset-y-0 left-0 z-10 flex w-5 cursor-grab items-center justify-start text-stone-700 active:cursor-grabbing disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="relative z-10 size-5 transition-transform group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+          <button type="button" disabled={!canMoveNewer} onClick={() => setOffset(Math.max(0, currentOffset - 6))} aria-label="Show newer dates" className="session-carousel-edge session-carousel-edge--newer group absolute inset-y-0 right-0 z-10 flex w-5 cursor-grab items-center justify-end text-stone-700 active:cursor-grabbing disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="relative z-10 size-5 transition-transform group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none"><path d="m9 18 6 6-6 6" /></svg>
+          </button>
+        </>}
+      </div>
+    </div>
+
   </section>;
 }
 
@@ -451,7 +498,7 @@ function InsightsLoadingSkeleton() {
   </section>;
 }
 
-function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }: { snapshot: PersistedInsightSnapshot | null; entries: ClientJourneyEntry[]; refreshStatus: InsightsRefreshStatus | null; onViewEvidence: Props["onViewEvidence"] }) {
+function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence, sessions }: { sessions: TranscriptListItem[]; snapshot: PersistedInsightSnapshot | null; entries: ClientJourneyEntry[]; refreshStatus: InsightsRefreshStatus | null; onViewEvidence: Props["onViewEvidence"] }) {
   const visibleItems = useMemo(() => snapshot?.items.filter((item) => {
     if (item.review_state === "hidden") return false;
     const sessionCount = new Set(item.evidence.map((source) => source.session_id).filter(Boolean)).size;
@@ -461,12 +508,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
   const currentItems = visibleItems.filter((item) => item.review_state !== "stale" && item.review_state !== "disputed");
   const acceptedJourney = entries.filter((entry) => entry.status === "accepted" && entry.evidence.length > 0);
   const snapshotThemes = currentItems.filter((item) => item.kind === "theme");
-  const themeMetrics: ThemeMetric[] = snapshotThemes.length ? snapshotThemes.map((item) => {
-    const sessions = new Set(item.evidence.map((source) => source.session_id).filter(Boolean));
-    const moments = new Set(item.evidence.map((source) => source.transcript_segment_id ?? source.clinical_note_version_id).filter(Boolean));
-    return { key: item.id, label: insightLabel(item.content), sessionCount: sessions.size, momentCount: moments.size };
-  }) : [];
-  const themeCount = themeMetrics.length;
+  const themeCount = snapshotThemes.length;
   const openThreadCount = currentItems.filter((item) => item.kind === "open_thread").length;
   const awaitingReview = currentItems.filter((item) => item.review_state === "draft").length;
   const acceptedSessions = Array.from(acceptedJourney.reduce((sessions, entry) => {
@@ -484,10 +526,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
   const insightModules = buildInsightModules(currentItems, sectionSummaries && typeof sectionSummaries === "object" && !Array.isArray(sectionSummaries) ? sectionSummaries as Record<string, unknown> : {});
   const hasMetrics = themeCount > 0 || openThreadCount > 0 || awaitingReview > 0 || acceptedJourney.length > 0;
   const overview = snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet.";
-  const overviewDetails = snapshot ? <>
-    <p className="text-[15px] leading-7 text-stone-700">{overview}</p>
-    <p className="mt-4 text-xs leading-5 text-stone-500">Workspace {snapshot.status} · version {snapshot.version} · generated by {snapshot.generator_name}. Review the cited evidence before relying on generated observations.</p>
-  </> : <p className="text-[15px] leading-7 text-stone-700">{overview}</p>;
+  const overviewDetails = <p className="text-[15px] leading-7 text-stone-700">{overview}</p>;
 
   return <section className="space-y-4 text-left" aria-label="Clinical insights workspace">
     <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -505,8 +544,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
         {awaitingReview > 0 ? <StatCard value={awaitingReview} label="Awaiting review" detail="Proposals requiring therapist judgment." /> : null}
         {acceptedJourney.length > 0 ? <StatCard value={acceptedJourney.length} label="Accepted evidence" detail={acceptedEvidenceDetail} /> : null}
       </div>
-      {themeMetrics.length ? <ThemeRecurrence themes={themeMetrics} /> : null}
-      <p className="mt-3 text-xs leading-5 text-stone-500">These counts organize the available record; they are not clinical scores or conclusions.</p>
+      {snapshotThemes.length ? <ThemeRecurrence themes={snapshotThemes} sessions={sessions} onViewEvidence={onViewEvidence} /> : null}
     </section> : null}
 
     {insightModules.length ? <section aria-label="Clinical synthesis sections">
@@ -515,7 +553,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence }:
   </section>;
 }
 
-export function ClientInsights({ onViewEvidence, recordContext }: Props) {
+export function ClientInsights({ onViewEvidence, recordContext, sessions = [] }: Props) {
   const [snapshot, setSnapshot] = useState<PersistedInsightSnapshot | null>(null);
   const [entries, setEntries] = useState<ClientJourneyEntry[]>([]);
   const [refreshStatus, setRefreshStatus] = useState<InsightsRefreshStatus | null>(null);
@@ -584,5 +622,5 @@ export function ClientInsights({ onViewEvidence, recordContext }: Props) {
   if (!recordContext) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-stone-600">Open Insights from an authorized client workspace.</p></section>;
   if (error) return <section className="rounded-2xl border border-stone-300 bg-white p-5 text-left shadow-sm"><h2 className="text-lg font-semibold text-stone-900">Insights</h2><p className="mt-3 text-sm text-red-700">{error}</p></section>;
   if (loading) return <InsightsLoadingSkeleton />;
-  return <InsightsWorkspace snapshot={snapshot} entries={entries} refreshStatus={refreshStatus} onViewEvidence={onViewEvidence} />;
+  return <InsightsWorkspace sessions={sessions} snapshot={snapshot} entries={entries} refreshStatus={refreshStatus} onViewEvidence={onViewEvidence} />;
 }

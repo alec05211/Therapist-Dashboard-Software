@@ -9,6 +9,8 @@ export type SessionCard = {
   date: Date;
   isAvailable: boolean;
   isProcessing?: boolean;
+  clinicalNoteStatus?: TranscriptListItem["clinical_note_status"];
+  pendingClaimCount?: number;
 };
 
 type Props = {
@@ -20,6 +22,7 @@ type Props = {
   onSelectScheduled: (session: SessionCard) => void;
   onEditSchedule?: () => void;
   processingSession?: { appointmentId: string; state: SessionProcessingState } | null;
+  audience?: "therapist" | "client";
 };
 
 function sessionCards(transcripts: TranscriptListItem[], appointments: Appointment[] = [], processingAppointmentId?: string): SessionCard[] {
@@ -28,6 +31,8 @@ function sessionCards(transcripts: TranscriptListItem[], appointments: Appointme
     label: transcript.label,
     date: new Date(transcript.created_at ?? Date.now()),
     isAvailable: true,
+    clinicalNoteStatus: transcript.clinical_note_status,
+    pendingClaimCount: transcript.pending_claim_count,
   }));
   const placeholders = appointments.filter(item => item.status === "scheduled" || item.status === "confirmed" || item.id === processingAppointmentId).map(item => ({
     id: item.id,
@@ -56,7 +61,7 @@ function CalendarIcon() {
   );
 }
 
-export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule, processingSession }: Props) {
+export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule, processingSession, audience = "client" }: Props) {
   const cards = useMemo(() => sessionCards(transcripts, appointments, processingSession?.appointmentId), [transcripts, appointments, processingSession?.appointmentId]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
   const [centerIndex, setCenterIndex] = useState(initialIndex);
@@ -89,7 +94,10 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
               {card.isProcessing ? <span aria-hidden="true" className="absolute right-3 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
               <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
               <strong className="mt-0.5 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
-              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : <span className="mt-2 block truncate text-xs font-medium text-stone-600">{card.isAvailable ? card.label : "Session details pending"}</span>}
+              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-stone-600">
+                {card.clinicalNoteStatus !== undefined && card.clinicalNoteStatus !== "finalized" ? <span className="inline-flex items-center gap-1" title="Clinical note awaiting finalization"><svg aria-hidden="true" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8m-8 4h5" /></svg>Draft note</span> : null}
+                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-1" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><svg aria-hidden="true" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5h11M9 12h11M9 19h11M3 5h1m-1 7h1m-1 7h1" /></svg><span aria-hidden="true">{card.pendingClaimCount}</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
+              </span> : null}
             </button>})}
           </div>}
         </div>

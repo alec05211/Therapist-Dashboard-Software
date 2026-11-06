@@ -168,3 +168,32 @@ unquantified pending observed request counts, query latency, active-client volum
 and capacity. No new storage, credentials, retention, or infrastructure is added.
 Rate limits are process-local (20 attempts/client/10 minutes, one active turn per
 client, eight globally); distributed scaling would require pricing a shared limiter.
+
+## Owen synthetic audio evaluation budget
+
+Verified November 6, 2026 against [official Google Cloud TTS pricing](https://cloud.google.com/text-to-speech/pricing).
+The Owen fixture requests two recordings initially (sessions 1 and 2), with
+session 6 as an optional third. No audio requests were made in this fixture
+change. Orus and Sadaltager are voice selections within the chosen model, not
+separate model-rate tiers. The fixture specifies Gemini 2.5 Pro TTS; the existing
+dialogue CLI defaults to Flash, so the model must be explicit when producing it.
+
+| Published model rate | Text input per million tokens | Audio output per million tokens | Output per generated minute |
+| --- | ---: | ---: | ---: |
+| Gemini 2.5 Pro TTS | $1.00 | $20.00 | $0.030 |
+| Gemini 2.5 Flash TTS | $0.50 | $10.00 | $0.015 |
+
+Google states 25 audio tokens per second. For an illustrative **30 minutes per
+recording**, output alone is $0.90 per Pro recording: **$1.80 for two** or
+**$2.70 for three**. Flash output alone would be $0.45 each, **$0.90 for two** or
+**$1.35 for three**. These are planning scenarios, not totals or measured draft
+durations. Current condensed drafts have no measured audio length.
+
+Full Pro cost is `input_tokens / 1,000,000 * 1 + audio_seconds * 25 / 1,000,000 * 20`.
+Input includes actual billable prompts and text; chunking repeats prompts.
+Input usage, retries, and audition/redo volume are unmeasured and must be added,
+not counted as zero. The existing dialogue script permits five attempts per
+uncached part; repeated generation can increase spend. Downstream HealthScribe,
+storage, and Insights/brief processing are separate costs under the existing
+tables and depend on actual uploads, duration, eligible sources, and refreshes.
+This change adds no application generation trigger or deployment.

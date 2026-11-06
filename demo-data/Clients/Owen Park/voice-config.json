@@ -5,12 +5,12 @@
   "language_code": "en-US",
   "client": {
     "speaker_alias": "OWEN",
-    "voice": "Sadachbia",
-    "style_prompt": "Warm baritone; conversational and self-deprecating; pace slows when he stops minimizing; avoid slurred performance."
+    "voice": "Orus",
+    "style_prompt": "Quiet, reserved adult male voice with a subdued, melancholy delivery. Speak softly but clearly enough for transcription, at an unhurried pace. Leave hesitant pauses before sensitive answers; use short replies, occasional unfinished sentences, and restrained self-corrections. Emotion stays contained. Disclosure becomes slightly more specific across sessions without becoming suddenly fluent or cheerful. Avoid projecting the stock voice's firmness as confidence, whispering, slurring, theatrical despair, or reading stage directions."
   },
   "therapist": {
     "speaker_alias": "THERAPIST",
-    "voice_fixture_id": "therapist-calm-03",
+    "voice_fixture_id": "therapist-calm-01",
     "configuration_location": "../../Therapists/voice-fixtures.json"
   }
 }

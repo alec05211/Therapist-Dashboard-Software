@@ -20,6 +20,39 @@ The local service-account key is expected at
 `.secrets/google_tts-script-runner_key.json`. The entire `.secrets` directory is
 ignored by Git. Never commit or share this key.
 
+### Moving this workflow to another Windows machine
+
+The current scripts explicitly load a **Google Cloud service-account JSON key**
+using `--credentials`. They do not read `GEMINI_API_KEY`, `GOOGLE_API_KEY`, or
+automatically use `GOOGLE_APPLICATION_CREDENTIALS`. A Gemini AI Studio API key
+alone does not configure this script's authentication path.
+
+Use the existing Google Cloud project and service account if appropriate. The
+default local filename above is a repository convention, not a searchable Google
+Cloud key name. Existing private key material cannot be downloaded again from
+the console. If the authorized original file cannot be securely transferred,
+create a replacement only under the account's credential-management policy;
+review whether the old key should be retired. Do not commit keys or paste them
+into chat. [Google service-account key guidance](https://cloud.google.com/iam/docs/keys-create-delete).
+
+After authorized credential setup, use the repository's Python environment to
+avoid installing into a different interpreter:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Billing, API enablement, authenticated identity, and
+`aiplatform.endpoints.predict` permission must be checked separately from local
+file presence. An authentication check alone does not establish successful TTS
+generation. See [Gemini-TTS setup](https://docs.cloud.google.com/text-to-speech/docs/gemini-tts)
+and [Cloud TTS authentication](https://docs.cloud.google.com/text-to-speech/docs/authentication).
+
+Voice samples are available in the Gemini-TTS voice table. Owen's current
+fixture uses Orus with quiet, reserved delivery; Jeremy's established voice is
+Sadaltager. The JSON fixture does not configure `tools/google_tts_dialogue.py`
+automatically: that utility currently expects Marcus and Jeremy speaker labels.
+
 ## Create audio
 
 Create an MP3 next to the source text file:

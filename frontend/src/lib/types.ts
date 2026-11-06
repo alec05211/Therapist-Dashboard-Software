@@ -38,6 +38,8 @@ export type TranscriptListItem = {
   label: string;
   text: string;
   created_at: string;
+  clinical_note_status?: "draft" | "reviewed" | "finalized" | "superseded" | null;
+  pending_claim_count?: number;
 };
 
 export type Appointment = {
