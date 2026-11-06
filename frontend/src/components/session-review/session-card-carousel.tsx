@@ -61,6 +61,16 @@ function CalendarIcon() {
   );
 }
 
+function PendingClaimsIcon() {
+  return (
+    <svg aria-hidden="true" className="size-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 3h12M4 17h12M5 3c0 3 1 4 2.5 5M15 3c0 3-1 4-2.5 5M5 17c0-3 1-4 2.5-5M15 17c0-3-1-4-2.5-5" />
+      <path d="M5.5 10c2.5-3.5 6.5-3.5 9 0-2.5 3.5-6.5 3.5-9 0Z" />
+      <circle cx="10" cy="10" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function SessionCardCarousel({ transcripts, appointments = [], activeId, error, onOpen, onSelectScheduled, onEditSchedule, processingSession, audience = "client" }: Props) {
   const cards = useMemo(() => sessionCards(transcripts, appointments, processingSession?.appointmentId), [transcripts, appointments, processingSession?.appointmentId]);
   const initialIndex = Math.max(cards.findIndex((card) => card.id === activeId), 0);
@@ -85,18 +95,18 @@ export function SessionCardCarousel({ transcripts, appointments = [], activeId, 
   return (
     <section className="session-history-carousel relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Session history">
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
-      <div className="relative -mx-5">
+      <div className="relative -mx-5 mt-10">
         <div className="session-carousel-viewport overflow-hidden" style={{ containerType: "inline-size" }}>
           {cards.length === 0 ? <div className="mx-5 flex min-h-28 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 px-4 pt-7 text-sm text-stone-600">No sessions scheduled yet.</div> : <div className="session-carousel-track flex gap-3" style={{ transform: `translateX(${trackOffset})`, transition: hasInteracted ? undefined : "none" }}>
             {cards.map((card, index) => {
               const isReadable = Math.abs(index - centerIndex) <= 1;
-              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative min-h-28 min-w-0 shrink-0 rounded-xl border px-3 pb-3 pt-12 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
-              {card.isProcessing ? <span aria-hidden="true" className="absolute right-3 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
-              <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-800 sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
-              <strong className="mt-0.5 block truncate text-xs text-stone-900 sm:text-sm">{formatDate(card.date)}</strong>
-              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-stone-600">
-                {card.clinicalNoteStatus !== undefined && card.clinicalNoteStatus !== "finalized" ? <span className="inline-flex items-center gap-1" title="Clinical note awaiting finalization"><svg aria-hidden="true" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8m-8 4h5" /></svg>Draft note</span> : null}
-                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-1" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><svg aria-hidden="true" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5h11M9 12h11M9 19h11M3 5h1m-1 7h1m-1 7h1" /></svg><span aria-hidden="true">{card.pendingClaimCount}</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
+              return <button key={card.id} type="button" onClick={() => selectCard(index, card)} tabIndex={isReadable ? 0 : -1} aria-hidden={isReadable ? undefined : true} style={{ flexBasis: `calc(${cardWidth})` }} className={`session-carousel-card relative flex min-h-32 min-w-0 shrink-0 flex-col justify-center rounded-xl border px-5 py-9 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${isReadable ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${index === centerIndex ? "border-emerald-700 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-400 hover:bg-stone-100 hover:shadow-sm"} ${!card.isAvailable && !card.isProcessing ? "opacity-70" : ""}`} aria-current={card.id === activeId ? "true" : undefined} aria-busy={card.isProcessing || undefined}>
+              {card.isProcessing ? <span aria-hidden="true" className="absolute right-5 top-3 size-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700 motion-reduce:animate-none" /> : null}
+              <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--accent-text)] sm:text-xs">{card.isProcessing ? "Complete" : card.isAvailable ? "Completed" : "Scheduled"}</span>
+              <strong className="mt-0.5 block truncate text-xs text-[var(--accent-text)] sm:text-sm">{formatDate(card.date)}</strong>
+              {card.isProcessing ? <span className="mt-2 block text-xs font-medium leading-4 text-stone-600" role="status"><span className="sr-only">Upload secure. You can leave this page. </span>Hang tight while the transcript and clinical note are prepared<span aria-hidden="true" className="processing-ellipsis inline-block w-5 text-left"><span>.</span><span>.</span><span>.</span></span></span> : audience === "therapist" && card.isAvailable ? <span className="absolute right-5 top-3 flex items-center gap-2 text-[10px] font-medium text-[var(--accent-text)] sm:text-xs">
+                {card.clinicalNoteStatus !== undefined && card.clinicalNoteStatus !== "finalized" ? <span className="font-medium italic tracking-wide text-red-700" title="Clinical note awaiting finalization"><span aria-hidden="true">DRAFT</span><span className="sr-only">Draft clinical note awaiting finalization</span></span> : null}
+                {(card.pendingClaimCount ?? 0) > 0 ? <span className="inline-flex items-center gap-1" title={`${card.pendingClaimCount} proposed evidence claims awaiting review`}><PendingClaimsIcon /><span aria-hidden="true">{card.pendingClaimCount}</span><span className="sr-only">{card.pendingClaimCount} proposed evidence claims awaiting review</span></span> : null}
               </span> : null}
             </button>})}
           </div>}
