@@ -93,7 +93,11 @@ desktop viewport. Achieve this through composition rather than hiding overflow:
   and contained overscroll. Playback controls remain outside the scrolling text. A
   narrow informational overview uses blurred transcript texture, a reading-position
   window, and sharp charcoal ticks for proposed evidence (light ticks in dark mode).
-  Ticks are non-interactive and disappear after review.
+  The overview is the only visible scrollbar, flush with the reader’s right edge,
+  without a separate border or contrasting backplate. Clicking jumps to that location;
+  dragging the reading-position window scrolls. Support wheel, touch, and keyboard
+  navigation. Evidence ticks remain sharp and disappear after review.
+  Session materials use equal outer padding; their first panel has no extra top margin.
 - Avoid fixed-height cards with internal scrolling and nested vertical scroll
   containers. Let ordinary content flow; long transcripts, calendars, expanded
   detail, small screens, and zoom may still require scrolling.

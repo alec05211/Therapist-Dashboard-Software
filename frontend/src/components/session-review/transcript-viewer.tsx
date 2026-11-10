@@ -97,7 +97,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   const isGuidanceInteraction = (target: EventTarget) =>
     target instanceof Element && Boolean(target.closest("[data-no-segment-playback]"));
 
-  if (!transcript) return <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Associated materials"><p className="text-sm text-stone-500">Choose a completed session to review its associated materials.</p></section>;
+  if (!transcript) return <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm [&>section:first-of-type]:mt-0" aria-label="Session materials"><p className="text-sm text-stone-500">Choose a completed session to review its associated materials.</p></section>;
 
   const quoteEntriesForSegment = (index: number) => quotes.entries.filter(entry => entry.evidence.some(source => source.session_id === sessionId && source.segment_index === index && source.quote?.trim() === transcript.segments[index]?.text.trim()));
   const proposedClaimCount = transcript.segments.reduce((count, _segment, index) => count + Number(quoteEntriesForSegment(index).length > 0), 0);
@@ -146,7 +146,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   );
 
   return (
-    <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm" aria-label="Associated materials">
+    <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm [&>section:first-of-type]:mt-0" aria-label="Session materials">
       {playbackError && <p role="alert" className="mb-3 text-sm text-red-700">{playbackError}</p>}
       {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} />}
       {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? transcriptRows : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">

@@ -313,8 +313,9 @@ html[data-theme="dark"] .text-loading-streak::after {
 .document-download:hover,
 .document-download:focus-visible { background-color: var(--document-action-bg-hover); color: var(--document-action-icon); }
 
-/* Long-session reader: native scrolling beside an informational overview. */
-.transcript-reader-scroll { scrollbar-width: thin; scrollbar-color: var(--text-muted) transparent; }
-.transcript-overview { background: var(--surface-inset); }
+/* The overview rail is the transcript reader's only visible scroll structure. */
+.transcript-reader-scroll { scrollbar-width: none; }
+.transcript-reader-scroll::-webkit-scrollbar { display: none; }
+.transcript-overview { background: transparent; }
 .transcript-evidence-tick { background: #171717; }
 html[data-theme="dark"] .transcript-evidence-tick { background: var(--foreground); }
