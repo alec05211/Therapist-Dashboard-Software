@@ -191,6 +191,11 @@ surfaces use a 56px left inset aligned with the transcript timestamp rail and a 
 The clinical-note preview is 136px tall so additional document context remains visible without making
 the collapsed card feel dense. Give its content a 12px top inset, and remove the first document block's top margin in both
 collapsed and expanded states.
+Expanded clinical notes use the same viewport-relative fixed reading height as
+transcripts, with internal scrolling and contained overscroll. Keep formatting
+and finalization controls in the stationary header; use a quiet native scrollbar
+without an overview rail. List-item paragraphs have no vertical margin, keeping
+consecutive bullets compact while ordinary paragraphs retain their spacing.
 
 Clinical notes begin as explicitly labeled AI drafts. A working draft's Tiptap document
 is directly editable whenever the panel is expanded; do not require a separate edit-mode
@@ -326,7 +331,10 @@ revealed.
   spacing, followed by dialogue. The transcript header reports the number of
   remaining passage-level proposed claims. Proposed passage text is bold and selectable;
   accepted or dismissed passages immediately return to ordinary transcript styling;
-  avoid separate cards, badges, or underlines for those rows. Selecting bold text
+  avoid separate cards, badges, or underlines for those rows. The proposed-passage
+  button spans the full segment height, including its top and bottom padding,
+  across the rendered claim width. The remaining row area retains audio playback.
+  Selecting bold text
   opens one non-modal evidence inspector without changing playback or the transcript's
   layout. On desktop, the inspector floats above the workspace, can be repositioned
   from its grab handle, remains inside the viewport, and updates in place when another

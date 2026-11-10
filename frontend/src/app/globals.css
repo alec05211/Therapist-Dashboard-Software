@@ -319,3 +319,5 @@ html[data-theme="dark"] .text-loading-streak::after {
 .transcript-overview { background: transparent; }
 .transcript-evidence-tick { background: #171717; }
 html[data-theme="dark"] .transcript-evidence-tick { background: var(--foreground); }
+
+.clinical-note-scroll { scrollbar-width: thin; scrollbar-color: var(--text-muted) transparent; }

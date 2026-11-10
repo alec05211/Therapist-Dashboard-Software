@@ -13,7 +13,7 @@ type SaveState = "loading" | "idle" | "unsaved" | "saving" | "saved" | "error" |
 
 const control = "grid size-8 cursor-grab place-items-center rounded-lg border border-transparent text-stone-700 active:cursor-grabbing hover:border-stone-300 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-700 disabled:cursor-wait disabled:opacity-50";
 const CLINICAL_NOTE_COLLAPSED_PREVIEW_HEIGHT = 136;
-const noteDocumentClass = "pb-4 pl-14 pr-4 pt-3 text-sm leading-6 text-stone-900 [&_h2]:mb-1 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_p]:my-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-6 [&>:first-child]:mt-0";
+const noteDocumentClass = "pb-4 pl-14 pr-4 pt-3 text-sm leading-6 text-stone-900 [&_h2]:mb-1 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_p]:my-1 [&_li]:my-0 [&_li>p]:my-0 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-6 [&>:first-child]:mt-0";
 
 function sectionsToDocument(sections: ClinicalNoteSection[]): JSONContent {
   return {
@@ -216,9 +216,9 @@ export function ClinicalNote({ sections, recordContext, sessionId, editable = fa
 
   return <>
     <CollapsibleContentPanel title="Clinical Note" summary={summary} ariaLabel={finalized ? "Finalized clinical note" : "Draft clinical note"} preview={preview || "No note details available."} previewContent={<div className="border-t border-stone-200 bg-white"><div className={noteDocumentClass} dangerouslySetInnerHTML={{ __html: editor.getHTML() }} /></div>} collapsedPreviewHeight={CLINICAL_NOTE_COLLAPSED_PREVIEW_HEIGHT} expanded={expanded} onExpandedChange={setExpanded} keepMounted className="mt-5" headerCenter={editable && expanded && editing && saveState !== "loading" ? formatControls : undefined} headerActions={editable && expanded && saveState !== "loading" ? noteActions : undefined}>
-      <div className="border-t border-stone-200 bg-white">
-        <div onBlur={() => { if (editingRef.current && pendingContent.current) void persistPending(); }}><EditorContent editor={editor} /></div>
-        {error && <p role="alert" className="border-t border-stone-200 px-5 py-3 text-xs text-red-700">{error}</p>}
+      <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col border-t border-stone-200 bg-white">
+        <div role="region" aria-label="Scrollable clinical note" tabIndex={0} className="clinical-note-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--accent-strong)]" onBlur={() => { if (editingRef.current && pendingContent.current) void persistPending(); }}><EditorContent editor={editor} /></div>
+        {error && <p role="alert" className="shrink-0 border-t border-stone-200 px-5 py-3 text-xs text-red-700">{error}</p>}
       </div>
     </CollapsibleContentPanel>
     {finalizeOpen && <FinalizeNoteDialog busy={saveState === "finalizing"} onClose={() => setFinalizeOpen(false)} onFinalize={() => void finalize()} />}
