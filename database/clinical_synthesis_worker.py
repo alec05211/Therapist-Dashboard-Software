@@ -69,6 +69,9 @@ def _generate_bundle(
     snapshot_content, generated_items = to_snapshot_content(generated)
     for item in generated_items:
         item["evidence_ids"] = [aliases[value] for value in item["evidence_ids"]]
+        item["evidence_roles"] = {
+            aliases[value]: role for value, role in item["evidence_roles"].items()
+        }
         for claim in item["content"].get("analysis_claims", []):
             claim["evidence_ids"] = [aliases[value] for value in claim["evidence_ids"]]
         for context in item["content"]["contexts"]:
@@ -85,7 +88,7 @@ def _generate_bundle(
                 "content": item["content"],
                 "evidence": [
                     {
-                        "evidence_role": "supporting",
+                        "evidence_role": item["evidence_roles"].get(evidence_id, "context"),
                         "transcript_segment_id": evidence_id if evidence_by_id[evidence_id].get("source_type") != "finalized_clinical_note" else None,
                         "clinical_note_version_id": evidence_by_id[evidence_id].get("clinical_note_version_id"),
                         "note_text": (evidence_by_id[evidence_id].get("content") or {}).get("plain_text") or json.dumps(evidence_by_id[evidence_id].get("content") or {}, ensure_ascii=False),
@@ -129,11 +132,23 @@ def _generate_bundle(
     }
 
 
-def process_one() -> bool:
+def process_one(
+    *,
+    organization_id: str | None = None,
+    client_id: str | None = None,
+    claimed_job: dict[str, Any] | None = None,
+    worker_token: str | None = None,
+    insight_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_longitudinal_insights,
+) -> bool:
     """Process one due revision. Return False when no work is currently due."""
-    worker_token = str(uuid4())
-    with connect() as connection:
-        job = synthesis_refresh.claim_due_insights_refresh(connection, worker_token=worker_token, lease_seconds=1800)
+    worker_token = worker_token or str(uuid4())
+    job = claimed_job
+    if job is None:
+        with connect() as connection:
+            job = synthesis_refresh.claim_due_insights_refresh(
+                connection, worker_token=worker_token, lease_seconds=1800,
+                organization_id=organization_id, client_id=client_id,
+            )
     if not job:
         return False
 
@@ -198,6 +213,7 @@ def process_one() -> bool:
             clinical_context=context,
             insights_model=insights_model,
             brief_model=brief_model,
+            insight_generator=insight_generator,
             on_event=record,
         )
         stage = 'publication'
@@ -210,7 +226,8 @@ def process_one() -> bool:
                 evidence=tuple(
                     InsightEvidence(
                         transcript_segment_id=evidence_id if source_by_id[evidence_id].get('source_type') != 'finalized_clinical_note' else None,
-                        clinical_note_version_id=source_by_id[evidence_id].get('clinical_note_version_id'))
+                        clinical_note_version_id=source_by_id[evidence_id].get('clinical_note_version_id'),
+                        evidence_role=item["evidence_roles"].get(evidence_id, "context"))
                     for evidence_id in item["evidence_ids"] if evidence_id in evidence_ids
                 ),
                 review_state="draft",

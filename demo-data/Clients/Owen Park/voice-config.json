@@ -1,7 +1,7 @@
 {
   "fixture_version": 1,
   "provider": "Google Gemini TTS",
-  "model": "gemini-2.5-pro-tts",
+  "model": "gemini-2.5-flash-tts",
   "language_code": "en-US",
   "client": {
     "speaker_alias": "OWEN",

@@ -1,6 +1,6 @@
 """Shared interpretation rules for application-owned, versioned client memory."""
 
-CONTEXT_POLICY_VERSION = "clinical-context-v2"
+CONTEXT_POLICY_VERSION = "clinical-context-v3"
 MAX_CONTEXT_BYTES = 250_000
 MAX_INSIGHTS_REQUEST_BYTES = 350_000
 

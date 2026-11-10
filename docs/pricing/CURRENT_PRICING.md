@@ -205,11 +205,9 @@ client, eight globally); distributed scaling would require pricing a shared limi
 ## Owen synthetic audio evaluation budget
 
 Verified November 6, 2026 against [official Google Cloud TTS pricing](https://cloud.google.com/text-to-speech/pricing).
-The Owen fixture requests two recordings initially (sessions 1 and 2), with
-session 6 as an optional third. No audio requests were made in this fixture
-change. Orus and Sadaltager are voice selections within the chosen model, not
-separate model-rate tiers. The fixture specifies Gemini 2.5 Pro TTS; the existing
-dialogue CLI defaults to Flash, so the model must be explicit when producing it.
+The Owen fixture now requests twelve recordings. Orus and Sadaltager are voice
+selections within the chosen model, not separate model-rate tiers. The completed
+batch uses Gemini 2.5 Flash TTS consistently after repeated Pro endpoint failures.
 
 | Published model rate | Text input per million tokens | Audio output per million tokens | Output per generated minute |
 | --- | ---: | ---: | ---: |
@@ -217,11 +215,60 @@ dialogue CLI defaults to Flash, so the model must be explicit when producing it.
 | Gemini 2.5 Flash TTS | $0.50 | $10.00 | $0.015 |
 
 Google states 25 audio tokens per second. For an illustrative **30 minutes per
-recording**, output alone is $0.90 per Pro recording: **$1.80 for two** or
-**$2.70 for three**. Flash output alone would be $0.45 each, **$0.90 for two** or
-**$1.35 for three**. These are planning scenarios, not totals or measured draft
-durations. Current condensed drafts have no measured audio length.
+recording**, output alone is $0.90 per Pro recording, or **$10.80 for twelve**.
+Flash output alone would be $0.45 each, or **$5.40 for twelve**. These are
+planning scenarios, not totals for the condensed fixture. The completed batch is
+3,324.789 seconds (55.413 minutes) across twelve recordings. At the published
+Flash output rate, its measured output-only planning cost is about **$0.83**.
+Text/prompt input, failed Pro attempts, retries, storage, and downstream
+processing are additional costs and are not counted as zero.
 
+The clinical-context builder sends a finalized note's canonical `plain_text`
+once when the stored editor document duplicates that same prose. This keeps the
+existing 250 KB context and 350 KB Insights-request limits and all note lineage,
+while reducing provider input tokens and cost for rich-text notes. The savings
+depend on note length and editor-tree overhead and are not estimated as zero or
+included in the audio figures above.
+
+The `clinical-context-v3` selection policy caps each synthesis packet at 60
+citable sources. It keeps eligible finalized notes first, then distributes the
+remaining transcript capacity across sessions in round-robin order. Accepted
+clinician decisions remain separately represented. This reduces input-token
+cost and validation pressure for evidence-dense histories; the exact savings
+depend on source length and cannot be priced as a fixed amount.
+
+`distinct-insights-v9` adds one compact role classification for every cited
+Insights source (`supporting`, `contrasting`, or `context`). This slightly raises
+structured output tokens while allowing the recurrence matrix to represent
+contrasting and mixed evidence instead of treating every citation as supporting.
+Claims and section-summary coverage select sentence indices, and the application
+derives their exact persisted anchors. This replaces unreliable model-copied
+phrase text. The net token impact depends on the number of sources and claims
+and is not included as a fixed total.
+
+Version 9 clarifies that evidence roles are directional relative to each theme
+or trajectory, so a counter-direction event remains contrasting even when it
+supports a broader interpretation that change was mixed. This prompt-only
+clarification does not add a generation trigger; the Owen evaluation uses one
+explicitly requested reprocess event. Token impact is limited to the added
+instruction text and remains usage-dependent.
+
+The Owen fixture additionally uses one explicitly requested, role-only
+classification call over the already validated snapshot. It preserves prose and
+citation membership and returns one compact role per existing citation. This is
+an evaluation repair path, not a routine generation trigger. When a future
+appointment exists, the role-only child snapshot and its read-only pre-session
+brief are regenerated and published atomically. Actual role and brief token
+usage must be recorded after the run rather than estimated as zero.
+
+Observed November 7, 2026 for the Owen role-only repair: the directional role
+classification used 18,383 input tokens and 2,792 output tokens (21,175 total);
+the coordinated pre-session brief used 10,733 input tokens and 1,045 output
+tokens (11,778 total). Provider-reported cached and reasoning-token details are
+retained in the run response. Dollar cost depends on the configured model rates
+and cache treatment and is not represented as zero.
+
+Full Flash cost is `input_tokens / 1,000,000 * 0.50 + audio_seconds * 25 / 1,000,000 * 10`.
 Full Pro cost is `input_tokens / 1,000,000 * 1 + audio_seconds * 25 / 1,000,000 * 20`.
 Input includes actual billable prompts and text; chunking repeats prompts.
 Input usage, retries, and audition/redo volume are unmeasured and must be added,

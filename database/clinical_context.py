@@ -10,8 +10,39 @@ from database import client_journey
 from database.longitudinal_records import LongitudinalRecordRepository
 
 
+MAX_CONTEXT_SOURCES = 60
+
+
 def fingerprint(packet: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(packet, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def _note_evidence_content(content: Any) -> Any:
+    """Avoid sending the same finalized note in plain-text and editor-tree form."""
+    if isinstance(content, dict) and isinstance(content.get("plain_text"), str):
+        return {"plain_text": content["plain_text"]}
+    return content
+
+
+def _round_robin_transcript_sources(sources: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    """Preserve cross-session breadth when accepted transcript evidence is dense."""
+    by_session: dict[str, list[dict[str, Any]]] = {}
+    for source in sources:
+        by_session.setdefault(str(source["session_id"]), []).append(source)
+    selected: list[dict[str, Any]] = []
+    depth = 0
+    while len(selected) < limit:
+        added = False
+        for session_sources in by_session.values():
+            if depth < len(session_sources):
+                selected.append(session_sources[depth])
+                added = True
+                if len(selected) == limit:
+                    break
+        if not added:
+            break
+        depth += 1
+    return selected
 
 
 def build_clinical_context(connection, *, organization_id, client_id, exclude_session_id=None):
@@ -61,7 +92,8 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
             'evidence_id': source_id, 'source_type': 'finalized_clinical_note',
             'clinical_note_version_id': source_id, 'version_number': note['version_number'],
             'session_id': f"session-{note['session_id']}", 'session_label': note['session_label'],
-            'finalized_at': note['finalized_at'].isoformat(), 'content': note['content'],
+            'finalized_at': note['finalized_at'].isoformat(),
+            'content': _note_evidence_content(note['content']),
             'accepted_guidance': [], 'categories': [],
         }
     interpretations = []
@@ -77,9 +109,14 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
         else:
             interpretations.append(compact_context_record(item))
     ordered_sources = list(sources.values())
-    # Prefer finalized notes without letting transcript volume crowd them out.
-    selected_sources = ([s for s in ordered_sources if s['source_type'] == 'finalized_clinical_note']
-                        + [s for s in ordered_sources if s['source_type'] == 'transcript_segment'])[:120]
+    # Keep every eligible finalized note, then distribute the remaining bounded
+    # transcript capacity across sessions instead of favoring one dense session.
+    note_sources = [s for s in ordered_sources if s['source_type'] == 'finalized_clinical_note']
+    transcript_sources = [s for s in ordered_sources if s['source_type'] == 'transcript_segment']
+    selected_notes = note_sources[:MAX_CONTEXT_SOURCES]
+    selected_sources = selected_notes + _round_robin_transcript_sources(
+        transcript_sources, MAX_CONTEXT_SOURCES - len(selected_notes),
+    )
     selected_source_ids = {source['evidence_id'] for source in selected_sources}
     packet = {
         'policy_version': CONTEXT_POLICY_VERSION,
@@ -97,7 +134,8 @@ def build_clinical_context(connection, *, organization_id, client_id, exclude_se
         'review_constraints': constraints,
         'generated_interpretations': interpretations[:30],
         'coverage': {
-            'source_count': len(ordered_sources), 'sources_omitted': max(0, len(ordered_sources)-120),
+            'source_count': len(ordered_sources),
+            'sources_omitted': max(0, len(ordered_sources)-len(selected_sources)),
             'pending_omitted': max(0, len(pending)-40),
             'decisions_omitted': max(0, len(decisions)-120),
             'interpretations_omitted': max(0, len(interpretations)-30),

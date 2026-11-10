@@ -1,8 +1,8 @@
 """Submit one fictional recording to the durable demo HealthScribe pipeline.
 
 Database credentials are supplied by the runtime secret wrapper. This tool never
-prints them and refuses to target a client outside Jeremy Heartwell's synthetic
-demo caseload.
+prints them and refuses to target a client outside Jeremy Heartwell's explicitly
+marked synthetic demo caseload.
 """
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ def main() -> None:
     parser.add_argument("--appointment-id", required=True)
     parser.add_argument("--audio", type=Path, required=True)
     parser.add_argument("--label", required=True)
+    parser.add_argument("--client-name", choices=("Marcus Reynolds", "Owen Park"), default="Marcus Reynolds")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     configure_database(args)
@@ -67,6 +68,8 @@ def main() -> None:
                JOIN app.organization_memberships AS membership
                  ON membership.id=practitioner.membership_id
                JOIN app.application_users AS actor ON actor.id=membership.user_id
+               JOIN app.client_portal_accounts AS portal
+                 ON portal.client_id=client.id AND portal.status='active'
                LEFT JOIN LATERAL (
                  SELECT job.runtime_id
                  FROM app.sessions AS session
@@ -75,13 +78,14 @@ def main() -> None:
                  ORDER BY job.updated_at DESC LIMIT 1
                ) AS completed ON true
                WHERE appointment.id=%s
-                 AND client.display_name='Marcus Reynolds'
+                 AND client.display_name=%s
+                 AND portal.synthetic_case_key IS NOT NULL
                  AND practitioner.professional_name='Jeremy Heartwell'""",
-            (args.appointment_id,),
+            (args.appointment_id, args.client_name),
         )
         context = cursor.fetchone()
     if not context:
-        raise RuntimeError("The requested Marcus/Jeremy appointment is not available.")
+        raise RuntimeError(f"The requested {args.client_name}/Jeremy synthetic appointment is not available.")
     if context["completed_runtime_id"]:
         with connect() as connection, connection.cursor() as cursor:
             cursor.execute(
@@ -98,7 +102,7 @@ def main() -> None:
         }))
         return
     if context["appointment_status"] not in {"scheduled", "confirmed"}:
-        raise RuntimeError("The requested Marcus/Jeremy appointment is not available.")
+        raise RuntimeError(f"The requested {args.client_name}/Jeremy synthetic appointment is not available.")
 
     care_context = {
         "client_id": str(context["client_id"]),

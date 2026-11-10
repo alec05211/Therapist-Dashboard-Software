@@ -1,7 +1,13 @@
 import unittest
 
 from unittest.mock import patch
-from ai_harness.longitudinal_insights import generate_openai_longitudinal_insights, to_snapshot_content, validate_response
+from ai_harness.longitudinal_insights import (
+    canonicalize_response_anchors,
+    generate_openai_longitudinal_insights,
+    materialize_response_anchors,
+    to_snapshot_content,
+    validate_response,
+)
 from database.longitudinal_records import InsightEvidence, InsightItem
 
 
@@ -55,6 +61,10 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
             'analysis_claims': [{'phrase': 'greater tolerance of uncertainty', 'occurrence': 0,
                                  'evidence_ids': ['e-1', 'e-2']}],
             'context_statements': [],
+            'evidence_roles': [
+                {'evidence_id': 'e-1', 'role': 'supporting'},
+                {'evidence_id': 'e-2', 'role': 'contrasting'},
+            ],
         }]}
 
     def test_analytical_phrase_can_link_to_multiple_records_without_repetitive_context(self):
@@ -62,10 +72,19 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertEqual(validate_response(document, self.evidence, set(), require_analysis_claims=True), [])
         _, items = to_snapshot_content(document)
         self.assertEqual(items[0]['evidence_ids'], ['e-1', 'e-2'])
+        self.assertEqual(items[0]['evidence_roles'], {'e-1': 'supporting', 'e-2': 'contrasting'})
         InsightItem(item_kind='open_thread', content=items[0]['content'], evidence=(
             InsightEvidence(transcript_segment_id='e-1'),
             InsightEvidence(clinical_note_version_id='e-2'),
         )).validate()
+
+    def test_evidence_roles_must_cover_citations_exactly_once(self):
+        document = self.analytical_document()
+        self.assertEqual(validate_response(
+            document, self.evidence, set(), require_evidence_roles=True), [])
+        document['items'][0]['evidence_roles'].pop()
+        self.assertIn('cover every cited source exactly once', '; '.join(validate_response(
+            document, self.evidence, set(), require_evidence_roles=True)))
 
     def test_missing_or_unavailable_analytical_support_is_rejected(self):
         document = self.analytical_document()
@@ -84,6 +103,52 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         document['items'][0]['analysis_claims'].append(dict(claim))
         self.assertIn('overlapping', '; '.join(validate_response(document, self.evidence, set())))
 
+    def test_formatting_equivalent_anchor_is_canonicalized_to_exact_prose(self):
+        document = self.analytical_document()
+        document['items'][0]['analysis'] = "Owen’s plan may remain\nunfinished."
+        claim = document['items'][0]['analysis_claims'][0]
+        claim.update(phrase="owen's plan may remain unfinished.", occurrence=0)
+        canonicalize_response_anchors(document)
+        self.assertEqual(claim['phrase'], "Owen’s plan may remain\nunfinished.")
+        self.assertEqual(validate_response(
+            document, self.evidence, set(), require_evidence_roles=True), [])
+
+    def test_non_equivalent_anchor_is_not_relocated_or_invented(self):
+        document = self.analytical_document()
+        claim = document['items'][0]['analysis_claims'][0]
+        claim['phrase'] = 'a different clinical interpretation'
+        canonicalize_response_anchors(document)
+        self.assertEqual(claim['phrase'], 'a different clinical interpretation')
+        self.assertIn('phrase is absent', '; '.join(validate_response(document, self.evidence, set())))
+
+    def test_sentence_index_materializes_an_exact_persisted_anchor(self):
+        document = self.analytical_document()
+        document['items'][0]['analysis'] = (
+            'This may reflect greater tolerance of uncertainty. '
+            'Persistence remains unclear.'
+        )
+        claim = document['items'][0]['analysis_claims'][0]
+        claim.clear()
+        claim.update(sentence_index=1, evidence_ids=['e-1', 'e-2'])
+        materialize_response_anchors(document)
+        self.assertEqual(claim['phrase'], 'Persistence remains unclear.')
+        self.assertEqual(claim['occurrence'], 0)
+        _, items = to_snapshot_content(document)
+        self.assertNotIn('sentence_index', items[0]['content']['analysis_claims'][0])
+
+    def test_summary_sentence_index_materializes_exact_coverage_phrase(self):
+        document = self.analytical_document()
+        coverage = document['section_summaries'][0]['topic_coverage'][0]
+        coverage.clear()
+        coverage.update(topic_index=0, sentence_index=0)
+        materialize_response_anchors(document)
+        self.assertEqual(
+            coverage['phrase'],
+            'An emerging shift remains an open question for review.',
+        )
+        self.assertEqual(validate_response(
+            document, self.evidence, set(), require_summary_coverage=True), [])
+
     def test_identical_analyses_across_sections_are_rejected(self):
         document = self.analytical_document()
         document['items'].append({**document['items'][0], 'kind': 'theme'})
@@ -97,6 +162,8 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         payload = request.call_args.args[0]
         self.assertIn('Plan trajectory, theme, open_thread, and relevant_history together', payload['instructions'])
         self.assertIn('Do not repeat an interpretation', payload['instructions'])
+        self.assertIn('Classify roles relative to the direction', payload['instructions'])
+        self.assertIn('Do not manufacture contrasting evidence', payload['instructions'])
         self.assertEqual(payload['text']['format']['schema']['properties']['items']['minItems'], 1)
 
     def test_themes_have_no_count_or_summary_coverage_ceiling(self):
@@ -171,7 +238,8 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         document = self.analytical_document()
         document['items'].append({**document['items'][0], 'label': 'Receiving care',
                                  'analysis': 'Receiving help may still feel unfamiliar.',
-                                 'analysis_claims': [{'phrase': 'Receiving help', 'occurrence': 0, 'evidence_ids': ['e-1']}]})
+                                 'analysis_claims': [{'phrase': 'Receiving help', 'occurrence': 0, 'evidence_ids': ['e-1']}],
+                                 'evidence_roles': [{'evidence_id': 'e-1', 'role': 'supporting'}]})
         section = document['section_summaries'][0]
         self.assertIn('each of its topics', '; '.join(validate_response(
             document, self.evidence, set(), require_summary_coverage=True)))

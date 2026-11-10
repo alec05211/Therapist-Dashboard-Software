@@ -8,8 +8,8 @@ Owen is a 34-year-old recently laid-off technical recruiter. He is quiet, reserv
 
 - Owen: **Orus**, speaker `OWEN`. Soft but audible, subdued, unhurried; no theatrical despair, slurring, or whispering. The style direction is in `voice-config.json`.
 - Jeremy Heartwell: **Sadaltager**, speaker `THERAPIST`, shared fixture `therapist-calm-01`. Owen's previous outline used `therapist-calm-03` / Charon; this case now follows Jeremy's established recordings.
-- `clinical-trajectory-outline.docx` is the narrative reference. `session-plan.json` tracks the ten-session arc and the six drafted sessions. Sessions 7-10 remain outlines.
-- The six new `.txt` files contain continuous dialogue in six parts each. They are condensed drafts with unmeasured duration, not full thirty-minute session recordings. Expand dialogue and review it before full-length production; do not manufacture duration by padding silence.
+- `clinical-trajectory-outline.docx` is the narrative reference. `session-plan.json` tracks the twelve-session arc and all twelve drafted sessions.
+- The twelve `.txt` files contain continuous dialogue in six parts each. The rendered batch totals 55.413 minutes; individual sessions run about 3.8 to 5.3 minutes. They are condensed recordings, not padded thirty-minute sessions.
 - `[pause]` and `[long pause]` are non-spoken cues. Their presence does not establish an actual audio duration. Keep them out of word-error-rate reference text and verify their rendering by listening.
 
 ## Evaluation procedure
@@ -55,10 +55,8 @@ Pre-session briefs must use the current validated Insights snapshot. They must n
 
 ## Recording priorities and readiness
 
-First produce sessions **1 and 2**; add **6** as the third if practical. These cover sparse disclosure, corrected factual detail, and mixed longitudinal movement. Audition Orus using `voice-test-script.txt` before rendering a full session. Listen for audible quiet speech, consistent speakers, unspoken stage directions, and preserved wording.
+All twelve sessions were rendered and uploaded in chronological order. Sessions **1, 2, and 6** remain useful first-listen checks because they cover sparse disclosure, corrected factual detail, and mixed longitudinal movement. Listen for audible quiet speech, consistent speakers, unspoken stage directions, and preserved wording.
 
-No Owen recordings were generated in this change. Neither the active system Python nor the repository virtual environment reported an installed `google-cloud-texttospeech` package. The repository virtual environment reports Python 3.11.5; the system interpreter reports Python 3.9.13. Prefer the project environment when installing the existing pinned dependency range.
+The generalized dialogue tool accepts explicit client and therapist aliases and voices. For Owen, preserve the `OWEN` / `THERAPIST` labels, use Orus and Sadaltager, select `gemini-2.5-flash-tts`, and supply the reviewed Owen performance prompt instead of the Marcus default. The batch uses Flash consistently because repeated Pro endpoint failures prevented a complete, internally consistent recording.
 
-The current dialogue tool hardcodes `Marcus:` and `Jeremy:` and does not load Owen's JSON config. Before using it, supply the correct speaker/voice mapping through a reviewed adapter or generalize its aliases. Do not silently synthesize Owen using Marcus's performance prompt. Preserve the `OWEN` / `THERAPIST` labels in canonical fixtures.
-
-Authentication readiness is **unverified**. Repository instructions require the `aws-secrets-manager` skill before credential work; that skill was not available, so no key files, secret values, environment secrets, or account permissions were inspected. This is not evidence that credentials are absent or invalid. See `docs/ai/GOOGLE_TTS.md` for the configured service-account path and provider setup. Do not paste keys into chat.
+The November 6, 2026 synthetic-demo run used runtime-resolved credentials without printing secret values. All twelve recordings completed the HealthScribe path, entered review, and were finalized; all 96 generated evidence claims were accepted for this explicitly fictional evaluation case. See `docs/ai/GOOGLE_TTS.md` for provider setup. Do not paste keys into chat.

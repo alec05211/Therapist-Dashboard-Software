@@ -205,7 +205,7 @@ class LongitudinalRecordRepository:
                   authored_by_user_id, finalized_by_user_id, finalized_at
                 ) VALUES (
                   %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                  CASE WHEN %s = 'finalized' THEN %s ELSE NULL END,
+                  CASE WHEN %s = 'finalized' THEN %s::uuid ELSE NULL END,
                   CASE WHEN %s = 'finalized' THEN CURRENT_TIMESTAMP ELSE NULL END
                 ) RETURNING id
                 """,

@@ -7,7 +7,7 @@
   "auth0_subject": null,
   "clinical_fixture": {
     "complexity": "Moderate",
-    "planned_session_count": 8,
+    "planned_session_count": 14,
     "trajectory_document": "clinical-trajectory-outline.docx",
     "session_plan": "session-plan.json",
     "voice_config": "voice-config.json"

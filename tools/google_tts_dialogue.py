@@ -46,9 +46,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="Dialogue script with ## Part N headings")
     parser.add_argument("-o", "--output", type=Path, required=True, help="Final .wav path")
-    parser.add_argument("--marcus-voice", default="Sadachbia")
-    parser.add_argument("--jeremy-voice", default="Sadaltager")
+    parser.add_argument("--client-alias", default="Marcus")
+    parser.add_argument("--client-voice", "--marcus-voice", dest="client_voice", default="Sadachbia")
+    parser.add_argument("--therapist-alias", default="Jeremy")
+    parser.add_argument("--therapist-voice", "--jeremy-voice", dest="therapist_voice", default="Sadaltager")
     parser.add_argument("--model", default="gemini-2.5-flash-tts")
+    parser.add_argument(
+        "--sample-rate",
+        type=int,
+        choices=(16_000, 24_000, 48_000),
+        default=24_000,
+        help="WAV sample rate; 16 kHz keeps long HealthScribe fixtures below the upload limit",
+    )
     parser.add_argument("--prompt", help="Override the default performance direction")
     parser.add_argument("--region", default="global")
     parser.add_argument("--credentials", type=Path, default=DEFAULT_CREDENTIALS)
@@ -77,8 +86,11 @@ def main() -> int:
                     f"Part {index} is {size:,} UTF-8 bytes; the Cloud TTS limit is "
                     f"{MAX_DIALOGUE_BYTES:,}."
                 )
-            if "Marcus:" not in part or "Jeremy:" not in part:
-                raise ValueError(f"Part {index} must contain both Marcus: and Jeremy: turns.")
+            required_labels = (f"{args.client_alias}:", f"{args.therapist_alias}:")
+            if any(label not in part for label in required_labels):
+                raise ValueError(
+                    f"Part {index} must contain both {required_labels[0]} and {required_labels[1]} turns."
+                )
 
         credentials = service_account.Credentials.from_service_account_file(
             str(credentials_path), scopes=("https://www.googleapis.com/auth/cloud-platform",)
@@ -94,10 +106,10 @@ def main() -> int:
         voice_config = texttospeech.MultiSpeakerVoiceConfig(
             speaker_voice_configs=[
                 texttospeech.MultispeakerPrebuiltVoice(
-                    speaker_alias="Marcus", speaker_id=args.marcus_voice
+                    speaker_alias=args.client_alias, speaker_id=args.client_voice
                 ),
                 texttospeech.MultispeakerPrebuiltVoice(
-                    speaker_alias="Jeremy", speaker_id=args.jeremy_voice
+                    speaker_alias=args.therapist_alias, speaker_id=args.therapist_voice
                 ),
             ]
         )
@@ -144,7 +156,7 @@ def main() -> int:
                         voice=voice,
                         audio_config=texttospeech.AudioConfig(
                             audio_encoding=texttospeech.AudioEncoding.LINEAR16,
-                            sample_rate_hertz=24_000,
+                            sample_rate_hertz=args.sample_rate,
                         ),
                     )
                     part_path.write_bytes(response.audio_content)

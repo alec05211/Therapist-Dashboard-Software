@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -11,8 +12,121 @@ from urllib.request import Request, urlopen
 from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
 
-INSIGHTS_GENERATOR_VERSION = "distinct-insights-v8"
+INSIGHTS_GENERATOR_VERSION = "distinct-insights-v9"
 INSIGHT_KINDS = {"trajectory", "theme", "open_thread", "relevant_history"}
+ANCHOR_TRANSLATION = str.maketrans({
+    "‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-",
+})
+
+
+def _anchor_token(value: str) -> str:
+    return unicodedata.normalize("NFKC", value).translate(ANCHOR_TRANSLATION).casefold()
+
+
+def _canonicalize_claim_phrase(text: str, claim: dict[str, Any]) -> None:
+    """Repair only formatting-equivalent anchors and preserve their exact source span."""
+    phrase = claim.get("phrase")
+    occurrence = claim.get("occurrence")
+    if not isinstance(phrase, str) or type(occurrence) is not int or occurrence < 0:
+        return
+    start = -1
+    for _ in range(occurrence + 1):
+        start = text.find(phrase, start + 1)
+        if start < 0:
+            break
+    if start >= 0:
+        return
+    text_tokens = [(match.group(), match.start(), match.end()) for match in re.finditer(r"\S+", text)]
+    phrase_tokens = [_anchor_token(token) for token in re.findall(r"\S+", phrase)]
+    if not phrase_tokens:
+        return
+    normalized_text = [_anchor_token(token) for token, _, _ in text_tokens]
+    matches = []
+    width = len(phrase_tokens)
+    for index in range(len(normalized_text) - width + 1):
+        if normalized_text[index:index + width] == phrase_tokens:
+            matches.append((text_tokens[index][1], text_tokens[index + width - 1][2]))
+    if occurrence >= len(matches):
+        return
+    span_start, span_end = matches[occurrence]
+    exact_phrase = text[span_start:span_end]
+    claim["phrase"] = exact_phrase
+    claim["occurrence"] = sum(
+        1 for match in re.finditer(re.escape(exact_phrase), text[:span_start])
+    )
+
+
+def canonicalize_response_anchors(generated: dict[str, Any]) -> None:
+    """Canonicalize model-selected phrases without inventing or relocating claims."""
+    for item in generated.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        analysis = item.get("analysis")
+        if isinstance(analysis, str):
+            for claim in item.get("analysis_claims") or []:
+                if isinstance(claim, dict):
+                    _canonicalize_claim_phrase(analysis, claim)
+        for statement in item.get("context_statements") or []:
+            if not isinstance(statement, dict) or not isinstance(statement.get("text"), str):
+                continue
+            for claim in statement.get("claims") or []:
+                if isinstance(claim, dict):
+                    _canonicalize_claim_phrase(statement["text"], claim)
+
+
+def _sentence_spans(text: str) -> list[tuple[int, int]]:
+    spans = []
+    start = 0
+    for separator in re.finditer(r"(?<=[.!?])\s+", text):
+        end = separator.start()
+        if text[start:end].strip():
+            left = start + len(text[start:end]) - len(text[start:end].lstrip())
+            right = end - (len(text[start:end]) - len(text[start:end].rstrip()))
+            spans.append((left, right))
+        start = separator.end()
+    if text[start:].strip():
+        left = start + len(text[start:]) - len(text[start:].lstrip())
+        spans.append((left, len(text.rstrip())))
+    return spans
+
+
+def _materialize_sentence_claims(text: str, claims: Any) -> None:
+    if not isinstance(claims, list):
+        return
+    spans = _sentence_spans(text)
+    for claim in claims:
+        if not isinstance(claim, dict) or "phrase" in claim:
+            continue
+        sentence_index = claim.get("sentence_index")
+        if type(sentence_index) is not int or not 0 <= sentence_index < len(spans):
+            continue
+        start, end = spans[sentence_index]
+        phrase = text[start:end]
+        claim["phrase"] = phrase
+        claim["occurrence"] = sum(1 for _ in re.finditer(re.escape(phrase), text[:start]))
+
+
+def materialize_response_anchors(generated: dict[str, Any]) -> None:
+    """Turn model-selected sentence indices into exact persisted phrase anchors."""
+    for item in generated.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        if isinstance(item.get("analysis"), str):
+            _materialize_sentence_claims(item["analysis"], item.get("analysis_claims"))
+        for statement in item.get("context_statements") or []:
+            if isinstance(statement, dict) and isinstance(statement.get("text"), str):
+                _materialize_sentence_claims(statement["text"], statement.get("claims"))
+    for section in generated.get("section_summaries") or []:
+        if not isinstance(section, dict) or not isinstance(section.get("summary"), str):
+            continue
+        spans = _sentence_spans(section["summary"])
+        for link in section.get("topic_coverage") or []:
+            if not isinstance(link, dict) or "phrase" in link:
+                continue
+            sentence_index = link.get("sentence_index")
+            if type(sentence_index) is int and 0 <= sentence_index < len(spans):
+                start, end = spans[sentence_index]
+                link["phrase"] = section["summary"][start:end]
 
 
 def _request_structured_response(payload: dict[str, Any], api_key: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -51,15 +165,11 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     claim = {
         "type": "object",
         "additionalProperties": False,
-        "required": ["phrase", "occurrence", "evidence_ids"],
+        "required": ["sentence_index", "evidence_ids"],
         "properties": {
-            "phrase": {
-                "type": "string", "minLength": 1, "maxLength": 180,
-                "description": "An exact, case-sensitive, contiguous substring copied from the sibling prose (analysis or context text).",
-            },
-            "occurrence": {
-                "type": "integer", "minimum": 0,
-                "description": "Zero-based occurrence of this exact phrase in the sibling context text; normally 0.",
+            "sentence_index": {
+                "type": "integer", "minimum": 0, "maximum": 7,
+                "description": "Zero-based sentence in the sibling analysis or context text to anchor to this evidence.",
             },
             "evidence_ids": {
                 "type": "array", "minItems": 1, "maxItems": 4,
@@ -74,6 +184,17 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
         "properties": {
             "text": {"type": "string", "minLength": 1, "maxLength": 720},
             "claims": {"type": "array", "minItems": 1, "maxItems": 2, "items": claim},
+        },
+    }
+    evidence_role = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["evidence_id", "role"],
+        "properties": {
+            "evidence_id": {
+                "type": "string", **({"enum": evidence_ids} if evidence_ids else {}),
+            },
+            "role": {"type": "string", "enum": ["supporting", "contrasting", "context"]},
         },
     }
     return {
@@ -111,7 +232,7 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
                 "items": {
                     "type": "object",
                     "additionalProperties": False,
-                    "required": ["kind", "label", "analysis", "analysis_claims", "context_statements"],
+                    "required": ["kind", "label", "analysis", "analysis_claims", "context_statements", "evidence_roles"],
                     "properties": {
                         "kind": {"type": "string", "enum": sorted(kinds)},
                         "label": {"type": "string", "minLength": 1, "maxLength": 80,
@@ -122,6 +243,10 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
                             "type": "array", "minItems": 0, "maxItems": 2,
                             "items": context_statement,
                         },
+                        "evidence_roles": {
+                            "type": "array", "minItems": 1, "maxItems": 28,
+                            "items": evidence_role,
+                        },
                     },
                 },
             },
@@ -129,7 +254,7 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     }
 
 
-def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False) -> list[str]:
+def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False, require_evidence_roles: bool = False) -> list[str]:
     violations: list[str] = []
     allowed_ids = {source["evidence_id"] for source in evidence}
     kinds: set[str] = set()
@@ -177,6 +302,7 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
             violations.append(f"item {item_index} needs contextual evidence")
             continue
         prose_blocks = ([{"text": analysis, "claims": analysis_claims}] if analysis_claims is not None else []) + contexts
+        cited_ids: set[str] = set()
         for context_index, context in enumerate(prose_blocks):
             if not isinstance(context, dict):
                 violations.append(f"item {item_index} context {context_index} is not an object")
@@ -214,6 +340,27 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                 if (not isinstance(ids, list) or not 1 <= len(ids) <= 4
                         or any(not isinstance(value, str) or value not in allowed_ids for value in ids)):
                     violations.append(f"item {item_index} context {context_index} claim {claim_index} cites unavailable evidence {ids!r}")
+                else:
+                    cited_ids.update(ids)
+        roles = item.get("evidence_roles")
+        if require_evidence_roles and roles is None:
+            violations.append(f"item {item_index} needs an evidence role for every cited source")
+        if roles is not None:
+            role_ids: set[str] = set()
+            if not isinstance(roles, list) or not roles:
+                violations.append(f"item {item_index} needs an evidence role for every cited source")
+            else:
+                for link in roles:
+                    evidence_id = link.get("evidence_id") if isinstance(link, dict) else None
+                    role = link.get("role") if isinstance(link, dict) else None
+                    if (not isinstance(evidence_id, str) or evidence_id not in allowed_ids
+                            or role not in {"supporting", "contrasting", "context"}
+                            or evidence_id in role_ids):
+                        violations.append(f"item {item_index} has an invalid or duplicate evidence role")
+                    else:
+                        role_ids.add(evidence_id)
+                if role_ids != cited_ids:
+                    violations.append(f"item {item_index} evidence roles must cover every cited source exactly once")
     summaries = generated.get("section_summaries")
     if require_section_summaries or summaries is not None:
         if not isinstance(summaries, list):
@@ -277,9 +424,15 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
 def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     items: list[dict[str, Any]] = []
     for item in generated["items"]:
+        evidence_roles = {
+            link["evidence_id"]: link["role"] for link in item.get("evidence_roles", [])
+        }
         contexts = []
-        analysis_claims = [dict(claim, evidence_ids=list(dict.fromkeys(claim["evidence_ids"])))
-                           for claim in item.get("analysis_claims", [])]
+        analysis_claims = [{
+            "phrase": claim["phrase"],
+            "occurrence": claim["occurrence"],
+            "evidence_ids": list(dict.fromkeys(claim["evidence_ids"])),
+        } for claim in item.get("analysis_claims", [])]
         evidence_ids: list[str] = [value for claim in analysis_claims for value in claim['evidence_ids']]
         for statement in item["context_statements"]:
             claims = []
@@ -300,6 +453,7 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
             "content": {"label": item["label"], "analysis": item["analysis"], "contexts": contexts,
                         **({"analysis_claims": analysis_claims} if analysis_claims else {})},
             "evidence_ids": list(dict.fromkeys(evidence_ids)),
+            "evidence_roles": evidence_roles,
         })
     return {"text": generated["overview"], **({"section_summaries": {
         section["kind"]: section["summary"] for section in generated["section_summaries"]
@@ -347,12 +501,23 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
             "what changed, what contradicts an earlier interpretation, and what remains uncertain. Do not merely "
             "paraphrase quotations or manufacture deeper meaning where evidence is thin. Keep interpretations "
             "cautious and distinguish them from documented observations. The analysis is the main insight. "
-            "Supply analysis_claims anchoring meaningful analytical phrases to one or more supporting records, "
+            "Supply analysis_claims anchoring meaningful analytical phrases to one or more cited records, "
             "including finalized notes and transcript evidence together where useful. A link identifies the basis "
             "for a reviewable interpretation; it does not imply the interpretation was spoken verbatim or proven. "
-            "Preserve contrary evidence and limitations. Optional context_statements add only necessary detail, "
-            "never a repetitive retelling of the analysis. Every claim phrase must be copied exactly from its "
-            "sibling prose, with zero-based occurrence, no overlapping anchors, and only supplied evidence IDs. "
+            "Preserve contrary evidence and limitations. For every cited source, return exactly one evidence_roles "
+            "entry. Classify roles relative to the direction of the item's theme or trajectory, not merely whether "
+            "the source supports a nuanced sentence: supporting means the session aligns with that direction; "
+            "contrasting means it moves against, weakens, complicates, or contradicts that direction; context means "
+            "it orients the reader without directional support. For example, in a help-seeking trajectory, contacting "
+            "support is supporting while drinking later that same evening is contrasting; citing both makes that "
+            "session mixed. Do not label counter-direction evidence as supporting just because it supports the broader "
+            "statement that progress was uneven. Do not manufacture contrasting evidence or fill a role quota. Sources "
+            "from the same session may have different roles, which should be preserved as mixed activity. Optional "
+            "context_statements add only necessary detail, "
+            "never a repetitive retelling of the analysis. For each claim, select the zero-based sentence_index "
+            "of the sibling analysis or context text that the cited evidence supports. Use a different sentence "
+            "for each claim in the same prose block, and cite only supplied evidence IDs. The application will "
+            "derive the exact contiguous phrase anchor from that sentence without changing your prose or sources. "
             "Keep prose free of Markdown and manually inserted links. Prefer multiple sessions for trajectories "
             "and recurring themes. Open threads are unresolved questions, not treatment instructions. "
             "Write section_summaries after planning the topic paragraphs: exactly one summary for each populated kind. "
@@ -363,8 +528,9 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
             "topic. Retain clinically meaningful uncertainty, contrasts, and open questions. Explain in fresh "
             "language rather than quoting or stitching together topic paragraphs; do not introduce new clinical "
             "claims, diagnoses, recommendations, or unsupported causal connections. Leave examples and evidence "
-            "details in the paragraphs. Supply topic_coverage for EVERY item of this kind: its zero-based index "
-            "in the complete items array and an exact summary phrase that meaningfully explains that topic. "
+            "details in the paragraphs. Supply topic_coverage for EVERY item of this kind: its zero-based "
+            "topic_index in the complete items array and an exact contiguous phrase from this section summary "
+            "that meaningfully explains that topic. Use a distinct summary phrase for each topic. "
             "Use coverage to self-check that a reader understands all topics without expanding the section. "
             "Omit summaries for empty sections. "
             "Before returning, review the complete document for repeated points and consolidate them."
@@ -376,7 +542,9 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
         raise RuntimeError("Insight request exceeds the bounded input limit.")
     generated, response_data = _request_structured_response(payload, api_key)
-    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True)
+    materialize_response_anchors(generated)
+    canonicalize_response_anchors(generated)
+    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True)
     repair_attempt = 0
     while violations and repair_attempt < 3:
         repair_attempt += 1
@@ -388,7 +556,8 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
                 " You are repairing a rejected structured draft. Return the complete document, changing only what is "
                 "needed to satisfy every listed validation error. This is bounded repair attempt "
                 f"{repair_attempt} of 3. Never remove evidence merely to silence an error, and "
-                "never invent a source. Recheck every phrase against its sibling text before returning."
+                "never invent a source. Recheck every sentence_index against its sibling prose and every "
+                "summary coverage phrase against its section summary before returning."
             ),
             "input": json.dumps({
                 "task": "repair_longitudinal_insight_draft",
@@ -402,10 +571,13 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         if len(json.dumps(repair_payload, ensure_ascii=False).encode("utf-8")) > MAX_INSIGHTS_REQUEST_BYTES:
             raise RuntimeError("Insight repair request exceeds the bounded input limit.")
         generated, response_data = _request_structured_response(repair_payload, api_key)
-        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True)
+        materialize_response_anchors(generated)
+        canonicalize_response_anchors(generated)
+        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True)
     if violations:
         error = RuntimeError("OpenAI output did not satisfy the longitudinal evidence contract after three repairs: " + "; ".join(violations))
         error.generated_response = generated
+        error.violations = tuple(violations)
         error.usage = response_data.get("usage", {})
         raise error
     return generated, {"generator_version": INSIGHTS_GENERATOR_VERSION, "model": response_data.get("model", model), "response_id": response_data.get("id"), "usage": response_data.get("usage", {})}

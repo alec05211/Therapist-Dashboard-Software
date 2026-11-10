@@ -1,0 +1,873 @@
+# Avery Chen session 1 The family switchboard
+# Fictional synthetic dialogue for transcript and longitudinal-synthesis evaluation
+# Target duration 40 to 50 minutes
+
+## Part 1
+
+THERAPIST: Before we get into the details, what would make this first conversation useful enough that coming back feels worth considering?
+
+AVERY: I would like to leave with fewer tabs open in my head. That sounds like I am asking you to be technical support.
+
+THERAPIST: We can start by seeing what the tabs are. We do not have to close them all today.
+
+AVERY: Good, because some of them are apparently permanent. My father has had more trouble managing things over the last year. Appointments, bills, groceries, medication pickups. Nothing is dramatic every day. It is the accumulation. My siblings help, but somehow every question still comes through me.
+
+THERAPIST: You have become the place questions are routed.
+
+AVERY: The switchboard. That is what my partner calls it. My father calls me when the pharmacy calls him. My sister calls me to ask what Dad told her. My brother calls me because my sister is not answering. Then I call everyone back with the answer nobody is happy with.
+
+THERAPIST: How long has it felt organized that way?
+
+AVERY: Organized is a flattering word. Maybe eighteen months? No, that is too neat. There were pieces before. Dad asked me about insurance because I am good with forms. After he had a health setback last year, the pieces became a system without anyone deciding it was a system.
+
+THERAPIST: What brought you here now rather than six months ago?
+
+AVERY: I yelled at my sister over a voicemail. She had not returned Dad's call. I said something like, "Some of us do not get to disappear when this is inconvenient." Her son was sick. I knew that. I knew it while I was saying it.
+
+[pause]
+
+THERAPIST: What happened afterward?
+
+AVERY: She hung up. Then I sent a long apology that was also an explanation, which is not really an apology. She texted, "I cannot do this tonight." I sat in my car outside the library for forty minutes because I did not want to go home and explain to Leah why I had done it again.
+
+THERAPIST: Again meaning yelling, or staying away?
+
+AVERY: Both, I suppose. I do not yell often. I get precise. That may be worse. I remember exact dates and I make a case. Staying away is more common. I sit in the car until I can be pleasant.
+
+THERAPIST: What is it like to say that here?
+
+AVERY: Embarrassing. Also efficient. We have reached the part where I admit I am not coping as gracefully as everyone thinks.
+
+THERAPIST: We can be interested in what is happening without making you prove it is bad enough.
+
+AVERY: That would be new.
+
+## Part 2
+
+THERAPIST: Who thinks you are coping gracefully?
+
+AVERY: People at work. My friends, if I answered them. My father, maybe. He tells relatives I have everything handled. Leah knows better. My siblings know I am angry, but I think they believe anger is my preferred management style.
+
+THERAPIST: Is it?
+
+AVERY: No. It is what leaks out after I spend too long being reasonable.
+
+THERAPIST: What does reasonable look like day to day?
+
+AVERY: Lists. Shared calendars. Reminders that do not sound like reminders. Saying, "No problem," when there is a problem but naming it would delay the immediate task. I manage a library branch. I am good at moving people and information without making the room feel chaotic.
+
+THERAPIST: Does the work skill help at home?
+
+AVERY: Constantly. That is part of the trouble. It works. If I make the calls, the calls get made. If I bring a folder to an appointment, the information is there. If I send my siblings three possible dates, one of them chooses. Competence is very reinforcing.
+
+THERAPIST: And costly?
+
+AVERY: Yes. But the cost arrives later, usually when no one is watching. I wake at three and remember a bill. I stop making plans because Dad might need something. I feel angry before the phone even rings.
+
+THERAPIST: What do you notice physically when it rings?
+
+AVERY: My shoulders go up. Sometimes my stomach drops. That sounds dramatic. It can be a normal call.
+
+THERAPIST: The reaction can be real without telling us what the call means.
+
+AVERY: Right. Sometimes he is calling to tell me a joke he has already told twice. I see his name and prepare for a crisis. Then I am impatient with the joke, and afterward I feel terrible because someday I will want one more version of it.
+
+[long pause]
+
+THERAPIST: That sounds painful.
+
+AVERY: It is. I do not want to make this sentimental. He is also difficult. He refuses help and then gets angry when help is not immediate. He asks me a question, ignores the answer, and calls my brother for a different answer.
+
+THERAPIST: You want room for affection and frustration.
+
+AVERY: Yes. People hear that someone's parent is less independent and they expect this soft, noble sadness. Mostly I am on hold with an insurance company.
+
+THERAPIST: And sadness may appear somewhere around the hold music.
+
+AVERY: Sometimes. Usually I open another tab.
+
+THERAPIST: What are the largest tabs this week?
+
+AVERY: Two appointments, a medication refill, a home-care assessment we have not scheduled, a bill he says he paid, groceries, and whether the shower needs another handrail. Also my actual job.
+
+## Part 3
+
+THERAPIST: Could we take one recent week and map what actually came to you?
+
+AVERY: I brought notes.
+
+THERAPIST: Of course you did.
+
+AVERY: I cannot tell if that was judgment.
+
+THERAPIST: It was recognition. We can use them if they help, and set them down if they pull you into reporting.
+
+AVERY: Monday, Dad called at seven twelve because he could not find the letter about his appointment. I had scanned it, so I sent it. At nine the clinic called me because he had listed me as contact. At lunch, Mia, my sister, asked whether I could change the appointment because she had a school event for her son.
+
+THERAPIST: Was Mia scheduled to take him?
+
+AVERY: We had discussed it. She would say it was not confirmed. I would say she put it in her calendar. This is one of our favorite disputes.
+
+THERAPIST: What did you do?
+
+AVERY: I changed it. The clinic had an opening Thursday. I took Thursday morning off because no one else could do it with two days' notice.
+
+THERAPIST: Did you ask your brother?
+
+AVERY: I texted Daniel. He works shifts. He did not answer for three hours, and by then I had accepted the appointment.
+
+THERAPIST: What made three hours too long?
+
+AVERY: The opening might disappear. Dad needed to be seen. I was between meetings. It was efficient.
+
+THERAPIST: Was it urgent medically?
+
+AVERY: Not an emergency. It mattered. There is a difference, and I flatten the difference when I am afraid something will be missed.
+
+THERAPIST: What happened Tuesday?
+
+AVERY: Mia found the original letter in Dad's recycling. She sent a photo and wrote, "Mystery solved." I wanted to say the mystery was not the problem. The problem was that I had already moved work around.
+
+THERAPIST: Did you say that?
+
+AVERY: I wrote, "Thanks." Then I complained to Leah for twenty minutes.
+
+THERAPIST: What stopped you from saying more to Mia?
+
+AVERY: It felt too late. The task was done. Bringing up the cost would sound like I wanted punishment.
+
+THERAPIST: Is acknowledgment the same as punishment?
+
+AVERY: No. In my family they get confused.
+
+THERAPIST: Do you get them confused too?
+
+AVERY: Yes. If someone acknowledges how much I did, I immediately want them to promise it will never happen again. That is not a reasonable promise.
+
+THERAPIST: So the cost stays mostly off the shared record.
+
+AVERY: Until I produce the record during a fight.
+
+## Part 4
+
+THERAPIST: Continue with the week if it is useful.
+
+AVERY: Wednesday the pharmacy called Dad about a refill. He did not understand which medication they meant. He called me during story time at the branch.
+
+THERAPIST: Could you answer?
+
+AVERY: I stepped into the office. I should say I had staff covering. No children were abandoned among the picture books.
+
+THERAPIST: You are quick to establish that.
+
+AVERY: Because even here I want the record to show I am responsible.
+
+THERAPIST: What did the refill require?
+
+AVERY: A call to the prescriber's office. I made it. They said the pharmacy had the request. The pharmacy said they did not. I sent messages through the portal. It took about forty-five minutes across the day.
+
+THERAPIST: Was there enough medication for that day?
+
+AVERY: Yes. Several days. Again, not an emergency. It felt like one because two systems were disagreeing and Dad was anxious.
+
+THERAPIST: Did either sibling know this was happening?
+
+AVERY: No. It seemed inefficient to narrate it while doing it.
+
+THERAPIST: Then Thursday was the appointment you took off for.
+
+AVERY: Yes. Dad was ready late. He wanted coffee. We argued about parking. The appointment itself was ordinary. I am trying not to give you medical details because they are not really the point.
+
+THERAPIST: We can keep the focus on your experience and only use the context needed.
+
+AVERY: Thank you. Afterward he wanted lunch. I had told work I would be back by one. I said no, then felt cruel, then took him through a drive-through and ate in the car. I got back at one forty.
+
+THERAPIST: How did work respond?
+
+AVERY: Fine. My assistant manager handled it. That almost made me more upset.
+
+THERAPIST: Why?
+
+AVERY: Because the world did not collapse without me, and I had still spent the morning acting like two worlds would.
+
+[pause]
+
+THERAPIST: That sounds like an important observation, not an accusation.
+
+AVERY: I hear it as an accusation. If things can function without me, why am I this tired? The answer cannot only be that I volunteer.
+
+THERAPIST: We do not have to reduce the situation to your choices. There are real needs, incomplete systems, and other people's constraints. We can also notice where you move faster than the situation requires.
+
+AVERY: Both. I need both to be true. Otherwise therapy becomes another person telling the competent daughter to practice self-care while everyone keeps calling her.
+
+## Part 5
+
+THERAPIST: I do not want to ask you to relax inside an unchanged arrangement. I do want to understand the arrangement. What happened Friday through Sunday?
+
+AVERY: Friday was quiet with Dad. At work, a staff member called out and the copier jammed before a community meeting. Honestly, it felt easier. The problems belonged to the building. I could assign them.
+
+THERAPIST: What makes assignment possible at work?
+
+AVERY: Roles. People know what they own. If I ask someone to handle the meeting room, they do not hear, "You are a bad person for not already knowing the room needed attention."
+
+THERAPIST: Is that what family requests carry?
+
+AVERY: Often. History. Tone. The last ten times. At work I can say, "Please call the vendor by three." With Mia I say, "Could you maybe call when you have a chance, because I know the kids are busy and I already started the form." Then she does not know whether I am asking or announcing.
+
+THERAPIST: What happened Saturday?
+
+AVERY: I had dinner plans with Leah and another couple. Dad called at four thirty because the grocery delivery had substituted something. He wanted me to come look.
+
+THERAPIST: Did you?
+
+AVERY: Yes.
+
+THERAPIST: What was substituted?
+
+AVERY: Tomato soup with basil instead of plain tomato soup.
+
+[pause]
+
+AVERY: I know.
+
+THERAPIST: What did going there mean in the moment?
+
+AVERY: That he sounded confused. That maybe there were other wrong items. That I was already dressed and could be there in fifteen minutes. That if I said no and something else was wrong, I would spend dinner checking my phone.
+
+THERAPIST: Were other things wrong?
+
+AVERY: No. He did not want the basil soup. I put it in my car and stopped at the store for plain soup. I was forty minutes late to dinner.
+
+THERAPIST: How did Leah respond?
+
+AVERY: She said she was glad Dad was okay and asked why Daniel could not have gone. Daniel lives closer. I had not called him.
+
+THERAPIST: Why not?
+
+AVERY: It seemed absurd to mobilize another person over soup.
+
+THERAPIST: But not absurd for you to go.
+
+AVERY: Correct. [long pause] I hear it.
+
+THERAPIST: What happened Sunday?
+
+AVERY: I did not answer anyone for most of the day. Mia called twice. I watched it ring. Then I felt self-righteous, which is not restful. At six I called back and she said she wanted to ask what kind of soup Dad liked.
+
+THERAPIST: The same soup.
+
+AVERY: The same soup. I laughed and then cried, which alarmed her. I told her I was fine. I was not in danger. I was just very tired and it was too much meaning for canned soup.
+
+## Part 6
+
+THERAPIST: When you told Mia you were fine, what did fine mean?
+
+AVERY: That she did not need to come over. That I could finish the conversation. That crying did not require a response plan.
+
+THERAPIST: Did she ask more?
+
+AVERY: She asked if I wanted her to handle groceries the next week. I said no too quickly. Then I said maybe. Then I explained the app for ten minutes.
+
+THERAPIST: Did she agree?
+
+AVERY: She said she could order, but she could not promise to be available during the delivery window because of the kids. I heard that as a loophole.
+
+THERAPIST: What did she mean?
+
+AVERY: I do not know. Probably exactly what she said. She can place the order. She cannot sit at Dad's house for two hours waiting. I wanted the whole task transferred, not part of it.
+
+THERAPIST: Is a partial transfer useful?
+
+AVERY: Maybe. It can also create another seam where someone calls me.
+
+THERAPIST: What did you decide?
+
+AVERY: Nothing. I said we would talk later. That is one of the open tabs.
+
+THERAPIST: Tell me more about Mia.
+
+AVERY: She is thirty-six. Two children, married, works four days a week in an accounting office. She lives about thirty minutes from Dad without traffic, which means anywhere from thirty to seventy minutes. She loves him. I need that on the record.
+
+THERAPIST: It sounds important that asking for more does not erase that.
+
+AVERY: Yes. She brings food. She gets him laughing. She notices things I miss because I am looking at paperwork. She is also difficult to pin down. If she says, "I can probably do Thursday," I hear Thursday. She hears probably.
+
+THERAPIST: Have you talked about that difference?
+
+AVERY: We have argued about it. Talking would be new.
+
+THERAPIST: And Daniel?
+
+AVERY: Forty-two. Older than me. Works maintenance for a hotel, rotating shifts. Divorced. He lives closest to Dad. He can fix anything and hates planning. He will show up at nine at night with a new handrail and then not answer a text about next month's appointment.
+
+THERAPIST: What does he contribute that may not enter your system?
+
+AVERY: Repairs. Company. He watches games with Dad. He took him to get a haircut last week and did not tell anyone because apparently haircuts do not require documentation.
+
+THERAPIST: Did you need to know?
+
+AVERY: No. [pause] I wanted to know because I am hungry for evidence that I am not the only one.
+
+## Part 7
+
+THERAPIST: How do your siblings describe the arrangement?
+
+AVERY: Mia says we all do different things and I only count what is on my list. Daniel says I make it hard to help because I correct him. I say invisible help is hard to rely on.
+
+THERAPIST: Is there truth in each account?
+
+AVERY: Unfortunately. I do count what is trackable. I also get calls when untracked things go wrong. Daniel bought the handrail without checking where Dad wanted it. Dad would not use it. Then I arranged for it to be moved.
+
+THERAPIST: What does Daniel remember about that?
+
+AVERY: That he spent a Saturday installing it and I criticized him. He is not wrong. I thanked him after explaining four problems.
+
+THERAPIST: What were you afraid would happen if you led with thanks and paused?
+
+AVERY: The problems would disappear from the conversation. Appreciation can become a gag order in my family. If you admit someone meant well, you are not allowed to discuss impact.
+
+THERAPIST: Is that a current rule everyone has agreed to, or an expectation?
+
+AVERY: An expectation. An old one. My mother hated conflict. She could make gratitude sound like a command.
+
+THERAPIST: What was her role in the family?
+
+AVERY: She handled people. Dad handled money and repairs. She remembered birthdays, softened messages, made everyone feel included. She died six years ago.
+
+THERAPIST: I am sorry.
+
+AVERY: Thank you. It is not recent. It is also present in all of this. After she died, Dad was more capable than everyone expected. Then things started getting harder gradually. I took over the forms because she would have. Mia took over holidays. Daniel took over the house. None of us said that was what we were doing.
+
+[long pause]
+
+THERAPIST: What happens as you connect those roles?
+
+AVERY: I feel disloyal. Like I am complaining about inheriting something from her.
+
+THERAPIST: Can grief and burden coexist without the burden becoming a criticism of her?
+
+AVERY: Maybe. She was good at making care look effortless. It was not effortless. I know that now. I wish I could ask whether she was angry too.
+
+THERAPIST: What do you imagine she might say?
+
+AVERY: That she did what needed doing. Which is not an answer.
+
+THERAPIST: It may be the answer she had available.
+
+AVERY: That is sadder.
+
+THERAPIST: We can slow down.
+
+AVERY: Please. I was not planning to talk about her today.
+
+## Part 8
+
+THERAPIST: We can stay here, move back to the week, or stop for a moment. What would help?
+
+AVERY: Ask me something ordinary.
+
+THERAPIST: What kind of library do you manage?
+
+AVERY: A neighborhood branch. Busy after school, a lot of families, older adults in the morning, people using computers for forms that have no business being online-only.
+
+THERAPIST: What do you like about it?
+
+AVERY: The specificity. Someone needs the second book in a series, a quiet place for an interview, help printing a document. We can often help. Not always, but the question has edges.
+
+THERAPIST: And you are not the only person who can answer it.
+
+AVERY: Correct. I have a good team. I train people. I delegate. I take vacation, theoretically.
+
+THERAPIST: When was the last vacation?
+
+AVERY: Four days last spring. We went to the coast. Dad called because he could not sign into his bank. I handled it from the hotel.
+
+THERAPIST: Did anyone else know he needed help?
+
+AVERY: No. He called me. Leah asked me not to answer the second call. I said finances were different.
+
+THERAPIST: Were they?
+
+AVERY: Potentially. It turned out he had typed the password wrong. I changed it and then spent an hour worrying he would forget the new one.
+
+THERAPIST: Did the vacation recover?
+
+AVERY: Mostly. We had dinner. I was distracted. Leah did not bring it up again until we got home.
+
+THERAPIST: How is this affecting your relationship with her?
+
+AVERY: More than I want to admit. She is patient. Too patient sometimes. Then she says one careful sentence and I hear all the sentences she has not said.
+
+THERAPIST: What was the recent careful sentence?
+
+AVERY: "I miss making plans with you before we know whether the week will behave." [pause] She did not ask me to choose her over Dad. I accused her of asking that anyway.
+
+THERAPIST: What did she say?
+
+AVERY: She said, "I am asking to be in the decision before the cancellation." That was fair. I had canceled dinner by text after telling Dad I would go over. I had not called her first.
+
+THERAPIST: Was going to your father urgent?
+
+AVERY: He was dizzy earlier in the day. It had passed. He had spoken to the clinic. I wanted to see him. I still think going was reasonable. The way I decided was not fair to Leah.
+
+THERAPIST: You are distinguishing the care decision from the relationship process.
+
+AVERY: I can do that afterward. In the moment, everything becomes one moral emergency.
+
+## Part 9
+
+THERAPIST: What does a moral emergency say?
+
+AVERY: A good daughter goes. A good partner understands. A good manager compensates. Nobody should need to ask twice.
+
+THERAPIST: Where are you in that list?
+
+AVERY: I am the person performing all the roles.
+
+THERAPIST: Do you get needs, or only duties?
+
+AVERY: That sounds like a therapist question.
+
+THERAPIST: It is. You can reject it.
+
+AVERY: I have needs. Sleep. Time with Leah. A day where I do not hear a ringtone and become angry. I am just not sure needs outrank real problems.
+
+THERAPIST: Must they outrank them to be included?
+
+AVERY: In practice, something wins.
+
+THERAPIST: Sometimes. Other times a problem waits, is shared, or is handled imperfectly.
+
+AVERY: Imperfectly is difficult.
+
+THERAPIST: What is the feared consequence of imperfect care?
+
+AVERY: Dad gets hurt. A bill goes unpaid. A medication is missed. He feels abandoned. My siblings think I am punishing them. Leah stops asking.
+
+THERAPIST: Those range from concrete risks to relationship fears. Do they all feel equally likely?
+
+AVERY: At three in the morning, yes. Right now, no. A bill being one day late is not the same as a medication being unavailable. Dad disliking dinner is not the same as him not having food.
+
+THERAPIST: Have you had space to sort by urgency before?
+
+AVERY: I sort tasks constantly. I do not sort my response. I handle anything that can become a problem before it does.
+
+THERAPIST: Prevention has helped your family.
+
+AVERY: It has.
+
+THERAPIST: It may also make it hard to discover which things could wait or be owned by someone else.
+
+AVERY: Yes. Then people say, "You should have asked," and I want to throw something because asking is another task.
+
+THERAPIST: What makes asking costly?
+
+AVERY: I have to define the task, choose the person, account for their schedule, prepare for no, explain the context, and then monitor. Sometimes doing it is faster.
+
+THERAPIST: Faster in the next hour.
+
+AVERY: Not necessarily over a year.
+
+[pause]
+
+THERAPIST: What did you notice just then?
+
+AVERY: I know where this is going. Delegation, boundaries, family meeting. I do not want a plan that assumes everyone becomes reliable because I use an assertive sentence.
+
+THERAPIST: Neither do I. A useful plan would have to include their actual capacities and the possibility that some requests fail.
+
+AVERY: Good. I can try something if we are not pretending the outcome is under my control.
+
+## Part 10
+
+THERAPIST: We have talked about sleep generally. What is it actually like?
+
+AVERY: I fall asleep on the couch around ten, wake at midnight, move to bed, then wake around three or four. Sometimes I check my phone. Sometimes I remember something without the phone's help.
+
+THERAPIST: How many nights in a typical week?
+
+AVERY: Four? Five? I am guessing. Weekends are not necessarily better.
+
+THERAPIST: What happens the next day?
+
+AVERY: Coffee. Irritability. I skip lunch and then eat crackers at four. I can function. That phrase is doing too much work.
+
+THERAPIST: What would someone close to you notice?
+
+AVERY: Leah says I ask the same question twice. At work I close my office door more. I have headaches. I have not been walking with my friend Nora.
+
+THERAPIST: Any changes in alcohol or other substances to manage sleep or stress?
+
+AVERY: No drugs. I drink wine sometimes, one glass with dinner, maybe two at a social thing. Less lately because I fall asleep faster and wake up worse. I do not use it as a sleep plan.
+
+THERAPIST: Any major change in appetite or weight that concerns you?
+
+AVERY: I forget meals and then eat late. My clothes fit the same. I am not trying to change my weight.
+
+THERAPIST: Have you had periods of feeling unable to keep yourself safe, thoughts of wanting to die, or thoughts of harming yourself?
+
+AVERY: No. I have wanted everyone to stop needing me for forty-eight hours. I have fantasized about a hotel room where no one knows the number. I do not want to die. I have not thought about hurting myself.
+
+THERAPIST: Thank you for answering directly. Any thoughts of hurting someone else when the anger is high?
+
+AVERY: No. I say cruelly accurate things. I do not threaten people or get physical.
+
+THERAPIST: Have you ever felt physically unsafe with anyone involved?
+
+AVERY: No. Family conflict is verbal. Leah is safe. Dad can be stubborn and sharp, not threatening.
+
+THERAPIST: I ask these questions routinely and because exhaustion and feeling trapped can change. If any of that shifts, we can talk directly rather than making you hint.
+
+AVERY: I appreciate that. I was worried the hotel-room thought would be treated like a crisis.
+
+THERAPIST: It sounds like a wish for uninterrupted rest and escape from demands. I would still want you to tell me if it changed into not wanting to be alive or if you felt unable to stay safe.
+
+AVERY: Understood.
+
+## Part 11
+
+THERAPIST: Who can you call when you need support rather than task coverage?
+
+AVERY: Leah. Nora, though I have been avoiding her because I owe her three returned calls. My cousin June. She cared for her mother, so she does not give advice unless I ask.
+
+THERAPIST: What makes it hard to answer Nora?
+
+AVERY: She will ask how I am, and I do not have a short answer. Also, she has a life. I do not want every conversation to become my father.
+
+THERAPIST: Could you tell her that?
+
+AVERY: "I want to see you and I do not want to spend the whole time giving a care update." She would probably understand.
+
+THERAPIST: Is friendship another place where you wait until you can arrive pleasantly?
+
+AVERY: Yes. I keep postponing until I am better company. Then isolation makes me worse company.
+
+THERAPIST: What do you and Nora usually do?
+
+AVERY: Walk by the river. Complain about city decisions. She knows every dog even though none are hers.
+
+THERAPIST: When was the last walk?
+
+AVERY: Two months ago. I canceled once for Dad. The other times I was tired and did not suggest a new date.
+
+THERAPIST: Would reconnecting be for rest, support, or something else?
+
+AVERY: Being a person who knows dogs' names. That sounds silly.
+
+THERAPIST: It sounds like an ordinary identity outside the switchboard.
+
+AVERY: I miss ordinary. Leah and I used to cook on Sundays. Now Sunday is when I catch up on Dad's week and prepare for mine.
+
+THERAPIST: Does your father know what the arrangement costs you?
+
+AVERY: Some of it. If I tell him I am tired, he says I should do less. Then he calls me with the next thing. I do not think he connects the sentence to the call. Or maybe he does and cannot see another option.
+
+THERAPIST: Have you asked what he thinks each sibling is responsible for?
+
+AVERY: Not directly. He calls based on who he thinks will answer. That is me.
+
+THERAPIST: What might happen if you asked him?
+
+AVERY: He might say he does not want a schedule. He might say we are making him a project. He might hear the conversation as a step toward taking over more decisions.
+
+THERAPIST: Those concerns would matter.
+
+AVERY: Yes. I do not want a family meeting about him without him. I also do not know how to discuss workload with him in the room without making him feel guilty for needing help.
+
+THERAPIST: That tension may not have a perfect solution. We can think about what belongs with him, what belongs among siblings, and where his preferences need to guide both.
+
+## Part 12
+
+THERAPIST: If we were to make the hidden workload visible, what categories would there be?
+
+AVERY: Medical appointments. Medication and pharmacy. Bills and mail. Groceries and meals. House repairs. Transportation. Social things, which sounds clinical, but I mean company. Technology. Emergencies.
+
+THERAPIST: Which currently require you specifically?
+
+AVERY: Require is hard. I have the portal access for appointments. Dad authorized me. I know the medication list. I monitor the checking account with his permission. Those three are attached to me right now.
+
+THERAPIST: Does attached mean only you can perform every step?
+
+AVERY: No. Someone else can drive. Someone else can pick up medication. Dad can still make decisions. Mia could learn the pharmacy routine. Daniel can handle repairs without me supervising, if I can tolerate not supervising.
+
+THERAPIST: Which tasks do you automatically absorb?
+
+AVERY: Scheduling. Follow-up calls. Reminding everyone. Groceries when the delivery is wrong. Any form with a deadline. Deciding whether something is urgent.
+
+THERAPIST: What do you absorb because no one has claimed it, and what do you absorb before anyone can claim it?
+
+AVERY: That is rude.
+
+THERAPIST: Too sharp?
+
+AVERY: No. Accurate. Scheduling is both. Some forms are both. Groceries may be before anyone can claim it. I do not announce the problem until I have solved it.
+
+[pause]
+
+THERAPIST: Would it be useful this week to observe one category without changing it?
+
+AVERY: You are not going to make me delegate something immediately?
+
+THERAPIST: We have one account of one week. Observation may give us a better baseline and reduce the chance of designing a plan around the loudest incident.
+
+AVERY: That appeals to me, which may mean it is avoidance disguised as data.
+
+THERAPIST: It could become avoidance if observation never leads anywhere. For one week, it can be information.
+
+AVERY: What would I record?
+
+THERAPIST: Each request or task that reaches you, whether it was urgent, who else knew, what you did, and what you imagined would happen if you waited or asked someone else.
+
+AVERY: That is a spreadsheet.
+
+THERAPIST: It could be a note. I am cautious about giving your management system another management system.
+
+AVERY: Thank you. I can use one page. Four columns, not eleven.
+
+THERAPIST: What would keep it from becoming evidence for the prosecution?
+
+AVERY: No column for whose fault. No scoring. Record what I know, not what I think they intended.
+
+THERAPIST: And include contributions you learn about after the fact?
+
+AVERY: Yes. Haircuts count.
+
+## Part 13
+
+THERAPIST: Is there one small change you want to test now, or would observation be enough for the first week?
+
+AVERY: I want one evening where I am not first contact. If I only observe, I will resent the observation.
+
+THERAPIST: Which evening is realistic?
+
+AVERY: Tuesday. Mia is usually home. Daniel may be working. Leah and I have no plan, which means I cannot ruin a plan.
+
+THERAPIST: Is the goal to protect an evening only when there is already an event, or to protect unstructured time too?
+
+AVERY: You are going to say unstructured time counts.
+
+THERAPIST: What do you say?
+
+AVERY: It should. I do not fully believe it.
+
+THERAPIST: What would need to happen before Tuesday?
+
+AVERY: I would ask Mia if she can be first call from five to nine for non-emergencies. I would tell Dad. I would not make Leah enforce it.
+
+THERAPIST: What if Mia says no?
+
+AVERY: I could ask Daniel about the hours he is off. Or choose another evening. I do not want the task to become making Tuesday happen at any cost.
+
+THERAPIST: What if your father calls you anyway?
+
+AVERY: I could answer and ask if it is urgent. If it is not, remind him to call Mia or write it down for Wednesday.
+
+THERAPIST: Could you choose not to answer?
+
+AVERY: Technically. I am not ready to make that the test. If I ignore the call, I will spend the evening imagining a fall.
+
+THERAPIST: Then answering briefly and redirecting may be a more honest first experiment.
+
+AVERY: Yes. I want this to be difficult, not impossible.
+
+THERAPIST: How will you ask Mia?
+
+AVERY: "Could you be Dad's first call Tuesday from five to nine for things that can be handled by phone or wait until morning? You can say no, and if Tuesday does not work, tell me what evening might."
+
+THERAPIST: What do you notice as you say it?
+
+AVERY: I want to add all the reasons I need it.
+
+THERAPIST: What would the reasons do?
+
+AVERY: Prove I have earned four hours.
+
+THERAPIST: Have you?
+
+AVERY: That is a trap. Yes, but I do not want care to work like earned leave.
+
+THERAPIST: Could the request stand without the case?
+
+AVERY: Maybe. I will want to send a second message.
+
+THERAPIST: What could you do with the second message?
+
+AVERY: Put it in my notes and wait for her answer.
+
+[pause]
+
+THERAPIST: Would you like to involve your father before or after Mia responds?
+
+AVERY: After. Otherwise I may tell him a plan that does not exist. But I will not frame it as Mia babysitting him. It is about who gets the non-urgent calls.
+
+## Part 14
+
+THERAPIST: Before we close, I want to understand what good care means to you when it is not defined only by preventing problems.
+
+AVERY: That is harder than it should be. Showing up. Knowing what matters to the person, not only what needs fixing. Letting Dad complain without treating the complaint as a ticket.
+
+THERAPIST: What does he value that the task list may miss?
+
+AVERY: Choice. Privacy. His house staying his house. Baseball. Food that tastes like food and not something chosen because it keeps well. Being useful. He still gives all of us advice whether we ask or not.
+
+THERAPIST: When do you feel connected to him rather than responsible for him?
+
+AVERY: Sometimes in the car after an appointment, if we are not rushing. He tells stories about people I have heard about my whole life. We argue about directions. He always thinks the old route is faster.
+
+THERAPIST: Does responsibility crowd those moments out?
+
+AVERY: Yes. I ask questions from the clinic while he is telling me about a restaurant that closed in 1998. Then later I wish I had listened to the restaurant story.
+
+THERAPIST: Could care include protecting some room for stories that do not accomplish anything?
+
+AVERY: It could. I do not know how to schedule that without ruining it.
+
+THERAPIST: Maybe the first step is noticing when it is already happening.
+
+AVERY: That I can do. [pause] He called yesterday to tell me the neighbor's dog had learned to open a gate. I was answering email while he talked. I could have stopped for two minutes.
+
+THERAPIST: What prevented you?
+
+AVERY: The assumption that a call from Dad is taking something. Even when he is offering a ridiculous dog story.
+
+THERAPIST: How do you want to respond next time?
+
+AVERY: If I have two minutes, give him two actual minutes. If I do not, say I want to hear it and choose another time. Not half-listen while becoming resentful.
+
+THERAPIST: That sounds like a different kind of boundary: clearer contact rather than less contact by default.
+
+AVERY: Yes. I do not want the goal to be fewer calls at any cost. I want calls not to erase whatever I am doing.
+
+THERAPIST: What might your father say the goal is?
+
+AVERY: He might say he wants all of us to stop meeting about him. He might also say he wants people to answer. Those can both be true.
+
+THERAPIST: Would you be willing to ask him what help feels useful and what feels intrusive?
+
+AVERY: Eventually. Not as a questionnaire. Maybe in the car when there is no clipboard.
+
+THERAPIST: What makes a clipboard dangerous?
+
+AVERY: I stop listening once I have categories.
+
+## Part 15
+
+THERAPIST: Since this is our first meeting, I also want to ask about what you expect from me. What would make therapy repeat the pattern you are trying to change?
+
+AVERY: If I become the good client who brings organized material and you reward the organization without asking what it costs. Or if you give me more systems. I love systems. I can use them to avoid almost anything.
+
+THERAPIST: How would you know I was pushing too hard in the other direction?
+
+AVERY: If every practical detail becomes a defense. Some details matter. The pharmacy really does lose requests. My siblings really do have constraints. Dad really does need help.
+
+THERAPIST: So you want the reality respected while we examine how you move inside it.
+
+AVERY: Yes. And I do not want anger translated immediately into sadness. Sometimes I am simply angry.
+
+THERAPIST: You can correct me if I soften something that needs to stay sharp.
+
+AVERY: I probably will.
+
+THERAPIST: Good. What happens when someone disagrees with you calmly?
+
+AVERY: I become more articulate. That is not always a virtue. I can make a very persuasive case while losing the point.
+
+THERAPIST: How might I help you notice that without turning the conversation into a contest?
+
+AVERY: Ask what I want from the person, not whether my evidence is correct. With Mia, I often prove she was late when what I want is for her to take the next call.
+
+THERAPIST: Would it be acceptable for me to interrupt a detailed case and ask about the request underneath it?
+
+AVERY: Acceptable, not enjoyable.
+
+THERAPIST: We can work with that. Is there anything about identity, family expectations, or culture that you want me to hold in mind without assuming I understand it?
+
+AVERY: My family does not fit a single explanation. We are Chinese American. Duty matters. Saving face sometimes matters. So do our individual personalities and the fact that my mother did most of this work. I do not want you to turn every conflict into culture, and I do not want you to pretend culture is irrelevant because that feels safer.
+
+THERAPIST: I will ask rather than assign meaning. You can tell me when a question misses.
+
+AVERY: Thank you.
+
+THERAPIST: Have you been in therapy before?
+
+AVERY: Three sessions through an employee program about ten years ago, after my mother first got sick. I spent all three talking about work. The counselor suggested breathing exercises. They were fine. I did not go back.
+
+THERAPIST: What made you stop?
+
+AVERY: I decided the crisis had passed. Also, talking about my mother made everything less containable. I preferred work.
+
+THERAPIST: If that urge appears again, how would you like us to handle it?
+
+AVERY: Name it without forcing me to talk about grief that day. Give me a choice. If I say no twice, believe me for that session.
+
+THERAPIST: That is clear. I will not treat reluctance as a puzzle to defeat.
+
+AVERY: Good. I have enough people converting no into a scheduling problem.
+
+## Part 16
+
+THERAPIST: We have about ten minutes. I want to check what has felt useful, what has not, and what you are leaving with.
+
+AVERY: Useful: you did not tell me to take a bath. You also did not tell me the whole problem is boundaries.
+
+THERAPIST: What was not useful?
+
+AVERY: I am not sure yet. The question about what I absorb before anyone can claim it was irritating. Probably useful, but irritating.
+
+THERAPIST: We can keep both responses. What feels most important from the map we made?
+
+AVERY: The workload is real. I also make some of it invisible and then use the invisibility as evidence no one helps. That is not the whole story. It is a piece I can affect.
+
+THERAPIST: What remains uncertain?
+
+AVERY: What my siblings can actually sustain. What Dad wants versus what he agrees to because I am persistent. How much of this is a temporary difficult period and how much is the new structure. Whether I can tolerate help that does not look like mine.
+
+THERAPIST: Those sound like questions for more than one session.
+
+AVERY: Good. I do not want a dramatic conclusion today.
+
+THERAPIST: Your two experiments are a one-page observation and a direct request about one evening. Do those feel manageable together?
+
+AVERY: Yes. The observation could become excessive. I will limit it to one line per request and ten minutes at the end of the day.
+
+THERAPIST: What will you do if you miss a day?
+
+AVERY: Continue the next day. I will not reconstruct it from phone records like a detective.
+
+THERAPIST: And the request to Mia?
+
+AVERY: I will send it before I leave the parking lot, because if I take it home I will workshop it with Leah and make her responsible for the tone.
+
+THERAPIST: Does Leah know you came today?
+
+AVERY: Yes. She helped me find the office and then pretended she had not memorized the route. She is trying not to manage me.
+
+THERAPIST: What would you like to tell her afterward?
+
+AVERY: That I talked about the cost to us, not just Dad's calendar. And that I want to walk after dinner if she does.
+
+THERAPIST: How are you feeling about leaving?
+
+AVERY: Tired. Less defended, which is not the same as better. I am thinking about my mother. I did not expect that.
+
+THERAPIST: Do you feel able to go back to the rest of your day, or do you need a few minutes before driving?
+
+AVERY: I can drive. I may sit in the car, but not because I am hiding from Leah. I want to write the message to Mia and breathe for a minute.
+
+THERAPIST: Is there anything from the safety questions you want to revisit before we end?
+
+AVERY: No. I am exhausted and angry, not unsafe. If that changes, I will say it directly.
+
+THERAPIST: Thank you. Next time we can review what actually happened without grading the week as a success or failure.
+
+AVERY: I will try not to bring an eleven-page report.
+
+THERAPIST: One page is welcome. You are also welcome without it.
+
+[long pause]
+
+AVERY: That is going to take some practice.
+
+THERAPIST: We can practice. I will see you next week.
+
+AVERY: See you next week.

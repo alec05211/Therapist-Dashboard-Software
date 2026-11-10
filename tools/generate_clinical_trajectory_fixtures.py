@@ -97,6 +97,20 @@ CASES = [
         "setting": "Outpatient individual therapy",
         "acuity": "Moderate",
         "voice": "Aoede",
+        "model": "gemini-2.5-flash-tts",
+        "production_parts": 16,
+        "long_session_target": "40 to 50 minutes",
+        "page_break_before_sessions": [12],
+        "session_assets": {
+            1: {
+                "status": "recorded",
+                "script": "session-01-the-family-switchboard.txt",
+                "recording": "session-01-the-family-switchboard.wav",
+                "target_duration_minutes": "40-50",
+                "rendered_duration_seconds": 2470.371,
+                "sample_rate_hz": 16000,
+            }
+        },
         "voice_style": "Clear, grounded voice; measured delivery; becomes clipped when resentful and softer when naming grief.",
         "speaker": "AVERY",
         "therapist_voice_fixture": "therapist-calm-02",
@@ -125,7 +139,9 @@ CASES = [
         "phases": [
             ("1", "1-2", "Make the hidden workload visible and separate urgency from habit.", "Avery names resentment without converting it into a task list."),
             ("2", "3-5", "Practice concrete requests and tolerate imperfect help.", "One sibling takes a recurring responsibility in a different style than Avery would choose."),
-            ("3", "6-8", "Approach anticipatory grief and build a sustainable care network.", "A setback no longer erases Avery's limits or her access to support."),
+            ("3", "6-9", "Test limits during setbacks, family negotiation, and competing work demands.", "Avery sometimes holds a boundary and sometimes resumes control, with both outcomes kept visible."),
+            ("4", "10-12", "Make room for grief, money conflict, and the wish for ordinary life.", "She speaks more directly while recognizing that agreement and relief are not guaranteed."),
+            ("5", "13-14", "Consolidate a living care agreement without treating strain as resolved.", "Avery uses support earlier and defines care as participation within limits rather than total availability."),
         ],
         "sessions": [
             ("The family switchboard", "Avery inventories the calls, appointments, and decisions that route through her.", "She distinguishes tasks only she can do from tasks she automatically absorbs.", "Bring one recent week of examples."),
@@ -134,8 +150,14 @@ CASES = [
             ("Help in someone else's style", "The sibling follows through but organizes the task differently.", "Avery experiments with accepting adequate help rather than reclaiming control.", "Track urges to redo the task."),
             ("What cannot be organized", "A quiet moment with her father evokes sadness and fear.", "She stays with grief without moving immediately to the next appointment.", "Choose one low-demand ritual of connection."),
             ("The canceled plan", "A health change disrupts Avery's first evening out in weeks.", "The session separates a genuine emergency from the belief that rest is futile.", "Reschedule rather than abandon the plan."),
-            ("A family meeting with edges", "Avery and her siblings discuss roles and money with mixed success.", "She holds one limit while acknowledging each sibling's constraints.", "Document agreements in plain language."),
-            ("Care without disappearance", "They review remaining strain, grief, and the supports that now exist.", "Avery defines care as participation within limits rather than total availability.", "Use the plan as a living agreement."),
+            ("The spreadsheet no one asked for", "Avery prepares a detailed care ledger, then realizes it may obscure the request she needs to make.", "She converts the ledger into three concrete responsibilities while keeping the underlying resentment discussable.", "Bring the shorter proposal to the family meeting."),
+            ("A family meeting with edges", "A long-form session reconstructs a family meeting about time, money, transportation, and their father's preferences.", "Avery holds one limit, overfunctions in another moment, and leaves uncertain whether the agreement will last.", "Send a plain-language summary and wait before correcting anyone's method."),
+            ("The hospital call at work", "A non-emergency medical call arrives during a staffing problem at the library.", "Avery delegates the family follow-up but later retakes two tasks after receiving incomplete information.", "Identify what made delegation tolerable and what pulled her back in."),
+            ("His lucid afternoon", "A quiet visit with her father includes humor, irritation, and a direct question about what he wants.", "Avery hears a preference that conflicts with her own idea of the safest plan and does not resolve it immediately.", "Record the preference without turning it into a final decision."),
+            ("Money and the old scorecard", "The siblings revisit unequal expenses and older stories about who has always been dependable.", "Avery names the current financial request without proving a lifelong case against either sibling.", "Separate reimbursement decisions from judgments about character."),
+            ("The week she took everything back", "A sibling misses a pickup and Avery resumes nearly every task for six days.", "The setback is examined as information about thresholds and backup plans rather than evidence that sharing cannot work.", "Restore one responsibility instead of redesigning the whole system."),
+            ("An evening that survives a phone call", "Avery keeps dinner plans while her brother handles a manageable change in their father's schedule.", "She notices guilt, checks once, and returns attention to her partner without requiring the evening to feel relaxed.", "Repeat one protected plan with a clear emergency exception."),
+            ("Care without disappearance", "They review the remaining strain, grief, family agreements, and supports that are still inconsistent.", "Avery defines care as participation within limits and identifies early signs that she is becoming the switchboard again.", "Use the plan as a living agreement and return to care as needed."),
         ],
         "dialogue": [
             ("THERAPIST", "What happened when your sister said she could take Thursdays?"),
@@ -644,6 +666,8 @@ def build_doc(case, output_root):
 
     doc.add_heading("Session by session plan", level=1)
     for index, (name, focus, movement, continuity) in enumerate(case["sessions"], start=1):
+        if index in case.get("page_break_before_sessions", []):
+            doc.add_page_break()
         doc.add_heading(f"Session {index} {name}", level=2)
         paragraph(doc, focus, bold_lead="Focus", after=2, keep=True)
         paragraph(doc, movement, bold_lead="Possible movement", after=2, keep=True)
@@ -659,7 +683,7 @@ def build_doc(case, output_root):
     doc.add_heading("Dialogue and production guardrails", level=1)
     for item in (
         "Use exactly two spoken labels: THERAPIST and the client alias shown above. Therapist identity and voice configuration live outside this client record.",
-        "Write one continuous session in six parts of roughly five minutes each; do not repeat greetings or summaries at part boundaries.",
+        f"Write one continuous session in {case.get('production_parts', 6)} parts targeting {case.get('long_session_target', 'about thirty minutes')}; do not repeat greetings or summaries at part boundaries.",
         "Preserve false starts, corrections, ordinary logistics, and silence. Not every exchange should produce insight.",
         "Mark non-spoken pauses on their own line, such as [SILENCE - 8 SECONDS - DO NOT SPEAK], and insert them in audio assembly if the model reads or shortens the cue.",
         "Generated interpretations remain tentative, source-grounded review prompts. A qualified clinician owns assessment, risk decisions, and treatment choices.",
@@ -722,6 +746,7 @@ def write_supporting_files(case, output_root):
                 "possible_movement": movement,
                 "carry_forward": continuity,
                 "status": "outline_only",
+                **case.get("session_assets", {}).get(index, {}),
             }
             for index, (name, focus, movement, continuity) in enumerate(case["sessions"], start=1)
         ],
@@ -730,7 +755,7 @@ def write_supporting_files(case, output_root):
     voice_config = {
         "fixture_version": 1,
         "provider": "Google Gemini TTS",
-        "model": "gemini-2.5-pro-tts",
+        "model": case.get("model", "gemini-2.5-pro-tts"),
         "language_code": "en-US",
         "client": {
             "speaker_alias": case["speaker"],
@@ -781,12 +806,19 @@ def write_catalog(cases, output_root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-root", type=Path, required=True)
+    parser.add_argument("--client", help="Generate only one named client without rewriting the catalog")
     args = parser.parse_args()
+    selected_cases = CASES
+    if args.client:
+        selected_cases = [case for case in CASES if case["name"] == args.client]
+        if not selected_cases:
+            raise SystemExit(f"Unknown client: {args.client}")
     outputs = []
-    for case in CASES:
+    for case in selected_cases:
         write_supporting_files(case, args.output_root)
         outputs.append(build_doc(case, args.output_root))
-    write_catalog(CASES, args.output_root)
+    if not args.client:
+        write_catalog(CASES, args.output_root)
     for output in outputs:
         print(output)
 

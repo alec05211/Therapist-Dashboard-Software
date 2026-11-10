@@ -11,7 +11,12 @@
       "focus": "Avery inventories the calls, appointments, and decisions that route through her.",
       "possible_movement": "She distinguishes tasks only she can do from tasks she automatically absorbs.",
       "carry_forward": "Bring one recent week of examples.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-01-the-family-switchboard.txt",
+      "recording": "session-01-the-family-switchboard.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2470.371,
+      "sample_rate_hz": 16000
     },
     {
       "number": 2,
@@ -55,18 +60,66 @@
     },
     {
       "number": 7,
-      "title": "A family meeting with edges",
-      "focus": "Avery and her siblings discuss roles and money with mixed success.",
-      "possible_movement": "She holds one limit while acknowledging each sibling's constraints.",
-      "carry_forward": "Document agreements in plain language.",
+      "title": "The spreadsheet no one asked for",
+      "focus": "Avery prepares a detailed care ledger, then realizes it may obscure the request she needs to make.",
+      "possible_movement": "She converts the ledger into three concrete responsibilities while keeping the underlying resentment discussable.",
+      "carry_forward": "Bring the shorter proposal to the family meeting.",
       "status": "outline_only"
     },
     {
       "number": 8,
+      "title": "A family meeting with edges",
+      "focus": "A long-form session reconstructs a family meeting about time, money, transportation, and their father's preferences.",
+      "possible_movement": "Avery holds one limit, overfunctions in another moment, and leaves uncertain whether the agreement will last.",
+      "carry_forward": "Send a plain-language summary and wait before correcting anyone's method.",
+      "status": "outline_only"
+    },
+    {
+      "number": 9,
+      "title": "The hospital call at work",
+      "focus": "A non-emergency medical call arrives during a staffing problem at the library.",
+      "possible_movement": "Avery delegates the family follow-up but later retakes two tasks after receiving incomplete information.",
+      "carry_forward": "Identify what made delegation tolerable and what pulled her back in.",
+      "status": "outline_only"
+    },
+    {
+      "number": 10,
+      "title": "His lucid afternoon",
+      "focus": "A quiet visit with her father includes humor, irritation, and a direct question about what he wants.",
+      "possible_movement": "Avery hears a preference that conflicts with her own idea of the safest plan and does not resolve it immediately.",
+      "carry_forward": "Record the preference without turning it into a final decision.",
+      "status": "outline_only"
+    },
+    {
+      "number": 11,
+      "title": "Money and the old scorecard",
+      "focus": "The siblings revisit unequal expenses and older stories about who has always been dependable.",
+      "possible_movement": "Avery names the current financial request without proving a lifelong case against either sibling.",
+      "carry_forward": "Separate reimbursement decisions from judgments about character.",
+      "status": "outline_only"
+    },
+    {
+      "number": 12,
+      "title": "The week she took everything back",
+      "focus": "A sibling misses a pickup and Avery resumes nearly every task for six days.",
+      "possible_movement": "The setback is examined as information about thresholds and backup plans rather than evidence that sharing cannot work.",
+      "carry_forward": "Restore one responsibility instead of redesigning the whole system.",
+      "status": "outline_only"
+    },
+    {
+      "number": 13,
+      "title": "An evening that survives a phone call",
+      "focus": "Avery keeps dinner plans while her brother handles a manageable change in their father's schedule.",
+      "possible_movement": "She notices guilt, checks once, and returns attention to her partner without requiring the evening to feel relaxed.",
+      "carry_forward": "Repeat one protected plan with a clear emergency exception.",
+      "status": "outline_only"
+    },
+    {
+      "number": 14,
       "title": "Care without disappearance",
-      "focus": "They review remaining strain, grief, and the supports that now exist.",
-      "possible_movement": "Avery defines care as participation within limits rather than total availability.",
-      "carry_forward": "Use the plan as a living agreement.",
+      "focus": "They review the remaining strain, grief, family agreements, and supports that are still inconsistent.",
+      "possible_movement": "Avery defines care as participation within limits and identifies early signs that she is becoming the switchboard again.",
+      "carry_forward": "Use the plan as a living agreement and return to care as needed.",
       "status": "outline_only"
     }
   ]

@@ -55,6 +55,26 @@ class ClinicalContextTests(unittest.TestCase):
         changed = {**packet, 'pending_proposals': [{'status': 'proposed'}]}
         self.assertNotEqual(fingerprint(packet), fingerprint(changed))
 
+    def test_finalized_note_does_not_duplicate_plain_text_in_editor_tree(self):
+        packet = self.build(notes=[dict(id='note', session_id='old', version_number=2,
+            content={'plain_text': 'Clinician amendment', 'editor': 'tiptap',
+                     'document': {'type': 'doc', 'content': [{'text': 'Clinician amendment'}]}},
+            finalized_at=datetime.now(timezone.utc), session_label='Old session')])
+        self.assertEqual(packet['source_evidence'][0]['content'],
+                         {'plain_text': 'Clinician amendment'})
+
+    def test_dense_transcript_selection_preserves_cross_session_breadth(self):
+        entries = [self.entry('accepted', f'dense-{index}') for index in range(61)]
+        for entry in entries:
+            entry['session_id'] = 'session-dense'
+            entry['evidence'][0]['session_id'] = 'session-dense'
+        other = self.entry('accepted', 'other')
+        packet = self.build([*entries, other])
+        selected_sessions = {source['session_id'] for source in packet['source_evidence']}
+        self.assertEqual(len(packet['source_evidence']), 60)
+        self.assertIn('session-other', selected_sessions)
+        self.assertEqual(packet['coverage']['sources_omitted'], 2)
+
     def test_prior_interpretations_remain_labeled_and_hidden_items_are_constraints(self):
         packet = self.build(snapshot={'id': 'snapshot', 'version': 3, 'items': [
             dict(id='visible', review_state='draft', kind='theme', content={'analysis': 'Maybe'}),

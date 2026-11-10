@@ -186,6 +186,8 @@ def claim_due_insights_refresh(
     *,
     worker_token: str,
     lease_seconds: int = 300,
+    organization_id: str | None = None,
+    client_id: str | None = None,
 ) -> dict[str, Any] | None:
     """Lease one due client revision without allowing two workers to claim it."""
     if not worker_token.strip():
@@ -200,6 +202,8 @@ def claim_due_insights_refresh(
               FROM app.clinical_synthesis_refresh_state
               WHERE desired_insights_revision > published_insights_revision
                 AND not_before <= CURRENT_TIMESTAMP
+                AND (%s::uuid IS NULL OR organization_id = %s::uuid)
+                AND (%s::uuid IS NULL OR client_id = %s::uuid)
                 AND (
                   status = 'pending'
                   OR (status = 'running' AND lease_expires_at < CURRENT_TIMESTAMP)
@@ -223,7 +227,7 @@ def claim_due_insights_refresh(
                       state.processing_insights_revision, state.pending_event_count,
                       state.attempt_count, state.worker_token
             """,
-            (worker_token, lease_seconds),
+            (organization_id, organization_id, client_id, client_id, worker_token, lease_seconds),
         )
         return cursor.fetchone()
 

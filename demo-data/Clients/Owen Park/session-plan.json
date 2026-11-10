@@ -13,7 +13,7 @@
       "carry_forward": "Gather accurate history without punitive framing.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-01-the-amount-that-kept-changing.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 2,
@@ -23,7 +23,7 @@
       "carry_forward": "Confirm the key handoff and safe transport; do not count an intention as a completed safeguard.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-02-the-drive-home.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 3,
@@ -33,7 +33,7 @@
       "carry_forward": "Attend the medical appointment.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-03-sleep-is-not-the-whole-story.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 4,
@@ -43,7 +43,7 @@
       "carry_forward": "Test the alternate routine twice.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-04-five-oclock-without-a-job.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 5,
@@ -53,7 +53,7 @@
       "carry_forward": "Share actions rather than guarantees.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-05-the-promise-his-partner-no-longer-trusts.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 6,
@@ -63,7 +63,7 @@
       "carry_forward": "Review which supports were effective.",
       "status": "dialogue_draft_unreviewed",
       "transcript_file": "session-06-craving-and-the-long-evening.txt",
-      "audio_status": "not_generated"
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 7,
@@ -71,7 +71,9 @@
       "focus": "Job loss grief surfaces beneath rehearsed optimism.",
       "possible_movement": "Owen describes shame without making alcohol the only available relief.",
       "carry_forward": "Schedule one non-job, non-drinking activity.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-07-who-he-is-without-the-pitch.txt",
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 8,
@@ -79,7 +81,9 @@
       "focus": "Owen reports drinking after two lower-use weeks and initially minimizes the amount.",
       "possible_movement": "He corrects the record within session and reassesses driving and withdrawal risk.",
       "carry_forward": "Update the care plan with specialists.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-08-the-lapse-he-almost-omitted.txt",
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 9,
@@ -87,7 +91,9 @@
       "focus": "Owen and his partner struggle over monitoring and privacy.",
       "possible_movement": "He distinguishes consensual accountability from making his partner solely responsible.",
       "carry_forward": "Clarify roles and professional supports.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-09-repair-without-surveillance.txt",
+      "audio_status": "generated_and_uploaded"
     },
     {
       "number": 10,
@@ -95,7 +101,29 @@
       "focus": "They review risk, structure, specialized care, relationship repair, and employment uncertainty.",
       "possible_movement": "Owen defines progress as earlier honesty and safer action, not a flawless story.",
       "carry_forward": "Continue the appropriate level of care.",
-      "status": "outline_only"
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-10-a-plan-that-includes-bad-weeks.txt",
+      "audio_status": "generated_and_uploaded"
+    },
+    {
+      "number": 11,
+      "title": "The call before five",
+      "focus": "A job rejection activates the familiar late-afternoon cue, and Owen contacts support before the cue peaks.",
+      "possible_movement": "Early support and a public-place routine change part of the evening, while later drinking keeps the result mixed.",
+      "carry_forward": "Strengthen earlier contact without treating it as a complete prevention strategy.",
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-11-the-call-before-five.txt",
+      "audio_status": "generated_and_uploaded"
+    },
+    {
+      "number": 12,
+      "title": "A quieter measure of progress",
+      "focus": "Owen reviews a mixed two-week period, a temporary work contract, a time-limited housing decision, and continuing coordinated care.",
+      "possible_movement": "He defines progress as earlier accuracy and safer action while explicitly preserving unresolved alcohol use, relationship repair, and key access.",
+      "carry_forward": "Monitor the contract transition, transportation review, later-evening gaps, group fit, and housing decision without overstating resolution.",
+      "status": "dialogue_draft_unreviewed",
+      "transcript_file": "session-12-a-quieter-measure-of-progress.txt",
+      "audio_status": "generated_and_uploaded"
     }
   ],
   "character_direction": {
@@ -104,7 +132,7 @@
     "client_voice": "Orus",
     "therapist": "Jeremy Heartwell",
     "therapist_voice": "Sadaltager",
-    "draft_scope": "Sessions 1-6 are condensed fictional conversations in six continuous parts, not timed full-length recordings. Sessions 7-10 remain outlines.",
+    "draft_scope": "Sessions 1-12 are condensed fictional conversations in six continuous parts, not timed full-length recordings.",
     "audio_priority": [
       1,
       2,

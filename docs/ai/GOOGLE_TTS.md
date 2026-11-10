@@ -50,8 +50,8 @@ and [Cloud TTS authentication](https://docs.cloud.google.com/text-to-speech/docs
 
 Voice samples are available in the Gemini-TTS voice table. Owen's current
 fixture uses Orus with quiet, reserved delivery; Jeremy's established voice is
-Sadaltager. The JSON fixture does not configure `tools/google_tts_dialogue.py`
-automatically: that utility currently expects Marcus and Jeremy speaker labels.
+Sadaltager. `tools/google_tts_dialogue.py` accepts explicit speaker aliases and
+voices, but the caller must still pass the case-specific performance prompt.
 
 ## Create audio
 
