@@ -207,7 +207,7 @@ function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false,
     <a href={`#${titleId}`} onClick={(event) => { event.preventDefault(); setSourceIndex(0); dialog.current?.showModal(); }} aria-haspopup="dialog" aria-controls={titleId} aria-label={`View evidence for ${phrase}`} className={`${children ? "inline-flex h-9 w-5 items-center justify-center hover:bg-stone-200" : ""} ${fallback ? "ml-1 align-baseline text-xs font-semibold text-stone-700 underline decoration-stone-400 underline-offset-3 hover:text-stone-950" : "font-bold text-inherit no-underline hover:text-stone-950"} cursor-grab rounded-sm text-left transition-colors active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700`}>
       {children ?? (fallback ? `View ${sourceLabel}` : phrase)}
     </a>
-    {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-2xl border border-stone-300 bg-white p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
+    {typeof document !== "undefined" && createPortal(<dialog id={titleId} ref={dialog} aria-labelledby={`${titleId}-heading`} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }} className="m-auto max-h-[85vh] w-[min(92vw,640px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-2xl border border-stone-300 bg-white p-4 sm:p-6 text-left text-stone-800 shadow-xl backdrop:bg-stone-950/50">
       <div className="flex items-start justify-between gap-4">
         <div><h3 id={`${titleId}-heading`} className="text-base font-semibold">Evidence in context</h3><p className="mt-1 text-xs text-stone-500">{interpretation ? "These records support a generated interpretation for clinician review; the interpretation is not a verbatim statement or established conclusion." : "Supporting slices for this linked statement."}</p></div>
         <button type="button" onClick={() => dialog.current?.close()} aria-label="Close evidence" className="cursor-grab rounded-lg px-2 text-xl active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">×</button>
@@ -370,7 +370,7 @@ function InsightCard({ item, onViewEvidence }: { item: InsightItem; onViewEviden
   const contextualProse = contexts.map((context, index) => <span key={index}>{index ? " " : null}<EvidenceLinkedText content={context} item={item} onViewEvidence={onViewEvidence} /></span>);
   return <article className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5">
     <h3 className="flex min-w-0"><InsightTopicCard item={item} /></h3>
-    <div className="mt-2 text-[15px] leading-6 text-stone-800 [text-wrap:pretty]">
+    <div className="mt-2 break-words text-[15px] leading-6 text-stone-800 [text-wrap:pretty]">
       <p>{Array.isArray(item.content.analysis_claims) ? <EvidenceLinkedText content={{ text: analysis, claims: item.content.analysis_claims }} item={item} onViewEvidence={onViewEvidence} interpretation /> : analysis}{contexts.length && !useSecondParagraph ? <> {contextualProse}</> : null}{!contexts.length && !Array.isArray(item.content.analysis_claims) && legacySources.length ? <> The supporting record is available across {legacySources.length === 1 ? "one cited moment" : `${legacySources.length} cited moments`}. <EvidenceDialogLink phrase={analysis} sources={legacySources} onViewEvidence={onViewEvidence} fallback /></> : null}</p>
       {contexts.length && useSecondParagraph ? <p className="mt-2">{contextualProse}</p> : null}
     </div>
@@ -382,7 +382,7 @@ function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: I
 }
 
 function InsightTopicCard({ item }: { item: InsightItem }) {
-  return <span data-topic-card={item.id} title={insightLabel(item.content)} className="block max-w-full truncate rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+  return <span data-topic-card={item.id} title={insightLabel(item.content)} className="block max-w-full break-words rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
     {insightLabel(item.content)}
   </span>;
 }
@@ -474,7 +474,7 @@ function InsightSectionLoadingSkeleton({ title }: { title: string }) {
 
 function InsightsLoadingSkeleton() {
   return <section className="space-y-4 text-left" aria-label="Loading clinical insights workspace" aria-busy="true">
-    <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
+    <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
     <section className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">
       <TextLoadingSkeleton label="Loading clinical overview" widths={["96%", "89%", "71%"]} />
     </section>
@@ -530,7 +530,7 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence, s
 
   return <section className="space-y-4 text-left" aria-label="Clinical insights workspace">
     <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-      <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
+      <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-stone-900">Clinical Overview</h2>
       <InsightsFreshness status={refreshStatus} snapshot={snapshot} />
     </header>
     <section aria-label="Clinical overview content" className="rounded-2xl border border-stone-300 bg-white p-4 shadow-sm">

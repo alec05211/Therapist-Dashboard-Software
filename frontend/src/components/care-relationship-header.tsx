@@ -74,26 +74,36 @@ export function CareRelationshipHeader({ profile, actions, activeAction }: {
   activeAction: string;
 }) {
   return <section className="mb-6 overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 text-left shadow-sm" aria-label={`${profile.role} details and navigation`}>
-    <div className="flex min-w-0 items-center gap-4 p-5">
-      <div className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-emerald-800 text-lg font-semibold text-white">
+    <div className="flex min-w-0 items-center gap-3 p-4 sm:gap-4 sm:p-5">
+      <div className="relative grid size-11 sm:size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-emerald-800 text-lg font-semibold text-white">
         {profile.imageSrc ? <Image src={profile.imageSrc} alt={`${profile.name} profile`} fill sizes="56px" unoptimized className="object-cover" /> : <span aria-hidden="true">{profile.initials}</span>}
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-emerald-800">{profile.role}</p>
-        <h1 className="mt-0.5 break-words text-xl font-semibold tracking-tight text-stone-900">{profile.name}</h1>
+        <h1 className="mt-0.5 break-words text-lg sm:text-xl font-semibold tracking-tight text-stone-900">{profile.name}</h1>
         {(profile.email || profile.phone) && <div className="mt-2 flex flex-col gap-1 text-sm text-stone-600 sm:flex-row sm:flex-wrap sm:gap-x-4">
           {profile.email && <a href={`mailto:${profile.email}`} className="inline-flex min-w-0 cursor-grab items-center gap-1.5 rounded hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><MailIcon /><span className="break-all">{profile.email}</span></a>}
           {profile.phone && <a href={`tel:${profile.phone.replace(/[^+\d]/g, "")}`} className="inline-flex cursor-grab items-center gap-1.5 rounded hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing"><PhoneIcon />{profile.phone}</a>}
         </div>}
-        {profile.role === "Therapist" && profile.aboutMe && <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-stone-600">{profile.aboutMe}</p>}
+        {profile.role === "Therapist" && profile.aboutMe && <p className="mt-3 max-w-2xl break-words whitespace-pre-wrap text-sm leading-6 text-stone-600">{profile.aboutMe}</p>}
       </div>
     </div>
-    {actions.length > 0 && <nav className="flex gap-1 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2" aria-label={`${profile.name} care navigation`}>
+    {actions.length > 0 && <nav className="border-t border-stone-200 bg-white p-2 sm:px-3" aria-label={`${profile.name} care navigation`}>
+      <div className="relative md:hidden">
+        <select aria-label={`${profile.name} care section`} value={activeAction}
+          onChange={event => actions.find(action => action.id === event.target.value && !action.disabled)?.onSelect?.()}
+          className="min-h-11 w-full min-w-0 cursor-grab appearance-none rounded-lg border border-[var(--accent-border)] bg-[var(--accent-surface)] py-2.5 pl-3 pr-10 text-base font-semibold text-[var(--accent-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">
+          {actions.map(action => <option key={action.id} value={action.id} disabled={action.disabled}>{action.label}{action.disabled ? " (Soon)" : ""}</option>)}
+        </select>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[var(--accent-text)]"><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+      </div>
+      <div className="hidden gap-1 overflow-x-auto md:flex">
       {actions.map(action => <button key={action.id} type="button" disabled={action.disabled} onClick={action.onSelect}
         aria-current={activeAction === action.id ? "page" : undefined}
         className={`inline-flex min-w-fit flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors duration-200 ease-out motion-reduce:transition-none ${action.disabled ? "cursor-not-allowed font-medium text-stone-500" : `cursor-grab font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing ${activeAction === action.id ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-stone-100"}`}`}>
         {icons[action.icon]}{action.label}
       </button>)}
+      </div>
     </nav>}
   </section>;
 }

@@ -102,7 +102,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   const quoteEntriesForSegment = (index: number) => quotes.entries.filter(entry => entry.evidence.some(source => source.session_id === sessionId && source.segment_index === index && source.quote?.trim() === transcript.segments[index]?.text.trim()));
   const proposedClaimCount = transcript.segments.reduce((count, _segment, index) => count + Number(quoteEntriesForSegment(index).length > 0), 0);
   const summary = transcript.segments.length
-    ? `${transcript.segments.length} ${readOnly ? "segments" : "timestamped segments"}${readOnly ? "" : ` · ${proposedClaimCount} proposed evidence ${proposedClaimCount === 1 ? "claim" : "claims"}`}`
+    ? `${transcript.segments.length} ${readOnly ? "segments" : "timestamped segments"}${readOnly || proposedClaimCount === 0 ? "" : ` · ${proposedClaimCount} proposed evidence ${proposedClaimCount === 1 ? "claim" : "claims"}`}`
     : "No speech detected";
   const openClaimEntries = quotes.entries.filter((entry) => openClaimIds.includes(entry.id));
   const activeClaim = quotes.entries.find((entry) => entry.id === activeClaimId) ?? null;
@@ -149,13 +149,27 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
     <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm [&>section:first-of-type]:mt-0" aria-label="Session materials">
       {playbackError && <p role="alert" className="mb-3 text-sm text-red-700">{playbackError}</p>}
       {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} />}
-      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? transcriptRows : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
-        <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col">
+      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? <div className="border-t border-stone-200 bg-white">{transcriptRows}</div> : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
+        <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col border-t border-stone-200 bg-white">
           <TranscriptScrollReader revision={`${sessionId}-${transcript.segments.length}-${quotes.entries.map(entry => entry.id).join(",")}`}>
             {transcriptRows}
           </TranscriptScrollReader>
           {quotes.error && <p role="alert" className="px-4 pb-4 text-sm text-red-700">Suggested passages unavailable: {quotes.error}</p>}
-          {!readOnly && transcript.recording_url ? <div className="shrink-0 border-t border-stone-200 bg-stone-50 px-4 py-3"><div className="flex flex-wrap items-center gap-3"><button type="button" onClick={togglePlayback} className="grid size-9 shrink-0 cursor-grab place-items-center rounded-full bg-emerald-800 text-sm text-white active:cursor-grabbing hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700" aria-label={isPlaying ? "Pause recording" : "Play recording"}>{isPlaying ? "❚❚" : "▶"}</button><span className="w-10 shrink-0 text-xs tabular-nums text-stone-600">{formatTime(currentTime)}</span><input type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} onChange={(event) => seek(event.target.value)} className="h-1 min-w-24 flex-1 cursor-grab accent-emerald-800 active:cursor-grabbing" aria-label="Recording position" /><span className="w-10 shrink-0 text-right text-xs tabular-nums text-stone-600">{formatTime(duration)}</span><label className="flex items-center gap-1.5 text-xs text-stone-600"><span aria-hidden="true">◖</span><span className="sr-only">Volume</span><input type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => changeVolume(event.target.value)} className="h-1 w-16 cursor-grab accent-emerald-800 active:cursor-grabbing" aria-label="Volume" /></label><a href={transcript.recording_url} download className="cursor-grab rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 underline underline-offset-2 hover:bg-emerald-50 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Download</a></div></div> : null}
+          {!readOnly && transcript.recording_url ? <div className="shrink-0 border-t border-stone-200 bg-stone-100 px-4 py-3 text-stone-800" role="group" aria-label="Recording playback controls">
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" onClick={togglePlayback} className="grid size-8 shrink-0 cursor-grab place-items-center rounded-md border border-stone-300 text-stone-800 hover:bg-stone-200 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--foreground)]" aria-label={isPlaying ? "Pause recording" : "Play recording"}>
+                <svg viewBox="0 0 16 16" fill="currentColor" className="size-4" aria-hidden="true">{isPlaying ? <><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></> : <path d="M4 2v12l9-6Z" />}</svg>
+              </button>
+              <span className="w-10 shrink-0 text-xs tabular-nums text-stone-600">{formatTime(currentTime)}</span>
+              <input type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} onChange={(event) => seek(event.target.value)} className="h-1 min-w-24 flex-1 cursor-grab accent-[var(--foreground)] active:cursor-grabbing" aria-label="Recording position" />
+              <span className="w-10 shrink-0 text-right text-xs tabular-nums text-stone-600">{formatTime(duration)}</span>
+              <label className="flex items-center gap-2 text-xs text-stone-600">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true"><path d="M9 4 4 8H2v4h2l5 4V4Z" /><path d="M12 7a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12" /></svg>
+                <span className="sr-only">Volume</span>
+                <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => changeVolume(event.target.value)} className="h-1 w-16 cursor-grab accent-[var(--foreground)] active:cursor-grabbing" aria-label="Volume" />
+              </label>
+            </div>
+          </div> : null}
         </div>
       </CollapsibleContentPanel>}
       {expanded && recordContext ? openClaimEntries.map((entry, stackIndex) => <FloatingQuoteInspector

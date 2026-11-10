@@ -13,7 +13,7 @@ type SaveState = "loading" | "idle" | "unsaved" | "saving" | "saved" | "error" |
 
 const control = "grid size-8 cursor-grab place-items-center rounded-lg border border-transparent text-stone-700 active:cursor-grabbing hover:border-stone-300 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-emerald-700 disabled:cursor-wait disabled:opacity-50";
 const CLINICAL_NOTE_COLLAPSED_PREVIEW_HEIGHT = 136;
-const noteDocumentClass = "pb-4 pl-14 pr-4 pt-3 text-sm leading-6 text-stone-900 [&_h2]:mb-1 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_p]:my-1 [&_li]:my-0 [&_li>p]:my-0 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-6 [&>:first-child]:mt-0";
+const noteDocumentClass = "pb-4 pl-14 pr-4 pt-3 text-sm leading-6 text-stone-900 [&_h2]:mb-1 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_p]:my-1 [&_li]:my-0 [&_li_p]:my-0 [&_li_p]:whitespace-normal [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-6 [&>:first-child]:mt-0";
 
 function sectionsToDocument(sections: ClinicalNoteSection[]): JSONContent {
   return {

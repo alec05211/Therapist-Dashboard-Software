@@ -48,7 +48,7 @@ export function ClientPortal({ name, profile }: { name: string; profile: CarePro
   const latestSession = portal?.sessions?.[0];
   const selectedSession = portal?.sessions?.find(session => session.id === selectedId) ?? latestSession;
   const visibleSessions = scheduled ? [] : selectedSession ? [selectedSession] : [];
-  return <main className="mx-auto w-[min(92vw,1080px)] py-8 text-stone-900">
+  return <main className="mx-auto w-[calc(100%-1.5rem)] min-w-0 max-w-[1080px] sm:w-[92vw] py-8 text-stone-900">
     <CareRelationshipHeader profile={profile} activeAction={activeView} actions={[
       { id: "care-assistant", label: "Care assistant", icon: "chat", onSelect: () => setActiveView("care-assistant") },
       { id: "clinical-workspace", label: "Clinical workspace", icon: "workspace", onSelect: () => { setActiveView("clinical-workspace"); setSelectedId(null); setScheduled(null); setWorkspaceVisit(value => value + 1); document.getElementById("client-clinical-workspace")?.focus(); } },

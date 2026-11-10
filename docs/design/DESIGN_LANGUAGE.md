@@ -195,7 +195,14 @@ Expanded clinical notes use the same viewport-relative fixed reading height as
 transcripts, with internal scrolling and contained overscroll. Keep formatting
 and finalization controls in the stationary header; use a quiet native scrollbar
 without an overview rail. List-item paragraphs have no vertical margin, keeping
-consecutive bullets compact while ordinary paragraphs retain their spacing.
+consecutive bullets compact while ordinary paragraphs retain their spacing. Collapse
+provider text-node whitespace inside list paragraphs so trailing HealthScribe newlines
+do not create blank lines; preserve explicit authored line breaks and section grouping.
+Transcript previews and expanded text use the same lighter document surface and
+gray header divider as clinical notes. Keep the header title and smaller muted
+segment/evidence counts distinct; omit the evidence count when zero. The transcript
+playback footer matches the gray header surface, with simple monochrome SVG play/pause
+and volume controls, neutral sliders, and no download action.
 
 Clinical notes begin as explicitly labeled AI drafts. A working draft's Tiptap document
 is directly editable whenever the panel is expanded; do not require a separate edit-mode

@@ -220,7 +220,7 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   const showPreparation = Boolean(upcomingId && activeId === upcomingId);
   const activeSessionLayout = activeSessionType === "scheduled" ? showPreparation && processingState?.phase !== "processing" ? <ScheduledSessionLayout isRecording={isRecording} isBusy={isBusy} processingState={processingState} processingError={uploadError} hasPriorSessions={transcripts.length > 0} onToggleRecording={() => void toggleRecording()} onUploadAudio={file => void uploadAudio(file)} onViewEvidence={(source: BriefEvidence) => void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index)} recordContext={recordContext} /> : null : <CompletedSessionLayout>{transcriptViewer}</CompletedSessionLayout>;
 
-  if (newClientSetup) return <main className="mx-auto w-[min(92vw,1080px)] pt-3 pb-8 text-center">
+  if (newClientSetup) return <main className="mx-auto w-[calc(100%-1.5rem)] min-w-0 max-w-[1080px] sm:w-[92vw] pt-3 pb-8 text-center">
     <CareRelationshipHeader profile={profile} actions={[]} activeAction="" />
     {configuringSessions ? <ClientCareSettings initialSection="scheduling" clientId={profile.clientId || undefined} expandRecurring onScheduleChanged={() => { void loadAppointments(); setNewClientSetup(false); }} /> : <section className="relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 shadow-sm" aria-label="Configure this client's sessions">
       <div aria-hidden="true" className="pointer-events-none select-none blur-[2px] opacity-90"><SessionCardCarousel transcripts={[]} appointments={setupAppointments} activeId={setupAppointments[0]?.id || null} error={null} onOpen={() => {}} onSelectScheduled={() => {}} /></div>
@@ -230,7 +230,7 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
 
 
   return (
-    <main className="mx-auto w-[min(92vw,1080px)] pt-3 pb-8 text-center">
+    <main className="mx-auto w-[calc(100%-1.5rem)] min-w-0 max-w-[1080px] sm:w-[92vw] pt-3 pb-8 text-center">
       <CareRelationshipHeader profile={profile} activeAction={activeClientView} actions={[
         { id: "clinical-workspace", label: "Clinical Workspace", icon: "workspace", onSelect: openClinicalWorkspace },
         { id: "insights", label: "Insights", icon: "insights", onSelect: () => selectClientView("insights") },

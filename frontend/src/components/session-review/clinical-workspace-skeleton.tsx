@@ -35,7 +35,7 @@ export function ClinicalWorkspaceLoadingSkeleton() {
 }
 
 export function ClientWorkspaceBootSkeleton() {
-  return <main className="mx-auto w-[min(92vw,1080px)] pt-3 pb-8" aria-label="Loading secure client workspace" aria-busy="true">
+  return <main className="mx-auto w-[calc(100%-1.5rem)] min-w-0 max-w-[1080px] sm:w-[92vw] pt-3 pb-8" aria-label="Loading secure client workspace" aria-busy="true">
     <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
       <div className="flex items-center gap-4 p-5">
         <span aria-hidden="true" className="size-14 shrink-0 rounded-full bg-stone-200 blur-[1px]" />
@@ -43,8 +43,8 @@ export function ClientWorkspaceBootSkeleton() {
           <TextLoadingSkeleton label="Loading client identity" widths={["28%", "48%"]} />
         </div>
       </div>
-      <nav aria-label="Loading client navigation" className="grid grid-cols-2 border-t border-stone-200 text-center text-sm font-semibold text-stone-600 sm:grid-cols-3 lg:grid-cols-6">
-        {["Clinical Workspace", "Insights", "Documents", "Billing", "Chat", "Client Care Settings"].map((label) => <span key={label} className="border-stone-200 px-3 py-3.5 lg:border-l first:lg:border-l-0">{label}</span>)}
+      <nav aria-label="Loading client navigation" className="grid grid-cols-1 border-t border-stone-200 text-center text-sm font-semibold text-stone-600 md:grid-cols-3 lg:grid-cols-6">
+        {["Clinical Workspace", "Insights", "Documents", "Billing", "Chat", "Client Care Settings"].map((label) => <span key={label} className="hidden border-stone-200 px-3 py-3.5 first:block md:block lg:border-l first:lg:border-l-0">{label}</span>)}
       </nav>
     </section>
     <div className="mt-6"><ClinicalWorkspaceLoadingSkeleton /></div>
