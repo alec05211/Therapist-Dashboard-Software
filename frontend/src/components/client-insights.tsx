@@ -316,15 +316,15 @@ function ThemeRecurrence({ themes, sessions, onViewEvidence }: { themes: Insight
   }, [currentOffset]);
   if (!visibleSessions.length) return null;
   return <section className="mt-3 border-t border-stone-300 pt-3" aria-labelledby={headingId}>
-    <div className="flex flex-wrap items-baseline justify-between gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <h3 id={headingId} className="text-sm font-semibold text-stone-900">Theme recurrence</h3>
-    </div>
-    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
+    <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-xs text-stone-600">
       <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-[var(--accent-strong)]" />Supporting</span>
       <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-red-700" />Contrasting / ± mixed</span>
       <span><span aria-hidden="true" className="mr-1 inline-block h-3 w-1.5 rounded-full bg-stone-400" />No cited support</span>
     </div>
-    <div className="mt-10 grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-x-3" style={{ gridTemplateRows: `repeat(${sortedThemes.length}, minmax(44px, auto))` }}>
+    </div>
+    <div className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-x-3" style={{ gridTemplateRows: `repeat(${sortedThemes.length}, minmax(44px, auto))` }}>
       {sortedThemes.map((item, row) => <div key={item.id} className="flex min-w-0 items-center border-b border-stone-200 py-2 text-sm font-medium text-stone-800 last:border-0" style={{ gridColumn: 1, gridRow: row + 1 }}>{insightLabel(item.content)}</div>)}
       <div ref={matrix} className={`relative grid min-w-0 grid-rows-subgrid ${orderedSessions.length > 12 ? "px-5" : ""}`} style={{ gridColumn: 2, gridRow: `1 / span ${sortedThemes.length}`, gridTemplateColumns: `repeat(${visibleSessions.length}, minmax(0, 1fr))` }}>
         {visibleSessions.map((session, column) => {
