@@ -89,6 +89,11 @@ desktop viewport. Achieve this through composition rather than hiding overflow:
 - Collapse secondary detail behind explicit disclosures; reuse
   `CollapsibleContentPanel` for content previews. Keep critical decisions, errors,
   and primary actions discoverable without opening unrelated sections.
+- Expanded transcripts use a bounded viewport-relative reader with internal scrolling
+  and contained overscroll. Playback controls remain outside the scrolling text. A
+  narrow informational overview uses blurred transcript texture, a reading-position
+  window, and sharp charcoal ticks for proposed evidence (light ticks in dark mode).
+  Ticks are non-interactive and disappear after review.
 - Avoid fixed-height cards with internal scrolling and nested vertical scroll
   containers. Let ordinary content flow; long transcripts, calendars, expanded
   detail, small screens, and zoom may still require scrolling.
@@ -213,7 +218,7 @@ carousel card `Complete`. That card owns the remaining state: a small spinner in
 its upper-right corner and a compact `Hang tight` message with a progressively
 animated ellipsis until both transcript and draft clinical note are durable. It
 must state accessibly that the upload is secure and the page may be left;
-reduced-motion mode shows a static ellipsis. Completed-session review begins directly with Associated materials at
+reduced-motion mode shows a static ellipsis. Completed-session review begins directly with the clinical note and transcript at
 the standard 24px workspace-section gap, without a redundant completed-session
 heading or uploaded-session label.
 
