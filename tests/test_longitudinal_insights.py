@@ -99,6 +99,53 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertIn('Do not repeat an interpretation', payload['instructions'])
         self.assertEqual(payload['text']['format']['schema']['properties']['items']['minItems'], 1)
 
+    def test_themes_have_no_count_or_summary_coverage_ceiling(self):
+        from copy import deepcopy
+        from ai_harness.longitudinal_insights import response_schema
+        document = self.analytical_document()
+        template = document['items'][0]
+        document['items'] = []
+        coverage = []
+        for index in range(14):
+            item = deepcopy(template)
+            item.update(kind='theme', label=f'Pattern {index}',
+                        analysis=f'Pattern {index} may show greater tolerance of uncertainty.')
+            document['items'].append(item)
+            coverage.append({'topic_index': index, 'phrase': f'Pattern {index}'})
+        document['section_summaries'] = [{'kind': 'theme',
+            'summary': '; '.join(entry['phrase'] for entry in coverage), 'topic_coverage': coverage}]
+        self.assertEqual(validate_response(document, self.evidence, set(),
+                         require_analysis_claims=True, require_section_summaries=True,
+                         require_summary_coverage=True), [])
+        schema = response_schema({'theme'})['properties']
+        self.assertNotIn('maxItems', schema['items'])
+        self.assertNotIn('maxItems', schema['section_summaries']['items']['properties']['topic_coverage'])
+        document['items'].append({**document['items'][0], 'label': ' PATTERN 0! ', 'analysis': 'Different prose for the same named pattern.'})
+        self.assertIn("duplicates another theme's label", '; '.join(validate_response(document, self.evidence, set())))
+
+    def test_all_sections_allow_more_than_two_distinct_items(self):
+        from ai_harness.longitudinal_insights import response_schema
+        for kind in ('trajectory', 'theme', 'open_thread', 'relevant_history'):
+            with self.subTest(kind=kind):
+                document = self.analytical_document()
+                template = document['items'][0]
+                document['items'] = [{**template, 'kind': kind, 'label': f'Focus {index}',
+                    'analysis': f'Observation {index} may suggest greater tolerance of uncertainty.'}
+                    for index in range(15)]
+                coverage = [{'topic_index': index, 'phrase': f'Focus {index}'} for index in range(15)]
+                document['section_summaries'] = [{'kind': kind,
+                    'summary': '; '.join(entry['phrase'] for entry in coverage), 'topic_coverage': coverage}]
+                self.assertEqual(validate_response(document, self.evidence, set(),
+                    require_analysis_claims=True, require_section_summaries=True,
+                    require_summary_coverage=True), [])
+                schema = response_schema({kind})['properties']
+                self.assertNotIn('maxItems', schema['items'])
+                self.assertNotIn('maxItems', schema['section_summaries']['items']['properties']['topic_coverage'])
+                _, items = to_snapshot_content(document)
+                self.assertEqual(len(items), 15)
+        coverage_schema = response_schema()['properties']['section_summaries']['items']['properties']['topic_coverage']
+        self.assertNotIn('maximum', coverage_schema['items']['properties']['topic_index'])
+
     def test_section_summaries_are_persisted_without_copying_topic_prose(self):
         document = self.analytical_document()
         self.assertEqual(validate_response(document, self.evidence, set(), require_section_summaries=True), [])

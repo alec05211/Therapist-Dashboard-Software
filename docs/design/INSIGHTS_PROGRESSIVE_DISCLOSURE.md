@@ -76,9 +76,9 @@ copied prose. This structural check does not prove semantic faithfulness; clinic
 review remains necessary. Summaries must not introduce new interpretations. Older snapshots use a label-based
 orientation until the next ordinary background refresh; viewing never generates.
 
-Expanding moves each topic card along the straight vector from its measured
-compact position to its own evidence-linked paragraph heading. Collapsing reverses
-the transition. Reduced-motion preferences skip the animation. Expanded cards use
+Expanding and collapsing reveal the topic prose without moving or cloning topic
+cards along a vector. Each theme has a singular, easily identifiable label, its own
+evidence-linked prose, and a matching matrix row. Expanded cards use
 compact padding and paragraph gaps while preserving readable line spacing and
 all existing evidence links.
 

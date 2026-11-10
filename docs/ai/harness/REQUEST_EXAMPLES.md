@@ -276,7 +276,7 @@ The validator rejects unknown segment keys, more than six segments per claim, du
 
 # 2. Coordinated Insights request
 
-The worker assembles one shared clinical-context packet, including accepted transcript sources and current finalized notes. It aliases eligible source IDs as `E001`, `E002`, and so on, then requests the entire Insights document in one call. Sections are planned together to reduce repeated interpretations; they are still rendered separately. Up to eight items are allowed, at most two per kind, with no requirement to fill unsupported sections. The encoded request remains bounded to 180,000 bytes.
+The worker assembles one shared clinical-context packet, including accepted transcript sources and current finalized notes. It aliases eligible source IDs as `E001`, `E002`, and so on, then requests the entire Insights document in one call. Sections are planned together to reduce repeated interpretations; they are still rendered separately. All four sections and the document as a whole have no fixed item-count ceiling, with no requirement to fill unsupported sections. The encoded request remains bounded to 180,000 bytes.
 
 This shortened fictional input illustrates one analytical phrase supported by both transcript evidence and a finalized note. Real requests include the strict schema from `ai_harness/longitudinal_insights.py`, the shared policy instructions, and the bounded `clinical_context` packet.
 

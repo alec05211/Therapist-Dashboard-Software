@@ -92,6 +92,25 @@ Formula: `call cost = input tokens / 1,000,000 × input rate + billed output tok
 
 At four normal cycles, this is **$5.74 per client/month** with Astra. The same assumed token volumes would cost **$1.1488** with Sol or **$0.05744** with Luna; equal token volumes do not imply equal clinical quality or equivalent behavior.
 
+### Singular-theme generation cost driver (2026-11-10)
+
+The singular-theme prompt adds instructions and removes the previous two-theme
+and eight-total-item ceilings. Item counts in all four Insights sections now follow supported evidence, with
+no per-section or total-item count ceiling. Each item retains its own
+analysis, evidence anchors, and summary coverage. This may increase input/output
+usage, repair inputs, downstream brief context, and stored snapshot size. The
+coordinated request count, generation triggers, three-repair allowance, and
+30,000-token output cap remain unchanged. No automatic historical regeneration
+is introduced. The tables above remain the earlier measured-independent planning
+scenario, **not an updated forecast for documents with uncapped item counts across all four sections**. Incremental cost is
+unknown, not zero: measure prompt-token delta, actual theme counts, billed output,
+repair frequency, brief input, and snapshot bytes across representative records
+before revising the per-client totals. At the published standard short-context
+Astra rates, each extra 1,000 input tokens costs $0.01 and each extra 1,000 billed
+output tokens costs $0.05; multiply by actual calls and four monthly session
+cycles for the corresponding monthly increment. Rates verified 2026-11-10 against
+[official OpenAI pricing](https://developers.openai.com/api/docs/pricing).
+
 ### Repairs, retries, and growth
 
 Insights permits up to three additional whole-document repair calls. Its output cap is 30,000 tokens per request; proposal analysis caps output at 16,000 and the brief at 6,000. Caps are limits, not expected usage. See [Insights implementation](../../ai_harness/longitudinal_insights.py), [proposal analysis](../../ai_harness/journey_proposals.py), and [brief generation](../../ai_harness/pre_session.py).

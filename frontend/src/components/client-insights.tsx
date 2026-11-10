@@ -382,70 +382,17 @@ function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: I
 }
 
 function InsightTopicCard({ item }: { item: InsightItem }) {
-  return <span data-topic-card={item.id} title={insightLabel(item.content)} className="block max-w-full break-words rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+  return <span title={insightLabel(item.content)} className="block max-w-full break-words rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
     {insightLabel(item.content)}
   </span>;
 }
 
-/** Topic cards travel on the measured vector between compact and paragraph headers. */
 function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
   const [expanded, setExpanded] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const origins = useRef(new Map<string, DOMRect>());
-  const movingCards = useRef(new Map<string, HTMLElement>());
-  const toggle = (next: boolean) => {
-    origins.current.clear();
-    root.current?.querySelectorAll<HTMLElement>("[data-topic-card]").forEach((card) => {
-      const id = card.dataset.topicCard!;
-      origins.current.set(id, (movingCards.current.get(id) ?? card).getBoundingClientRect());
-    });
-    setExpanded(next);
-  };
-  useLayoutEffect(() => {
-    if (!origins.current.size || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const cleanups: Array<() => void> = [];
-    root.current?.querySelectorAll<HTMLElement>("[data-topic-card]").forEach((target) => {
-      const id = target.dataset.topicCard!;
-      const from = origins.current.get(id);
-      if (!from) return;
-      const to = target.getBoundingClientRect();
-      const floating = target.cloneNode(true) as HTMLElement;
-      floating.removeAttribute("data-topic-card");
-      floating.setAttribute("aria-hidden", "true");
-      Object.assign(floating.style, {
-        position: "fixed", left: `${from.left}px`, top: `${from.top}px`,
-        width: `${from.width}px`, height: `${from.height}px`, maxWidth: "none",
-        margin: "0", zIndex: "1000", pointerEvents: "none", boxSizing: "border-box",
-      });
-      document.body.append(floating);
-      movingCards.current.set(id, floating);
-      target.style.visibility = "hidden";
-      const animation = floating.animate([
-        { transform: "translate(0px, 0px)", width: `${from.width}px`, height: `${from.height}px` },
-        { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px)`, width: `${to.width}px`, height: `${to.height}px` },
-      ], { duration: 340, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" });
-      const cleanup = () => {
-        animation.cancel();
-        floating.remove();
-        target.style.visibility = "";
-        if (movingCards.current.get(id) === floating) movingCards.current.delete(id);
-      };
-      animation.onfinish = cleanup;
-      cleanups.push(cleanup);
-    });
-    const cleanup = () => cleanups.forEach((remove) => remove());
-    window.addEventListener("resize", cleanup, { once: true });
-    window.addEventListener("scroll", cleanup, { once: true, capture: true });
-    return () => {
-      cleanup();
-      window.removeEventListener("resize", cleanup);
-      window.removeEventListener("scroll", cleanup, true);
-    };
-  }, [expanded]);
-  return <div ref={root}><CollapsibleContentPanel
+  return <CollapsibleContentPanel
     title={`${module.title}:`}
     expanded={expanded}
-    onExpandedChange={toggle}
+    onExpandedChange={setExpanded}
     summary={!expanded && <span className="flex flex-wrap gap-2">{module.items.map((item) => <InsightTopicCard key={item.id} item={item} />)}</span>}
     preview={module.previewSummary}
     previewContent={<p className="px-4 pb-3 pr-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
@@ -454,7 +401,7 @@ function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; 
     ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
   >
     <div className="border-t border-stone-200"><InsightModuleBody items={module.items} onViewEvidence={onViewEvidence} className="p-3" /></div>
-  </CollapsibleContentPanel></div>;
+  </CollapsibleContentPanel>;
 }
 
 function InsightGroup({ module, onViewEvidence }: { module: InsightModule; onViewEvidence: Props["onViewEvidence"] }) {
