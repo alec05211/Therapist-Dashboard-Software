@@ -1,6 +1,9 @@
 import copy
+import json
+from unittest.mock import patch
 import unittest
-from ai_harness.pre_session import validate_pre_session_response, resolve_brief, assemble_brief_parts
+from ai_harness.pre_session import (MAX_BRIEF_REQUEST_BYTES, assemble_brief_parts,
+    generate_openai_pre_session_brief, resolve_brief, validate_pre_session_response)
 from ai_harness.brief_service import brief_input
 
 class ClaimTests(unittest.TestCase):
@@ -29,6 +32,33 @@ class ClaimTests(unittest.TestCase):
         before = brief_input(brief)[0]
         brief['sections'][0]['items'][0]['sources'][0]['quote'] = 'Corrected source'
         self.assertNotEqual(before, brief_input(brief)[0])
+
+    def test_oversized_note_payload_keeps_cross_session_citations_resolvable(self):
+        sources = [
+            {'evidence_id': source_id, 'session_id': session, 'clinical_note_version_id': source_id,
+             'note_text': 'Full finalized note. ' * 4000}
+            for source_id, session in [('a', 'one'), ('b', 'two')]
+        ]
+        _, request = brief_input({'sections': [{'items': [
+            {'text': 'The record describes staying late in two sessions.', 'sources': sources},
+        ]}]})
+        output = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'opening': 'The record describes ',
+            'claims': [{'text': 'staying late', 'following_text': ' in two sessions.',
+                        'scope': 'cross_session', 'evidence_ids': ['a', 'b']}],
+        }]}]}
+        with patch('ai_harness.pre_session.urlopen') as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(
+                {'output_text': json.dumps(output)}).encode()
+            generated, _ = generate_openai_pre_session_brief(
+                synthesis_request=request, api_key='test', model='test')
+        data = urlopen.call_args.args[0].data
+        self.assertLessEqual(len(data), MAX_BRIEF_REQUEST_BYTES)
+        model_input = json.loads(json.loads(data)['input'])
+        self.assertEqual([source['evidence_id'] for source in model_input['evidence']], ['a', 'b'])
+        self.assertTrue(all('note_text' not in source for source in model_input['evidence']))
+        item = resolve_brief(generated, request['evidence'])['sections'][0]['items'][0]
+        self.assertEqual(item['claims'][0]['sources'], sources)
 
     def test_parts_build_exact_repeated_phrase_locations(self):
         response = {'sections': [{'title': 'Active focus', 'items': [{'parts': [

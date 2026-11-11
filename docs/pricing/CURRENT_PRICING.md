@@ -111,6 +111,18 @@ output tokens costs $0.05; multiply by actual calls and four monthly session
 cycles for the corresponding monthly increment. Rates verified 2026-11-10 against
 [official OpenAI pricing](https://developers.openai.com/api/docs/pricing).
 
+### Oversized brief inputs (2026-11-11)
+
+The brief adapter measures the serialized request against its existing 60,000-byte
+limit. When the full request exceeds it, the adapter sends complete Insights
+statements with source IDs and short transcript excerpts, leaving full source
+records available to resolve citations. This can turn a previously rejected
+request into one billable brief call and avoid repeating Insights generation on
+a worker retry. The normal-cycle tables already include one successful brief
+call. The net impact on failed or retried cycles is unmeasured. Quantify it from
+oversize frequency, billed brief input/output tokens, and avoided Insights
+retries using the configured model's [published rates](https://developers.openai.com/api/docs/pricing).
+
 ### Repairs, retries, and growth
 
 Insights permits up to three additional whole-document repair calls. Its output cap is 30,000 tokens per request; proposal analysis caps output at 16,000 and the brief at 6,000. Caps are limits, not expected usage. See [Insights implementation](../../ai_harness/longitudinal_insights.py), [proposal analysis](../../ai_harness/journey_proposals.py), and [brief generation](../../ai_harness/pre_session.py).
