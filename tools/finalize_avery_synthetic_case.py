@@ -1,4 +1,4 @@
-"""Finalize Avery's first three synthetic sessions and accept their evidence."""
+"""Finalize Avery's expected synthetic-session batch and accept its evidence."""
 
 from __future__ import annotations
 
@@ -87,6 +87,7 @@ def main() -> None:
     parser.add_argument("--username", required=True)
     parser.add_argument("--password", required=True)
     parser.add_argument("--sslrootcert", required=True)
+    parser.add_argument("--expected-session-count", type=int, default=3)
     args = parser.parse_args()
     configure_database(args)
     scope = context()
@@ -115,8 +116,10 @@ def main() -> None:
             (scope["organization_id"], scope["client_id"]),
         )
         sessions = cursor.fetchall()
-    if len(sessions) != 3:
-        raise RuntimeError(f"Expected exactly three completed Avery sessions; found {len(sessions)}.")
+    if len(sessions) != args.expected_session_count:
+        raise RuntimeError(
+            f"Expected exactly {args.expected_session_count} completed Avery sessions; found {len(sessions)}."
+        )
 
     finalized_transcripts = []
     for session in sessions:
@@ -170,9 +173,9 @@ def main() -> None:
         )
         proposal_job_statuses = cursor.fetchall()
     incomplete = [row for row in proposal_job_statuses if row["status"] != "completed"]
-    if len(proposal_job_statuses) != 3 or incomplete:
+    if len(proposal_job_statuses) != args.expected_session_count or incomplete:
         raise RuntimeError(
-            "All three transcript evidence analyses must complete before acceptance: "
+            "Every transcript evidence analysis in the expected batch must complete before acceptance: "
             + json.dumps(proposal_job_statuses, default=str)
         )
 

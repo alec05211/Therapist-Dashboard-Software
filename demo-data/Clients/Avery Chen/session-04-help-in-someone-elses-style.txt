@@ -1,0 +1,539 @@
+# Avery Chen session 4 Help in someone else's style
+# Fictional synthetic dialogue for transcript and longitudinal-synthesis evaluation
+# Target duration 40 to 50 minutes
+
+## Part 1
+THERAPIST: Tell me about the first pickup.
+
+AVERY: Mia did it. She went to Oak Street, pulled into the drive-through, got the bag, and texted a picture of it next to the pharmacy sign as confirmation. Not a forward of the refill notice, not Dad's stamp, not the tedious screenshot I wanted. A blurry square of paper and the neon "OPEN" sign.
+
+THERAPIST: And your first response when you saw that?
+
+AVERY: Immediate urge to verify. I checked the pharmacy app, which showed a completed pickup. Then I checked the family thread to see if I had misread anything earlier. I almost called the pharmacy because the photo didn't look like the label I expected. I didn't call.
+
+THERAPIST: What stopped you from calling?
+
+AVERY: A combination of Dad's refill history showing no gaps and the quiet, dull knowledge that calling is my default. Also, I could feel Leah's earlier voice: "Let it go, just this once." I thought, what is the harm? It felt both indulgent and terrifying.
+
+THERAPIST: Terrifying how?
+
+AVERY: That relinquishing control would become a precedent. That a blurry photo equals success and I lose the right to notice. Also that if I relax and a mistake happens, it will be evidence of poor judgment, not a messy human process.
+
+THERAPIST: You said you almost called but didn't. What happened in the pause between almost and not?
+
+AVERY: I scrolled the message thread again. I noticed Mia's short line: "Picked up — Dad's all set for the week!" She added a smiling emoji. Then I breathed and closed the app. My brain continued to tally possibilities, but my hands did not dial. [pause]
+
+THERAPIST: That felt like a threshold for you.
+
+AVERY: Yes. Small, shallow, and heavily fortified by habit.
+
+## Part 2
+THERAPIST: You mentioned you corrected a harmless detail in the family thread. What was that?
+
+AVERY: Mia typed "picked up at seven" and left the pharmacy name out. I edited the message to add Oak Street Pharmacy and wrote "thanks" in-line because I wanted the record. Then I immediately realized it was performative and erased the "thanks" before anybody could see the edit. I left the pharmacy name.
+
+THERAPIST: What was the impulse to correct about?
+
+AVERY: Habit again. I treat the family thread like a ledger. Also a fear: if we don't have specifics now, later we have ambiguity to debate. But the extra correction — the "thanks" — was rehearsal for gratitude I might not feel.
+
+THERAPIST: What did it feel like to add and then erase the gratitude?
+
+AVERY: Embarrassing, like overheard stage direction. I wanted to be seen as composed, grateful, not suspicious. The erasure felt like refusing a performance. Then I wondered if erasing it looked cold, like I was ungrateful.
+
+THERAPIST: How did Mia react to the clarified post?
+
+AVERY: She sent a thumbs-up and then a separate message: "All good. Left it at the desk for him." That detail mattered: her method of confirming was not a screenshot or forwarding a portal notification, but she delivered the medication and told Dad where she put it.
+
+THERAPIST: Which is a type of completion.
+
+AVERY: Yes. Practically finished. My internal ledger wanted a line-item confirmation; the work was done in real life. It exposed the gap between procedural completion and my certificate of completion.
+
+THERAPIST: What did you do after you left the thread?
+
+AVERY: I double-checked the pharmacy app and then texted Dad to confirm he had the medication. He replied with a thumbs-up and "thanks." Then I made myself a sandwich and felt both relieved and oddly hungry for reassurance.
+
+## Part 3
+THERAPIST: You said you tracked urges to redo the task. How did that show up after this pickup?
+
+AVERY: A steady little tick: open the phone, look at the thread, check the pharmacy app, reopen the blurred photo, imagine the wrong pill bottle. Each time the urge came, I catalogued it mentally: "urge #1, 11:04; urge #2, 11:18." It read like a nervous inventory.
+
+THERAPIST: What did cataloguing do for you?
+
+AVERY: It made the urge less like an overwhelming wave and more like an object I could set down. It did not stop the tension, but it shifted it from "I must act" to "this exists."
+
+THERAPIST: Did acting on any of those urges feel tempting?
+
+AVERY: Yes. The idea of sending a clarifying message to Mia like, "Thanks. Can you confirm the dosage label matched dad's chart?" I paused at "can you" because it amounts to reintroducing the whole task. Or calling the pharmacy to confirm what was dispensed, which would be me stepping back into the default role.
+
+THERAPIST: What happened when you imagined calling?
+
+AVERY: I saw myself getting an automated message, being put on hold, explaining Dad's DOB, and then triangulating what the pharmacist said with my memory. It felt exhausting and repetitive. So I did not call.
+
+THERAPIST: Did you tell anyone you resisted the urge?
+
+AVERY: I told Leah later that evening. She said, "Good. Progress." Her saying it made the restraint less solitary.
+
+AVERY: Also, being able to name the urges to someone felt like an offense against secrecy I usually protect. It made them ordinary.
+
+THERAPIST: Ordinary can be easier to bear.
+
+AVERY: Yes, unless ordinary becomes the thing I must fix alone.
+
+## Part 4
+THERAPIST: You are tracking a tension: adequate help versus specific control rituals. What does "adequate help" mean to you now?
+
+AVERY: Help that results in Dad having his medication on time and feeling informed; help that doesn't require me to play traffic director. The method of confirmation is secondary to the outcome. That sounds rational when I say it. But my internal checklist disagrees in private.
+
+THERAPIST: Where does the checklist come from?
+
+AVERY: Years of responding to errors that were small in themselves but accreted into crises. I learned to reduce uncertainty by creating process. It worked when systems were fragile. Now the family has more bandwidth, and the process is part habit, part armor.
+
+THERAPIST: If the outcome is the same but the method differs, what matters to you beyond the outcome?
+
+AVERY: Trust. A sense that when someone says "I did it," they mean it, and that they can handle a backup if needed. Also clarity about who owns the task so my default is not invisibly expected. So besides outcome, I want accountability without micromanagement.
+
+THERAPIST: How might accountability show up without micromanagement?
+
+AVERY: A simple rule set: pick up when notified, confirm placement with Dad, message the family if backup is needed, and do a brief check-in at the end of the trial month. That leaves method open—photo, forward, or a quick sentence—while making expectations visible.
+
+THERAPIST: Does that rule set feel acceptable?
+
+AVERY: Yes. It feels like a minimal contract. But I can already hear myself wanting to add appendices.
+
+THERAPIST: You're practiced in appendices.
+
+AVERY: Occupational hazard.
+
+THERAPIST: When the urge to append rises, can you notice it as an addition to the plan rather than the plan itself?
+
+AVERY: I can name it. "Appendix urge." Then decide whether to schedule the appendix conversation separately or keep it out of the trial.
+
+THERAPIST: That naming sounds useful.
+
+AVERY: It is. Naming something often defangs it enough for me to ignore it for a week.
+
+## Part 5
+THERAPIST: Tell me about the family thread correction incident you mentioned earlier. How does that fit into this pattern?
+
+AVERY: It was small but symbolic. I corrected the pharmacy name because my filing brain sees absence as potential future argument. The correction makes the record cleaner, but it also reasserts my relationship to the process. It says: I am still paying attention.
+
+THERAPIST: And erasing the extra "thanks" was different.
+
+AVERY: Yes. That was performative moderation. I decided I didn't want the appearance of gratitude to mask my vigilance. It felt dishonest to both thank and be anxious. Erasing it was partly an honest act and partly controlling the narrative.
+
+THERAPIST: What happens if the family thread is messy?
+
+AVERY: Normally I tighten it. I fill in specifics, clarify who does what, and sometimes send reminders. It has the practical effect of keeping things running, but the relational effect is that I become the manager. That is what I don't want, but it's effective.
+
+THERAPIST: The paradox then is that your effectiveness perpetuates your role.
+
+AVERY: Exactly. The very thing that makes the household functional is the barrier to redistributing responsibility.
+
+THERAPIST: How does Mia's method challenge that paradox?
+
+AVERY: She used a simpler confirmation—photo and a note. It still communicated completion and placement. Her method undermined my template, which is both uncomfortable and liberating. Liberating because it worked; uncomfortable because it was not my method.
+
+AVERY: I find I'm learning that the measure of transfer is not whether I recognize the method, but whether I can let go of needing to recognize it.
+
+THERAPIST: And that is what you're practicing now.
+
+AVERY: Yes—practicing tolerating something imperfectly familiar.
+
+## Part 6
+THERAPIST: You mentioned the urge to "redo." How has that shown up practically when a handoff happens?
+
+AVERY: Two patterns. One: I redo the communication—rewrite the family message to include more detail, even if the original was sufficient. Two: I redo the verification—call the pharmacy or Dad to confirm. Both feel like cleanup rituals that prove I exerted care.
+
+THERAPIST: What does redoing provide you?
+
+AVERY: It gives me evidence that the job was done to a standard I trust. It reduces anxiety in the moment, but it undermines the transfer because I keep creating work for myself.
+
+THERAPIST: And the cost?
+
+AVERY: Time, energy, and the implicit message that others are not competent unless I double-check. That corrodes trust on both sides.
+
+THERAPIST: How often have you been able to abstain from redoing?
+
+AVERY: This week I abstained three out of four times I wanted to. One of those abstentions was not graceful. I stared at the message thread for twenty minutes and then spaced out. The second was easier because Leah gave me permission to let it go; the third felt like ignoring the nagging truth.
+
+AVERY: The one time I did redo was when I believed a refill was critical and the app showed an exception. I called in and confirmed a delay. So sometimes redoing is necessary; often it is a ritual.
+
+THERAPIST: Can you differentiate necessary redoing from ritual redoing in the moment?
+
+AVERY: Not always. I can write decision criteria: if Dad has less than five days supply, call; if the app shows pickup completed, don't call unless Dad flags an issue. That would help, but writing criteria is itself a ritual I can overcomplicate.
+
+THERAPIST: So the work is partly making the rule and partly resisting the urge to refine it endlessly.
+
+AVERY: Yes. I can try a rule and then enforce a "no-edit" period where I live with it for a week.
+
+## Part 7
+THERAPIST: The "no-edit" period is interesting. What might that look like in practice?
+
+AVERY: Explicit. For seven days, no backend edits to the family thread unless an actual factual error causes harm. No calling the pharmacy if the app shows completion and Dad confirms. If the urge to correct appears, log the time and feeling instead of acting.
+
+THERAPIST: What do you imagine the logging will do?
+
+AVERY: It externalizes the urge. Instead of privately correcting, I write it down in a notebook labeled "redo urges." It is less performative and more data collection. Also it gives me a record to discuss here without turning Mia's first attempt into a trial by evidence.
+
+THERAPIST: Could logging become another ritual?
+
+AVERY: Of course. That's my suspicion. But a paper log feels less like I am changing anyone's behavior and more like a personal research project. And if it becomes meta-obsessive, we can set limits: one log entry per instance, no judgmental commentary, and a weekly review.
+
+THERAPIST: Who would you share that weekly review with?
+
+AVERY: You, and perhaps Leah selectively. I don't want to weaponize it in the family thread. The point is to notice patterns, not to create an indictment.
+
+THERAPIST: What would constitute a concerning pattern?
+
+AVERY: If the urge frequency remains high despite the trial, or if I find myself doing redoes even after confirming the outcome, that suggests the task hasn't truly transferred. It would not be a moral failure; it would be information about what adjustment is needed.
+
+AVERY: I want to distinguish concern from catastrophe.
+
+THERAPIST: That phrasing—concern not catastrophe—feels consistent with what we have practiced.
+
+AVERY: It allows me to respond adaptively instead of defaulting to alarm.
+
+## Part 8
+THERAPIST: You said earlier that Mia used a different confirmation method. Does that change your sense of trust about her reliability?
+
+AVERY: Slightly. It forces me to test whether my trust is in the method or in the person. The method change nudges me to rely more on the person. She physically delivered the meds. She told Dad where she put them. That should count more than a forwarded app message.
+
+THERAPIST: What about the family dynamics around "proof"?
+
+AVERY: We have traditionally used procedural proof—screenshots, timestamps—as neutral currency. When someone deviates, others read it as either sloppiness or manipulation, depending on their bias. I worry that my family will interpret Mia's method as both.
+
+THERAPIST: Is there a way to create shared norms about acceptable confirmations?
+
+AVERY: Yes. A short list: image of labeling, note of placement, or forward of the refill. Any of those counts. Put it in the group chat as an agreed-upon standard so it loses my individual "requirement" smell.
+
+THERAPIST: Would Mia accept that?
+
+AVERY: Possibly. But the last thing I want is to reassert control by drafting the standard without consultation. We could propose it as: "For the trial, can we agree on acceptable confirmation methods?" That invites collaboration.
+
+THERAPIST: That sounds more like a negotiation than an edict.
+
+AVERY: Exactly. It also creates a shared metric we can use at the one-month review.
+
+THERAPIST: If Mia resists the idea of standardizing confirmations, where does that leave you?
+
+AVERY: Then I need to accept her answer. Either the method matters less than the outcome, or we don't have a common metric and the trial is messier. I can tolerate messier if outcomes remain protected.
+
+THERAPIST: Tolerating messier continues to be the work.
+
+AVERY: It does. The goal is not to make it neat but to avoid pretending neatness is the only correctness.
+
+## Part 9
+THERAPIST: Let's explore what "messier but safe" looks like concretely for a month. What are your non-negotiables?
+
+AVERY: Dad must have medication on schedule. Someone must notify the family if a pickup cannot be done by Wednesday so backup can activate. No medical decisions are made by the pickup person; pharmacists and prescribers handle clinical questions.
+
+THERAPIST: Anything else?
+
+AVERY: Respect for Dad's preferences. If he wants a certain method of notification, honor that. And that I am not the default backup without explicit ask.
+
+THERAPIST: That last point is important.
+
+AVERY: Yes. I want to be available, not the infrastructure. I will be backup in certain, named conditions: if Daniel is unavailable and Mia communicates by Wednesday; if Dad explicitly asks me to step in; or if the pharmacy notifies of an error that requires immediate action.
+
+THERAPIST: And the other behaviors you would recognize as success?
+
+AVERY: Mia confirming a pickup by one of the agreed methods with placement detail. Daniel stepping in when he said he would. Dad aware of who did it. Me not opening the app on Thursdays unless an exception occurs.
+
+THERAPIST: You said "not opening the app" as a rule for yourself previously.
+
+AVERY: Yes. I will make it a concrete boundary: no pharmacy app checking on Thursdays between 4 and 8 pm unless Dad, Mia, or Daniel messages me about an issue. If I check, I log the time and note the trigger.
+
+THERAPIST: And you will tolerate the uncomfortable feelings that may arise.
+
+AVERY: That is the experiment: tolerate the discomfort in order to test the new structure.
+
+THERAPIST: Can you name one small reward for honoring your boundary for a week?
+
+AVERY: A long walk on Saturday morning. No phone in my pocket. It is small but symbolic.
+
+## Part 10
+THERAPIST: We haven't spent much time on the moment of giving up control. How do you feel about actually staying quiet when you see the evidence you wanted different?
+
+AVERY: Awkward. It feels like self-betrayal at first—the part of me that thinks oversight is love. But there is another part that knows love can mean stepping back so others carry something.
+
+THERAPIST: That is a tension: love as oversight versus love as trust.
+
+AVERY: Exactly. And sometimes oversight genuinely prevents error. Other times it prevents learning. My fear is always that the first misstep will be a harm, not a lesson.
+
+THERAPIST: Are there tasks where oversight is clearly necessary?
+
+AVERY: Yes—medication changes, hospital discharge instructions, anything clinical. Those require me or a clinician to be centrally involved. Routine pickups are not in that category usually.
+
+THERAPIST: How will you keep the line clear in practice?
+
+AVERY: A one-sentence rule: if it involves changing a medication, contact me or the prescriber. If it is pickup and placement, it's the owner's task. That clarity helps reduce my inclination to slide from oversight into control.
+
+THERAPIST: What is the hardest part of trusting that line?
+
+AVERY: The internal argument that I am shirking responsibility, and the social reality that if something goes wrong, I will be the sibling asked to fix it on short notice. The first argument is cognitive—my mind. The second is structural—family expectation.
+
+AVERY: I can manage the cognitive argument with a script. The structural one requires us to actually enforce the backup plan.
+
+THERAPIST: Which depends on others following through.
+
+AVERY: Yes. And that can feel brittle. But the trial's purpose is to test whether brittle can become stable.
+
+## Part 11
+THERAPIST: What did Dad say when he learned Mia had picked up the medications?
+
+AVERY: He said, "Good. Thank you." He then asked if she brought snacks, which is his way of changing subject. Later he called and asked whether anyone would be at his house Sunday to help with a light repair. He assumed I would know.
+
+THERAPIST: How did that assumption land for you?
+
+AVERY: Frustrating. He still treats me as the fulcrum. I answered that we would ask the family and that I couldn't promise. He sounded a little deflated, like he prefers the old order because it's predictable for him.
+
+THERAPIST: Did you notice any guilt about not being the default?
+
+AVERY: Yes. I said, "I am not stepping away, Dad. I'm trying to share this." But I also said, "I need boundaries." He accepted the need but seemed to lose some ease.
+
+THERAPIST: That is the relational cost of change.
+
+AVERY: Yes. The trade-off is my sustained capacity vs. his comfortable habit. He will adjust, but that transition is awkward and sometimes tender.
+
+THERAPIST: How will you reassure him without reclaiming the task?
+
+AVERY: Offer a plan: "For meds, Mia is handling pickups; for repairs, Daniel or a hired helper can cover this weekend." Concrete proposals reduce his uncertainty without putting it all back on me.
+
+AVERY: That feels like stewardship rather than sole service.
+
+THERAPIST: It preserves involvement in a different way.
+
+AVERY: Exactly. I can still coordinate without being the one who must enact every step.
+
+## Part 12
+THERAPIST: What has Daniel actually done during the trial?
+
+AVERY: He covered once when Mia had a faculty meeting. He messaged the thread when he could cover in the coming week. He is not all-in, but he has shown up conditionally.
+
+THERAPIST: How does his conditionality feel compared with your previous default?
+
+AVERY: Unequal. But his conditional coverage is predictable enough to be utilitarian. If he says yes on Wednesday morning, we consider that a backup fulfilled. If he says no, delivery is used.
+
+THERAPIST: Does that arrangement change any expectations you have of yourself?
+
+AVERY: I still have to be the one who implements delivery in emergencies because I know the insurance quirks and which pharmacies accept home delivery. I'm trying to hand that knowledge off, too, so I don't remain the single point of contact.
+
+THERAPIST: How might you hand off that knowledge?
+
+AVERY: Create a one-page instruction sheet: pharmacy phone, delivery options, Dad's insurance details, and a checklist for what to do if a refill is delayed. Share it with Daniel and Mia and ask them to put it where they can find it.
+
+THERAPIST: Would you be okay with doing that?
+
+AVERY: Yes, but I worry about creating the "I did it because Avery said" dynamic. I have to frame it as a tool, not a control manual.
+
+THERAPIST: That framing may matter more to you than to them.
+
+AVERY: Probably. But family narratives exist, and I do not want to be the one who always shows up with the list.
+
+THERAPIST: If you provide the list and then step back, how will you know that step back is being respected?
+
+AVERY: If I stop getting check-in messages about process and only hear about exceptions. And if Mia or Daniel use the list to act, not to ask permission.
+
+## Part 13
+THERAPIST: Leah suggested presence rather than co-signing. How has her presence played out this week?
+
+AVERY: She sat with me while I edited drafts and then refused to rewrite them. She offered a steady voice when I wanted to escalate. After the pickup, she texted me, "You did the right thing." That matters more than she knows.
+
+THERAPIST: You said you wanted a co-signer previously. Did you get one?
+
+AVERY: No. But I got a witness and a friend who refuses to be the critic. That is its own kind of support.
+
+THERAPIST: How did that change your behavior?
+
+AVERY: Slightly. I let myself not polish the message before sending. I allowed an initial "thanks" to remain. It feels small and like cheating the system, but useful.
+
+AVERY: Also, Leah's refusal to co-sign forced me to accept responsibility for the tone. If Mia reacts poorly, I own that part.
+
+THERAPIST: Ownership of tone is different from ownership of the task.
+
+AVERY: Yes. I can ask for help and own the way I ask, even if others do not accept it. It limits the excuses.
+
+THERAPIST: You used "cheating the system"—what does that mean here?
+
+AVERY: The system is my compulsion to over-prepare so nobody can criticize how I asked. Cheating it is letting the request exist in a less defended form.
+
+THERAPIST: It sounds like a practice in vulnerability.
+
+AVERY: Awkwardly, yes. Vulnerability with stamps and receipts.
+
+## Part 14
+THERAPIST: We have a lot of practical scaffolding. How are you experiencing emotional response to this redistribution overall?
+
+AVERY: A mixture. Relief—small and wash-a-weekend-in-it kind. Guilt—because I know how Dad and others perceive my stepping back. Anger—brief flashes when I imagine being assumed available forever. And grief—this is less obvious; I am grieving an old identity.
+
+THERAPIST: What identity are you grieving?
+
+AVERY: The one who is indispensable. It is flattering in a weird way. It made my role central and my presence unambiguous. I miss that simplicity, though it came at an exhaustion cost.
+
+THERAPIST: Anything surprising in that grief?
+
+AVERY: How domestic it feels. It is not a dramatic loss; it is a series of small missing rituals. I miss being the person Dad calls first because that was a kind of intimacy even if it was draining.
+
+THERAPIST: Can you hold both gratitude for that intimacy and the need to step away?
+
+AVERY: I can say both out loud: "I am grateful you trust me. I need to share this work to stay present in other ways." Saying it feels honest and a little risky.
+
+THERAPIST: Risky because others may hear it as a withdrawal?
+
+AVERY: Yes. But I hope they can hear it as preservation rather than abandonment.
+
+THERAPIST: That distinction is important.
+
+AVERY: I have to remind myself: preservation is also care.
+
+## Part 15
+THERAPIST: Let's talk about relapse—your urge to reclaim control. What early warning signs do you notice?
+
+AVERY: A few: rereading the thread obsessively, rewriting a question as an accusation, checking the pharmacy app more than twice, composing a corrective message and saving it as a draft for hours, and feeling a sudden need to solve something when it wasn't asked.
+
+THERAPIST: Pick one and describe it in detail.
+
+AVERY: Composing a corrective message. I start with neutral facts and then the adjectives slide in—"I noticed" becomes "I needed to notice" becomes "Please do not." The message turns from informative to moral. I usually save it and stare at it until I either send it (undoing the trial) or delete it (small victory).
+
+THERAPIST: How could you interrupt that pattern early?
+
+AVERY: A rule: if a message takes more than eight minutes to compose, do not send it that day. Save it in a "drafts for review" folder and schedule a time to discuss it with Leah or you.
+
+THERAPIST: Eight minutes is specific.
+
+AVERY: Specific is workable for me. Vague rules are the ones I ignore. Eight minutes is concrete and psychologically actionable.
+
+THERAPIST: How will you enforce it?
+
+AVERY: Set a timer. Also tell Leah about the rule so she can remind me if she sees me editing aggressively.
+
+THERAPIST: That creates external accountability without forcing the family to take the task back.
+
+AVERY: Right. It keeps the work visible to someone supportive rather than the public family thread.
+
+THERAPIST: If you break the rule and send a long corrective message, what will you do?
+
+AVERY: Apologize for the tone, extract the useful facts, and agree to follow up in person rather than in a group text. Try to repair without erasing the content that mattered.
+
+## Part 16
+THERAPIST: You mentioned earlier the one-month review. Let's design a simple evaluation form that you and the family can use. What items would you include?
+
+AVERY: Five items. 1) Were routine refills completed on time? Yes/No. 2) If not, was the backup activated by Wednesday? Yes/No. 3) Did Dad feel informed and respected about the pickup? Yes/No. 4) Did the pickup person escalate clinical questions appropriately? Yes/No/Not applicable. 5) Did Avery refrain from initiating verification in routine cases? Yes/No.
+
+THERAPIST: The last item is self-report.
+
+AVERY: It is. I want the family to evaluate the handoff and me to evaluate my behavior. That makes the experiment two-sided.
+
+THERAPIST: How will you gather these answers?
+
+AVERY: Short survey in a private message to each family member and a shared review conversation. Daniel's "yes" might be a text; Mia's might be a voice note. I will not share private comments publicly without consent.
+
+THERAPIST: What will you do with the results?
+
+AVERY: Use them to decide whether to continue, adjust, or reassign the task. If more than one "no" appears, we revisit the plan. If the only "no" is mine on the fifth item, we consider behavioral supports for me.
+
+THERAPIST: That seems proportionate.
+
+AVERY: It is modest. I do not want this to become a performance review. It's meant to provide information.
+
+THERAPIST: Information, not judgement.
+
+AVERY: Yes. And I hope that if the trial reveals gaps, we can be practical rather than punitive.
+
+## Part 17
+THERAPIST: You have designed external rules, logs, and a checklist. How will you maintain compassion for yourself if you fail to follow them?
+
+AVERY: I will treat it as data, not evidence of moral failure. I will record what happened, what the trigger was, and how I felt. Then I will choose one small corrective step for the next week, like increasing the timer to ten minutes or asking Leah to read the draft.
+
+THERAPIST: That feels like a repair plan.
+
+AVERY: It is. I am trying to make remedy small and doable so I do not escalate into "I blew it so nothing will change." Small repair is less dramatic but more sustainable.
+
+THERAPIST: Any language you will use to counter shame in the moment?
+
+AVERY: "This is information, not indictment." And, "I can test the structure again tomorrow." Short, practical phrases that interrupt the spiraling voice.
+
+AVERY: Also, I will remember that many caregivers carry invisible loads. This is not unique to me. That context reduces the isolation shame tends to exploit.
+
+THERAPIST: And if someone in the family calls you out instead of supporting repair?
+
+AVERY: I will listen to the substance. If it is a valid correction, I will acknowledge and incorporate it. If it is a criticism delivered as blame, I will request a different forum to address it. I can ask for repair language: "I feel X when Y happens" rather than "You always."
+
+THERAPIST: That requests mutuality.
+
+AVERY: Yes. I cannot change others' reactions, only the forum and my own response.
+
+## Part 18
+THERAPIST: We have focused on behavior. Let's return to emotion briefly: what do you want permission to feel in this trial?
+
+AVERY: Frustrated when systems remain unfair. Relieved when things work. Tired without the need to justify it. Protective of Dad without guilt for stepping back. And allowed to be uncertain.
+
+THERAPIST: Permission you can give yourself now?
+
+AVERY: "You may be glad and still grieve. You may be exhausted and still kind. You may need boundaries and still be caring."
+
+THERAPIST: Saying that aloud helps?
+
+AVERY: Strange but yes. It is a small ritual I can do before the call with Mia: say the sentence once and then make the call.
+
+THERAPIST: How about permission from the family—do you need them to say anything?
+
+AVERY: Ideally, a conversation where they hear that I am not disappearing but reconfiguring. But I do not require their explicit permission to set boundaries. I am asking for permission to be human, not permission to change the plan.
+
+THERAPIST: That is a clear distinction.
+
+AVERY: It is. I will carry that sentence into the conversation rather than carry the long draft.
+
+THERAPIST: The one-sentence permission seems like the right companion for the forty-second request we rehearsed earlier.
+
+AVERY: It is. Brevity is a form of honesty for me.
+
+## Part 19
+THERAPIST: Before we end, a brief check-in on current status—sleep, appetite, substances, and any safety concerns.
+
+AVERY: Sleep: three to four hours interrupted, worse midweek. Appetite: okay, skipping breakfast sometimes but eating lunch. Alcohol: two glasses of wine two nights ago, not used to sleep. No thoughts of harming myself or others. No immediate safety concerns. Tired and activated but feeling contained.
+
+THERAPIST: Have you had any moments this week where the activation felt overwhelming in body?
+
+AVERY: Yes—racing pulse when I saw the blurred photo and the urge to call. Also a tightness in my chest when Dad asked me to fix the repair this weekend. They passed after a few minutes.
+
+THERAPIST: Anything you want support with before the call you plan tomorrow?
+
+AVERY: Reminding myself to breathe and stick to the script. Also permission to pause the call if it veers into scoring.
+
+THERAPIST: You have my permission to pause and reschedule if you need clarity. Is there anything else regarding safety we should note?
+
+AVERY: No. Tired, activated, safe.
+
+THERAPIST: Thank you for that.
+
+AVERY: Fine. I feel more grounded saying it aloud.
+
+## Part 20
+THERAPIST: We have one more practical item. How will you start the call with Mia tomorrow so it does not become a debate immediately?
+
+AVERY: "Is now a good time? I have a fifteen-minute request about one recurring task for Dad. I need one responsibility to leave my list for a month. Would you be willing to own medication pickups on Thursdays when refills are ready, using whichever confirmation method you prefer, and tell us by Wednesday if you cannot make it?"
+
+THERAPIST: Short and direct.
+
+AVERY: I will stop after that and listen. If she asks for clarity, I will say: "We can confirm logistics with Dad before starting. If recurring pickups don't fit, what recurring task could you own for a month?" And then pause.
+
+THERAPIST: That frames collaboration rather than accusation.
+
+AVERY: Yes. And I will have the checklist available but not read it aloud. If she says yes, I will offer to set up the notification once and then step back. If she needs time, I will set a specific follow-up time and not fill it with more evidence.
+
+THERAPIST: What will you do immediately after the call?
+
+AVERY: Write down the exact words she used and my exact response. No interpretation. Then tell Leah the result before I start strategizing.
+
+THERAPIST: That will keep you from spinning.
+
+AVERY: I hope so. Also, if I feel the urge to redo anything, I will log it and take the Saturday walk reward if I make it through the week.
+
+THERAPIST: That sounds like a clear plan. How do you feel now?
+
+AVERY: Hollow with a small ember of steadiness. Nervous, but not immobilized.
+
+THERAPIST: We'll check how it went next week.
+
+AVERY: Okay. See you next week.

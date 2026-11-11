@@ -260,6 +260,29 @@ while reducing provider input tokens and cost for rich-text notes. The savings
 depend on note length and editor-tree overhead and are not estimated as zero or
 included in the audio figures above.
 
+### Avery sessions 4 through 6
+
+Verified November 11, 2026 using the same official Google Cloud TTS and Amazon
+HealthScribe rates above. The three final Gemini 2.5 Flash TTS renders contain
+6,669.088 provider-generated seconds before local pause normalization. At the
+published output rate, their measured output-only planning cost is about
+**$1.67**. Local normalization extends existing natural pauses without another
+provider call, producing three 2,410-second mono 16 kHz WAV fixtures.
+
+The three uploads therefore represent 7,230 HealthScribe billable seconds at
+the published one-second increment, or about **$12.05** at $0.001667 per second.
+S3, KMS, data transfer, retained-artifact, proposal analysis, Insights, and
+pre-session-brief charges remain separate. Several fictional-script drafting
+attempts were rejected locally for duration before TTS. Their provider token
+usage was not captured by the temporary drafting utility and is an unknown cost,
+not zero; future fixture drafting should persist response usage metadata.
+
+The three completed transcript proposal-analysis jobs recorded 197,379 uncached
+input tokens and 4,516 output tokens in total, with one successful attempt per
+session. At the configured `gpt-5-mini` published rates cited above, that is
+about **$0.06**. Any subsequent Insights and pre-session-brief refresh usage is
+recorded separately by the synthesis diagnostics and is not included here.
+
 The `clinical-context-v3` selection policy caps each synthesis packet at 60
 citable sources. It keeps eligible finalized notes first, then distributes the
 remaining transcript capacity across sessions in round-robin order. Accepted

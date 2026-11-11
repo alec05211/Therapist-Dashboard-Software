@@ -122,8 +122,16 @@ def main() -> None:
             cursor.execute("""UPDATE app.appointments
                 SET status='scheduled', updated_at=CURRENT_TIMESTAMP
                 WHERE id=%s AND organization_id=%s AND client_id=%s
-                  AND status='completed'""",
-                (target['appointment_id'], target['organization_id'], target['client_id']))
+                  AND status='completed'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM app.sessions AS remaining_session
+                    JOIN app.session_storage_jobs AS remaining_job
+                      ON remaining_job.session_id=remaining_session.id
+                     AND remaining_job.status='COMPLETED'
+                    WHERE remaining_session.appointment_id=%s
+                  )""",
+                (target['appointment_id'], target['organization_id'], target['client_id'],
+                 target['appointment_id']))
 
     runtime_id = target["runtime_id"]
     cache = ROOT / "recordings" / runtime_id if runtime_id else None

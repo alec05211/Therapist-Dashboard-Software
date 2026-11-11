@@ -50,7 +50,12 @@
       "focus": "The sibling follows through but organizes the task differently.",
       "possible_movement": "Avery experiments with accepting adequate help rather than reclaiming control.",
       "carry_forward": "Track urges to redo the task.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-04-help-in-someone-elses-style.txt",
+      "recording": "session-04-help-in-someone-elses-style.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2410.0,
+      "sample_rate_hz": 16000
     },
     {
       "number": 5,
@@ -58,7 +63,12 @@
       "focus": "A quiet moment with her father evokes sadness and fear.",
       "possible_movement": "She stays with grief without moving immediately to the next appointment.",
       "carry_forward": "Choose one low-demand ritual of connection.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-05-what-cannot-be-organized.txt",
+      "recording": "session-05-what-cannot-be-organized.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2410.0,
+      "sample_rate_hz": 16000
     },
     {
       "number": 6,
@@ -66,7 +76,12 @@
       "focus": "A health change disrupts Avery's first evening out in weeks.",
       "possible_movement": "The session separates a genuine emergency from the belief that rest is futile.",
       "carry_forward": "Reschedule rather than abandon the plan.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-06-the-canceled-plan.txt",
+      "recording": "session-06-the-canceled-plan.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2410.0,
+      "sample_rate_hz": 16000
     },
     {
       "number": 7,
