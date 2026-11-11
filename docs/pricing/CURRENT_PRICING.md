@@ -223,6 +223,36 @@ Flash output rate, its measured output-only planning cost is about **$0.83**.
 Text/prompt input, failed Pro attempts, retries, storage, and downstream
 processing are additional costs and are not counted as zero.
 
+### Avery sessions 2 and 3
+
+Verified November 10, 2026 using the same official Google Cloud TTS rates above.
+The final Avery session 2 and 3 recordings use Gemini 2.5 Flash TTS with Aoede
+for Avery and Jeremy Heartwell's established Sadaltager voice. The final files
+contain 4,876.398 seconds (81.273 minutes), including ten seconds of locally
+appended closing silence in session 3. Provider-generated final audio accounts
+for 4,866.398 seconds; its published output-only planning cost is about **$1.22**.
+
+An initial 1,816.211-second session 2 render was intentionally discarded after
+duration validation found it below the 40-minute fixture target. Including that
+discarded render, provider-generated audio for this work totals 6,682.609 seconds
+(111.377 minutes), with an output-only planning cost of about **$1.67**. Prompt
+input, storage, HealthScribe transcription, retries, and other downstream usage
+are additional costs and are not counted as zero.
+
+The final session 2 and 3 WAVs were uploaded once each to HealthScribe. Billing
+each request by the published one-second increment gives 2,473 + 2,405 = 4,878
+billable seconds and a measured planning cost of about **$8.13** at $0.001667 per
+second. S3, KMS, data transfer, and retained-artifact charges remain separate.
+
+The two transcript proposal-analysis jobs recorded 125,334 uncached input tokens
+and 4,318 billed output tokens in total, with no retries. The demo fell back to
+its configured `gpt-5-mini` model. At the published standard rates of $0.25 per
+million input tokens and $2.00 per million output tokens, those two calls cost
+about **$0.04**. The [official GPT-5 Mini model page](https://developers.openai.com/api/docs/models/gpt-5-mini)
+lists those rates and marks the model deprecated as of the November 10, 2026
+verification date; replacement-model selection and any corresponding quality or
+cost change remain future work, not a zero-cost assumption.
+
 The clinical-context builder sends a finalized note's canonical `plain_text`
 once when the stored editor document duplicates that same prose. This keeps the
 existing 250 KB context and 350 KB Insights-request limits and all note lineage,

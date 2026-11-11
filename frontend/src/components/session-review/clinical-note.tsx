@@ -7,7 +7,7 @@ import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { api } from "@/lib/api";
-import type { ClinicalNoteSection, ClinicalNoteVersion, LongitudinalRecordContext } from "@/lib/types";
+import type { ClinicalNoteSection, ClinicalNoteVersion, LongitudinalRecordContext, TranscriptListItem } from "@/lib/types";
 
 type SaveState = "loading" | "idle" | "unsaved" | "saving" | "saved" | "error" | "finalizing";
 
@@ -46,9 +46,14 @@ function FinalizeNoteDialog({ busy, onClose, onFinalize }: { busy: boolean; onCl
   );
 }
 
-export function ClinicalNote({ sections, recordContext, sessionId, editable = false }: { sections: ClinicalNoteSection[]; recordContext?: LongitudinalRecordContext; sessionId?: string; editable?: boolean }) {
+export function ClinicalNote({ sections, recordContext, sessionId, editable = false, initialStatus, expanded: controlledExpanded, onExpandedChange }: { sections: ClinicalNoteSection[]; recordContext?: LongitudinalRecordContext; sessionId?: string; editable?: boolean; initialStatus?: TranscriptListItem["clinical_note_status"]; expanded?: boolean; onExpandedChange?: (expanded: boolean) => void }) {
   const initialDocument = useRef(sectionsToDocument(sections));
-  const [expanded, setExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = controlledExpanded ?? internalExpanded;
+  const setExpanded = (next: boolean) => {
+    if (controlledExpanded === undefined) setInternalExpanded(next);
+    onExpandedChange?.(next);
+  };
   const [editing, setEditing] = useState(editable);
   const editingRef = useRef(editable);
   const suppressEditorUpdate = useRef(false);
@@ -168,10 +173,13 @@ export function ClinicalNote({ sections, recordContext, sessionId, editable = fa
   const active = useEditorState({ editor, selector: ({ editor: currentEditor }) => ({ bold: currentEditor?.isActive("bold") ?? false, italic: currentEditor?.isActive("italic") ?? false, strike: currentEditor?.isActive("strike") ?? false, bullet: currentEditor?.isActive("bulletList") ?? false, ordered: currentEditor?.isActive("orderedList") ?? false, heading2: currentEditor?.isActive("heading", { level: 2 }) ?? false, heading3: currentEditor?.isActive("heading", { level: 3 }) ?? false }) });
 
   if (!sections.length || !editor) return null;
-  const finalized = note?.status === "finalized";
+  const finalized = note?.status === "finalized" || (note === null && initialStatus === "finalized");
+  const statusResolved = !editable || saveState !== "loading";
   const summary = finalized
     ? <span className="font-medium text-emerald-800">FINALIZED</span>
-    : <span className="font-medium italic tracking-wide text-amber-700">DRAFT</span>;
+    : statusResolved
+      ? <span className="font-medium italic tracking-wide text-amber-700">DRAFT</span>
+      : <span role="status" className="inline-flex min-w-16 items-center"><span className="sr-only">Loading clinical note status</span><span aria-hidden="true" className="text-loading-streak block h-3 w-16" /></span>;
   const saveIndicatorVisible = saveState === "unsaved" || saveState === "saving" || savedIndicatorVisible;
   const openFinalize = () => { setExpanded(true); setFinalizeOpen(true); };
   const finalize = async () => {
@@ -215,7 +223,7 @@ export function ClinicalNote({ sections, recordContext, sessionId, editable = fa
   </> : <button type="button" disabled={saveState === "loading" || saveState === "finalizing"} onClick={() => setEditing(true)} aria-label="Amend clinical note" title="Amend note" className={`${control} border-stone-300 bg-stone-50`}><svg viewBox="0 0 20 20" className="size-4" fill="none" aria-hidden="true"><path d="m4 14.8.5-3.2L12.8 3.3a1.8 1.8 0 0 1 2.5 0l1.4 1.4a1.8 1.8 0 0 1 0 2.5l-8.3 8.3-3.2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m11.5 4.6 3.9 3.9" stroke="currentColor" strokeWidth="1.5" /></svg></button>;
 
   return <>
-    <CollapsibleContentPanel title="Clinical Note" summary={summary} ariaLabel={finalized ? "Finalized clinical note" : "Draft clinical note"} preview={preview || "No note details available."} previewContent={<div className="border-t border-stone-200 bg-white"><div className={noteDocumentClass} dangerouslySetInnerHTML={{ __html: editor.getHTML() }} /></div>} collapsedPreviewHeight={CLINICAL_NOTE_COLLAPSED_PREVIEW_HEIGHT} expanded={expanded} onExpandedChange={setExpanded} keepMounted className="mt-5" headerCenter={editable && expanded && editing && saveState !== "loading" ? formatControls : undefined} headerActions={editable && expanded && saveState !== "loading" ? noteActions : undefined}>
+    <CollapsibleContentPanel title="Clinical Note" summary={summary} ariaLabel={finalized ? "Finalized clinical note" : statusResolved ? "Draft clinical note" : "Clinical note"} preview={preview || "No note details available."} previewContent={<div className="border-t border-stone-200 bg-white"><div className={noteDocumentClass} dangerouslySetInnerHTML={{ __html: editor.getHTML() }} /></div>} collapsedPreviewHeight={CLINICAL_NOTE_COLLAPSED_PREVIEW_HEIGHT} expanded={expanded} onExpandedChange={setExpanded} keepMounted className="mt-5" headerCenter={editable && expanded && editing && saveState !== "loading" ? formatControls : undefined} headerActions={editable && expanded && saveState !== "loading" ? noteActions : undefined}>
       <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col border-t border-stone-200 bg-white">
         <div role="region" aria-label="Scrollable clinical note" tabIndex={0} className="clinical-note-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--accent-strong)]" onBlur={() => { if (editingRef.current && pendingContent.current) void persistPending(); }}><EditorContent editor={editor} /></div>
         {error && <p role="alert" className="shrink-0 border-t border-stone-200 px-5 py-3 text-xs text-red-700">{error}</p>}

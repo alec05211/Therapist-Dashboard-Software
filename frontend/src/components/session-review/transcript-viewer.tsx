@@ -1,8 +1,8 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } from "react";
 import { CollapsibleContentPanel } from "@/components/collapsible-content-panel";
 import { TranscriptScrollReader } from "@/components/session-review/transcript-scroll-reader";
 import { ClinicalNote } from "@/components/session-review/clinical-note";
-import type { ClientJourneyEntry, LongitudinalRecordContext, Transcript } from "@/lib/types";
+import type { ClientJourneyEntry, LongitudinalRecordContext, Transcript, TranscriptListItem } from "@/lib/types";
 import { FloatingQuoteInspector, useQuoteProposals } from "@/components/session-review/quote-review";
 
 type Props = {
@@ -19,6 +19,11 @@ type Props = {
   onAudioPlay?: () => void;
   onAudioPause?: () => void;
   onAudioEnded?: () => void;
+  initialClinicalNoteStatus?: TranscriptListItem["clinical_note_status"];
+  clinicalNoteExpanded?: boolean;
+  onClinicalNoteExpandedChange?: (expanded: boolean) => void;
+  transcriptExpanded?: boolean;
+  onTranscriptExpandedChange?: (expanded: boolean) => void;
 };
 
 const formatTime = (seconds: number) => {
@@ -26,7 +31,7 @@ const formatTime = (seconds: number) => {
   return `${Math.floor(safe / 60)}:${Math.floor(safe % 60).toString().padStart(2, "0")}`;
 };
 
-export function TranscriptViewer({ transcript, recordContext, sessionId, readOnly = false, showTranscript = true, showClinicalNote = true, activeSegment: controlledSegment, isPlaying: controlledPlaying, onPlaySegment, onAudioTimeUpdate, onAudioPlay, onAudioPause, onAudioEnded }: Props) {
+export function TranscriptViewer({ transcript, recordContext, sessionId, readOnly = false, showTranscript = true, showClinicalNote = true, activeSegment: controlledSegment, isPlaying: controlledPlaying, onPlaySegment, onAudioTimeUpdate, onAudioPlay, onAudioPause, onAudioEnded, initialClinicalNoteStatus, clinicalNoteExpanded, onClinicalNoteExpandedChange, transcriptExpanded: controlledExpanded, onTranscriptExpandedChange }: Props) {
   const transcriptId = useId();
   const quotes = useQuoteProposals(readOnly ? undefined : recordContext, sessionId);
   const [openClaimIds, setOpenClaimIds] = useState<string[]>([]);
@@ -36,7 +41,14 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const activeSegment = controlledSegment ?? playingSegment;
   const isPlaying = controlledPlaying ?? playing;
-  const [expanded, setExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = controlledExpanded ?? internalExpanded;
+  const onTranscriptExpandedChangeRef = useRef(onTranscriptExpandedChange);
+  useEffect(() => { onTranscriptExpandedChangeRef.current = onTranscriptExpandedChange; }, [onTranscriptExpandedChange]);
+  const setExpanded = useCallback((next: boolean) => {
+    if (controlledExpanded === undefined) setInternalExpanded(next);
+    onTranscriptExpandedChangeRef.current?.(next);
+  }, [controlledExpanded]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -47,7 +59,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
     if (activeSegment < 0) return;
     const frame = window.requestAnimationFrame(() => setExpanded(true));
     return () => window.cancelAnimationFrame(frame);
-  }, [activeSegment]);
+  }, [activeSegment, setExpanded]);
 
   useEffect(() => {
     if (activeSegment < 0 || !expanded) return;
@@ -148,7 +160,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   return (
     <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm [&>section:first-of-type]:mt-0" aria-label="Session materials">
       {playbackError && <p role="alert" className="mb-3 text-sm text-red-700">{playbackError}</p>}
-      {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} />}
+      {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} initialStatus={initialClinicalNoteStatus} expanded={clinicalNoteExpanded} onExpandedChange={onClinicalNoteExpandedChange} />}
       {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? <div className="border-t border-stone-200 bg-white">{transcriptRows}</div> : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
         <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col border-t border-stone-200 bg-white">
           <TranscriptScrollReader revision={`${sessionId}-${transcript.segments.length}-${quotes.entries.map(entry => entry.id).join(",")}`}>

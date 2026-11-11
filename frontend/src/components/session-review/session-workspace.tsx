@@ -56,6 +56,8 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
   const transcriptRequest = useRef(0);
+  const transcriptCache = useRef(new Map<string, Transcript>());
+  const [sessionPanelState, setSessionPanelState] = useState<Record<string, { clinicalNoteExpanded: boolean; transcriptExpanded: boolean }>>({});
   const restoredSelection = useRef(false);
   const recorder = useRef<MediaRecorder | null>(null); const stream = useRef<MediaStream | null>(null); const chunks = useRef<Blob[]>([]); const audio = useRef<HTMLAudioElement | null>(null);
   const recordingAppointmentId = useRef<string | null>(null);
@@ -148,10 +150,11 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   const openTranscript = async (id: string, message = "Viewing saved transcript.", evidenceSegmentIndex?: number) => {
     if (profile.clientId) rememberClinicalSession(profile.clientId, { id, type: "completed" });
     const request = ++transcriptRequest.current;
+    const cached = transcriptCache.current.get(id) ?? null;
     setActiveId(id); setActiveSessionType("completed"); setActiveSegment(evidenceSegmentIndex ?? -1);
-    setTranscript(null); setTranscriptLoading(true); setTranscriptError(null);
-    try { if (!profile.clientId) throw new Error("This client workspace is unavailable."); const data = await api.getTranscript(id, profile.clientId); if (request === transcriptRequest.current) { setTranscript(data); setStatus(message); } }
-    catch (error) { if (request === transcriptRequest.current) setTranscriptError(error instanceof Error ? error.message : "Could not open transcript."); }
+    setTranscript(cached); setTranscriptLoading(!cached); setTranscriptError(null);
+    try { if (!profile.clientId) throw new Error("This client workspace is unavailable."); const data = await api.getTranscript(id, profile.clientId); transcriptCache.current.set(id, data); if (request === transcriptRequest.current) { setTranscript(data); setStatus(message); } }
+    catch (error) { if (request === transcriptRequest.current && !cached) setTranscriptError(error instanceof Error ? error.message : "Could not open transcript."); }
     finally { if (request === transcriptRequest.current) setTranscriptLoading(false); }
   };
   const selectScheduled = (id: string | null) => { transcriptRequest.current++; audio.current?.pause(); setActiveId(id); setTranscript(null); setActiveSegment(-1); setTranscriptLoading(false); setActiveSessionType("scheduled"); if (id && profile.clientId) rememberClinicalSession(profile.clientId, { id, type: "scheduled" }); };
@@ -215,7 +218,16 @@ export function SessionWorkspace({ profile, initialView = "clinical-workspace" }
   // Restore exactly once after this client's session library is available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libraryLoading, appointmentsLoading, profile.clientId, transcripts, appointments]);
-  const transcriptViewer = transcriptLoading ? <CompletedSessionLoadingSkeleton /> : transcriptError ? <p role="alert" className="p-5 text-sm text-red-700">{transcriptError}</p> : <TranscriptViewer key={activeId} transcript={transcript} recordContext={recordContext} sessionId={activeId ?? undefined} activeSegment={activeSegment} isPlaying={isPlaying} onPlaySegment={playSegment} onAudioTimeUpdate={(event) => setActiveSegment(transcript?.segments.findIndex((segment) => event.currentTarget.currentTime >= segment.start && event.currentTarget.currentTime < segment.end) ?? -1)} onAudioPlay={() => setIsPlaying(true)} onAudioPause={() => setIsPlaying(false)} onAudioEnded={() => { setIsPlaying(false); setActiveSegment(-1); }} />;
+  const activePanelState = activeId ? sessionPanelState[activeId] : undefined;
+  const updateActivePanelState = (change: Partial<{ clinicalNoteExpanded: boolean; transcriptExpanded: boolean }>) => {
+    if (!activeId) return;
+    setSessionPanelState(current => ({
+      ...current,
+      [activeId]: { ...(current[activeId] ?? { clinicalNoteExpanded: false, transcriptExpanded: false }), ...change },
+    }));
+  };
+  const activeClinicalNoteStatus = activeId ? transcripts.find(item => item.id === activeId)?.clinical_note_status : undefined;
+  const transcriptViewer = transcriptLoading ? <CompletedSessionLoadingSkeleton /> : transcriptError ? <p role="alert" className="p-5 text-sm text-red-700">{transcriptError}</p> : <TranscriptViewer key={activeId} transcript={transcript} recordContext={recordContext} sessionId={activeId ?? undefined} activeSegment={activeSegment} isPlaying={isPlaying} initialClinicalNoteStatus={activeClinicalNoteStatus} clinicalNoteExpanded={activePanelState?.clinicalNoteExpanded ?? false} onClinicalNoteExpandedChange={expanded => updateActivePanelState({ clinicalNoteExpanded: expanded })} transcriptExpanded={activePanelState?.transcriptExpanded ?? false} onTranscriptExpandedChange={expanded => updateActivePanelState({ transcriptExpanded: expanded })} onPlaySegment={playSegment} onAudioTimeUpdate={(event) => setActiveSegment(transcript?.segments.findIndex((segment) => event.currentTarget.currentTime >= segment.start && event.currentTarget.currentTime < segment.end) ?? -1)} onAudioPlay={() => setIsPlaying(true)} onAudioPause={() => setIsPlaying(false)} onAudioEnded={() => { setIsPlaying(false); setActiveSegment(-1); }} />;
   const upcomingId = processingAppointmentId ?? nextScheduledSession(transcripts, appointments)?.id;
   const showPreparation = Boolean(upcomingId && activeId === upcomingId);
   const activeSessionLayout = activeSessionType === "scheduled" ? showPreparation && processingState?.phase !== "processing" ? <ScheduledSessionLayout isRecording={isRecording} isBusy={isBusy} processingState={processingState} processingError={uploadError} hasPriorSessions={transcripts.length > 0} onToggleRecording={() => void toggleRecording()} onUploadAudio={file => void uploadAudio(file)} onViewEvidence={(source: BriefEvidence) => void openTranscript(source.session_id, `Reviewing cited evidence from ${source.session_label}.`, source.segment_index)} recordContext={recordContext} /> : null : <CompletedSessionLayout>{transcriptViewer}</CompletedSessionLayout>;

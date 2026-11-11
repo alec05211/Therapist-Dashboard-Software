@@ -10,7 +10,7 @@
   },
   "therapist": {
     "speaker_alias": "THERAPIST",
-    "voice_fixture_id": "therapist-calm-02",
+    "voice_fixture_id": "therapist-calm-01",
     "configuration_location": "../../Therapists/voice-fixtures.json"
   }
 }

@@ -41,7 +41,11 @@ def main() -> None:
     parser.add_argument("--appointment-id", required=True)
     parser.add_argument("--audio", type=Path, required=True)
     parser.add_argument("--label", required=True)
-    parser.add_argument("--client-name", choices=("Marcus Reynolds", "Owen Park"), default="Marcus Reynolds")
+    parser.add_argument(
+        "--client-name",
+        choices=("Avery Chen", "Marcus Reynolds", "Owen Park"),
+        default="Marcus Reynolds",
+    )
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     configure_database(args)

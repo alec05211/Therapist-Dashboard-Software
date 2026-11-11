@@ -24,7 +24,12 @@
       "focus": "A missed sibling callback triggers a disproportionate argument.",
       "possible_movement": "Avery identifies anger as information about overload, not a verdict on the relationship.",
       "carry_forward": "Draft one specific request.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-02-anger-before-the-phone-rings.txt",
+      "recording": "session-02-anger-before-the-phone-rings.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2472.179,
+      "sample_rate_hz": 16000
     },
     {
       "number": 3,
@@ -32,7 +37,12 @@
       "focus": "She rehearses asking a sibling to own medication pickup every Thursday.",
       "possible_movement": "Avery notices how much evidence she wants to present before making a simple request.",
       "carry_forward": "Send a brief request without overexplaining.",
-      "status": "outline_only"
+      "status": "recorded",
+      "script": "session-03-the-request-without-the-case.txt",
+      "recording": "session-03-the-request-without-the-case.wav",
+      "target_duration_minutes": "40-50",
+      "rendered_duration_seconds": 2404.219,
+      "sample_rate_hz": 16000
     },
     {
       "number": 4,

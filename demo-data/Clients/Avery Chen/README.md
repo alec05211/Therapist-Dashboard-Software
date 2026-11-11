@@ -7,15 +7,15 @@ Avery is a 39-year-old public-library branch manager who has become the default 
 ## Long-form recording batch
 
 - Every session in the fourteen-session arc targets 40 to 50 minutes when scripted and rendered.
-- Current batch script: `session-01-the-family-switchboard.txt`
-- Current batch recording: `session-01-the-family-switchboard.wav`
-- Later sessions remain outline-only until their batch is requested.
+- Current batch scripts: `session-01-the-family-switchboard.txt`, `session-02-anger-before-the-phone-rings.txt`, and `session-03-the-request-without-the-case.txt`
+- Current batch recordings use the corresponding `.wav` filenames.
+- Sessions 4 through 14 remain outline-only until their batch is requested.
 - Client speaker: `AVERY`, Google Gemini TTS voice `Aoede`
-- Therapist speaker: `THERAPIST`, Google Gemini TTS voice `Achernar`
+- Therapist speaker: Jeremy Heartwell as `THERAPIST`, Google Gemini TTS voice `Sadaltager`, shared fixture `therapist-calm-01`
 - Model: `gemini-2.5-flash-tts`
 - Final audio format: mono 16 kHz PCM WAV so a 40 to 50 minute fixture remains below the application's 100 MB upload limit.
 
-The first-session script is intentionally less compressed than the Owen recordings. It preserves pauses, corrections, ordinary logistical detail, incomplete recollection, competing interpretations, and stretches in which no new insight appears. It maps the current caregiving system without treating Avery's first account as a complete history or turning an initial formulation into a conclusion.
+The scripts are intentionally less compressed than the Owen recordings. They preserve pauses, corrections, ordinary logistical detail, incomplete recollection, competing interpretations, and stretches in which no new insight appears. The first three sessions map the caregiving system, examine anger after an imperfect handoff, and rehearse a concrete recurring request without treating any account or formulation as a final conclusion.
 
 ## Evaluation cautions
 

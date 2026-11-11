@@ -10,9 +10,8 @@ function MaterialSkeleton({ title, widths }: { title: string; widths: string[] }
 }
 
 export function CompletedSessionLoadingSkeleton() {
-  return <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 text-left shadow-sm" aria-label="Loading associated materials" aria-busy="true">
-    <h3 className="text-base font-semibold text-stone-900">Associated materials</h3>
-    <div className="mt-5 grid gap-5">
+  return <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 text-left shadow-sm" aria-label="Loading completed session" aria-busy="true">
+    <div className="grid gap-5">
       <MaterialSkeleton title="Clinical Note" widths={["44%", "91%", "76%"]} />
       <MaterialSkeleton title="Transcript" widths={["82%", "94%", "71%"]} />
     </div>
