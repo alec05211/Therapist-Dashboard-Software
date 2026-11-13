@@ -30,6 +30,7 @@ jobs:
       DUCKDNS_SUBDOMAIN: ${{ vars.DUCKDNS_SUBDOMAIN }}
       TF_IN_AUTOMATION: "true"
       TF_INPUT: "false"
+      SPEAKER_MATCHER_IMAGE_DIGEST: ${{ vars.SPEAKER_MATCHER_IMAGE_DIGEST }}
       TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
 
     steps:
@@ -123,12 +124,15 @@ jobs:
 
       - name: Plan
         if: inputs.operation == 'plan'
-        run: terraform -chdir=terraform/demo-app plan -lock-timeout=5m
+        run: |
+          if [[ -n "$SPEAKER_MATCHER_IMAGE_DIGEST" ]]; then export TF_VAR_speaker_matcher_image_digest="$SPEAKER_MATCHER_IMAGE_DIGEST"; fi
+          terraform -chdir=terraform/demo-app plan -lock-timeout=5m
 
       - name: Apply hosted application infrastructure
         if: inputs.operation == 'apply'
         shell: bash
         run: |
+          if [[ -n "$SPEAKER_MATCHER_IMAGE_DIGEST" ]]; then export TF_VAR_speaker_matcher_image_digest="$SPEAKER_MATCHER_IMAGE_DIGEST"; fi
           terraform -chdir=terraform/demo-app plan -lock-timeout=5m -out=apply.tfplan
           terraform -chdir=terraform/demo-app apply -auto-approve apply.tfplan
 

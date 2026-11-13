@@ -148,6 +148,7 @@ jobs:
           APP_RUNTIME_SECRET_ARN: ${{ steps.target.outputs.runtime_secret_arn }}
           CLINICAL_SYNTHESIS_SECRET_ARN: ${{ steps.target.outputs.clinical_synthesis_secret_arn }}
           DEPLOY_REVISION: ${{ steps.revision.outputs.sha }}
+          SPEAKER_MATCHER_FUNCTION: ${{ vars.SPEAKER_MATCHER_IMAGE_DIGEST != '' && 'therapist-dashboard-demo-app-speaker-matcher' || '' }}
           INSTANCE_ID: ${{ steps.target.outputs.instance_id }}
         run: |
           cat > "$RUNNER_TEMP/deploy-hosted-demo.sh" <<EOF
@@ -155,6 +156,7 @@ jobs:
           revision="$DEPLOY_REVISION"
           source_directory="/opt/therapist-dashboard/source"
           repository_url="https://github.com/alec05211/Therapist-Dashboard-Software.git"
+          speaker_matcher_function="$SPEAKER_MATCHER_FUNCTION"
           runtime_identifiers="/etc/therapist-dashboard/runtime-identifiers.env"
           runtime_secret_arn="$APP_RUNTIME_SECRET_ARN"
           clinical_synthesis_secret_arn="$CLINICAL_SYNTHESIS_SECRET_ARN"
@@ -173,6 +175,8 @@ jobs:
           else
             printf '\nCLINICAL_SYNTHESIS_SECRET_ARN=%s\n' "\$clinical_synthesis_secret_arn" >> "\$runtime_identifiers"
           fi
+          sed -i '/^SPEAKER_MATCHER_FUNCTION=/d' "\$runtime_identifiers"
+          printf '\nSPEAKER_MATCHER_FUNCTION=%s\n' "\$speaker_matcher_function" >> "\$runtime_identifiers"
           chmod 0640 "\$runtime_identifiers"
           chown root:ec2-user "\$runtime_identifiers"
           install -d -m 0755 /opt/therapist-dashboard

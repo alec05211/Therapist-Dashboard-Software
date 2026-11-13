@@ -20,6 +20,7 @@ logger.setLevel(logging.INFO)
 def encoder():
     from speechbrain.inference.speaker import EncoderClassifier
     return EncoderClassifier.from_hparams(source="/var/task/model", savedir="/tmp/speaker-model",
+                                          overrides={"pretrained_path": "/var/task/model"},
                                           run_opts={"device": "cpu"})
 
 
