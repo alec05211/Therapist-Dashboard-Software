@@ -8,7 +8,7 @@ from psycopg.types.json import Json
 from database.connection import connect
 from database import client_journey
 from database import journey_proposal_jobs
-from database import speaker_identification
+from database import speaker_identification, voice_profiles
 
 
 def _timing(value):
@@ -81,6 +81,7 @@ def persist_result(storage, segments, clinical_note, source_artifact_id, raw_tra
         cursor.execute("""UPDATE app.sessions SET status='review'
             WHERE id=%s AND organization_id=%s AND client_id=%s""",
             (storage['session_id'], storage['organization_id'], storage['client_id']))
+    return version_id
 
 
 def _review_version(cursor, storage):
@@ -114,6 +115,9 @@ def read_result(storage):
             (storage['session_id'], storage['organization_id'], storage['client_id']))
         draft = cursor.fetchone()
         relationship_names = speaker_identification.read_relationship_names(cursor, storage)
+        if voice_profiles.enabled():
+            automatic_names = voice_profiles.read_names(cursor, storage, version['id'])
+            relationship_names.update({label.upper(): name for label, name in automatic_names.items()})
         speakers = speaker_identification.resolve_names(
             [segment['speaker'] for segment in segments if segment.get('speaker')], speakers,
             relationship_names)

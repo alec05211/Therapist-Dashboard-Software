@@ -159,3 +159,9 @@ terraform -chdir=terraform/demo-app apply demo-app-destroy.tfplan
 This releases the Elastic IP and removes the EC2 layer. The DuckDNS record will
 still contain the old address until the next apply/update, but RDS and synthetic
 artifacts remain intact.
+
+### Optional voice matching
+
+Apply database migration 033. Provision the ECR repository with the digest unset, then build the image from the repository root with `docker buildx build --platform linux/amd64 --provenance=false --sbom=false -t <repository>:<version> --push speaker_matching`. Supply the published digest as `speaker_matcher_image_digest` and apply the hosted demo stack again. Benchmark the configured similarity threshold and margin with consented test recordings before enabling automatic naming with clinical data.
+
+The application invokes the function from its existing background HealthScribe import path after committing the transcript. The application persists results in RDS. The function receives short-lived access to the recording, has no database credentials, and uses model weights packaged at build time. Account Settings accepts a short recording to enroll or replace a voice. It stores the resulting embedding, and deleting the profile removes its automatic transcript mappings. Client Care Identification groups matched source labels by enrolled profile, and individual transcript edits take precedence.

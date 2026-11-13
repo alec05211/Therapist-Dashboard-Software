@@ -12,7 +12,7 @@ import boto3
 from psycopg.types.json import Json
 
 from database.connection import connect
-from database import session_review
+from database import session_review, voice_profiles
 from database.audio_metadata import recording_duration
 
 
@@ -225,7 +225,8 @@ def publish_results(storage, directory, segments, clinical_note, raw_transcript=
     artifact_ids = {}
     for name, kind in [('healthscribe-transcript.json', 'raw_transcript'), ('clinical-note.json', 'raw_clinical_document'), ('transcript.json', 'normalized_transcript_export')]:
         artifact_ids[kind] = put_artifact(storage, directory / name, kind, f"{storage['prefix']}transcripts/{name}", 'application/json', 'healthscribe')
-    session_review.persist_result(storage, segments, clinical_note, artifact_ids['raw_transcript'], raw_transcript, raw_note)
+    version_id = session_review.persist_result(storage, segments, clinical_note, artifact_ids['raw_transcript'], raw_transcript, raw_note)
+    voice_profiles.match_session(storage, version_id, segments)
 
 
 def restore_artifact(storage, filename, directory):

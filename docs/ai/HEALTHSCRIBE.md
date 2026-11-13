@@ -207,3 +207,7 @@ The local server uses temporary AWS credentials from `AWS_PROFILE`; AWS access k
 HealthScribe is a practical early-development dependency, not the intended final intelligence layer. It enables rapid product learning while the project defines what a psychiatric-care-specific transcription, diarization, note-generation, and longitudinal-insight system should do—and how it should be measured, controlled, and made accountable.
 
 See [AI_ML_VISION.md](AI_ML_VISION.md) for that direction.
+
+### Automatic speaker attribution
+
+Account Settings owns opt-in voice enrollment. The hosted worker decodes audio and creates a fixed embedding for the enrolled account. After transcript import it compares timestamped clips from the original recording with eligible participant profiles and saves confident mappings by transcript version. Uncertain clips keep their source label. Transcript-specific edits take precedence. Client Care Identification combines matched labels into a single row per enrolled speaker across recordings and plays an authorized session clip. Legacy label associations remain available for unresolved speakers.

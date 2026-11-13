@@ -24,7 +24,7 @@ from database.connection import connect
 from database import organization_storage
 from database import client_journey
 from database import journey_proposal_jobs
-from database import speaker_identification
+from database import speaker_identification, voice_profiles
 from database import document_workflow
 from database import insurance_cards
 from database import client_operations
@@ -853,6 +853,44 @@ def account_profile_target(connection, authorization):
         "last_name": claims.get("family_name"), "email": claims.get("email"),
         "phone": None, "discoverable": True,
     }
+
+
+@app.get("/account/voice-profile")
+def get_voice_profile(authorization: str | None = Header(default=None)):
+    with connect() as connection, connection.cursor() as cursor:
+        role, subject, _ = account_profile_target(connection, authorization)
+        cursor.execute("SELECT 1 FROM app.account_voice_profiles WHERE subject=%s", (subject,))
+        return {"available": voice_profiles.enabled() and role in ("therapist", "client"),
+                "enrolled": cursor.fetchone() is not None}
+
+
+@app.put("/account/voice-profile")
+async def save_voice_profile(audio: UploadFile = File(...), authorization: str | None = Header(default=None)):
+    from starlette.concurrency import run_in_threadpool
+    with connect() as connection:
+        role, subject, _ = account_profile_target(connection, authorization)
+    if role not in ("therapist", "client"):
+        raise HTTPException(403, "An active account is required.")
+    if not voice_profiles.enabled():
+        raise HTTPException(503, "Voice enrollment is unavailable.")
+    sample = await audio.read(4 * 1024 * 1024 + 1)
+    if not sample or len(sample) > 4 * 1024 * 1024:
+        raise HTTPException(422, "Choose a recording smaller than 4 MB.")
+    try:
+        await run_in_threadpool(voice_profiles.enroll, subject, sample)
+    except KeyError as exc:
+        raise HTTPException(422, "Record at least a few seconds of clear speech.") from exc
+    except (BotoCoreError, ClientError, RuntimeError) as exc:
+        raise HTTPException(503, "Voice enrollment could not be processed.") from exc
+    return {"enrolled": True}
+
+
+@app.delete("/account/voice-profile")
+def delete_voice_profile(authorization: str | None = Header(default=None)):
+    with connect() as connection, connection.cursor() as cursor:
+        subject = validate_access_token(authorization)["sub"]
+        cursor.execute("DELETE FROM app.account_voice_profiles WHERE subject=%s", (subject,))
+    return {"enrolled": False}
 
 
 @app.get("/account/profile")

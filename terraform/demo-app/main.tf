@@ -178,6 +178,7 @@ resource "aws_instance" "application" {
   monitoring                  = true
 
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
+    speaker_matcher_function                = try(aws_lambda_function.speaker_matcher[0].function_name, "")
     aws_region                              = var.aws_region
     database_endpoint                       = var.database_endpoint
     database_name                           = var.database_name

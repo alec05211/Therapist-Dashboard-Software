@@ -342,3 +342,7 @@ uncached part; repeated generation can increase spend. Downstream HealthScribe,
 storage, and Insights/brief processing are separate costs under the existing
 tables and depend on actual uploads, duration, eligible sources, and refreshes.
 This change adds no application generation trigger or deployment.
+
+## Optional automatic speaker matching
+
+Verified 2026-11-13. The hosted demo uses one x86 Lambda invocation per enrollment and per completed transcript with enrolled participants. At 2 GB and an assumed 30 seconds per match, 1,000 matches cost approximately $1.00 for compute and requests before free tier. The 1 GB scratch allocation adds approximately $0.0005 for that workload at the published $0.0000000309 per GB-second above 512 MB. Actual runtime and enrollment volume need measurement. Add ECR retained image storage, S3 GET and applicable KMS requests per recording, CloudWatch logs, and incremental RDS storage for embeddings and assignments. Those depend on image size, retention, and usage and are excluded from the example. HealthScribe rates and the existing baseline totals are unchanged. [Lambda pricing](https://aws.amazon.com/lambda/pricing/) · [ECR pricing](https://aws.amazon.com/ecr/pricing/) · [S3 pricing](https://aws.amazon.com/s3/pricing/) · [KMS pricing](https://aws.amazon.com/kms/pricing/) · [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/)

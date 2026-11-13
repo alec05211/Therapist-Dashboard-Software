@@ -42,6 +42,7 @@ CADDYFILE
 # the documented SSM workflow and must never be placed in Terraform/user data.
 cat >/etc/therapist-dashboard/runtime-identifiers.env <<'RUNTIMEVARS'
 AWS_REGION=${aws_region}
+SPEAKER_MATCHER_FUNCTION=${speaker_matcher_function}
 DATABASE_HOST=${database_endpoint}
 DATABASE_NAME=${database_name}
 DATABASE_SECRET_ARN=${database_secret_arn}

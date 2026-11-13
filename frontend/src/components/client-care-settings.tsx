@@ -11,7 +11,7 @@ type Section = "identification" | "scheduling" | "insurance" | "permissions" | "
 type Permission = "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
 type AudioSample = { recordingUrl: string; start: number; end: number };
 type Participant = { name: string; pronouns: string; sample: AudioSample | null };
-type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sessionLabel: string; sourceLabel: string; name: string; sample: AudioSample | null; overridden: boolean };
+type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sessionLabel: string; sourceLabel: string; profileId?: string; role?: "therapist" | "client"; name: string; sample: AudioSample | null; overridden: boolean };
 
 const sections: SettingsSection[] = [
   { id: "identification", title: "Identification" },
@@ -117,7 +117,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
     setBusy(true); setSaved(false); setError(null);
     try {
       const response = section === "identification"
-        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.name, pronouns: client.pronouns || null }, therapist: { name: therapist.name, pronouns: therapist.pronouns || null }, speakers: speakers.map(({ transcriptVersionId, sourceLabel, name }) => ({ transcript_version_id: transcriptVersionId, source_label: sourceLabel, name })) }) })
+        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.name, pronouns: client.pronouns || null }, therapist: { name: therapist.name, pronouns: therapist.pronouns || null }, speakers: speakers.filter(speaker => !speaker.profileId).map(({ transcriptVersionId, sourceLabel, name }) => ({ transcript_version_id: transcriptVersionId, source_label: sourceLabel, name })) }) })
         : await fetch("/api/client-portal-permissions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, ...Object.fromEntries(Object.entries(permissionFields).map(([key, field]) => [field, choices[key as Permission]])) }) });
       const body = await responseBody(response, "Could not save client care settings.");
       if (section === "identification") {
@@ -162,17 +162,24 @@ export function ClientCareSettings({ initialSection = "identification", clientId
     {sectionLoading ? <LoadingSpinner label={`Loading ${section.toLowerCase()} settings…`} /> : null}
     {sectionError ? <p role="alert" className="mt-5 text-sm text-red-700">{sectionError}</p> : null}
     {sectionReady && section === "identification" ? <div className="mt-4 text-left">
-      <p className="text-sm leading-6 text-stone-600">HealthScribe separates voices but does not reliably identify people. Each row shows its exact speaker label; assign a name once to use it for the same label throughout this client relationship.</p>
-      {speakers.length ? <div className="mt-4 space-y-4">{Array.from(new Set(speakers.map(speaker => speaker.transcriptVersionId))).map(transcriptVersionId => {
-        const sessionSpeakers = speakers.filter(speaker => speaker.transcriptVersionId === transcriptVersionId);
-        return <section key={transcriptVersionId} className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
-          <h3 className="border-b border-stone-200 px-4 py-3 text-sm font-semibold text-stone-900">{sessionSpeakers[0]?.sessionLabel ?? "Completed session"}</h3>
-          <div className="divide-y divide-stone-200 px-4">{sessionSpeakers.map((speaker) => {
-            const id = `speaker-${speaker.transcriptVersionId}-${speaker.sourceLabel}`;
-            return <IdentificationRow key={`${speaker.transcriptVersionId}-${speaker.sourceLabel}`} id={id} label={speaker.sourceLabel} name={speaker.name} sample={speaker.sample} suggestions={[client.name, therapist.name].filter(Boolean)} playing={activeSample?.id === id} onPlay={() => toggleSample(id, speaker.sample)} onChange={(name) => { setSpeakers(current => current.map(item => item.sourceLabel.toUpperCase() === speaker.sourceLabel.toUpperCase() ? { ...item, name } : item)); setSaved(false); }} />;
-          })}</div>
-        </section>;
-      })}</div> : <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">Speaker samples will appear after the first session finishes processing.</p>}
+      <p className="text-sm leading-6 text-stone-600">Matched voices share a speaker row across sessions. Play a sample to hear the speaker.</p>
+      {speakers.length ? <div className="mt-4 divide-y divide-stone-200 rounded-xl border border-stone-200 px-4">
+        {speakers.map((speaker) => {
+          const id = speaker.profileId ?? `speaker-${speaker.transcriptVersionId}-${speaker.sourceLabel}`;
+          const participant = speaker.role === "therapist" ? therapist : client;
+          const label = speaker.role === "therapist" ? "Clinician1" : speaker.role === "client" ? "Patient1" : speaker.sourceLabel;
+          return <IdentificationRow key={id} id={id} label={label}
+            name={speaker.role ? participant.name : speaker.name} sample={speaker.sample}
+            suggestions={[client.name, therapist.name].filter(Boolean)}
+            playing={activeSample?.id === id} onPlay={() => toggleSample(id, speaker.sample)}
+            onChange={(name) => {
+              if (speaker.role === "therapist") setTherapist(current => ({ ...current, name }));
+              else if (speaker.role === "client") setClient(current => ({ ...current, name }));
+              else setSpeakers(current => current.map(item => !item.profileId && item.sourceLabel.toUpperCase() === speaker.sourceLabel.toUpperCase() ? { ...item, name } : item));
+              setSaved(false);
+            }} />;
+        })}
+      </div> : <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">Speaker samples will appear after the first session finishes processing.</p>}
     </div> : null}
     {section === "scheduling" ? <ClientScheduling clientId={clientId} initiallyExpanded={expandRecurring} onChanged={onScheduleChanged} /> : null}
     {section === "insurance" ? <TherapistInsuranceSummary clientId={clientId} /> : null}

@@ -121,7 +121,31 @@ def list_associations(cursor, context):
                        'sourceLabel': label,
                        'name': overrides.get(label, ''),
                        'sample': sample, 'overridden': bool(overrides)})
-    return result
+    from database.voice_profiles import enabled
+    if not enabled():
+        return result
+
+    cursor.execute("""SELECT assignment.transcript_version_id, assignment.source_label,
+                assignment.profile_id, assignment.participant_role
+            FROM app.transcript_voice_assignments assignment
+            JOIN app.transcript_versions transcript ON transcript.id=assignment.transcript_version_id
+            WHERE transcript.organization_id=%s AND transcript.client_id=%s""",
+            (context['organization_id'], context['client_id']))
+    assignments = {(str(row['transcript_version_id']), row['source_label']): row
+                   for row in cursor.fetchall()}
+    speakers = {}
+    for row in result:
+        match = assignments.get((row['transcriptVersionId'], row['sourceLabel']))
+        if match:
+            key = str(match['profile_id'])
+            row['profileId'] = key
+            row['role'] = match['participant_role']
+        else:
+            key = (row['transcriptVersionId'], row['sourceLabel'])
+        previous = speakers.get(key)
+        if not previous or (not previous['sample'] and row['sample']):
+            speakers[key] = row
+    return list(speakers.values())
 
 
 def save_associations(cursor, context, associations, actor):

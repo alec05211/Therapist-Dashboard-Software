@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
+import { VoiceProfileSettings } from "@/components/voice-profile-settings";
 import { AccountProfileForm } from "@/components/account-profile-form";
 import { InsuranceCardSettings } from "@/components/insurance-card-settings";
 import { SettingsLayout, type SettingsSection } from "@/components/settings-layout";
@@ -10,6 +11,7 @@ import { chooseSessionView, readSessionView, subscribeToSessionView, type Sessio
 
 const baseSections: SettingsSection[] = [
   { id: "profile", title: "Profile" },
+  { id: "voice-profile", title: "Voice profile" },
   { id: "security", title: "Security" },
   { id: "notifications", title: "Notifications" },
   { id: "appearance", title: "Appearance" },
@@ -59,7 +61,7 @@ function AccountSettingsContent() {
             </button>)}
           </div>{role && canUseFeature(role, "sessionNavigation") && <div className="mt-8 border-t border-stone-200 pt-6"><h3 className="text-sm font-semibold text-stone-900">Session navigation</h3><p className="mt-1 text-sm leading-6 text-stone-600">Choose how saved sessions are browsed in the client workspace.</p><div className="mt-3 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Session navigation layout">
             {(["cards", "legacy"] as SessionView[]).map((option) => <button key={option} type="button" role="radio" aria-checked={sessionView === option} onClick={() => chooseSessionView(option)} className={`rounded-xl border p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${sessionView === option ? "border-emerald-700 bg-emerald-50 ring-1 ring-emerald-700" : "border-stone-300 hover:bg-stone-50"}`}><span className="block text-sm font-semibold text-stone-900">{option === "cards" ? "Session cards" : "Legacy list"}</span><span className="mt-1 block text-xs leading-5 text-stone-500">{option === "cards" ? "Five-session carousel with the selected session centered." : "The original vertical list of saved transcripts."}</span></button>)}
-          </div></div>}</> : active === "profile" ? <AccountProfileForm /> : active === "insurance" ? <InsuranceCardSettings /> : <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">This setting is coming soon.</div>}
+          </div></div>}</> : active === "voice-profile" ? <VoiceProfileSettings /> : active === "profile" ? <AccountProfileForm /> : active === "insurance" ? <InsuranceCardSettings /> : <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">This setting is coming soon.</div>}
       </SettingsLayout>
     </main>
   );
