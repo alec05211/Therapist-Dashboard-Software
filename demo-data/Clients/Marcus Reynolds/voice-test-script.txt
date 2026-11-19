@@ -1,0 +1,13 @@
+# Fictional Gemini TTS voice audition
+# Client: Marcus Reynolds
+# Client speaker: MARCUS | Client voice: Sadachbia
+# Therapist voice fixture: therapist-calm-01 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: Who takes care of you when the capable version is tired?
+
+MARCUS: That is a very therapist question. <short pause> I do not know.
+
+THERAPIST: What happens when you let the question sit there?
+
+MARCUS: I want to give you a good answer. Then I realize that is probably the thing we are talking about.

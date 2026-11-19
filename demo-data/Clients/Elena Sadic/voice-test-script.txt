@@ -1,0 +1,13 @@
+# Fictional Gemini TTS voice audition
+# Client: Elena Sadic
+# Client speaker: ELENA | Client voice: Gacrux
+# Therapist voice fixture: therapist-calm-01 (defined outside the client folder)
+# Synthetic demonstration material only. Do not use as a clinical record or assessment.
+
+THERAPIST: What made this feel like the time to reach out?
+
+ELENA: I keep saying it is a busy stretch, but the stretch does not end.
+
+THERAPIST: What tells you the cost is different now?
+
+ELENA: I am still doing the work. I am just disappearing from everything around it.

@@ -1,0 +1,57 @@
+{
+  "fixture_version": 2,
+  "fictional": true,
+  "client": "Elena Sadic",
+  "non_diagnostic": true,
+  "clinical_complexity": "Moderate to high complexity",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "Intake and stabilization",
+      "focus": "Elena describes months of escalating strain and intermittent thoughts of disappearing.",
+      "possible_movement": "Jeremy completes a calm current-status assessment and they identify supports and a simple plan.",
+      "carry_forward": "Review safety status and one observed pressure cycle.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "Noticing the pressure cycle",
+      "focus": "A routine request from a supervisor becomes evidence of failure.",
+      "possible_movement": "Elena sends a realistic timeline and tells Nora more about the strain.",
+      "carry_forward": "Compare prediction with what actually occurred.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "Making room for rest",
+      "focus": "Rest triggers guilt and fear of becoming careless.",
+      "possible_movement": "Elena tests a small restorative routine without requiring it to prove improvement.",
+      "carry_forward": "Notice the rule that rest must be earned.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "The deadline setback",
+      "focus": "A difficult deadline disrupts sleep and increases withdrawal.",
+      "possible_movement": "They reassess current safety and separate setback from total collapse.",
+      "carry_forward": "Use supports earlier in the cycle.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "Practicing clear requests",
+      "focus": "Elena prepares direct requests at work and at home.",
+      "possible_movement": "One request lands imperfectly, and she practices repair without retracting it.",
+      "carry_forward": "Carry the clearer language forward.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "Six session review",
+      "focus": "They review gains, limits, current safety, and the approaching project launch.",
+      "possible_movement": "Elena identifies durable supports and unresolved questions.",
+      "carry_forward": "Keep the next phase open and evidence-based.",
+      "status": "outline_only"
+    }
+  ]
+}

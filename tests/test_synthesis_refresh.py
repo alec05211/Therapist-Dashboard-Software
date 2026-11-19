@@ -112,7 +112,29 @@ class SynthesisRefreshQueueTests(unittest.TestCase):
         self.assertTrue(any("published_brief_snapshot_id" in sql for sql in statements))
         self.assertTrue(any("status = 'superseded'" in sql for sql in statements))
 
-    def test_high_value_review_event_is_due_immediately(self):
+    def test_bundle_completion_preserves_debounce_for_events_arriving_during_generation(self):
+        connection, cursor = self.connection({
+            "desired_insights_revision": 5,
+            "processing_insights_revision": 4,
+        })
+        synthesis_refresh.complete_synthesis_bundle(
+            connection,
+            organization_id=str(uuid4()),
+            client_id=str(uuid4()),
+            worker_token="worker-a",
+            published_revision=4,
+            insight_snapshot_id=str(uuid4()),
+            appointment_id=None,
+            brief_snapshot_id=None,
+        )
+        state_update = next(
+            call.args[0] for call in cursor.execute.call_args_list
+            if "UPDATE app.clinical_synthesis_refresh_state" in call.args[0]
+        )
+        self.assertIn("GREATEST", state_update)
+        self.assertIn("COALESCE(not_before, CURRENT_TIMESTAMP)", state_update)
+
+    def test_claim_acceptance_starts_five_minute_inactivity_debounce(self):
         connection, cursor = self.connection({"desired_insights_revision": 1})
         synthesis_refresh.enqueue_insights_refresh(
             connection,
@@ -122,7 +144,39 @@ class SynthesisRefreshQueueTests(unittest.TestCase):
         )
         state_call = next(call for call in cursor.execute.call_args_list
                           if "INSERT INTO app.clinical_synthesis_refresh_state" in call.args[0])
+        self.assertEqual(state_call.args[1][2], 300)
+        self.assertTrue(state_call.args[1][3])
+        self.assertEqual(state_call.args[1][4], 300)
+
+    def test_note_finalization_resets_five_minute_inactivity_clock(self):
+        connection, cursor = self.connection({"desired_insights_revision": 2})
+        synthesis_refresh.enqueue_insights_refresh(
+            connection,
+            organization_id=str(uuid4()),
+            client_id=str(uuid4()),
+            event_type="clinical_note_finalized",
+        )
+        state_call = next(call for call in cursor.execute.call_args_list
+                          if "INSERT INTO app.clinical_synthesis_refresh_state" in call.args[0])
+        statement, parameters = state_call.args
+        self.assertIn(
+            "WHEN %s THEN CURRENT_TIMESTAMP + %s * INTERVAL '1 second'",
+            statement,
+        )
+        self.assertEqual(parameters[2:5], (300, True, 300))
+
+    def test_transcript_finalization_remains_due_immediately(self):
+        connection, cursor = self.connection({"desired_insights_revision": 1})
+        synthesis_refresh.enqueue_insights_refresh(
+            connection,
+            organization_id=str(uuid4()),
+            client_id=str(uuid4()),
+            event_type="transcript_finalized",
+        )
+        state_call = next(call for call in cursor.execute.call_args_list
+                          if "INSERT INTO app.clinical_synthesis_refresh_state" in call.args[0])
         self.assertEqual(state_call.args[1][2], 0)
+        self.assertFalse(state_call.args[1][3])
 
 
 if __name__ == "__main__":

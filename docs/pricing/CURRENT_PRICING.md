@@ -1,6 +1,6 @@
 # Current architecture pricing
 
-**Last verified:** October 26, 2026. **Currency:** USD, before tax. **Status:** planning estimate, not an invoice or customer subscription price.
+**Last verified:** November 18, 2026. **Currency:** USD, before tax. **Status:** planning estimate, not an invoice or customer subscription price.
 
 This document estimates Auth0 Enterprise, recorded-session processing, and OpenAI synthesis for the current architecture. A client means a person receiving care; an Auth0 monthly active user (MAU) means an active login identity. These counts are different, especially when therapists and administrators also sign in.
 
@@ -63,6 +63,8 @@ These figures use the published per-second rate and round only the final result.
 ## OpenAI model calls for synthesis
 
 The current pipeline adds transcript proposal analysis after HealthScribe, generates Insights in one coordinated request, and condenses validated Insights into a read-only pre-session brief. Review/finalization changes can trigger further Insights refreshes; page views do not. Closely timed events may coalesce. A normal session is therefore not a guaranteed fixed number of calls. See the [generation lifecycle](../ai/harness/CLINICAL_SYNTHESIS_GENERATION_LIFECYCLE.md).
+
+Refresh-trigger update (verified 2026-11-19): clinical-note finalization or amendment and evidence-claim acceptance now share a client-scoped rolling five-minute inactivity debounce. Each additional qualifying event resets the clock, and the queue-count threshold does not accelerate these events. This does not change published model rates or per-request token assumptions; it reduces redundant Insights and downstream brief calls when clinicians finalize notes or accept several claims in one review burst. The savings depend on observed event clustering and are not counted in the fixed planning totals below.
 
 Published standard token rates below are per **one million tokens**, using the short-context pricing view. They are comparison scenarios, not a model-selection decision. [Official OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
 
@@ -147,6 +149,8 @@ AWS publishes $0.05 per 10,000 Secrets Manager API calls and $0.40 per secret/mo
 
 Client diagnostics adds an indexed operational event table with a 30-day trace window, pruning older rows on the next diagnostic write for that client. A successful worker attempt records seven stage events, with up to three additional Insights repair events; failed/retried attempts add their own traces. Each append performs an insert plus a client-scoped retention delete. Existing review/upload ledgers are read rather than copied. No clinical prompts, model responses, or source text are duplicated into diagnostic storage.
 
+Provider-error diagnostics update (verified 2026-11-19): a failed synthesis event may now retain a small allowlisted set of provider operational fields inside its existing JSON record, including the HTTP status, error code/type, request ID, retry delay, and rate-limit remaining/reset headers. This does not add events, model calls, credentials, clinical content, or a new retention path. The incremental JSON storage is expected to be negligible at current scale and remains covered by the existing database/storage estimates; measured event-row size should replace that planning judgment at production volume.
+
 While Diagnostics is open, visible, and unpaused, the UI polls once per ten seconds: up to 360 API reads and 1,800 bounded SQL SELECTs per active viewing hour (five SELECTs/read). Opening, reading, pausing, or resuming diagnostics never calls a model or queues work. As a storage sizing example only, assuming 1 KB per stage event including row/index overhead, four successful attempts/month/client would retain roughly 28 KB/client or 2.8 MB for 100 clients over 30 days, before extra reviews, repairs, retries, backups, and database overhead. These are unmeasured planning assumptions. Dollar impact remains unpriced until actual event size, polling-viewer hours, RDS capacity/I/O, backup retention, and API/network usage are measured against the selected hosting rates; existing model-call budget tables are unchanged.
 
 | Architecture cost | Why it affects the full operating total |
@@ -213,6 +217,22 @@ unquantified pending observed request counts, query latency, active-client volum
 and capacity. No new storage, credentials, retention, or infrastructure is added.
 Rate limits are process-local (20 attempts/client/10 minutes, one active turn per
 client, eight globally); distributed scaling would require pricing a shared limiter.
+
+## Gemini 3.8 synthetic audio workflow
+
+Verified November 18, 2026 against [official Gemini API pricing](https://aistudio.google.com/docs/pricing) and the [Gemini 3.8 TTS model documentation](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash-tts). New synthetic fixture generation now targets Gemini 3.8 Flash TTS through the Gemini Enterprise `generateContent` API. Existing Gemini 2.5 recordings and their historical measured costs below are unchanged.
+
+Through December 31, 2026, published standard paid rates are **$0.50 per million text input tokens** and **$9.00 per million audio output tokens**. Google states that audio uses 25 tokens per second. Output therefore costs about **$0.0135 per generated minute**, or **$0.675 for one 50-minute session** before text input, retries, storage, local processing, and downstream HealthScribe usage. One new 50-minute render for each of the eight current synthetic clients would have an output-only planning cost of about **$5.40**. [Official Gemini API pricing](https://aistudio.google.com/docs/pricing)
+
+Starting January 1, 2027, the published standard rates become **$1.00 per million text input tokens** and **$18.00 per million audio output tokens**. At those rates, output for a 50-minute session is about **$1.35**, and eight such sessions are about **$10.80**.
+
+Voice design is a Preview feature. Google bills creation at the Gemini 3.8 Flash TTS text-input and audio-output rates; the generated audition sample contributes output tokens. Google's example reports about 220 input tokens and 1,100 output tokens, but actual usage must be read from the creation response. Voice `get`, `list`, and `delete` operations are not billed. Replication, retained voice artifacts, retries, and any future storage or governance overhead must be measured and are not counted as zero. [Official voice-design pricing and retention](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/text-to-speech/voice-design)
+
+### Avery sessions 7 and 8 native-speed regeneration
+
+Verified November 19, 2026 against the same official Google Cloud pricing above. The accepted automated-gate candidates are 2,729.51 and 2,703.51 seconds after exact local PCM silence and duration-preserving conversion to 16 kHz. Provider-generated speech accounts for approximately 2,446.51 and 2,460.51 seconds; the remaining 526 seconds is locally assembled silence and is not provider audio output. At 25 audio tokens per second and the promotional $9.00 per million audio-output tokens through December 31, 2026, the two final native speech renders have an output-only planning cost of approximately **$1.10**. Text input, storage, and any later HealthScribe upload are additional.
+
+The rewrite workflow also called Gemini 3.8 Flash for part rewrites and short dialogue inserts, including rejected and retried responses. Gemini Enterprise publishes promotional standard pricing of **$0.75 per million input tokens** and **$3.75 per million text-output tokens** through December 31, 2026, rising to $1.50 and $7.50 starting January 1, 2027. The temporary rewrite utility did not persist response usage metadata, so its actual dollar cost is unknown and is not counted as zero. Two exploratory Gemini 4 Carbon requests were also attempted; one completed and one was stopped. No published Carbon rate was captured for this run, so that cost also remains unknown. Future fixture generation should persist provider usage metadata for every successful, rejected, retried, or aborted response. [Official Gemini Enterprise pricing](https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing)
 
 ## Owen synthetic audio evaluation budget
 

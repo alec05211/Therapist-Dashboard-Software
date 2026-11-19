@@ -1,0 +1,539 @@
+# Avery Chen session 7 The spreadsheet no one asked for
+# Fictional synthetic dialogue for transcript, diarization, and longitudinal-synthesis evaluation
+# QA status: rejected for rewrite; dialogue is too polished, precise, and insight-dense.
+# Required before regeneration: docs/ai/SYNTHETIC_SESSION_REALISM.md
+# Gemini 3.8 production note: a leading [voice direction] is turn-level speech_metadata.style and is not spoken.
+# Standalone silence cues are production directions and are not spoken.
+# Target finished duration: 45 to 50 minutes, including indicated silence and ordinary response latency.
+
+## Part 1
+THERAPIST: [warm, conversational, unhurried] You brought paper today.
+
+AVERY: [dry humor over visible fatigue] Forty-seven rows of paper. Technically three pages, because I printed double-sided and then felt virtuous about the environment while documenting every hour my family has disappointed me.
+
+THERAPIST: You are already telling me what the spreadsheet means.
+
+AVERY: I know. I came in prepared to defend it, which should probably concern both of us. It started as a care ledger: appointments, rides, medication pickups, grocery deliveries, bills, who was asked, who answered, what happened. Then I added a column for notice. Then cost. Then whether I had to follow up. There is conditional formatting. Red means I took it back.
+
+THERAPIST: How much red is there?
+
+AVERY: Enough that I changed the shade because the first red looked accusatory. That is a sentence I actually thought at one in the morning.
+
+THERAPIST: Were you working on it until one?
+
+AVERY: One seventeen. Leah came into the dining room twice. The first time she asked if I wanted tea. The second time she said, "I think the spreadsheet is eating the person who made it." I told her that was dramatic. She said, "You color-coded resentment." Then she went to bed.
+
+THERAPIST: What happened between you after that?
+
+AVERY: Nothing cinematic. I stayed up another half hour. When I came to bed, she was awake but facing away. I said, "I am sorry," and she said, "I know you are scared." That made me angrier than if she had criticized me.
+
+THERAPIST: Why?
+
+AVERY: Because I was not trying to be scared. I was trying to be correct. There is a family meeting on Saturday. Mia asked for "something simple" so we can decide who is doing what. Daniel said he would come if it was not a trial. Dad said he does not want us discussing him like a broken appliance. I thought facts would keep us out of old stories.
+
+THERAPIST: And the facts became forty-seven rows.
+
+AVERY: The old stories are in the formulas. That is the embarrassing part. A neutral record does not need a column called "Avery follow-up required." It could just say follow-up. I put my name in every place where the system failed, like a watermark.
+
+THERAPIST: What are you hoping happens when they see it?
+
+AVERY: [quieter, less defended] I want someone to say, "Oh. You really have been carrying this." Not "thanks," exactly. I want the scale of it to become undeniable.
+
+THERAPIST: Before the assignments are discussed.
+
+AVERY: Yes. If we jump straight to who can drive Tuesday, it feels like the previous year disappears. I know we cannot resolve a year before lunch. I also do not want to hand them three neat requests and make it look as if those requests arose in a vacuum.
+
+THERAPIST: When did the document shift from planning Saturday to recording the year?
+
+AVERY: Somewhere around row twelve. I started with the next month. Then I thought, if I list only the next month, Daniel will say transportation is occasional. So I pulled the calendar back six weeks. Then I remembered the winter appointments and opened my work calendar. After that it became archaeology. I found a day in February where I had blocked ninety minutes as "personal" because I did not want my staff to know I was taking Dad to the clinic again.
+
+THERAPIST: What was it like to see that entry?
+
+AVERY: Lonely. Also absurdly validating. The calendar remembered what I had minimized. But then I lost forty minutes trying to determine whether a March phone call belonged under medical coordination or insurance. That is when the document stopped serving the meeting. Nobody needs the taxonomy of a call from eight months ago.
+
+THERAPIST: What kept you working after you noticed that?
+
+AVERY: The next row might have been the row that made the whole pattern obvious. That is how research traps you, except this was not research. It was me looking for a decisive exhibit in a case where everyone already knows the broad facts and disagrees about their meaning.
+
+THERAPIST: So the ledger is partly a workload record and partly a witness.
+
+AVERY: A witness that cannot interrupt me or say it remembers differently.
+
+[SILENCE - 6 SECONDS - DO NOT SPEAK]
+
+THERAPIST: What did you notice just then?
+
+AVERY: That I made a spreadsheet because people can argue with me, and cells cannot.
+
+## Part 2
+THERAPIST: [attentive, practical] Walk me through what happened when the meeting was proposed.
+
+AVERY: Mia proposed it after Dad's dizziness settled. She wrote, "Can we all sit down before the next thing happens?" Daniel answered with his shift schedule. I answered with three possible times, an agenda, and a link to the shared folder. Mia sent me a private text that said, "Please do not make us prepare for a board meeting."
+
+THERAPIST: How did you read that?
+
+AVERY: As contempt. Then, after about an hour, as a request. Then as contempt again. I replied, "I am trying to make it efficient." She wrote, "Efficient for whom?" I did not answer because every answer I drafted was a prosecution.
+
+THERAPIST: What was in the drafts?
+
+AVERY: "Efficient for the person who has to know everything." "Efficient for Dad, whose care does not pause when your calendar is full." "Efficient for the family member using paid leave." I deleted all of them. I sent a thumbs-up, which was emotionally dishonest but less damaging.
+
+THERAPIST: Did Mia know you had made the ledger?
+
+AVERY: Not then. Leah did. I showed her Tuesday night. She read the first page and said, "This is useful for you and dangerous for the meeting." I asked what that meant. She said it documents patterns but also tells everyone that I have already decided what counts.
+
+THERAPIST: Did that fit?
+
+AVERY: Partly. I count rides, calls, money, appointment notes. Mia counts sitting with Dad while he tells the same story four times. Daniel counts fixing the back steps and checking the furnace. Those are real. They are not absent from the sheet, but they are in a notes column, which visually means "miscellaneous."
+
+THERAPIST: What did Leah suggest?
+
+AVERY: She said, "Use it to find your requests. Do not use it to sentence them." I told her she had been waiting months to say that. She said she had been waiting months for me to make a document honest enough that I might hear it.
+
+THERAPIST: That sounds like a difficult exchange.
+
+AVERY: [clipped, restrained irritation] It was. I said, "It is convenient to be philosophically opposed to tracking when you are not the one getting the clinic calls." Leah said, "I am not opposed to tracking. I am opposed to watching you build a machine that proves you are alone and then climb inside it." I told her to stop turning everything into a metaphor. She said the spreadsheet was already a metaphor with gridlines.
+
+THERAPIST: What happened next?
+
+AVERY: I shut the laptop too hard. Not enough to break it. Enough to make the water glass jump. Leah flinched. I hated that. I said, "I am not angry at you." She said, "Your anger does not check identification at the door." Then she went for a walk.
+
+THERAPIST: Did you feel unsafe with each other?
+
+AVERY: No. I was sharp and loud for one sentence. I did not threaten her, block her, follow her, or break anything. She left because she did not want to absorb it. She texted that she was walking around the block and would be back. I want that precision in the record. It was conflict, not danger. It still hurt her.
+
+THERAPIST: How did you repair?
+
+AVERY: When she came back I said, "I used you as an audience for a fight with my family." She said yes. I apologized for the volume and for dismissing her. She asked me to close the spreadsheet for the night. I did not. That is where the repair was incomplete. I lowered the brightness and worked another hour like that made it private.
+
+THERAPIST: What did the additional hour give you?
+
+AVERY: Three more columns and less sleep.
+
+THERAPIST: How did less sleep show up the next day?
+
+AVERY: I was impatient at work. A new librarian asked whether a room reservation could be moved, and I answered as if she had ignored a policy she had never seen. I heard my tone and started over. At lunch I ate crackers at my desk because I had used the morning break correcting the formulas. Then Dad called to ask whether Saturday was a "serious meeting" and I said, "It is only serious if nobody prepares," which was unfair and also exactly the atmosphere Mia was trying to prevent.
+
+THERAPIST: Did you correct that with him?
+
+AVERY: I called back after work. I said I was anxious and had made preparation sound like a test. He said, "I stopped taking tests a long time ago." Then he asked whether to buy coffee cake. I said yes. We had a five-minute argument about which bakery because even our de-escalation becomes logistics.
+
+THERAPIST: Was there any ordinary part of the day not connected to the meeting?
+
+AVERY: A child at the library returned a book she had kept for three months because she loved it and did not want the story to end. We waived the fee. I remember thinking I understood the impulse. Then I hated myself for turning a children's book into another metaphor, so I shelved books for ten minutes and tried to be at work.
+
+## Part 3
+THERAPIST: [low-interruption, curious] If we look at the ledger as information rather than a verdict, what does it show?
+
+AVERY: It shows I do most of the coordination. That is not imaginary. In six weeks I handled nine clinic or pharmacy contacts, changed two appointments, paid one bill and got reimbursed, drove four times, and answered too many small questions to count. Mia did four medication pickups, two long visits, and one school-day ride. Daniel did three repairs, two rides, and covered one pickup with short notice. Dad scheduled his eye appointment himself and forgot to tell any of us until the reminder came.
+
+THERAPIST: What surprises you in that summary?
+
+AVERY: Daniel did more than I remembered. His tasks are chunky. He disappears and then replaces a railing. I see the disappearance every day and the railing once.
+
+THERAPIST: And Mia?
+
+AVERY: Her visits are longer than mine lately. She brings dinner. Dad is easier with her because she does not enter holding a folder. That sentence sounds bitter. It is bitter. She gets a version of him that laughs, and I get password resets.
+
+THERAPIST: Is that because Mia takes the laughing role from you, or because your role leaves less room for it?
+
+AVERY: Both, maybe. She is naturally more playful. I also arrive braced. If Dad starts telling a story, part of me is listening and part of me is looking at the unopened envelope behind him.
+
+THERAPIST: What does the ledger not capture?
+
+AVERY: Anticipation. Knowing that if nobody confirms by Wednesday, I will need a Thursday plan. Remembering which clinic extension actually reaches a person. The way Dad says "it is probably nothing" when he wants me to decide whether it is something. The friction with Leah after I answer at dinner. Paid leave. The mental tab that stays open.
+
+THERAPIST: Can those costs be named without assigning them as moral debt?
+
+AVERY: [quickened, skeptical] That sounds elegant in this room. At the table, if I say "mental load," Daniel will say he cannot help with information nobody shares. Mia will say she has mental load too. Dad will say he never asked me to keep all of it. Then I will be standing there with an invisible thing everyone can plausibly deny.
+
+THERAPIST: I hear that you expect the concept to be debated. What would you want them to understand even if they disagree about the total?
+
+AVERY: That coordination is a task. It needs an owner, time, and a limit. It cannot remain the atmosphere around me.
+
+THERAPIST: That is more specific than asking them to validate every row.
+
+AVERY: Yes, but it feels smaller.
+
+THERAPIST: Smaller than what?
+
+AVERY: Smaller than justice.
+
+[SILENCE - 8 SECONDS - DO NOT SPEAK]
+
+AVERY: [softer, uncertain] I hear how grand that sounds. I do not mean punishment. I mean I want the past to matter.
+
+THERAPIST: It can matter without the meeting producing a unanimous ruling about it.
+
+AVERY: I know. I do not like it.
+
+THERAPIST: You do not have to like it for us to examine what is possible on Saturday.
+
+AVERY: Fine. Possible, not fair. I can work with possible for ten minutes.
+
+THERAPIST: What are the three responsibilities the ledger points toward?
+
+AVERY: First, medication pickup has mostly moved to Mia, but the backup still routes through me. I want Mia and Daniel to arrange backup directly by Wednesday noon. Second, transportation for routine appointments. Daniel has more weekday flexibility on his off weeks, but his schedule rotates. I want him to own finding the ride for two appointments a month, even if he is not the driver. Third, bills and insurance letters. I want a rotating review so every envelope does not come to my house.
+
+THERAPIST: Where is your father in those decisions?
+
+AVERY: He chooses who has access and what help he wants. He may say no to rotating bill review. That is part of why the meeting is with him, not about him.
+
+THERAPIST: What preferences has he already made clear?
+
+AVERY: He wants to stay in his house. He wants us to call before coming over, though he also complains when nobody drops in. He wants me involved in clinic conversations because I remember details, but he does not want me answering for him. He prefers Mia for grocery shopping because she buys the brands he likes. He wants Daniel to stop rearranging tools after repairs. He wants all three of us to act as if those preferences are compatible.
+
+THERAPIST: Are any of them incompatible?
+
+AVERY: Calling before visiting and spontaneous company are in tension. Wanting me to remember details without answering means we have to slow down. Staying home may require more help than he enjoys receiving. Those are not reasons to override him. They are reasons the plan cannot be a tidy division of labor.
+
+THERAPIST: What might he want from Saturday besides assignments?
+
+AVERY: To know we are not secretly deciding he cannot manage. To hear that needing help has not made him the cause of our fights. Maybe to have coffee cake and talk about baseball after. I keep forgetting the meeting ends and we are still a family in the same room.
+
+## Part 4
+THERAPIST: [slower, direct, not confrontational] I want to test something, and you can tell me it does not fit. The spreadsheet may protect you from making requests that can be refused.
+
+AVERY: [controlled anger, pace tightening] That does not fit. I have made requests. I have made them politely, specifically, briefly, with options, without options, in writing, by phone, after checking schedules, before checking schedules. Refusal is not a theoretical fear.
+
+THERAPIST: You are right. You have made requests, and some have been refused or inconsistently carried.
+
+AVERY: Then why say I am avoiding requests? This is the part of therapy that makes caregivers furious. Everything becomes a communication problem because communication is the thing in the room. If I bring evidence, it is armor. If I do not bring evidence, maybe I am catastrophizing. At what point is the answer simply that other people have more freedom because I pick up the consequences?
+
+THERAPIST: There are real differences in who has carried consequences. I moved too quickly from the function of the spreadsheet to a claim about what you avoid.
+
+AVERY: [sharper, voice still low] Yes. You did.
+
+[SILENCE - 9 SECONDS - DO NOT SPEAK]
+
+THERAPIST: I am sorry. I can ask rather than decide. Does any part of the document delay a request, or is that not what is happening here?
+
+AVERY: [after a breath, guarded] It delays the meeting. I asked to move it from last Saturday to this Saturday because I wanted to finish the categories. So, yes, a part of it delays. But not because I cannot tolerate no. Because I cannot tolerate another conversation where everyone says they did not know.
+
+THERAPIST: The delay is an attempt to prevent denial or ambiguity.
+
+AVERY: And to keep me from screaming. If the facts are on paper, I thought I could remain calm.
+
+THERAPIST: Does the paper make calm more likely?
+
+AVERY: Honestly? It makes me rehearse objections. I have a response for every row. That is not calm. That is armed.
+
+THERAPIST: What are you feeling toward me now?
+
+AVERY: Annoyed. Also relieved that you corrected it without asking me to make you feel better. I expected you to explain what you meant until I agreed.
+
+THERAPIST: I did mean it as a possibility, but the impact was that I reduced a material workload to avoidance. Your correction matters.
+
+AVERY: [tension easing slightly] Okay.
+
+THERAPIST: Do you want to continue with the meeting, or stay with what happened here?
+
+AVERY: They are related. I expect people to turn the problem into my tone. Sometimes my tone is a problem. Sometimes it becomes the only problem because it is easier to discuss than the work.
+
+THERAPIST: How could you acknowledge your tone Saturday without surrendering the workload question?
+
+AVERY: "I know I can sound like I have already graded everyone. I am trying not to do that. I still need us to assign these tasks." That sounds almost human.
+
+THERAPIST: What if Mia says the ledger already graded her?
+
+AVERY: I can say, "It began as my private record. I am not asking you to agree with every entry." Then I do not put it in the center of the table.
+
+THERAPIST: Do you bring it at all?
+
+AVERY: I think I bring one copy in my bag. That sounds like hiding a weapon.
+
+THERAPIST: Or keeping your own reference available without making it the agenda.
+
+AVERY: I can live with that description.
+
+THERAPIST: I want to return briefly to what happened between us. What would have made it harder to correct me?
+
+AVERY: If you had softened your voice too much. If you had said, "I wonder if perhaps a small part of you" and then kept walking toward the same conclusion. Or if you had praised me for being assertive after I corrected you. That would make my anger another exercise you assigned.
+
+THERAPIST: What helped instead?
+
+AVERY: You said I was right about the workload and that you moved too quickly. It did not require me to prove the whole case again. I am noticing I expect repair to involve a hearing.
+
+THERAPIST: Is there anything unfinished in the repair?
+
+AVERY: I want you to remember that the family may genuinely fail to cover things. I can work on how I ask and still end up with the task. If later I take something back, I do not want the first interpretation to be that I could not tolerate delegation.
+
+THERAPIST: That is fair. We can ask what happened before assigning a function to it.
+
+AVERY: And I can tell you if I did take it back because I could not tolerate the gap. Both outcomes exist.
+
+## Part 5
+THERAPIST: [quiet, patient, leaving room] Imagine the meeting begins. Who is there, and where are you sitting?
+
+AVERY: Dad's dining table. Dad at the end because that is his chair, not because he is chairing the meeting. Mia beside him. Daniel across from me. I will probably sit nearest the kitchen because I always get up for water and plates, which is another way I become staff.
+
+THERAPIST: Do you want to choose a different chair?
+
+AVERY: That feels absurdly symbolic.
+
+THERAPIST: It may be. You can still decide.
+
+AVERY: I could sit beside Daniel. Then nobody has a clear opposing side. Mia will notice and tease me about staging. Maybe that is fine.
+
+THERAPIST: What is the first sentence?
+
+AVERY: "I want Dad to keep making his decisions, and I want the work around those decisions to be more predictable." Then I want to say, "I cannot continue as the default for every call."
+
+THERAPIST: Say it as if they are here.
+
+AVERY: [measured, deliberate] I cannot continue as the default for every call, appointment change, and backup. I can coordinate clinic information for now, but I cannot also own routine transportation, medication backup, and every bill question.
+
+THERAPIST: What happens in your body saying that?
+
+AVERY: My shoulders come up. My jaw locks. There is a thought that Dad will hear "I cannot continue" as "I cannot continue loving you."
+
+THERAPIST: What do you want him to hear?
+
+AVERY: That I want to remain his daughter. That is almost unbearably sentimental.
+
+[SILENCE - 10 SECONDS - DO NOT SPEAK]
+
+AVERY: [voice softer, searching] I do not want every visit to feel like I am clocking in. I resent him sometimes, and then I hate myself because none of this is his plan either. He misses Mom. He hates needing help. He makes jokes when he is embarrassed. I arrive with my competent face and then punish everyone for believing it.
+
+THERAPIST: There is grief and resentment together.
+
+AVERY: Yes. Please do not make that the beautiful insight that solves the spreadsheet.
+
+THERAPIST: It does not solve it.
+
+AVERY: Good.
+
+THERAPIST: What might your father say?
+
+AVERY: "I did not ask you to do all that." He has said versions of it. And I want to answer, "You called me." Both are true. He did call. I also answered before anyone else had a chance.
+
+THERAPIST: If he says he did not ask, what is the response that keeps both truths?
+
+AVERY: "Some of it you asked for. Some of it I took on because it needed doing. Either way, this is what I can do now." No trial. No history lecture.
+
+THERAPIST: Suppose he says, "Then do less," in a frustrated way.
+
+AVERY: I would want to say, "That is what this meeting is for." I might also hear it as rejection: if I cannot do everything, he does not want what I can offer. That is not necessarily what he means.
+
+THERAPIST: What could you ask?
+
+AVERY: "Are you saying you do not want this help, or that you are upset about the conversation?" He may say both. He gets to refuse help, within whatever consequences follow. We then decide what each of us can participate in. I do not get to convert his refusal into permission to control him.
+
+THERAPIST: And if he becomes embarrassed?
+
+AVERY: I can slow down without abandoning the topic. Offer a break. Ask whether he wants examples or just the proposal. Not rush to comfort him by saying everything is fine, because everything is not fine and he knows it.
+
+THERAPIST: How certain are you that you can say it that way?
+
+AVERY: Forty percent. Maybe sixty if I do not bring the color pages out.
+
+THERAPIST: What raises it from forty to sixty?
+
+AVERY: Having the three asks on one index card. Knowing I can pause. Telling Leah beforehand that I do not need her to coach me by text. She is not attending. Dad wanted family only, and Leah agreed, though she said she is available afterward.
+
+THERAPIST: What would a pause look like at the table?
+
+AVERY: I say, "I need a minute before I answer." Then I drink water and do not fill the minute with an argument.
+
+THERAPIST: Can we leave the minute unfilled here?
+
+[SILENCE - 12 SECONDS - DO NOT SPEAK]
+
+AVERY: [uncertain, almost amused] That was long.
+
+THERAPIST: It was twelve seconds.
+
+AVERY: It felt rude.
+
+THERAPIST: Did anything break?
+
+AVERY: No. I wanted to reassure you I was still participating. That may be useful information.
+
+## Part 6
+THERAPIST: [collaborative, precise] Let us pressure-test each request without deciding what your siblings should agree to.
+
+AVERY: Medication backup: Mia owns Thursday pickup when available. If she cannot, she contacts Daniel by Wednesday noon. If Daniel cannot, they tell the group by Wednesday evening and we choose delivery, another day, or I decide whether I can cover. The change is that I am not the private dispatcher between them.
+
+THERAPIST: What if Mia says Daniel does not answer?
+
+AVERY: Then she posts once in the group. She does not have to chase him forever. Ownership cannot mean endless pursuit. If nobody can do it, the task is visibly unfilled. I may still take it because medication matters, but I will not pretend the system worked.
+
+THERAPIST: Transportation.
+
+AVERY: Daniel owns arranging two routine rides a month. His rotating shifts mean fixed Tuesdays are unrealistic. He can drive, ask Mia, ask me, or look at the senior transport number I found. I hear how that sounds: I found the number.
+
+THERAPIST: Does that make the request invalid?
+
+AVERY: No. It means I have already done setup. I can hand over the reference sheet without managing each ride.
+
+THERAPIST: Bills.
+
+AVERY: This is the weakest one. Dad does not want everyone seeing his finances. He trusts me with online access. Mia is better at sitting with him while he opens mail, but he may not want her seeing balances. Maybe the ask is not rotating access. Maybe Mia sits with him twice a month to sort envelopes into "pay," "question," and "keep," and I handle only the questions he asks me to handle.
+
+THERAPIST: How is that different from you still owning the bills?
+
+AVERY: It reduces discovery and sorting. It does not distribute financial authority he has not granted. If Dad wants me to remain the one with access, I need a predictable window, not random evening calls.
+
+THERAPIST: What window?
+
+AVERY: Sunday from eleven to noon, twice a month. Anything non-urgent waits. Urgent is shutoff, fraud, or a deadline before the next window—not an envelope that feels unpleasant.
+
+THERAPIST: Who defines urgent?
+
+AVERY: Dad and I will argue about that. We can make examples, not a constitution.
+
+THERAPIST: What do you expect Daniel's strongest objection to be?
+
+AVERY: That arranging is the exact invisible work I complain about, and I am giving it to him without control over his schedule. He may offer repairs instead. Repairs matter, but they do not reduce appointment calls.
+
+THERAPIST: Is there a version of transportation ownership that gives him more control?
+
+AVERY: He could choose which two dates from the monthly calendar he owns rather than receive dates from me. We post known appointments by the first Sunday. He claims one or two within forty-eight hours. If none fit, he says that rather than remaining silent. That gives him choice without making me chase an answer for each appointment.
+
+THERAPIST: Who posts the monthly calendar?
+
+AVERY: Currently me. Dad could tell us dates as they are scheduled, but some come through the portal I manage. For now I may still post them. I need to distinguish holding clinic information from owning every downstream task. It is not perfectly equal.
+
+THERAPIST: Does imperfect equality make the experiment invalid?
+
+AVERY: No. I am trying to stop making fairness a prerequisite for movement. I want fairness; I may get a less unfair arrangement first.
+
+THERAPIST: Could his offer be both real help and not the help you requested?
+
+AVERY: Yes. I can say that. "I value the repairs. I still need transportation ownership distributed." I do not have to call the repairs a distraction.
+
+THERAPIST: Mia's strongest objection?
+
+AVERY: She will say she already does emotional labor and I discount it. She is right that I discount what I cannot schedule. I can acknowledge it and still ask whether she will own envelope sorting.
+
+THERAPIST: Your father's strongest objection?
+
+AVERY: That the plan makes him a project and reduces spontaneity. He may say he wants to call whichever child he wants. He can call. We can also tell him the person he calls may redirect a non-urgent task.
+
+THERAPIST: How does that feel to say?
+
+AVERY: Mean. Necessary. Uncertain. All three.
+
+## Part 7
+THERAPIST: [concrete, encouraging without triumph] What will be on the index card?
+
+AVERY: Opening sentence. Three headings: medication backup, two rides, mail sorting and bill window. Then one sentence at the bottom: "We can revise after four weeks." I need an expiration date so nobody thinks I am carving roles into stone.
+
+THERAPIST: And the ledger?
+
+AVERY: In my bag. I may say I tracked six weeks to understand the pattern. If someone asks for examples, I can give one or two. I do not pass it around unless Dad and everyone else wants to look.
+
+THERAPIST: What would count as the meeting going badly but not being a failure?
+
+AVERY: Someone gets defensive. I get defensive. We take a break. We leave one role unresolved. Dad says something that hurts. I say something imperfect and repair it. Badly is not the same as useless.
+
+THERAPIST: What would cross a boundary for you?
+
+AVERY: If the conversation becomes only about whether I am controlling. I can hear that feedback, but I will say, "We still need an owner for these tasks." If people refuse every task, I will not immediately volunteer. I will name what I can continue and what remains uncovered.
+
+THERAPIST: What can you continue?
+
+AVERY: Clinic information, because I have the history and Dad wants me there. One ride a month, not every ride. The twice-monthly bill window if Dad chooses it. I can be emergency contact, but emergency cannot mean any discomfort after five.
+
+THERAPIST: What will you stop?
+
+AVERY: Private triangulation. Mia asks me to ask Daniel; Daniel asks me what Mia meant; Dad asks me why one of them has not answered. I will redirect once. I will not carry messages unless there is an actual access problem.
+
+THERAPIST: How does it feel to put that in plain language?
+
+AVERY: [settled but ambivalent] Clean and unrealistic. Families triangulate. I will probably do it again by Sunday.
+
+THERAPIST: Then perhaps the experiment is noticing and stepping out once, not never doing it again.
+
+AVERY: That I can agree to. I am wary of plans that require a new personality.
+
+THERAPIST: What support do you want after the meeting?
+
+AVERY: Leah and I will take a walk. She has asked me not to give a minute-by-minute reenactment until after we eat. I negotiated fifteen minutes of facts first, then dinner, then more if we both want. That sounds contractual, but it is better than dumping the whole table onto ours.
+
+THERAPIST: Did you tell her about the incomplete repair Tuesday night?
+
+AVERY: Yes. I said closing the laptop halfway was not the same as stopping. I asked what repair would feel like. She said, "Do not make me monitor the spreadsheet." So tonight I am putting the file in a folder and not opening it after nine. She does not have to enforce it.
+
+THERAPIST: Are you willing to do that even if the index card feels unfinished?
+
+AVERY: I will take a photo of the card and leave it. There is nothing I can add at ten thirty that makes my siblings more available.
+
+THERAPIST: What will you do if Mia texts Friday night asking for the agenda again?
+
+AVERY: Send the three headings, not the background. If she asks whether I am angry, I can say yes and that I still want a workable meeting. I do not have to pretend emotional neutrality to earn the request.
+
+THERAPIST: And if Daniel cancels Saturday because of work?
+
+AVERY: We decide whether to continue with Dad and Mia or reschedule once. I will not turn his shift into proof he never intended to participate. I will also not let the entire conversation disappear indefinitely. We could get his response to the three asks by phone.
+
+THERAPIST: What if you wake Saturday wanting to cancel?
+
+AVERY: I check whether I need a shorter meeting, not whether I can avoid it. Forty-five minutes, then lunch. No open-ended family summit. Dad will appreciate the limit. So will I.
+
+THERAPIST: That sounds like a limit on preparation, not a claim that preparation was wrong.
+
+AVERY: Important distinction.
+
+## Part 8
+THERAPIST: [concise, reflective, natural closing cadence] What are you taking from today?
+
+AVERY: The spreadsheet is accurate enough to be useful and loaded enough to be dangerous. I do not have to destroy it or present it as evidence. It helped me find three responsibilities and one truth I need to say: coordination is work.
+
+THERAPIST: And the truth about the past?
+
+AVERY: It matters. Saturday may not validate it in the way I want. I hate that sentence less than I did forty minutes ago.
+
+THERAPIST: You also corrected me when I turned the ledger too quickly into avoidance.
+
+AVERY: [direct, with residual irritation but no hostility] Yes. I am glad you named that. I need this room not to become another place where the logistical problem disappears under analysis of my reaction.
+
+THERAPIST: I agree. Your reactions are part of what we examine, and the workload remains material.
+
+AVERY: Good. I am still a little angry.
+
+THERAPIST: You can leave angry.
+
+AVERY: That is strangely reassuring.
+
+THERAPIST: What is the plan between now and Saturday?
+
+AVERY: Make the index card. Put the ledger away by nine. No new categories. Tell Leah I am not asking her to review the wording. At the meeting, keep the ledger in my bag unless it is requested. Ask for the three responsibilities. If the answer is no, do not rush to fill the silence.
+
+THERAPIST: Can we practice that last silence once more?
+
+AVERY: I knew you were going to say that.
+
+THERAPIST: Do you want to?
+
+AVERY: [small exhale, willing but uneasy] Yes.
+
+[SILENCE - 14 SECONDS - DO NOT SPEAK]
+
+THERAPIST: What happened?
+
+AVERY: I planned three rescue sentences. Then I let them go. On the third one, anyway.
+
+THERAPIST: What was the third?
+
+AVERY: "I can do it this month." That is the one that usually ends the conversation.
+
+THERAPIST: What might you say instead?
+
+AVERY: "It sounds like this is still uncovered. Let us decide whether we need another option." Then stop again.
+
+THERAPIST: Anything we need to check before we end?
+
+AVERY: I am tired and angry, not unsafe. I will drive home. Leah knows the meeting is Saturday. Dad's dizziness has not returned, and his clinic follow-up is already scheduled. I am not going to work on the sheet in the car.
+
+THERAPIST: What will you do in the car?
+
+AVERY: Sit for two minutes. Maybe text Leah, "Done. No spreadsheet review requested." Then go home.
+
+THERAPIST: And the open thread for next time?
+
+AVERY: What actually happened at the table, not whether it matched the index card. Also whether I can hear "no" without converting it into either a verdict or another job for me.
+
+THERAPIST: We will start there.
+
+AVERY: [near baseline, tired, faint dry humor] I will bring the index card. The spreadsheet is not invited.

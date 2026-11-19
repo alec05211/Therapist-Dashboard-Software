@@ -1,28 +1,35 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
   "provider": "Google Gemini TTS",
-  "model": "gemini-2.5-pro-tts",
-  "language_code": "en-US",
-  "source_url": "https://docs.cloud.google.com/text-to-speech/docs/gemini-tts",
+  "api": "Gemini Enterprise generateContent",
+  "model": "gemini-3.8-flash-tts",
+  "location": "global",
+  "language": "auto",
+  "source_url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/text-to-speech/overview",
   "fictional": true,
   "fixtures": [
     {
       "id": "therapist-calm-01",
       "speaker_alias": "THERAPIST",
-      "voice": "Sadaltager",
-      "style_prompt": "Calm grounded adult voice, unhurried pace, concise reflections, natural pauses, and no theatrical soothing."
+      "voice_source": "prebuilt",
+      "provider_voice_reference": "Sadaltager",
+      "stored_custom_voice_id": null,
+      "voice_design_prompt": "Adult man with a calm grounded mid register, natural contemporary American English, restrained warmth, clear diction that never sounds announcer-like, and an unhurried conversational cadence. Comfortable with silence; direct without hardness; emotionally responsive without theatrical soothing.",
+      "baseline_style": "Calm grounded adult voice, unhurried conversational pace, concise reflections, natural pauses, and restrained warmth. Maintain the same timbre, apparent age, accent, and microphone perspective. Become firmer for clarification or safety questions without becoming authoritative or ominous. No theatrical soothing.",
+      "continuity_note": "Gemini 3.8 migration retains Jeremy Heartwell's supported Sadaltager prebuilt reference from the earlier Avery recordings. If a designed voice is later created, replace provider_voice_reference with the returned voice_ ID and retain the prompt for audit and recreation.",
+      "version": 2
     },
     {
       "id": "therapist-calm-02",
       "speaker_alias": "THERAPIST",
-      "voice": "Achernar",
-      "style_prompt": "Steady attentive adult voice, warm but restrained, comfortable with silence, and clear during direct safety questions."
+      "provider_voice_reference": "Achernar",
+      "baseline_style": "Steady attentive adult voice, warm but restrained, comfortable with silence, and clear during direct safety questions."
     },
     {
       "id": "therapist-calm-03",
       "speaker_alias": "THERAPIST",
-      "voice": "Charon",
-      "style_prompt": "Measured collaborative adult voice, low emotional exaggeration, precise questions, and a conversational rather than instructional delivery."
+      "provider_voice_reference": "Charon",
+      "baseline_style": "Measured collaborative adult voice, low emotional exaggeration, precise questions, and a conversational rather than instructional delivery."
     }
   ]
 }

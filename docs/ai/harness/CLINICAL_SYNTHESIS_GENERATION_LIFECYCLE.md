@@ -44,8 +44,8 @@ Insights refresh is background-first and event-driven.
 
 1. A qualifying transaction writes the clinical change and its refresh event atomically.
 2. The client receives a monotonically increasing desired Insights revision.
-3. Closely timed events are coalesced during a short debounce window so several review actions can produce one generation.
-4. High-value clinician actions, including note finalization and accepting or dismissing an evidence claim, request prompt processing rather than waiting for an event-count threshold.
+3. Finalizing or amending a clinical note and accepting an evidence claim use a rolling five-minute inactivity debounce. Every additional event of one of those types for the same client resets the clock; generation begins only after five minutes without another such event. Their queue-count threshold does not accelerate processing, so a burst of related review work produces one refresh over the latest desired revision.
+4. Other high-value clinician actions, including finalizing or correcting a transcript and dismissing an evidence claim, request prompt processing rather than waiting for an event-count threshold.
 5. A queue-size threshold may accelerate processing, while a maximum queue-age threshold guarantees that low-volume changes do not wait indefinitely. Neither threshold replaces prompt processing for high-value clinician actions.
 6. A rolling daily reconciliation finds missed, delayed, failed, or revision-mismatched work. It does not blindly regenerate unchanged clients and is a safety net rather than the normal refresh mechanism.
 7. Work is idempotent by organization, client, desired revision, and input fingerprint. Concurrent events are not lost: if the desired revision advances during generation, another refresh remains queued.
@@ -126,6 +126,8 @@ Each brief is tied to the appointment and exact Insights snapshot version that i
 ## 7. State and audit requirements
 
 Client Care Settings exposes a read-only Diagnostics timeline to users with existing client-care access, without a developer-role gate. The worker records allowlisted stage events, repair counts, token usage when supplied, publication, and stage-specific failure codes in `app.client_diagnostic_events`. Raw exceptions, provider bodies, and clinical prompts are never persisted there. Stage traces have a 30-day operational retention window; refresh-event audit history remains separate. Timeline reads never trigger generation or retries, and historical attempts without stage traces are labeled using only recorded state watermarks.
+
+Provider request failures retain only allowlisted operational metadata needed to identify capacity bottlenecks: HTTP status, provider error code and type, request ID, retry delay, and available request/token limit and reset headers. The Diagnostics timeline exposes those fields. It never stores the provider's error message or response body, since either may contain sensitive request detail.
 
 At minimum, retain:
 

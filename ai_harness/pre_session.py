@@ -5,6 +5,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from ai_harness.provider_errors import provider_error_from_http_error
+
 
 MAX_BRIEF_REQUEST_BYTES = 60_000
 
@@ -287,8 +289,7 @@ def generate_openai_pre_session_brief(*, synthesis_request: dict[str, Any], api_
         with urlopen(request, timeout=180) as response:
             response_data = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenAI request failed ({exc.code}): {detail}") from exc
+        raise provider_error_from_http_error(exc, provider="openai") from exc
     except TimeoutError as exc:
         raise RuntimeError("Brief generation timed out; no automatic retry was made.") from exc
     except URLError as exc:

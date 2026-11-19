@@ -158,6 +158,15 @@ html[data-theme="dark"] .text-emerald-900 { color: var(--accent-text); }
   100% { transform: translateX(120%); opacity: 0.22; }
 }
 
+@keyframes diagnostic-live-blink {
+  0%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+
+.diagnostic-live-indicator {
+  animation: diagnostic-live-blink 1s steps(1, end) infinite;
+}
+
 .text-loading-streak {
   position: relative;
   height: 0.68rem;
@@ -262,6 +271,9 @@ html[data-theme="dark"] .text-loading-streak::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .diagnostic-live-indicator {
+    animation: none;
+  }
   .session-carousel-track { transition: none; }
   .transcript-segment-row { transition: none; }
   .text-loading-streak::after { animation: none; opacity: 0.35; }

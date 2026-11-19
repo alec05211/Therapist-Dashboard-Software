@@ -8,6 +8,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from ai_harness.provider_errors import provider_error_from_http_error
+
 
 from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
@@ -140,8 +142,7 @@ def _request_structured_response(payload: dict[str, Any], api_key: str) -> tuple
         with urlopen(request, timeout=300) as response:
             response_data = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenAI request failed ({exc.code}): {detail}") from exc
+        raise provider_error_from_http_error(exc, provider="openai") from exc
     except TimeoutError as exc:
         raise RuntimeError("Insight generation timed out; no automatic retry was made.") from exc
     except URLError as exc:

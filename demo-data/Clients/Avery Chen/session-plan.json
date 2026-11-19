@@ -1,5 +1,5 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
   "fictional": true,
   "client": "Avery Chen",
   "non_diagnostic": true,
@@ -11,7 +11,7 @@
       "focus": "Avery inventories the calls, appointments, and decisions that route through her.",
       "possible_movement": "She distinguishes tasks only she can do from tasks she automatically absorbs.",
       "carry_forward": "Bring one recent week of examples.",
-      "status": "recorded",
+      "status": "rejected_qa",
       "script": "session-01-the-family-switchboard.txt",
       "recording": "session-01-the-family-switchboard.wav",
       "target_duration_minutes": "40-50",
@@ -24,12 +24,7 @@
       "focus": "A missed sibling callback triggers a disproportionate argument.",
       "possible_movement": "Avery identifies anger as information about overload, not a verdict on the relationship.",
       "carry_forward": "Draft one specific request.",
-      "status": "recorded",
-      "script": "session-02-anger-before-the-phone-rings.txt",
-      "recording": "session-02-anger-before-the-phone-rings.wav",
-      "target_duration_minutes": "40-50",
-      "rendered_duration_seconds": 2472.179,
-      "sample_rate_hz": 16000
+      "status": "outline_only"
     },
     {
       "number": 3,
@@ -37,12 +32,7 @@
       "focus": "She rehearses asking a sibling to own medication pickup every Thursday.",
       "possible_movement": "Avery notices how much evidence she wants to present before making a simple request.",
       "carry_forward": "Send a brief request without overexplaining.",
-      "status": "recorded",
-      "script": "session-03-the-request-without-the-case.txt",
-      "recording": "session-03-the-request-without-the-case.wav",
-      "target_duration_minutes": "40-50",
-      "rendered_duration_seconds": 2404.219,
-      "sample_rate_hz": 16000
+      "status": "outline_only"
     },
     {
       "number": 4,
@@ -50,12 +40,7 @@
       "focus": "The sibling follows through but organizes the task differently.",
       "possible_movement": "Avery experiments with accepting adequate help rather than reclaiming control.",
       "carry_forward": "Track urges to redo the task.",
-      "status": "recorded",
-      "script": "session-04-help-in-someone-elses-style.txt",
-      "recording": "session-04-help-in-someone-elses-style.wav",
-      "target_duration_minutes": "40-50",
-      "rendered_duration_seconds": 2410.0,
-      "sample_rate_hz": 16000
+      "status": "outline_only"
     },
     {
       "number": 5,
@@ -63,12 +48,7 @@
       "focus": "A quiet moment with her father evokes sadness and fear.",
       "possible_movement": "She stays with grief without moving immediately to the next appointment.",
       "carry_forward": "Choose one low-demand ritual of connection.",
-      "status": "recorded",
-      "script": "session-05-what-cannot-be-organized.txt",
-      "recording": "session-05-what-cannot-be-organized.wav",
-      "target_duration_minutes": "40-50",
-      "rendered_duration_seconds": 2410.0,
-      "sample_rate_hz": 16000
+      "status": "outline_only"
     },
     {
       "number": 6,
@@ -76,12 +56,7 @@
       "focus": "A health change disrupts Avery's first evening out in weeks.",
       "possible_movement": "The session separates a genuine emergency from the belief that rest is futile.",
       "carry_forward": "Reschedule rather than abandon the plan.",
-      "status": "recorded",
-      "script": "session-06-the-canceled-plan.txt",
-      "recording": "session-06-the-canceled-plan.wav",
-      "target_duration_minutes": "40-50",
-      "rendered_duration_seconds": 2410.0,
-      "sample_rate_hz": 16000
+      "status": "outline_only"
     },
     {
       "number": 7,
@@ -89,7 +64,16 @@
       "focus": "Avery prepares a detailed care ledger, then realizes it may obscure the request she needs to make.",
       "possible_movement": "She converts the ledger into three concrete responsibilities while keeping the underlying resentment discussable.",
       "carry_forward": "Bring the shorter proposal to the family meeting.",
-      "status": "outline_only"
+      "status": "recorded_pending_listening_qa",
+      "script": "session-07-the-spreadsheet-no-one-asked-for.native.txt",
+      "recording": "session-07-the-spreadsheet-no-one-asked-for.wav",
+      "target_duration_minutes": "45-50",
+      "tts_model": "gemini-3.8-flash-tts",
+      "rendered_duration_seconds": 2729.51,
+      "sample_rate_hz": 16000,
+      "postprocessing": "Native-speed Gemini render with exact PCM silence assembled from transcript cues, then sample-rate converted from 24 kHz to 16 kHz mono PCM without changing duration or pitch.",
+      "qa_status": "pending_listening_review",
+      "qa_note": "Regenerated under docs/ai/SYNTHETIC_SESSION_REALISM.md. Automated structure and native-duration gates passed; human listening review remains required before approval."
     },
     {
       "number": 8,
@@ -97,7 +81,16 @@
       "focus": "A long-form session reconstructs a family meeting about time, money, transportation, and their father's preferences.",
       "possible_movement": "Avery holds one limit, overfunctions in another moment, and leaves uncertain whether the agreement will last.",
       "carry_forward": "Send a plain-language summary and wait before correcting anyone's method.",
-      "status": "outline_only"
+      "status": "recorded_pending_listening_qa",
+      "script": "session-08-a-family-meeting-with-edges.augmented.txt",
+      "recording": "session-08-a-family-meeting-with-edges.wav",
+      "target_duration_minutes": "45-50",
+      "tts_model": "gemini-3.8-flash-tts",
+      "rendered_duration_seconds": 2703.51,
+      "sample_rate_hz": 16000,
+      "postprocessing": "Native-speed Gemini render with exact PCM silence assembled from transcript cues, then sample-rate converted from 24 kHz to 16 kHz mono PCM without changing duration or pitch.",
+      "qa_status": "pending_listening_review",
+      "qa_note": "Regenerated under docs/ai/SYNTHETIC_SESSION_REALISM.md. Automated structure and native-duration gates passed; human listening review remains required before approval."
     },
     {
       "number": 9,

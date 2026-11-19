@@ -1,5 +1,5 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
   "fictional": true,
   "purpose": "Clinical trajectory, synthetic dialogue, speech, diarization, and longitudinal-synthesis testing",
   "clients": [
@@ -9,6 +9,8 @@
       "complexity": "Lower acuity",
       "planned_sessions": 6,
       "client_voice": "Puck",
+      "voice_identity_id": "client-jordan-kim-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-01"
     },
     {
@@ -17,6 +19,8 @@
       "complexity": "Moderate",
       "planned_sessions": 14,
       "client_voice": "Aoede",
+      "voice_identity_id": "client-avery-chen-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-02"
     },
     {
@@ -25,6 +29,8 @@
       "complexity": "Moderate",
       "planned_sessions": 8,
       "client_voice": "Kore",
+      "voice_identity_id": "client-priya-nair-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-03"
     },
     {
@@ -33,6 +39,8 @@
       "complexity": "Moderate to high complexity",
       "planned_sessions": 8,
       "client_voice": "Orus",
+      "voice_identity_id": "client-luis-mendoza-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-01"
     },
     {
@@ -41,6 +49,8 @@
       "complexity": "High acuity",
       "planned_sessions": 10,
       "client_voice": "Sulafat",
+      "voice_identity_id": "client-keisha-ward-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-02"
     },
     {
@@ -48,7 +58,29 @@
       "folder": "Owen Park",
       "complexity": "High complexity",
       "planned_sessions": 10,
-      "client_voice": "Orus",
+      "client_voice": "Sadachbia",
+      "voice_identity_id": "client-owen-park-v1",
+      "tts_model": "gemini-3.8-flash-tts",
+      "therapist_voice_fixture": "therapist-calm-03"
+    },
+    {
+      "name": "Marcus Reynolds",
+      "folder": "Marcus Reynolds",
+      "complexity": "Moderate",
+      "planned_sessions": 8,
+      "client_voice": "Sadachbia",
+      "voice_identity_id": "client-marcus-reynolds-v1",
+      "tts_model": "gemini-3.8-flash-tts",
+      "therapist_voice_fixture": "therapist-calm-01"
+    },
+    {
+      "name": "Elena Sadic",
+      "folder": "Elena Sadic",
+      "complexity": "Moderate to high complexity",
+      "planned_sessions": 6,
+      "client_voice": "Gacrux",
+      "voice_identity_id": "client-elena-sadic-v1",
+      "tts_model": "gemini-3.8-flash-tts",
       "therapist_voice_fixture": "therapist-calm-01"
     }
   ]

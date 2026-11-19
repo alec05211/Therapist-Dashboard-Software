@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import re
 from typing import Any
 
 from psycopg.types.json import Json
+
+from ai_harness.provider_errors import ProviderRequestError
 
 EVENTS = {
     'synthesis_claimed': 'Worker started an Insights refresh',
@@ -26,6 +29,13 @@ ERRORS = {
     'provider_timeout': 'Model provider request timed out',
     'provider_unreachable': 'Model provider could not be reached',
     'provider_rate_limited': 'Model provider rate limit reached',
+    'provider_slow_down': 'Model provider requested a slower traffic ramp',
+    'provider_project_spend_limit': 'Model provider project spend limit reached',
+    'provider_organization_spend_limit': 'Model provider organization spend limit reached',
+    'provider_organization_usage_limit': 'Model provider organization usage limit reached',
+    'provider_credit_exhausted': 'Model provider credit balance exhausted',
+    'provider_quota_exhausted': 'Model provider quota exhausted',
+    'provider_overloaded': 'Model provider is temporarily overloaded',
     'provider_request_failed': 'Model provider rejected the request',
     'provider_output_incomplete': 'Model provider returned incomplete output',
     'publication_failed': 'Validated synthesis could not be published',
@@ -36,7 +46,17 @@ ERRORS = {
 }
 STAGES = {'claim', 'context', 'insights', 'brief', 'publication'}
 NUMBER_FIELDS = {'revision', 'attempt', 'source_count', 'context_bytes', 'request_bytes',
-                 'input_tokens', 'output_tokens', 'repair_attempt', 'violation_count'}
+                 'input_tokens', 'output_tokens', 'repair_attempt', 'violation_count',
+                 'provider_status_code', 'retry_after_seconds',
+                 'rate_limit_limit_requests', 'rate_limit_remaining_requests',
+                 'rate_limit_limit_tokens', 'rate_limit_remaining_tokens',
+                 'rate_limit_limit_project_tokens', 'rate_limit_remaining_project_tokens'}
+STRING_FIELDS = {
+    'provider', 'provider_error_code', 'provider_error_type', 'provider_request_id',
+    'rate_limit_reset_requests', 'rate_limit_reset_tokens', 'rate_limit_reset_project_tokens',
+}
+SAFE_VALUE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')
+SAFE_RESET = re.compile(r'^[0-9]+(?:ms|s|m|h)(?:[0-9]+(?:ms|s|m|h))*$')
 
 
 def safe_details(details: dict[str, Any] | None) -> dict[str, Any]:
@@ -44,17 +64,41 @@ def safe_details(details: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(details, dict):
         return result
     for key, value in (details or {}).items():
-        if key in NUMBER_FIELDS and type(value) is int and 0 <= value <= 100_000_000:
+        if key in NUMBER_FIELDS and type(value) is int and 0 <= value <= 10**12:
             result[key] = value
         elif key == 'stage' and isinstance(value, str) and value in STAGES:
             result[key] = value
         elif key == 'error_code' and isinstance(value, str) and value in ERRORS:
+            result[key] = value
+        elif key in STRING_FIELDS and isinstance(value, str) and (
+            SAFE_RESET.fullmatch(value) if key.startswith('rate_limit_reset_')
+            else SAFE_VALUE.fullmatch(value)
+        ):
             result[key] = value
     return result
 
 
 def failure_code(exc: Exception, stage: str) -> str:
     """Inspect known internal prefixes; never return provider bodies or clinical prose."""
+    if isinstance(exc, ProviderRequestError):
+        code = exc.error_code
+        if code == 'slow_down':
+            return 'provider_slow_down'
+        if code == 'project_spend_limit_exceeded':
+            return 'provider_project_spend_limit'
+        if code == 'organization_spend_limit_exceeded':
+            return 'provider_organization_spend_limit'
+        if code == 'organization_usage_limit_exceeded':
+            return 'provider_organization_usage_limit'
+        if code == 'credit_balance_exhausted':
+            return 'provider_credit_exhausted'
+        if code in {'insufficient_quota', 'quota_exceeded'} or exc.error_type == 'insufficient_quota':
+            return 'provider_quota_exhausted'
+        if exc.status_code == 503 and code == 'server_is_overloaded':
+            return 'provider_overloaded'
+        if exc.status_code == 429:
+            return 'provider_rate_limited'
+        return 'provider_request_failed'
     message = str(exc)
     if message in {'no_accepted_source_evidence', 'synthesis_provider_not_configured'}:
         return message
@@ -80,6 +124,14 @@ def failure_code(exc: Exception, stage: str) -> str:
                            'OpenAI returned invalid structured')):
         return 'provider_output_incomplete'
     return 'publication_failed' if stage == 'publication' else 'unexpected_error'
+
+
+def failure_details(exc: Exception, stage: str) -> dict[str, Any]:
+    """Return an internal category plus sanitized provider diagnostics."""
+    details = {'error_code': failure_code(exc, stage)}
+    if isinstance(exc, ProviderRequestError):
+        details.update(exc.diagnostic_details())
+    return safe_details(details)
 
 
 def append_event(connection, *, organization_id, client_id, event_type, details=None, level='info'):

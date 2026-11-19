@@ -10,11 +10,12 @@ type Props = {
   navigationLabel: string;
   children: ReactNode;
   headingLevel?: "h1" | "h2";
+  hideActiveHeading?: boolean;
 };
 
 export const settingsFieldClass = "mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:outline-none focus-visible:border-stone-500";
 
-export function SettingsLayout({ title, sections, activeSection, onSelect, navigationLabel, children, headingLevel = "h1" }: Props) {
+export function SettingsLayout({ title, sections, activeSection, onSelect, navigationLabel, children, headingLevel = "h1", hideActiveHeading = false }: Props) {
   const Heading = headingLevel;
   const PanelHeading = headingLevel === "h1" ? "h2" : "h3";
   const active = sections.find((section) => section.id === activeSection) ?? sections[0];
@@ -26,7 +27,7 @@ export function SettingsLayout({ title, sections, activeSection, onSelect, navig
         {sections.map((section) => <button key={section.id} type="button" aria-current={activeSection === section.id ? "page" : undefined} onClick={() => onSelect(section.id)} className={`shrink-0 cursor-grab rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors duration-200 ease-out active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 md:w-full ${activeSection === section.id ? "bg-emerald-50 text-emerald-900" : "text-stone-600 hover:bg-[var(--surface)]"}`}>{section.title}</button>)}
       </nav>
       <section className="min-w-0 rounded-xl border border-stone-300 bg-white p-4 shadow-sm sm:p-6">
-        <PanelHeading className="text-lg font-semibold text-stone-900">{active.title}</PanelHeading>
+        <PanelHeading className={hideActiveHeading ? "sr-only" : "text-lg font-semibold text-stone-900"}>{active.title}</PanelHeading>
         {children}
       </section>
     </div>

@@ -28,12 +28,16 @@ EVENT_TYPES = {
 }
 
 PROMPT_EVENT_TYPES = {
-    "clinical_note_finalized",
-    "clinical_note_amended",
     "transcript_finalized",
     "transcript_corrected",
-    "evidence_claim_accepted",
     "evidence_claim_dismissed",
+}
+
+INACTIVITY_DEBOUNCE_SECONDS = 300
+INACTIVITY_DEBOUNCE_EVENT_TYPES = {
+    "clinical_note_finalized",
+    "clinical_note_amended",
+    "evidence_claim_accepted",
 }
 
 
@@ -110,7 +114,12 @@ def enqueue_insights_refresh(
         raise ValueError("Maximum queue age must be between 60 seconds and one day.")
     if not 1 <= event_count_threshold <= 100:
         raise ValueError("Refresh event threshold must be between 1 and 100.")
-    effective_debounce_seconds = 0 if event_type in PROMPT_EVENT_TYPES else debounce_seconds
+    resets_inactivity_clock = event_type in INACTIVITY_DEBOUNCE_EVENT_TYPES
+    effective_debounce_seconds = (
+        INACTIVITY_DEBOUNCE_SECONDS
+        if resets_inactivity_clock
+        else (0 if event_type in PROMPT_EVENT_TYPES else debounce_seconds)
+    )
 
     with connection.cursor() as cursor:
         cursor.execute(
@@ -135,6 +144,7 @@ def enqueue_insights_refresh(
               pending_event_count = state.pending_event_count + 1,
               pending_since = COALESCE(state.pending_since, CURRENT_TIMESTAMP),
               not_before = CASE
+                WHEN %s THEN CURRENT_TIMESTAMP + %s * INTERVAL '1 second'
                 WHEN state.pending_event_count + 1 >= %s THEN CURRENT_TIMESTAMP
                 ELSE LEAST(
                   CURRENT_TIMESTAMP + %s * INTERVAL '1 second',
@@ -150,6 +160,8 @@ def enqueue_insights_refresh(
             (
                 organization_id,
                 client_id,
+                effective_debounce_seconds,
+                resets_inactivity_clock,
                 effective_debounce_seconds,
                 event_count_threshold,
                 effective_debounce_seconds,
@@ -387,7 +399,12 @@ def complete_synthesis_bundle(
                   WHERE organization_id = %s AND client_id = %s AND consumed_at IS NULL
                 ),
                 pending_since = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
-                not_before = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                not_before = CASE
+                  WHEN %s THEN GREATEST(
+                    COALESCE(not_before, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP
+                  )
+                  ELSE NULL
+                END,
                 worker_token = NULL, lease_expires_at = NULL,
                 attempt_count = 0, last_published_at = CURRENT_TIMESTAMP,
                 last_error_code = NULL, updated_at = CURRENT_TIMESTAMP
@@ -470,7 +487,12 @@ def complete_insights_refresh(
                   WHERE organization_id = %s AND client_id = %s AND consumed_at IS NULL
                 ),
                 pending_since = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
-                not_before = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                not_before = CASE
+                  WHEN %s THEN GREATEST(
+                    COALESCE(not_before, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP
+                  )
+                  ELSE NULL
+                END,
                 worker_token = NULL,
                 lease_expires_at = NULL,
                 attempt_count = 0,

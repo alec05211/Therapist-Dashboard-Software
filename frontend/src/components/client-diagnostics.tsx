@@ -6,7 +6,15 @@ type Event = { id: string; timestamp: string; message: string; level: "info" | "
 type Timeline = { events: Event[]; checked_at: string; retention_days: number; summary: { status: string; desired_revision: number; published_revision: number; queued_event_count: number; attempt_count: number; error: string | null } };
 
 function timestamp(value: string) {
-  return new Date(value).toLocaleString(undefined, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZoneName: "short" });
+  return new Date(value).toLocaleString(undefined, { month: "short", day: "2-digit", hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true, timeZoneName: "short" });
+}
+
+function fullTimestamp(value: string) {
+  return new Date(value).toLocaleString(undefined, {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true,
+    timeZoneName: "long",
+  });
 }
 
 function DiagnosticRow({ event }: { event: Event }) {
@@ -16,10 +24,18 @@ function DiagnosticRow({ event }: { event: Event }) {
     source_count: "Source records", context_bytes: "Context size (bytes)",
     request_bytes: "Request size (bytes)", input_tokens: "Input tokens", output_tokens: "Output tokens",
     repair_attempt: "Validation repair attempt", violation_count: "Validation issues", error_code: "Error code",
+    provider: "Provider", provider_status_code: "Provider HTTP status", provider_error_code: "Provider error code",
+    provider_error_type: "Provider error type", provider_request_id: "Provider request ID",
+    retry_after_seconds: "Retry after (seconds)", rate_limit_limit_requests: "Request limit",
+    rate_limit_remaining_requests: "Requests remaining", rate_limit_reset_requests: "Request limit resets in",
+    rate_limit_limit_tokens: "Token limit", rate_limit_remaining_tokens: "Tokens remaining",
+    rate_limit_reset_tokens: "Token limit resets in", rate_limit_limit_project_tokens: "Project token limit",
+    rate_limit_remaining_project_tokens: "Project tokens remaining",
+    rate_limit_reset_project_tokens: "Project token limit resets in",
   };
   const description = [
     `${event.level.toUpperCase()}: ${event.message}`,
-    new Date(event.timestamp).toLocaleString(undefined, { dateStyle: "full", timeStyle: "long" }),
+    fullTimestamp(event.timestamp),
     ...details.map(([key, value]) => `${detailLabels[key] ?? key.replaceAll("_", " ")}: ${value}`),
   ].join("\n");
 
@@ -69,15 +85,18 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
 
   if (!clientId) return <p role="alert" className="mt-5 text-sm text-red-700">Open diagnostics from a client workspace.</p>;
 
-  return <section className="mt-4 text-left" aria-label="Client diagnostics">
+  const status = timeline?.summary.status ?? "connecting";
+  const failed = status === "failed";
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+
+  return <section className="text-left" aria-label="Client diagnostics">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-      {timeline ? <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-stone-600">
-        <span>Insights: <span className="font-semibold text-stone-900">{timeline.summary.status}</span></span>
-        <dl className="flex flex-wrap gap-x-5 gap-y-2">
-          <div className="flex gap-2"><dt>Queued changes</dt><dd className="font-mono font-semibold tabular-nums text-stone-900">{timeline.summary.queued_event_count}</dd></div>
-          <div className="flex gap-2" title="Latest processed Insights revision. This cumulative version number does not reset."><dt>Published revision</dt><dd className="font-mono tabular-nums text-stone-900">{timeline.summary.published_revision}</dd></div>
-          <div className="flex gap-2"><dt>Attempt</dt><dd className="font-mono tabular-nums text-stone-900">{timeline.summary.attempt_count}</dd></div>
-        </dl>
+      {timeline ? <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 text-sm text-stone-600">
+        <span>Insights: <span className="font-mono font-semibold tabular-nums text-stone-900">v{timeline.summary.published_revision}</span></span>
+        <span>Status: <span className={`font-semibold ${failed ? "text-red-700" : "text-stone-900"}`}>{statusLabel}
+          {timeline.summary.queued_event_count > 0 ? ` (${timeline.summary.queued_event_count} changes)` : ""}
+          {failed ? ` (attempt ${timeline.summary.attempt_count})` : ""}
+        </span></span>
       </div> : <p className="text-sm text-stone-600">Connecting to event log…</p>}
       <button type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)} className="cursor-grab rounded-lg border border-stone-300 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:cursor-grabbing">{paused ? "Resume live log" : "Pause live log"}</button>
     </div>
@@ -92,7 +111,7 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
         setFollowing(atBottom);
       }} role="log" aria-label="Timestamped client events, newest at the bottom" aria-live="off" tabIndex={0} className="max-h-[32rem] min-h-64 overflow-x-hidden overflow-y-auto px-4 py-3 font-mono text-xs leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400">
         {!timeline ? <p role="status">{error ? "Event log unavailable." : "Loading events…"}</p> : timeline.events.length === 0 ? <p>No recorded events for this client yet.</p> : timeline.events.map(event => <DiagnosticRow key={event.id} event={event} />)}
-        {timeline && <p aria-hidden="true" className="mt-2 text-[#94aa9b]"><span className="mr-2 text-emerald-300">&gt;</span>{paused ? "Live output paused" : "Waiting for events"}<span className="ml-2 inline-block h-3 w-1.5 translate-y-0.5 bg-emerald-300" /></p>}
+        {timeline && <p aria-hidden="true" className="mt-2 text-[#94aa9b]"><span className="mr-2 text-emerald-300">&gt;</span>{paused ? "Live output paused" : "Waiting for events"}<span className={`ml-2 inline-block h-3 w-1.5 translate-y-0.5 bg-emerald-300 ${paused ? "" : "diagnostic-live-indicator"}`} /></p>}
       </div>
     </div>
     {!following && <button type="button" onClick={() => { followLatest.current = true; setFollowing(true); if (viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight; }} className="mt-2 cursor-grab rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-800 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-emerald-700">Jump to latest</button>}

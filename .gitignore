@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+.tmp/
 
 # Local runtime and installer logs
 *.log
@@ -15,6 +16,15 @@ htmlcov/
 
 # Session-processing runtime artifacts; canonical synthetic fixtures live in demo-data/.
 recordings/
+
+# Synthetic-session render intermediates; commit only canonical scripts and final recordings.
+demo-data/Clients/*/.augment_*/
+demo-data/Clients/*/.parts_*/
+demo-data/Clients/*/.rewrite_*/
+demo-data/Clients/*/*.native-24k.wav
+demo-data/Clients/*/*.native.txt
+demo-data/Clients/*/*.rewrite.txt
+demo-data/Clients/*/*.augmented.txt
 
 # Temporary Microsoft Office lock files
 ~$*.doc*

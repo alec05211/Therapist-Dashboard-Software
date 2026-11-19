@@ -158,7 +158,7 @@ export function ClientCareSettings({ initialSection = "identification", clientId
     });
   };
 
-  return <SettingsLayout sections={expandRecurring ? sections.filter(item => item.id === "scheduling") : sections} activeSection={section} onSelect={(id) => { audioRef.current?.pause(); setActiveSample(null); setSection(id as Section); setSaved(false); setError(null); }} navigationLabel="Client care setting sections" headingLevel="h2">
+  return <SettingsLayout sections={expandRecurring ? sections.filter(item => item.id === "scheduling") : sections} activeSection={section} onSelect={(id) => { audioRef.current?.pause(); setActiveSample(null); setSection(id as Section); setSaved(false); setError(null); }} navigationLabel="Client care setting sections" headingLevel="h2" hideActiveHeading={section === "diagnostics"}>
     {sectionLoading ? <LoadingSpinner label={`Loading ${section.toLowerCase()} settings…`} /> : null}
     {sectionError ? <p role="alert" className="mt-5 text-sm text-red-700">{sectionError}</p> : null}
     {sectionReady && section === "identification" ? <div className="mt-4 text-left">

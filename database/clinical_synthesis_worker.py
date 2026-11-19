@@ -276,8 +276,9 @@ def process_one(
         record('synthesis_published', {'stage': 'publication'})
         return True
     except Exception as exc:
-        error_code = client_diagnostics.failure_code(exc, stage)
-        record('synthesis_failed', {'stage': stage, 'error_code': error_code})
+        failure = client_diagnostics.failure_details(exc, stage)
+        error_code = failure['error_code']
+        record('synthesis_failed', {'stage': stage, **failure})
         with connect() as connection:
             synthesis_refresh.fail_insights_refresh(
                 connection,

@@ -1,16 +1,95 @@
 {
-  "fixture_version": 1,
+  "fixture_version": 2,
   "provider": "Google Gemini TTS",
-  "model": "gemini-2.5-pro-tts",
-  "language_code": "en-US",
+  "api": "Gemini Enterprise generateContent",
+  "model": "gemini-3.8-flash-tts",
+  "location": "global",
+  "language": "auto",
   "client": {
+    "voice_identity_id": "client-priya-nair-v1",
     "speaker_alias": "PRIYA",
-    "voice": "Kore",
-    "style_prompt": "Precise, bright voice; controlled rhythm; quickens during self-criticism; occasional dry understatement."
+    "voice_source": "prebuilt",
+    "provider_voice_reference": "Kore",
+    "baseline_style": "Precise, bright voice; controlled rhythm; quickens during self-criticism; occasional dry understatement.",
+    "version": 1
   },
   "therapist": {
     "speaker_alias": "THERAPIST",
     "voice_fixture_id": "therapist-calm-03",
     "configuration_location": "../../Therapists/voice-fixtures.json"
+  },
+  "script_generation": {
+    "target_duration_minutes": 50,
+    "target_spoken_words": {
+      "minimum": 4800,
+      "maximum": 5800
+    },
+    "production_parts": 8,
+    "segments": [
+      {
+        "number": 1,
+        "name": "Arrival and baseline",
+        "minutes": "0-6",
+        "purpose": "Establish the week, the room, and the client's ordinary speaking baseline.",
+        "client_direction": "Natural baseline. Conversational pace, full volume, and no early dramatic coloring.",
+        "therapist_direction": "Warm and economical. Leave space without sounding ceremonial."
+      },
+      {
+        "number": 2,
+        "name": "Agenda and immediate pressure",
+        "minutes": "6-12",
+        "purpose": "Move from the opening update to the session's concrete focus.",
+        "client_direction": "Slightly quicker pace around logistics; preserve humor, qualifiers, and self-correction.",
+        "therapist_direction": "Clarifying questions and short reflections. Do not announce a formulation."
+      },
+      {
+        "number": 3,
+        "name": "Narrative detail",
+        "minutes": "12-19",
+        "purpose": "Let the client reconstruct a recent event with ordinary detail and ambiguity.",
+        "client_direction": "Variable pace. Use brief hesitations and unfinished phrases when memory or meaning is uncertain.",
+        "therapist_direction": "Attentive and low-interruption. Ask for sequence, meaning, and correction."
+      },
+      {
+        "number": 4,
+        "name": "Pressure point",
+        "minutes": "19-26",
+        "purpose": "Approach the session's main tension without forcing disclosure or resolution.",
+        "client_direction": "Narrower phrasing and modestly increased tension; never shout, sob theatrically, or perform a diagnosis.",
+        "therapist_direction": "Slower pace and direct language. Check current safety explicitly when the case plan requires it."
+      },
+      {
+        "number": 5,
+        "name": "Silence and reconsideration",
+        "minutes": "26-33",
+        "purpose": "Allow uncertainty, disagreement, correction, or a change in how the client frames the event.",
+        "client_direction": "Longer response latency, softer delivery, and more audible searching for words. Keep the core timbre unchanged.",
+        "therapist_direction": "Tolerate silence. Use tentative observations and accept disagreement immediately."
+      },
+      {
+        "number": 6,
+        "name": "Relational turn",
+        "minutes": "33-39",
+        "purpose": "Connect the immediate issue to an established pattern or to the therapeutic relationship.",
+        "client_direction": "Return toward fuller volume; mix guardedness with directness rather than sounding suddenly transformed.",
+        "therapist_direction": "Collaborative and precise. Attribute interpretations to the conversation, not to hidden certainty."
+      },
+      {
+        "number": 7,
+        "name": "Integration and experiment",
+        "minutes": "39-45",
+        "purpose": "Identify one plausible shift, test, repair, or support without manufacturing closure.",
+        "client_direction": "More settled pace with residual ambivalence. Do not make confidence sound complete.",
+        "therapist_direction": "Concrete and collaborative. Confirm that the next step belongs to the client."
+      },
+      {
+        "number": 8,
+        "name": "Closing and carry forward",
+        "minutes": "45-50",
+        "purpose": "Review what should carry into the next session and end at a natural stopping point.",
+        "client_direction": "Near-baseline voice with traces of the session's effort. Avoid an inspirational final cadence.",
+        "therapist_direction": "Concise summary, current-status check when relevant, and one open thread for next time."
+      }
+    ]
   }
 }

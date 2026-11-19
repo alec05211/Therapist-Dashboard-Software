@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from database import client_diagnostics as diagnostics
 import server
 from database import clinical_synthesis_worker as worker
+from ai_harness.provider_errors import ProviderRequestError
 
 
 class ClientDiagnosticsTests(unittest.TestCase):
@@ -21,6 +22,43 @@ class ClientDiagnosticsTests(unittest.TestCase):
         self.assertEqual(diagnostics.failure_code(RuntimeError('OpenAI request failed (400): private payload'), 'insights'), 'provider_request_failed')
         self.assertEqual(diagnostics.failure_code(ValueError('private clinical text'), 'publication'), 'publication_failed')
         self.assertEqual(diagnostics.failure_code(RuntimeError('Brief request exceeds the testing input limit; narrow the accepted context.'), 'brief'), 'brief_request_too_large')
+
+    def test_provider_failures_retain_only_granular_operational_metadata(self):
+        error = ProviderRequestError(
+            provider='openai', status_code=429, error_code='slow_down',
+            error_type='rate_limit_error', request_id='req_123', retry_after_seconds=56,
+            rate_limits={
+                'rate_limit_remaining_tokens': 0,
+                'rate_limit_reset_tokens': '6m0s',
+            },
+        )
+        self.assertEqual(diagnostics.failure_details(error, 'insights'), {
+            'error_code': 'provider_slow_down',
+            'provider': 'openai',
+            'provider_status_code': 429,
+            'provider_error_code': 'slow_down',
+            'provider_error_type': 'rate_limit_error',
+            'provider_request_id': 'req_123',
+            'retry_after_seconds': 56,
+            'rate_limit_remaining_tokens': 0,
+            'rate_limit_reset_tokens': '6m0s',
+        })
+
+    def test_provider_spend_and_credit_failures_are_not_mislabeled_as_rate_limits(self):
+        cases = (
+            ('project_spend_limit_exceeded', None, 'provider_project_spend_limit'),
+            ('organization_spend_limit_exceeded', None, 'provider_organization_spend_limit'),
+            ('organization_usage_limit_exceeded', None, 'provider_organization_usage_limit'),
+            ('credit_balance_exhausted', None, 'provider_credit_exhausted'),
+            (None, 'insufficient_quota', 'provider_quota_exhausted'),
+        )
+        for code, error_type, expected in cases:
+            with self.subTest(code=code, error_type=error_type):
+                error = ProviderRequestError(
+                    provider='openai', status_code=429,
+                    error_code=code, error_type=error_type,
+                )
+                self.assertEqual(diagnostics.failure_code(error, 'insights'), expected)
 
     def test_events_are_scoped_bounded_ordered_and_sanitized_on_read(self):
         conn = MagicMock()
@@ -113,6 +151,30 @@ class ClientDiagnosticsTests(unittest.TestCase):
         self.assertEqual(append.call_args.kwargs['details'],
                          {'stage':'context','error_code':'context_too_large','revision':4,'attempt':2})
         self.assertEqual(fail.call_args.kwargs['error_code'], 'context_too_large')
+
+    def test_worker_records_sanitized_provider_failure_details(self):
+        job = dict(organization_id='org', client_id='client', processing_insights_revision=9, attempt_count=3)
+        provider_error = ProviderRequestError(
+            provider='openai', status_code=429, error_code='rate_limit_exceeded',
+            error_type='rate_limit_error', request_id='req_safe', retry_after_seconds=30,
+            rate_limits={'rate_limit_remaining_project_tokens': 0},
+        )
+        with patch.dict('os.environ', {'OPENAI_API_KEY':'test','INSIGHTS_MODEL':'test','PRE_SESSION_MODEL':'test'}), \
+                patch.object(worker, 'connect'), \
+                patch.object(worker.synthesis_refresh, 'claim_due_insights_refresh', return_value=job), \
+                patch.object(worker, 'build_clinical_context', side_effect=provider_error), \
+                patch.object(worker.client_diagnostics, 'append_event') as append, \
+                patch.object(worker.synthesis_refresh, 'fail_insights_refresh'):
+            self.assertTrue(worker.process_one())
+        self.assertEqual(append.call_args.kwargs['details'], {
+            'stage': 'context', 'error_code': 'provider_rate_limited',
+            'provider': 'openai', 'provider_status_code': 429,
+            'provider_error_code': 'rate_limit_exceeded',
+            'provider_error_type': 'rate_limit_error',
+            'provider_request_id': 'req_safe', 'retry_after_seconds': 30,
+            'rate_limit_remaining_project_tokens': 0,
+            'revision': 9, 'attempt': 3,
+        })
 
     def test_diagnostic_write_failure_does_not_abort_the_worker(self):
         job = dict(organization_id='org', client_id='client', processing_insights_revision=4, attempt_count=1)

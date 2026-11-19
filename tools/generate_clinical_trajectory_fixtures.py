@@ -21,6 +21,76 @@ LIGHT_TEAL = "EAF3F2"
 SAND = "F5F0E8"
 WHITE = "FFFFFF"
 GRID = "D9D9D9"
+LATEST_TTS_MODEL = "gemini-3.8-flash-tts"
+DEFAULT_SESSION_TARGET = "about 50 minutes"
+DEFAULT_PRODUCTION_PARTS = 8
+
+SESSION_PERFORMANCE_SEGMENTS = [
+    {
+        "number": 1,
+        "name": "Arrival and baseline",
+        "minutes": "0-6",
+        "purpose": "Establish the week, the room, and the client's ordinary speaking baseline.",
+        "client_direction": "Natural baseline. Conversational pace, full volume, and no early dramatic coloring.",
+        "therapist_direction": "Warm and economical. Leave space without sounding ceremonial.",
+    },
+    {
+        "number": 2,
+        "name": "Agenda and immediate pressure",
+        "minutes": "6-12",
+        "purpose": "Move from the opening update to the session's concrete focus.",
+        "client_direction": "Slightly quicker pace around logistics; preserve humor, qualifiers, and self-correction.",
+        "therapist_direction": "Clarifying questions and short reflections. Do not announce a formulation.",
+    },
+    {
+        "number": 3,
+        "name": "Narrative detail",
+        "minutes": "12-19",
+        "purpose": "Let the client reconstruct a recent event with ordinary detail and ambiguity.",
+        "client_direction": "Variable pace. Use brief hesitations and unfinished phrases when memory or meaning is uncertain.",
+        "therapist_direction": "Attentive and low-interruption. Ask for sequence, meaning, and correction.",
+    },
+    {
+        "number": 4,
+        "name": "Pressure point",
+        "minutes": "19-26",
+        "purpose": "Approach the session's main tension without forcing disclosure or resolution.",
+        "client_direction": "Narrower phrasing and modestly increased tension; never shout, sob theatrically, or perform a diagnosis.",
+        "therapist_direction": "Slower pace and direct language. Check current safety explicitly when the case plan requires it.",
+    },
+    {
+        "number": 5,
+        "name": "Silence and reconsideration",
+        "minutes": "26-33",
+        "purpose": "Allow uncertainty, disagreement, correction, or a change in how the client frames the event.",
+        "client_direction": "Longer response latency, softer delivery, and more audible searching for words. Keep the core timbre unchanged.",
+        "therapist_direction": "Tolerate silence. Use tentative observations and accept disagreement immediately.",
+    },
+    {
+        "number": 6,
+        "name": "Relational turn",
+        "minutes": "33-39",
+        "purpose": "Connect the immediate issue to an established pattern or to the therapeutic relationship.",
+        "client_direction": "Return toward fuller volume; mix guardedness with directness rather than sounding suddenly transformed.",
+        "therapist_direction": "Collaborative and precise. Attribute interpretations to the conversation, not to hidden certainty.",
+    },
+    {
+        "number": 7,
+        "name": "Integration and experiment",
+        "minutes": "39-45",
+        "purpose": "Identify one plausible shift, test, repair, or support without manufacturing closure.",
+        "client_direction": "More settled pace with residual ambivalence. Do not make confidence sound complete.",
+        "therapist_direction": "Concrete and collaborative. Confirm that the next step belongs to the client.",
+    },
+    {
+        "number": 8,
+        "name": "Closing and carry forward",
+        "minutes": "45-50",
+        "purpose": "Review what should carry into the next session and end at a natural stopping point.",
+        "client_direction": "Near-baseline voice with traces of the session's effort. Avoid an inspirational final cadence.",
+        "therapist_direction": "Concise summary, current-status check when relevant, and one open thread for next time.",
+    },
+]
 
 
 CASES = [
@@ -97,7 +167,7 @@ CASES = [
         "setting": "Outpatient individual therapy",
         "acuity": "Moderate",
         "voice": "Aoede",
-        "model": "gemini-2.5-flash-tts",
+        "model": LATEST_TTS_MODEL,
         "production_parts": 16,
         "long_session_target": "40 to 50 minutes",
         "page_break_before_sessions": [12],
@@ -109,11 +179,38 @@ CASES = [
                 "target_duration_minutes": "40-50",
                 "rendered_duration_seconds": 2470.371,
                 "sample_rate_hz": 16000,
-            }
+            },
+            7: {
+                "status": "rejected_qa",
+                "script": "session-07-the-spreadsheet-no-one-asked-for.txt",
+                "recording": "session-07-the-spreadsheet-no-one-asked-for.wav",
+                "target_duration_minutes": "45-50",
+                "tts_model": LATEST_TTS_MODEL,
+                "rendered_duration_seconds": 2819.83,
+                "sample_rate_hz": 16000,
+                "postprocessing": "Pitch-preserving time expansion from the Gemini 24 kHz unary WAV, then resampled to 16 kHz mono PCM for the application upload-size limit.",
+                "qa_status": "rejected",
+                "qa_rejection_reason": "Whole-recording time expansion introduced audible interpolation artifacts. Dialogue was also too polished, precise, and insight-dense. Do not use as an approved evaluation fixture; rewrite and regenerate at native speed.",
+            },
+            8: {
+                "status": "rejected_qa",
+                "script": "session-08-a-family-meeting-with-edges.txt",
+                "recording": "session-08-a-family-meeting-with-edges.wav",
+                "target_duration_minutes": "45-50",
+                "tts_model": LATEST_TTS_MODEL,
+                "rendered_duration_seconds": 2820.061,
+                "sample_rate_hz": 16000,
+                "postprocessing": "Pitch-preserving time expansion from the Gemini 24 kHz unary WAV, then resampled to 16 kHz mono PCM for the application upload-size limit.",
+                "qa_status": "rejected",
+                "qa_rejection_reason": "Whole-recording time expansion introduced audible interpolation artifacts. Dialogue was also too polished, precise, and insight-dense. Do not use as an approved evaluation fixture; rewrite and regenerate at native speed.",
+            },
         },
-        "voice_style": "Clear, grounded voice; measured delivery; becomes clipped when resentful and softer when naming grief.",
+        "voice_style": "Clear grounded adult voice in a comfortable mid-low register. Measured conversational delivery with dry understated humor. Keep the same timbre, apparent age, accent, and microphone perspective across sessions; allow pace to quicken and phrasing to clip under resentment, then soften and become less complete around grief or uncertainty. Never shout or perform distress theatrically.",
+        "voice_version": 2,
+        "voice_design_prompt": "Adult woman in her late 30s with a clear mid-low register, natural contemporary American English, precise but unforced consonants, steady breath, and dry understated humor. Grounded rather than polished; capable of clipped restraint under conflict and a softer, less defended delivery around grief without becoming theatrical.",
+        "voice_continuity_note": "Gemini 3.8 migration retains the supported Aoede prebuilt reference used for Avery's earlier recordings. Treat this as performance profile v2, not a new character. If a designed voice is later created, store its voice_ ID in provider_voice_reference and stored_custom_voice_id while retaining this prompt for audit and recreation.",
         "speaker": "AVERY",
-        "therapist_voice_fixture": "therapist-calm-02",
+        "therapist_voice_fixture": "therapist-calm-01",
         "reason": "Caregiving demands and unresolved family conflict have displaced sleep, friendships, and personal routines.",
         "tension": "Avery wants help but fears that asking directly will expose how angry and exhausted she already feels.",
         "strengths": "Practical, caring, organized, able to repair relationships, supported by a partner, and motivated to preserve connection with her father.",
@@ -440,6 +537,121 @@ CASES = [
             ("OWEN", "I will make the call here, before I leave. Otherwise I will turn it into research for three days."),
         ],
     },
+    {
+        "name": "Marcus Reynolds",
+        "folder": "Marcus Reynolds",
+        "email": "marcus.reynolds@example.com",
+        "age": 34,
+        "identity": "Black man; he/him; raised in a close-knit working-class family in Baltimore",
+        "life": "High-school guidance counselor living alone outside Philadelphia and relied upon heavily by students, colleagues, and family.",
+        "setting": "Outpatient individual therapy",
+        "acuity": "Moderate",
+        "voice": "Sadachbia",
+        "voice_style": "Warm baritone; articulate and measured; speech quickens when he is managing anxiety; dry humor and unfinished thoughts remain understated.",
+        "speaker": "MARCUS",
+        "therapist_voice_fixture": "therapist-calm-01",
+        "reason": "Sleep disruption, irritability, emotional exhaustion, and difficulty concentrating after his mother's death and a demanding year of family caregiving.",
+        "tension": "Marcus has built his identity around being dependable and composed; asking for help feels exposing and potentially destabilizing.",
+        "strengths": "Reflective, relationally attuned, loyal, articulate, observant, humorous, motivated, and able to translate insight into small experiments.",
+        "backstory": [
+            "Marcus grew up as the eldest of three siblings. He became the person who remembered appointments, anticipated problems, and softened conflict. Praise often followed usefulness: he was the responsible one and the son who did not need much.",
+            "He moved to Philadelphia for graduate school and became a counselor. The work suits his genuine care for young people, but it also rewards noticing everyone else's needs first. He often edits what he shares so he will not feel burdensome.",
+            "Marcus coordinated much of his mother's care during an autoimmune illness while working full time. After her unexpected death, he handled arrangements, supported his family, and returned to work quickly. The crisis ended, but his vigilance did not.",
+        ],
+        "themes": [
+            "Grief expressed through fatigue, irritability, overwork, and sudden sensory memories.",
+            "A belief that love is demonstrated through competence and availability.",
+            "Hyper-responsibility and difficulty distinguishing care from control.",
+            "A growing wish to receive care without performing steadiness.",
+        ],
+        "formulation": "Marcus's distress may be maintained by vigilance, over-functioning, depleted sleep, avoidance of vulnerable support, and self-criticism when grief interrupts performance.",
+        "protective": "Meaningful work, stable housing, close friends, family connection, reflective capacity, music, and willingness to try therapy despite ambivalence.",
+        "relational": "He is initially polished and agreeable, uses humor when attention lingers on him, and becomes more direct when he trusts that disagreement will not threaten the relationship.",
+        "stance": "Warm, collaborative, paced, and gently curious. The therapist reflects patterns tentatively and turns insight into manageable experiments selected with Marcus.",
+        "safety": [
+            "Do not invent a trauma reveal or crisis to accelerate the arc.",
+            "Grief, anxiety, sleep disruption, and caregiver strain remain themes for exploration, not generated diagnoses.",
+            "Do not infer safety or risk from Marcus's vocal delivery; ask directly when the script calls for assessment.",
+        ],
+        "phases": [
+            ("1", "1-2", "Build safety and map sleep, overload, grief, and the cost of appearing fine.", "Marcus notices the gap between functioning and feeling well."),
+            ("2", "3-4", "Identify the responsibility loop and approach grief in tolerable doses.", "He asks a sibling for one specific form of help."),
+            ("3", "5-6", "Practice boundaries and respond to a setback without narrative collapse.", "He recognizes exhaustion earlier and repairs after irritation."),
+            ("4", "7-8", "Practice receiving support and define how the work continues.", "He can name needs and carry grief without claiming completion."),
+        ],
+        "sessions": [
+            ("The capable version", "Marcus minimizes distress while describing a tightly scheduled life.", "A silence after asking who cares for him exposes how unfamiliar the question feels.", "Map the cost of appearing fine."),
+            ("The body keeps the schedule", "They map the 3:00 a.m. waking cycle and its connection to caregiving vigilance.", "Marcus chooses one modest wind-down experiment without turning it into a scorecard.", "Review sleep and urge-to-plan observations."),
+            ("Responsibility as protection", "A family request triggers resentment and immediate guilt.", "Marcus pushes back on a tentative interpretation, then becomes curious about being indispensable.", "Notice when care becomes control."),
+            ("A memory allowed to remain", "A song evokes his mother's kitchen.", "Marcus stays with grief and affection together, then asks his brother to handle a task.", "Let the memory remain without solving it."),
+            ("Boundary backlash", "Marcus ruminates after declining extra work and sends an apologetic email.", "He rehearses a repair that does not erase the limit.", "Track the urge to over-explain."),
+            ("Setback without collapse", "Poor sleep and an anniversary reaction leave Marcus depleted.", "He identifies earlier recognition, less isolation, and more choice without calling the setback progress.", "Use support before depletion peaks."),
+            ("Receiving", "Marcus asks a friend for company rather than advice.", "He describes both relief and embarrassment while remaining present.", "Practice one direct request."),
+            ("Carrying forward", "They review warning signs, supports, and an ongoing grief ritual.", "Marcus defines continuation rather than completion.", "Carry one open thread into future work."),
+        ],
+        "dialogue": [
+            ("THERAPIST", "Who takes care of you when the capable version is tired?"),
+            ("MARCUS", "That is a very therapist question. <short pause> I do not know."),
+            ("THERAPIST", "What happens when you let the question sit there?"),
+            ("MARCUS", "I want to give you a good answer. Then I realize that is probably the thing we are talking about."),
+        ],
+    },
+    {
+        "name": "Elena Sadic",
+        "folder": "Elena Sadic",
+        "email": "elena.sadic@example.com",
+        "age": 34,
+        "identity": "Woman; she/her; public-interest attorney",
+        "life": "Lives with her partner Nora and works in legal aid while managing substantial family responsibilities.",
+        "setting": "Outpatient individual therapy",
+        "acuity": "Moderate to high complexity",
+        "voice": "Gacrux",
+        "voice_style": "Clear adult voice with controlled professional cadence; pace tightens around deadlines and softens during direct disclosure; avoid brittle or theatrical distress.",
+        "speaker": "ELENA",
+        "therapist_voice_fixture": "therapist-calm-01",
+        "reason": "Sustained work and family strain has narrowed sleep, relationships, restoration, and her sense of choice.",
+        "tension": "Elena remains outwardly capable while treating ordinary uncertainty as evidence that she is falling behind or disappointing someone.",
+        "strengths": "Competent, caring, reflective, connected to her partner and sister, engaged in therapy, and increasingly able to identify warning signs and ask for specific support.",
+        "backstory": [
+            "Elena learned to respond to worry by working longer and preparing more. That strategy was often rewarded in school and in legal practice, where reliability became central to her identity.",
+            "When her father became ill, Elena took on appointments, calls, and family coordination while keeping her tone calm. The role persisted after the immediate crisis and made rest feel like another responsibility she had failed to earn.",
+            "Earlier brief therapy in graduate school was useful. She now returns after months of uneven sleep, skipped meals, social withdrawal, irritability with Nora, and moments of wanting to disappear from pressure.",
+        ],
+        "themes": [
+            "Overwork, self-criticism, and the fear that asking for time exposes inadequacy.",
+            "Family responsibility and difficulty separating care from constant availability.",
+            "Intermittent self-harm thoughts that require direct current-status assessment and collaborative safety planning.",
+            "Rest, communication, and repair as uneven practices rather than proof of recovery.",
+        ],
+        "formulation": "Elena's strain may be maintained by uncertainty, harsh self-monitoring, overwork, depleted sleep, indirect requests for support, and the belief that self-pressure is necessary for responsibility.",
+        "protective": "Nora, her sister, her dog, meaningful work, prior benefit from therapy, reflective capacity, and willingness to use a collaborative support plan.",
+        "relational": "Elena initially presents organized accounts and worries about alarming or disappointing the therapist. Trust grows when direct questions remain calm, specific, and proportionate to current information.",
+        "stance": "Collaborative, practical, and direct about safety. The therapist revisits current status, supports choice, and avoids treating a past disclosure as permanently current.",
+        "safety": [
+            "Ask about current thoughts, intent, plan, access, and change when the session plan reaches safety content; do not infer risk from tone.",
+            "Use a collaborative support plan and appropriate escalation. Never present fictional resources as sufficient for a real emergency.",
+            "Do not make a setback or a tense vocal segment proof of worsening risk.",
+        ],
+        "phases": [
+            ("1", "1-2", "Establish the alliance, map overwork and sleep, and begin direct safety assessment.", "Elena shares more than the polished account and identifies usable supports."),
+            ("2", "3-4", "Track the pressure cycle and test small changes in rest and communication.", "She notices warning signs earlier and makes one realistic request."),
+            ("3", "5-6", "Respond to a deadline setback and consolidate repair without claiming resolution.", "Elena treats a hard week as information rather than total failure."),
+        ],
+        "sessions": [
+            ("Intake and stabilization", "Elena describes months of escalating strain and intermittent thoughts of disappearing.", "Jeremy completes a calm current-status assessment and they identify supports and a simple plan.", "Review safety status and one observed pressure cycle."),
+            ("Noticing the pressure cycle", "A routine request from a supervisor becomes evidence of failure.", "Elena sends a realistic timeline and tells Nora more about the strain.", "Compare prediction with what actually occurred."),
+            ("Making room for rest", "Rest triggers guilt and fear of becoming careless.", "Elena tests a small restorative routine without requiring it to prove improvement.", "Notice the rule that rest must be earned."),
+            ("The deadline setback", "A difficult deadline disrupts sleep and increases withdrawal.", "They reassess current safety and separate setback from total collapse.", "Use supports earlier in the cycle."),
+            ("Practicing clear requests", "Elena prepares direct requests at work and at home.", "One request lands imperfectly, and she practices repair without retracting it.", "Carry the clearer language forward."),
+            ("Six session review", "They review gains, limits, current safety, and the approaching project launch.", "Elena identifies durable supports and unresolved questions.", "Keep the next phase open and evidence-based."),
+        ],
+        "dialogue": [
+            ("THERAPIST", "What made this feel like the time to reach out?"),
+            ("ELENA", "I keep saying it is a busy stretch, but the stretch does not end."),
+            ("THERAPIST", "What tells you the cost is different now?"),
+            ("ELENA", "I am still doing the work. I am just disappearing from everything around it."),
+        ],
+    },
 ]
 
 
@@ -500,6 +712,13 @@ def borders(table):
 def repeat_header(row):
     tr_pr = row._tr.get_or_add_trPr()
     node = OxmlElement("w:tblHeader")
+    node.set(qn("w:val"), "true")
+    tr_pr.append(node)
+
+
+def prevent_row_split(row):
+    tr_pr = row._tr.get_or_add_trPr()
+    node = OxmlElement("w:cantSplit")
     node.set(qn("w:val"), "true")
     tr_pr.append(node)
 
@@ -619,6 +838,42 @@ def trajectory_table(doc, case):
             set_font(cell.paragraphs[0].add_run(text), size=8.6, bold=(cell is cells[0]))
 
 
+def performance_map_table(doc):
+    table = doc.add_table(rows=1, cols=5)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = False
+    borders(table)
+    widths = [0.4, 0.85, 1.35, 2.05, 2.05]
+    headers = ["Part", "Minutes", "Narrative purpose", "Client vocal direction", "Therapist vocal direction"]
+    for cell, text, width in zip(table.rows[0].cells, headers, widths):
+        cell.width = Inches(width)
+        shade(cell, TEAL)
+        margins(cell, 90, 70, 90, 70)
+        set_font(cell.paragraphs[0].add_run(text), size=7.6, bold=True, color=WHITE)
+    repeat_header(table.rows[0])
+    for index, segment in enumerate(SESSION_PERFORMANCE_SEGMENTS):
+        row = table.add_row()
+        prevent_row_split(row)
+        cells = row.cells
+        values = [
+            str(segment["number"]),
+            segment["minutes"],
+            f'{segment["name"]}. {segment["purpose"]}',
+            segment["client_direction"],
+            segment["therapist_direction"],
+        ]
+        for column, (cell, text, width) in enumerate(zip(cells, values, widths)):
+            cell.width = Inches(width)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            margins(cell, 75, 65, 75, 65)
+            if index % 2:
+                shade(cell, LIGHT_TEAL)
+            cell.paragraphs[0].paragraph_format.space_after = Pt(0)
+            align = WD_ALIGN_PARAGRAPH.CENTER if column < 2 else WD_ALIGN_PARAGRAPH.LEFT
+            cell.paragraphs[0].alignment = align
+            set_font(cell.paragraphs[0].add_run(text), size=7.4, bold=(column == 0))
+
+
 def build_doc(case, output_root):
     output = output_root / case["folder"] / "clinical-trajectory-outline.docx"
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -675,17 +930,42 @@ def build_doc(case, output_root):
 
     if len(case["sessions"]) >= 8:
         doc.add_page_break()
-    doc.add_heading("Client voice direction", level=1)
-    paragraph(doc, case["voice_style"], bold_lead="Performance")
-    paragraph(doc, f"Use Google Gemini TTS voice {case['voice']} for the client speaker alias {case['speaker']}. Keep the same assignment across every session.", bold_lead="Assignment")
-    paragraph(doc, "Express change through pacing, pauses, word choice, and willingness to stay with difficult material. Do not perform distress as spectacle or infer emotion from voice alone.", bold_lead="Arc continuity")
+    doc.add_heading("Vocal identity", level=1)
+    voice_identity_id = case.get("voice_identity_id", f"client-{case['folder'].lower().replace(' ', '-')}-v1")
+    paragraph(doc, voice_identity_id, bold_lead="Identity reference")
+    paragraph(doc, LATEST_TTS_MODEL, bold_lead="Synthesis model")
+    paragraph(doc, "Prebuilt voice. The same field may later contain a stored designed or consent-based replicated voice ID beginning with voice_.", bold_lead="Voice source")
+    paragraph(doc, f"Use Google Gemini TTS voice {case['voice']} for the client speaker alias {case['speaker']}. Keep the same identity reference and provider voice assignment across every session unless a reviewed version change is recorded.", bold_lead="Provider assignment")
+    paragraph(doc, case["voice_style"], bold_lead="Baseline performance")
+    paragraph(doc, "The underlying timbre, apparent age, accent, and microphone perspective remain stable. Session changes are expressed through turn-level pace, volume, hesitation, breath, and sentence completion. Vocal cues are production direction, not evidence of a clinical state.", bold_lead="Continuity rule")
+
+    doc.add_page_break()
+    doc.add_heading("Fifty minute script production plan", level=1)
+    paragraph(doc, "Write one continuous session targeting about 50 minutes of finished audio. Use eight consecutive parts and the performance map below. Part boundaries are production boundaries only; they must not restart the conversation, repeat a greeting, summarize earlier dialogue, or reset the vocal state.")
+    performance_map_table(doc)
+
+    doc.add_heading("Script generation instructions", level=1)
+    for item in (
+        "Before generation, read docs/ai/SYNTHETIC_SESSION_REALISM.md and acknowledge its mandatory preflight in the rendering command.",
+        f"Use only THERAPIST and {case['speaker']} as speaker names. Represent every spoken turn as a separate structured part when submitting it to Gemini 3.8 TTS.",
+        "Put sustained delivery direction in speech_metadata.style. Put only momentary vocal events such as <short pause>, <sigh>, or <laugh> inside the verbatim text.",
+        "Estimate and verify native rendered duration. Natural silence and response latency count toward the target; do not pad the session with polished speeches.",
+        "Never globally slow, accelerate, interpolate, or time-stretch a recording. If native output misses the target, revise the transcript or exact assembled silence and render again.",
+        "Write real-time thought: irregular fillers, false starts, corrections, uncertain recall, forgotten details, incomplete clauses, ordinary logistics, disagreement, and stretches that do not produce insight.",
+        "Do not let the client recall every quotation or chronology precisely, answer mainly in organized paragraphs, or understand each event immediately.",
+        "Keep therapist speech brief and fallible. Allow missed questions, imperfect reflections, correction, repetition, topic drift, and unresolved silence instead of continuously advancing a formulation.",
+        "Begin each part with the final vocal state of the prior part. Do not prepend continuity dialogue that would be rendered twice.",
+        "End with a plausible carry-forward item or open question. Do not manufacture a breakthrough or imply that the arc is complete.",
+    ):
+        bullet(doc, item)
 
     doc.add_heading("Dialogue and production guardrails", level=1)
     for item in (
         "Use exactly two spoken labels: THERAPIST and the client alias shown above. Therapist identity and voice configuration live outside this client record.",
-        f"Write one continuous session in {case.get('production_parts', 6)} parts targeting {case.get('long_session_target', 'about thirty minutes')}; do not repeat greetings or summaries at part boundaries.",
-        "Preserve false starts, corrections, ordinary logistics, and silence. Not every exchange should produce insight.",
-        "Mark non-spoken pauses on their own line, such as [SILENCE - 8 SECONDS - DO NOT SPEAK], and insert them in audio assembly if the model reads or shortens the cue.",
+        f"Write one continuous session in {DEFAULT_PRODUCTION_PARTS} parts targeting {DEFAULT_SESSION_TARGET}; do not repeat greetings or summaries at part boundaries.",
+        "Preserve imperfect recall, false starts, corrections, ordinary confusion, repetition, topic drift, low-information time, and silence. Not every exchange should produce insight.",
+        "Use Gemini 3.8 inline vocal tags for brief events. Insert exact long silences during audio assembly when the model cannot preserve their duration.",
+        "Finalize at native rendered speed. Sample-rate conversion may not change duration or pitch.",
         "Generated interpretations remain tentative, source-grounded review prompts. A qualified clinician owns assessment, risk decisions, and treatment choices.",
     ):
         bullet(doc, item)
@@ -700,15 +980,6 @@ def build_doc(case, output_root):
     ):
         bullet(doc, item)
 
-    doc.add_heading("Evaluation targets", level=1)
-    for item in (
-        "Speaker consistency, timestamp alignment, pauses, interruptions, and correction of speaker labels.",
-        "Faithful session summaries that distinguish statements from inferences.",
-        "Longitudinal retrieval of recurring themes only after evidence appears across multiple sessions.",
-        "Respect for clinician corrections, outdated items, and non-diagnostic uncertainty language.",
-        "Appropriate behavior when high-acuity content requires direct human assessment.",
-    ):
-        bullet(doc, item)
     doc.save(output)
     return output
 
@@ -733,7 +1004,7 @@ def write_supporting_files(case, output_root):
     }
     (folder / "account-profile.json").write_text(json.dumps(account, indent=2) + "\n", encoding="utf-8")
     session_plan = {
-        "fixture_version": 1,
+        "fixture_version": 2,
         "fictional": True,
         "client": case["name"],
         "non_diagnostic": True,
@@ -752,20 +1023,35 @@ def write_supporting_files(case, output_root):
         ],
     }
     (folder / "session-plan.json").write_text(json.dumps(session_plan, indent=2) + "\n", encoding="utf-8")
+    voice_identity_id = case.get("voice_identity_id", f"client-{case['folder'].lower().replace(' ', '-')}-v1")
     voice_config = {
-        "fixture_version": 1,
+        "fixture_version": 2,
         "provider": "Google Gemini TTS",
-        "model": case.get("model", "gemini-2.5-pro-tts"),
-        "language_code": "en-US",
+        "api": "Gemini Enterprise generateContent",
+        "model": LATEST_TTS_MODEL,
+        "location": "global",
+        "language": "auto",
         "client": {
+            "voice_identity_id": voice_identity_id,
             "speaker_alias": case["speaker"],
-            "voice": case["voice"],
-            "style_prompt": case["voice_style"],
+            "voice_source": "prebuilt",
+            "provider_voice_reference": case["voice"],
+            "stored_custom_voice_id": case.get("stored_custom_voice_id"),
+            **({"voice_design_prompt": case["voice_design_prompt"]} if case.get("voice_design_prompt") else {}),
+            "baseline_style": case["voice_style"],
+            **({"continuity_note": case["voice_continuity_note"]} if case.get("voice_continuity_note") else {}),
+            "version": case.get("voice_version", 1),
         },
         "therapist": {
             "speaker_alias": "THERAPIST",
             "voice_fixture_id": case["therapist_voice_fixture"],
             "configuration_location": "../../Therapists/voice-fixtures.json",
+        },
+        "script_generation": {
+            "target_duration_minutes": 50,
+            "target_spoken_words": {"minimum": 4800, "maximum": 5800},
+            "production_parts": DEFAULT_PRODUCTION_PARTS,
+            "segments": SESSION_PERFORMANCE_SEGMENTS,
         },
     }
     (folder / "voice-config.json").write_text(json.dumps(voice_config, indent=2) + "\n", encoding="utf-8")
@@ -785,7 +1071,7 @@ def write_supporting_files(case, output_root):
 
 def write_catalog(cases, output_root):
     catalog = {
-        "fixture_version": 1,
+        "fixture_version": 2,
         "fictional": True,
         "purpose": "Clinical trajectory, synthetic dialogue, speech, diarization, and longitudinal-synthesis testing",
         "clients": [
@@ -795,6 +1081,8 @@ def write_catalog(cases, output_root):
                 "complexity": case["acuity"],
                 "planned_sessions": len(case["sessions"]),
                 "client_voice": case["voice"],
+                "voice_identity_id": case.get("voice_identity_id", f"client-{case['folder'].lower().replace(' ', '-')}-v1"),
+                "tts_model": LATEST_TTS_MODEL,
                 "therapist_voice_fixture": case["therapist_voice_fixture"],
             }
             for case in cases

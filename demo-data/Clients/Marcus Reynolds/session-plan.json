@@ -1,0 +1,73 @@
+{
+  "fixture_version": 2,
+  "fictional": true,
+  "client": "Marcus Reynolds",
+  "non_diagnostic": true,
+  "clinical_complexity": "Moderate",
+  "sessions": [
+    {
+      "number": 1,
+      "title": "The capable version",
+      "focus": "Marcus minimizes distress while describing a tightly scheduled life.",
+      "possible_movement": "A silence after asking who cares for him exposes how unfamiliar the question feels.",
+      "carry_forward": "Map the cost of appearing fine.",
+      "status": "outline_only"
+    },
+    {
+      "number": 2,
+      "title": "The body keeps the schedule",
+      "focus": "They map the 3:00 a.m. waking cycle and its connection to caregiving vigilance.",
+      "possible_movement": "Marcus chooses one modest wind-down experiment without turning it into a scorecard.",
+      "carry_forward": "Review sleep and urge-to-plan observations.",
+      "status": "outline_only"
+    },
+    {
+      "number": 3,
+      "title": "Responsibility as protection",
+      "focus": "A family request triggers resentment and immediate guilt.",
+      "possible_movement": "Marcus pushes back on a tentative interpretation, then becomes curious about being indispensable.",
+      "carry_forward": "Notice when care becomes control.",
+      "status": "outline_only"
+    },
+    {
+      "number": 4,
+      "title": "A memory allowed to remain",
+      "focus": "A song evokes his mother's kitchen.",
+      "possible_movement": "Marcus stays with grief and affection together, then asks his brother to handle a task.",
+      "carry_forward": "Let the memory remain without solving it.",
+      "status": "outline_only"
+    },
+    {
+      "number": 5,
+      "title": "Boundary backlash",
+      "focus": "Marcus ruminates after declining extra work and sends an apologetic email.",
+      "possible_movement": "He rehearses a repair that does not erase the limit.",
+      "carry_forward": "Track the urge to over-explain.",
+      "status": "outline_only"
+    },
+    {
+      "number": 6,
+      "title": "Setback without collapse",
+      "focus": "Poor sleep and an anniversary reaction leave Marcus depleted.",
+      "possible_movement": "He identifies earlier recognition, less isolation, and more choice without calling the setback progress.",
+      "carry_forward": "Use support before depletion peaks.",
+      "status": "outline_only"
+    },
+    {
+      "number": 7,
+      "title": "Receiving",
+      "focus": "Marcus asks a friend for company rather than advice.",
+      "possible_movement": "He describes both relief and embarrassment while remaining present.",
+      "carry_forward": "Practice one direct request.",
+      "status": "outline_only"
+    },
+    {
+      "number": 8,
+      "title": "Carrying forward",
+      "focus": "They review warning signs, supports, and an ongoing grief ritual.",
+      "possible_movement": "Marcus defines continuation rather than completion.",
+      "carry_forward": "Carry one open thread into future work.",
+      "status": "outline_only"
+    }
+  ]
+}
