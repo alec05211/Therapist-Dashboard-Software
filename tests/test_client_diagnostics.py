@@ -83,6 +83,7 @@ class ClientDiagnosticsTests(unittest.TestCase):
         self.assertLessEqual(len(result['events']), 200)
 
     def test_queued_changes_track_outstanding_events_and_clear_after_publication(self):
+        now = datetime.now(timezone.utc)
         for desired, published, pending, status, expected in (
             (5, 3, 2, 'pending', 2),
             (6, 3, 3, 'running', 3),
@@ -98,11 +99,16 @@ class ClientDiagnosticsTests(unittest.TestCase):
                     status=status, desired_insights_revision=desired,
                     published_insights_revision=published, pending_event_count=pending,
                     processing_insights_revision=desired, attempt_count=1,
-                    last_error_code=None, last_attempt_at=None, updated_at=datetime.now(timezone.utc),
+                    last_error_code=None, last_attempt_at=None, not_before=now + timedelta(minutes=5),
+                    updated_at=datetime.now(timezone.utc),
                 )
                 result = diagnostics.read_timeline(conn, organization_id='org', client_id='client')
                 self.assertEqual(result['summary']['queued_event_count'], expected)
                 self.assertEqual(result['summary']['published_revision'], published)
+                self.assertEqual(
+                    result['summary']['debounce_until'],
+                    (now + timedelta(minutes=5)).isoformat() if status == 'pending' else None,
+                )
 
     def test_only_latest_200_events_are_returned_in_terminal_order(self):
         conn = MagicMock()

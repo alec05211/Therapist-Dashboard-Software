@@ -253,6 +253,49 @@ class ClinicalContextTests(unittest.TestCase):
         self.assertEqual(projected_source['clinical_note_version_id'], 'note')
         self.assertNotIn('segment_index', projected_source)
 
+    def test_brief_validation_failure_uses_source_preserving_fallback(self):
+        note = dict(evidence_id='note', clinical_note_version_id='note',
+                    source_type='finalized_clinical_note', session_id='session-old',
+                    session_label='Old session', content={'plain_text': 'Finalized observation'})
+        def insight(**kwargs):
+            return {'overview': 'Review', 'items': [dict(kind='open_thread', label='Review',
+                analysis='Review this observation', analysis_claims=[dict(phrase='this observation',
+                    occurrence=0, evidence_ids=['E001'])], context_statements=[])]}, {'model': 'test'}
+        brief_error = RuntimeError('OpenAI output did not satisfy the evidence contract: invalid claim')
+        brief_error.violations = ('invalid claim',)
+        events = MagicMock()
+        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test'}):
+            bundle = _generate_bundle(
+                [note], clinical_context={'source_evidence': [note]},
+                insights_model='test', brief_model='test', insight_generator=insight,
+                brief_generator=MagicMock(side_effect=brief_error), on_event=events,
+            )
+        self.assertEqual(bundle['brief']['status'], 'REVIEW DRAFT · insights v0')
+        self.assertEqual(bundle['brief_model'], 'deterministic-projection-v1')
+        fallback = next(call for call in events.call_args_list
+                        if call.args[0] == 'brief_fallback_used')
+        self.assertEqual(fallback.args[1]['error_code'], 'brief_validation_failed')
+        self.assertEqual(fallback.args[1]['violation_count'], 1)
+
+    def test_brief_generation_is_skipped_without_upcoming_appointment(self):
+        note = dict(evidence_id='note', clinical_note_version_id='note',
+                    source_type='finalized_clinical_note', session_id='session-old',
+                    session_label='Old session', content={'plain_text': 'Finalized observation'})
+        def insight(**kwargs):
+            return {'overview': 'Review', 'items': [dict(kind='open_thread', label='Review',
+                analysis='Review this observation', analysis_claims=[dict(phrase='this observation',
+                    occurrence=0, evidence_ids=['E001'])], context_statements=[])]}, {'model': 'test'}
+        brief = MagicMock()
+        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test'}):
+            bundle = _generate_bundle(
+                [note], clinical_context={'source_evidence': [note]},
+                insights_model='test', brief_model='test', insight_generator=insight,
+                brief_generator=brief, generate_brief=False,
+            )
+        brief.assert_not_called()
+        self.assertIsNone(bundle['brief'])
+        self.assertIsNone(bundle['brief_model'])
+
     def test_persisted_note_citation_resolves_exact_version_content_and_session(self):
         connection = MagicMock()
         cursor = connection.cursor.return_value.__enter__.return_value

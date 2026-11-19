@@ -43,6 +43,7 @@ def _generate_bundle(
     brief_model: str,
     insight_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_longitudinal_insights,
     brief_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] = generate_openai_pre_session_brief,
+    generate_brief: bool = True,
     on_event: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     def emit(event_type, **details):
@@ -105,17 +106,33 @@ def _generate_bundle(
             for item in generated_items
         ],
     }
-    emit('brief_requested', stage='brief')
     projected = project_accepted_insights(packet, [])
-    _, request = brief_input(projected)
-    brief_response, brief_metadata = brief_generator(
-        synthesis_request=request,
-        api_key=os.environ["OPENAI_API_KEY"],
-        model=brief_model,
-    )
-    resolved_brief = resolve_brief(brief_response, request["evidence"])
-    usage = brief_metadata.get('usage') or {}
-    emit('brief_validated', stage='brief', input_tokens=usage.get('input_tokens'), output_tokens=usage.get('output_tokens'))
+    resolved_brief = None
+    brief_metadata = {'model': None}
+    if generate_brief:
+        emit('brief_requested', stage='brief')
+        _, request = brief_input(projected)
+        repair_options = {'on_repair': lambda attempt, count: emit(
+            'brief_repair_requested', stage='brief', repair_attempt=attempt,
+            violation_count=count)} if on_event and brief_generator is generate_openai_pre_session_brief else {}
+        try:
+            brief_response, brief_metadata = brief_generator(
+                synthesis_request=request,
+                api_key=os.environ["OPENAI_API_KEY"],
+                model=brief_model,
+                **repair_options,
+            )
+            resolved_brief = resolve_brief(brief_response, request["evidence"])
+            usage = brief_metadata.get('usage') or {}
+            emit('brief_validated', stage='brief', input_tokens=usage.get('input_tokens'),
+                 output_tokens=usage.get('output_tokens'))
+        except (RuntimeError, ValueError) as exc:
+            failure = client_diagnostics.failure_details(exc, 'brief')
+            violations = getattr(exc, 'violations', ())
+            emit('brief_fallback_used', stage='brief', **failure,
+                 **({'violation_count': len(violations)} if violations else {}))
+            resolved_brief = projected
+            brief_metadata = {'model': 'deterministic-projection-v1', 'usage': {}}
     return {
         "snapshot_content": {
             **snapshot_content,
@@ -164,7 +181,8 @@ def process_one(
             with connect() as diagnostic_connection:
                 client_diagnostics.append_event(diagnostic_connection, organization_id=organization_id,
                     client_id=client_id, event_type=event_type,
-                    level='error' if event_type == 'synthesis_failed' else 'info',
+                    level=('error' if event_type == 'synthesis_failed' else
+                           'warning' if event_type == 'brief_fallback_used' else 'info'),
                     details={**details, 'revision': revision, 'attempt': int(job['attempt_count'])})
         except Exception:
             # Observability must not fail clinical processing or leak exception bodies.
@@ -214,6 +232,7 @@ def process_one(
             insights_model=insights_model,
             brief_model=brief_model,
             insight_generator=insight_generator,
+            generate_brief=appointment is not None,
             on_event=record,
         )
         stage = 'publication'

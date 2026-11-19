@@ -16,7 +16,9 @@ EVENTS = {
     'insights_repair_requested': 'Insights validation repair requested',
     'insights_validated': 'Insights passed validation',
     'brief_requested': 'Pre-session brief request started',
+    'brief_repair_requested': 'Pre-session brief validation repair requested',
     'brief_validated': 'Pre-session brief passed validation',
+    'brief_fallback_used': 'Pre-session brief used the validated deterministic fallback',
     'synthesis_published': 'Insights refresh published',
     'synthesis_failed': 'Insights refresh failed',
 }
@@ -200,16 +202,20 @@ def read_timeline(connection, *, organization_id, client_id):
                 add('proposals-state-' + str(row['session_id']), row['updated_at'], messages[row['status']],
                     'error' if row['status'] == 'failed' else 'info', {'attempt': row['attempt_count']})
         cursor.execute('''SELECT status,desired_insights_revision,published_insights_revision,
-            processing_insights_revision,pending_event_count,attempt_count,last_error_code,last_attempt_at,updated_at
+            processing_insights_revision,pending_event_count,attempt_count,last_error_code,last_attempt_at,
+            not_before,updated_at
             FROM app.clinical_synthesis_refresh_state WHERE organization_id=%s AND client_id=%s''', scope)
         state = cursor.fetchone()
-    summary = dict(status='idle', desired_revision=0, published_revision=0, queued_event_count=0, attempt_count=0, error=None)
+    summary = dict(status='idle', desired_revision=0, published_revision=0,
+                   queued_event_count=0, attempt_count=0, error=None, debounce_until=None)
     if state:
         summary = dict(status=state['status'], desired_revision=state['desired_insights_revision'],
                        published_revision=state['published_insights_revision'],
                        queued_event_count=max(0, int(state['pending_event_count'])) if state['desired_insights_revision'] > state['published_insights_revision'] else 0,
                        attempt_count=state['attempt_count'],
-                       error=ERRORS.get(state['last_error_code'], 'Generation failed') if state['last_error_code'] else None)
+                       error=ERRORS.get(state['last_error_code'], 'Generation failed') if state['last_error_code'] else None,
+                       debounce_until=(state['not_before'].isoformat()
+                                       if state['status'] == 'pending' and state.get('not_before') else None))
         # Legacy attempts have only a last-attempt watermark, not a historical stage trace.
         if state['last_attempt_at']:
             add('last-attempt', state['last_attempt_at'], 'Latest worker attempt started',

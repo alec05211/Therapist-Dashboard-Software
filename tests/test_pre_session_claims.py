@@ -1,6 +1,6 @@
 import copy
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import unittest
 from ai_harness.pre_session import (MAX_BRIEF_REQUEST_BYTES, assemble_brief_parts,
     generate_openai_pre_session_brief, resolve_brief, validate_pre_session_response)
@@ -79,3 +79,40 @@ class ClaimTests(unittest.TestCase):
         assembled = assemble_brief_parts(response)
         self.assertEqual(assembled['sections'][0]['items'][0]['text'], 'Reports overwork again.')
         self.assertFalse(validate_pre_session_response(assembled, self.evidence))
+
+    def test_invalid_brief_receives_bounded_evidence_repair(self):
+        _, request = brief_input({'sections': [{'items': [{
+            'text': 'Work pressure remained important.',
+            'sources': [self.evidence[0]],
+        }]}]})
+        invalid = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'opening': 'Work pressure ',
+            'claims': [{'text': 'remained important', 'following_text': '.',
+                        'scope': 'single_exchange', 'evidence_ids': ['missing']}],
+        }]}]}
+        valid = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'opening': 'Work pressure ',
+            'claims': [{'text': 'remained important', 'following_text': '.',
+                        'scope': 'single_exchange', 'evidence_ids': ['a']}],
+        }]}]}
+        responses = []
+        for output in (invalid, valid):
+            response = MagicMock()
+            response.__enter__.return_value.read.return_value = json.dumps({
+                'output_text': json.dumps(output), 'usage': {},
+            }).encode()
+            responses.append(response)
+        repairs = []
+        with patch('ai_harness.pre_session.urlopen', side_effect=responses) as urlopen:
+            generated, _ = generate_openai_pre_session_brief(
+                synthesis_request=request, api_key='test', model='test',
+                on_repair=lambda attempt, count: repairs.append((attempt, count)),
+            )
+        self.assertEqual(urlopen.call_count, 2)
+        self.assertEqual(repairs, [(1, 2)])
+        self.assertFalse(validate_pre_session_response(generated, request['evidence']))
+        repair_payload = json.loads(urlopen.call_args.args[0].data)
+        repair_input = json.loads(repair_payload['input'])
+        self.assertEqual(repair_input['task'], 'repair_pre_session_brief')
+        self.assertEqual(repair_input['rejected_draft']['sections'][0]['items'][0]
+                         ['evidence_ids'], ['missing'])

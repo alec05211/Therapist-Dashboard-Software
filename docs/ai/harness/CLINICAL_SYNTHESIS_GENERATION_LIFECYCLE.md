@@ -61,6 +61,7 @@ The interface should not ask therapists to perform routine system maintenance.
 The page's presentation and progressive-disclosure contract is defined in [Insights progressive disclosure architecture](../../design/INSIGHTS_PROGRESSIVE_DISCLOSURE.md). Insights uses a stable semantic hierarchy, hides unsupported modules, and places clinically useful current material above background context, orientation counts, and the accepted evidence record.
 
 - While work is queued or running, keep the last valid snapshot readable and show a quiet status such as **Updating insights**.
+- Diagnostics shows a live minute-and-second countdown to the queue's `not_before` time only while Insights is pending. Running, idle, and failed states do not show the debounce countdown.
 - Do not expose a manual Insights regeneration control. Crossing a threshold should make the background worker run without transferring maintenance responsibility to the therapist.
 - Avoid an interruptive popup that says the therapist must refresh. Delayed or failed work may surface a quiet operational status and recover through the background retry and reconciliation paths.
 - Display the snapshot's source-through time or equivalent freshness information when useful.
@@ -112,6 +113,8 @@ The brief generator is an editorial selector and compressor. It may:
 - choose short, exact phrases in that prose as links to the specific inherited evidence claims.
 
 It may not introduce a new clinical interpretation, trend, diagnosis, risk assessment, or treatment recommendation. Reliability evaluation and future clinical fine-tuning should concentrate on Insights; the brief is evaluated for faithful selection, compression, freshness, and citation preservation.
+
+Brief output that fails deterministic evidence validation receives at most two whole-brief repair requests. If those repairs fail, or the brief provider is temporarily unavailable, publication uses the existing deterministic, source-preserving projection of the newly validated Insights snapshot. A downstream editorial failure must not discard a valid Insights document or force the expensive Insights request to run again. When no upcoming appointment exists, the Insights worker does not request a brief.
 
 The pre-session brief is a downstream materialized view of Insights, presented in the scheduled-session workflow. Publishing a new current Insights snapshot automatically invalidates any brief based on an older snapshot and requests its background replacement when an upcoming appointment exists.
 

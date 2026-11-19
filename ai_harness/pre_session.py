@@ -206,7 +206,8 @@ def assemble_brief_parts(response):
     return {'sections': sections}
 
 
-def generate_openai_pre_session_brief(*, synthesis_request: dict[str, Any], api_key: str, model: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def generate_openai_pre_session_brief(*, synthesis_request: dict[str, Any], api_key: str,
+                                      model: str, on_repair=None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Generate and validate one synthetic pre-session draft through OpenAI.
 
     This provider adapter deliberately uses a stateless response and does not
@@ -279,47 +280,78 @@ def generate_openai_pre_session_brief(*, synthesis_request: dict[str, Any], api_
         if not selected_entries:
             raise RuntimeError("Brief request exceeds the testing input limit; narrow the accepted context.")
         model_input["evidence"] = list(selected_sources.values())
-    request = Request(
-        "https://api.openai.com/v1/responses",
-        data=data,
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urlopen(request, timeout=180) as response:
-            response_data = json.loads(response.read().decode("utf-8"))
-    except HTTPError as exc:
-        raise provider_error_from_http_error(exc, provider="openai") from exc
-    except TimeoutError as exc:
-        raise RuntimeError("Brief generation timed out; no automatic retry was made.") from exc
-    except URLError as exc:
-        raise RuntimeError("Could not reach OpenAI.") from exc
+    def request_structured(encoded: bytes) -> tuple[dict[str, Any], dict[str, Any]]:
+        request = Request(
+            "https://api.openai.com/v1/responses",
+            data=encoded,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=180) as response:
+                response_data = json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            raise provider_error_from_http_error(exc, provider="openai") from exc
+        except TimeoutError as exc:
+            raise RuntimeError("Brief generation timed out; no automatic retry was made.") from exc
+        except URLError as exc:
+            raise RuntimeError("Could not reach OpenAI.") from exc
 
-    output_text = response_data.get("output_text")
-    if not output_text:
-        output_text = next((content["text"] for item in response_data.get("output", []) for content in item.get("content", []) if content.get("type") == "output_text"), "")
-    if not output_text:
-        output_shape = [
-            {
+        output_text = response_data.get("output_text") or next(
+            (content["text"] for item in response_data.get("output", [])
+             for content in item.get("content", []) if content.get("type") == "output_text"),
+            "",
+        )
+        if not output_text:
+            output_shape = [{
                 "type": item.get("type"),
                 "content_types": [content.get("type") for content in item.get("content", [])],
-            }
-            for item in response_data.get("output", [])
-        ]
-        raise RuntimeError(
-            "OpenAI returned no structured output "
-            f"(status={response_data.get('status')}, output={output_shape})."
-        )
-    try:
-        generated = json.loads(output_text)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("OpenAI returned invalid structured output.") from exc
+            } for item in response_data.get("output", [])]
+            raise RuntimeError(
+                "OpenAI returned no structured output "
+                f"(status={response_data.get('status')}, output={output_shape})."
+            )
+        try:
+            structured = json.loads(output_text)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("OpenAI returned invalid structured output.") from exc
+        return assemble_brief_parts(model_parts(structured)), response_data
 
-    generated = assemble_brief_parts(model_parts(generated))
-    violations = validate_pre_session_response(generated, model_input["evidence"])
+    generated, response_data = request_structured(data)
+    active_payload = json.loads(data.decode("utf-8"))
+    active_input = json.loads(active_payload["input"])
+    validation_evidence = active_input["evidence"]
+    violations = validate_pre_session_response(generated, validation_evidence)
+    repair_attempt = 0
+    while violations and repair_attempt < 2:
+        repair_attempt += 1
+        if on_repair:
+            on_repair(repair_attempt, len(violations))
+        repair_payload = {
+            **active_payload,
+            "instructions": active_payload["instructions"] + (
+                " Repair the rejected brief. Return the complete brief and correct every supplied "
+                f"validation error. This is bounded repair attempt {repair_attempt} of 2. Keep claim "
+                "phrases non-overlapping, preserve exact assembled text, cite only supplied evidence IDs, "
+                "and use cross_session only with sources from at least two distinct sessions."
+            ),
+            "input": json.dumps({
+                **active_input,
+                "task": "repair_pre_session_brief",
+                "validation_errors": violations,
+                "rejected_draft": generated,
+            }),
+        }
+        repair_data = json.dumps(repair_payload).encode("utf-8")
+        if len(repair_data) > MAX_BRIEF_REQUEST_BYTES:
+            break
+        generated, response_data = request_structured(repair_data)
+        violations = validate_pre_session_response(generated, validation_evidence)
     if violations:
         error = RuntimeError("OpenAI output did not satisfy the evidence contract: " + "; ".join(violations))
         error.generated_response = generated
         error.usage = response_data.get("usage", {})
+        error.violations = tuple(violations)
+        error.repair_attempts = repair_attempt
         raise error
     return generated, {"model": response_data.get("model", model), "response_id": response_data.get("id"), "usage": response_data.get("usage", {})}
