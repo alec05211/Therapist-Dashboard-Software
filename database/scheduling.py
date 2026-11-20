@@ -22,6 +22,16 @@ def recurring_occurrences(start: datetime, cadence_weeks: int, count: int) -> li
     return [start + timedelta(weeks=cadence_weeks * index) for index in range(count)]
 
 
+def next_recurring_occurrence(start: datetime, cadence_weeks: int, timezone: str) -> datetime:
+    """Advance by local calendar weeks so the wall-clock time survives DST."""
+    if cadence_weeks not in (1, 2, 4):
+        raise ValueError("Cadence must be weekly, every two weeks, or every four weeks.")
+    zone = ZoneInfo(timezone)
+    local = start.astimezone(zone)
+    next_day = local.date() + timedelta(weeks=cadence_weeks)
+    return datetime.combine(next_day, local.timetz().replace(tzinfo=None), zone)
+
+
 def available_recurring_slots(
     appointments: list[dict], *, timezone: str, duration_minutes: int,
     cadence_weeks: int, occurrences: int = 8, limit: int = 12,

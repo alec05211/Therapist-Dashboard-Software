@@ -9,7 +9,7 @@ import type { Appointment } from "@/lib/types";
 type Preferences = { cadence_weeks: 1 | 2 | 4; duration_minutes: number; meeting_mode: "in_person" | "video" | "phone"; timezone: string };
 type RecurringDraft = { cadence_weeks: "" | 1 | 2 | 4; duration_minutes: "" | number; meeting_mode: "" | Preferences["meeting_mode"] };
 type BusyTime = { starts_at: string; ends_at: string };
-type Data = { organization_id: string; client_id: string; client_name: string; preferences: Preferences; appointments: Appointment[]; busy_times: BusyTime[]; has_existing_schedule: boolean; current_recurring_starts_at: string | null };
+type Data = { organization_id: string; client_id: string; client_name: string; preferences: Preferences; appointments: Appointment[]; busy_times: BusyTime[]; has_existing_schedule: boolean; current_recurring_starts_at: string | null; minimum_upcoming_recurring_sessions: number };
 
 async function body(response: Response) {
   const value = await response.json().catch(() => ({}));
@@ -118,6 +118,7 @@ export function ClientScheduling({ clientId, initiallyExpanded = false, onChange
         <Chevron expanded={recurringOpen} />
       </button>
       {recurringOpen ? <div className="border-t border-stone-300 p-4">
+        <p className="mb-4 text-xs leading-5 text-stone-600">This recurring plan is the scheduling source of truth. The calendar automatically keeps at least {data.minimum_upcoming_recurring_sessions} upcoming sessions scheduled as completed sessions roll off.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="text-xs font-semibold text-stone-700">Frequency<select value={recurringDraft.cadence_weeks} onChange={event => updateRecurringDraft({ ...recurringDraft, cadence_weeks: Number(event.target.value) as 1 | 2 | 4 })} className={settingsFieldClass}><option value="" disabled>Select frequency</option><option value="1">Weekly</option><option value="2">Every 2 weeks</option><option value="4">Every 4 weeks</option></select></label>
           <label className="text-xs font-semibold text-stone-700">Length<select value={recurringDraft.duration_minutes} onChange={event => updateRecurringDraft({ ...recurringDraft, duration_minutes: Number(event.target.value) })} className={settingsFieldClass}><option value="" disabled>Select length</option>{[30, 45, 50, 60, 75, 90].map(value => <option key={value} value={value}>{value} minutes</option>)}</select></label>
@@ -125,7 +126,7 @@ export function ClientScheduling({ clientId, initiallyExpanded = false, onChange
         </div>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="min-w-72 flex-1 text-xs font-semibold text-stone-700">Available recurring time<select value={recurringStart} disabled={!configuredPreferences} onChange={event => setRecurringStart(event.target.value)} className={settingsFieldClass}><option value="" disabled>Select an available time</option>{recurringOptions.map(startsAt => <option key={startsAt} value={startsAt}>{formatRecurringBlock(startsAt, configuredPreferences?.duration_minutes || data.preferences.duration_minutes)}{startsAt === data.current_recurring_starts_at ? " (current)" : ""}</option>)}</select></label>
-          <button disabled={!configuredPreferences || !recurringStart || recurringStart === data.current_recurring_starts_at || busy} onClick={() => configuredPreferences && void mutate("/api/client-scheduling/appointments", "POST", { ...configuredPreferences, starts_at: recurringStart, appointment_type: "recurring", recurrence_count: 8 }, "Eight recurring appointments scheduled.").then(() => setRecurringStart(""))} className="cursor-grab rounded-xl bg-emerald-800 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">{recurringStart === data.current_recurring_starts_at && recurringStart ? "Current schedule" : "Schedule series"}</button>
+          <button disabled={!configuredPreferences || !recurringStart || recurringStart === data.current_recurring_starts_at || busy} onClick={() => configuredPreferences && void mutate("/api/client-scheduling/appointments", "POST", { ...configuredPreferences, starts_at: recurringStart, appointment_type: "recurring", recurrence_count: 8 }, `Recurring schedule saved and kept at least ${data.minimum_upcoming_recurring_sessions} sessions ahead.`).then(() => setRecurringStart(""))} className="cursor-grab rounded-xl bg-emerald-800 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">{recurringStart === data.current_recurring_starts_at && recurringStart ? "Current schedule" : "Schedule series"}</button>
         </div>
       </div> : null}
     </section>

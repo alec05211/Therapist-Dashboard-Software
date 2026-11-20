@@ -135,7 +135,7 @@ def completed_jobs(context):
     with connect() as connection, connection.cursor() as cursor:
         cursor.execute("""SELECT job.runtime_id AS id,
                 COALESCE(job.storage->>'label', 'Uploaded session') AS label,
-                note.status AS clinical_note_status,
+                COALESCE(note.status, CASE WHEN synthesis.id IS NOT NULL THEN 'draft' END) AS clinical_note_status,
                 (job.storage->>'recording_duration_seconds')::double precision AS recording_duration_seconds,
                 (SELECT count(DISTINCT segment.id)
                  FROM app.client_journey_entries entry
@@ -157,6 +157,11 @@ def completed_jobs(context):
                 WHERE session_id=session.id AND organization_id=job.organization_id AND client_id=job.client_id
                 ORDER BY version_number DESC LIMIT 1
             ) note ON true
+            LEFT JOIN LATERAL (
+                SELECT id FROM app.synthesis_versions
+                WHERE session_id=session.id AND organization_id=job.organization_id AND client_id=job.client_id
+                ORDER BY version_number DESC LIMIT 1
+            ) synthesis ON true
             WHERE job.organization_id=%s AND job.client_id=%s AND job.status='COMPLETED'
             ORDER BY COALESCE(appointment.starts_at, session.started_at, job.created_at) DESC""",
             (context['organization_id'], context['client_id']))

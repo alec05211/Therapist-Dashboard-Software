@@ -43,6 +43,33 @@ class JourneyProposalJobTests(unittest.TestCase):
             self.assertTrue(journey_proposal_jobs.process_one(session_id=job['session_id']))
         fail.assert_called_once_with(job, 'RuntimeError')
 
+    def test_late_analysis_does_not_add_new_scope_after_review_is_complete(self):
+        connection = MagicMock()
+        connection.__enter__.return_value = connection
+        cursor = connection.cursor.return_value.__enter__.return_value
+        cursor.fetchall.side_effect = [
+            [{'sequence_number': 0, 'id': 'segment-0'}, {'sequence_number': 1, 'id': 'segment-1'}],
+            [{'sequence_number': 0}],
+            [],
+        ]
+        cursor.rowcount = 1
+        job = {
+            'session_id': uuid4(), 'organization_id': uuid4(), 'client_id': uuid4(),
+            'source_transcript_version_id': uuid4(), 'worker_token': 'lease',
+        }
+        claim = {
+            'evidence_segment_keys': ['1'], 'synthesis_focus': 'New late scope',
+            'categories': ['context'], 'claim_summary': 'Late claim',
+            'relationship': 'session_context', 'related_insight_item_ids': [],
+        }
+        with patch.object(journey_proposal_jobs, 'connect', return_value=connection):
+            journey_proposal_jobs._publish(
+                job, [claim], {'model': 'test-model'}, {'snapshot_id': None}, 'fingerprint')
+
+        statements = [call.args[0] for call in cursor.execute.call_args_list]
+        self.assertTrue(any('DELETE FROM app.client_journey_entries' in sql for sql in statements))
+        self.assertFalse(any('INSERT INTO app.client_journey_entries' in sql for sql in statements))
+
 
 if __name__ == '__main__':
     unittest.main()

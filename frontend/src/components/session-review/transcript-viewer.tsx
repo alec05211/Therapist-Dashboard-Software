@@ -54,9 +54,17 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
   const [volume, setVolume] = useState(1);
   const audio = useRef<HTMLAudioElement>(null);
   const activeSegmentElement = useRef<HTMLLIElement>(null);
+  const suppressPlaybackAutoExpand = useRef(false);
 
+  const previousActiveSegment = useRef(-1);
   useEffect(() => {
-    if (activeSegment < 0) return;
+    const previous = previousActiveSegment.current;
+    previousActiveSegment.current = activeSegment;
+    if (activeSegment < 0) {
+      suppressPlaybackAutoExpand.current = false;
+      return;
+    }
+    if (activeSegment === previous || suppressPlaybackAutoExpand.current) return;
     const frame = window.requestAnimationFrame(() => setExpanded(true));
     return () => window.cancelAnimationFrame(frame);
   }, [activeSegment, setExpanded]);
@@ -161,7 +169,7 @@ export function TranscriptViewer({ transcript, recordContext, sessionId, readOnl
     <section className="w-full rounded-2xl border border-stone-200 bg-white p-5 shadow-sm [&>section:first-of-type]:mt-0" aria-label="Session materials">
       {playbackError && <p role="alert" className="mb-3 text-sm text-red-700">{playbackError}</p>}
       {showClinicalNote && <ClinicalNote sections={transcript.clinical_note} recordContext={recordContext} sessionId={sessionId} editable={!readOnly && Boolean(recordContext && sessionId)} initialStatus={initialClinicalNoteStatus} expanded={clinicalNoteExpanded} onExpandedChange={onClinicalNoteExpandedChange} />}
-      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? <div className="border-t border-stone-200 bg-white">{transcriptRows}</div> : undefined} expanded={expanded} onExpandedChange={next => { setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
+      {showTranscript && <CollapsibleContentPanel title="Transcript" summary={summary} preview="No transcript details available." previewContent={transcript.segments.length ? <div className="border-t border-stone-200 bg-white">{transcriptRows}</div> : undefined} expanded={expanded} onExpandedChange={next => { suppressPlaybackAutoExpand.current = !next && activeSegment >= 0; setExpanded(next); if (!next) { setOpenClaimIds([]); setActiveClaimId(null); } }} className="mt-5">
         <div className="flex h-[calc(100dvh-9rem)] max-h-[900px] min-h-64 flex-col border-t border-stone-200 bg-white">
           <TranscriptScrollReader revision={`${sessionId}-${transcript.segments.length}-${quotes.entries.map(entry => entry.id).join(",")}`}>
             {transcriptRows}

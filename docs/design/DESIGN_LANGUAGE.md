@@ -248,14 +248,18 @@ pointer and keyboard interaction until the carousel moves them into view. Its
 schedule action remains above the right edge as the only separately interactive
 boundary, using a calendar/edit icon with an accessible label and hover description.
 
-Session cards show a green state label, a smaller regular-weight gray date, and
-duration beneath the date. Completed duration comes from the recording and shows
+Session cards keep a fixed height across scheduled, processing, and completed
+states. A distinct circular calendar or completion icon anchors a compact green
+state label, while the date carries the primary typographic emphasis and duration
+sits beneath it. Completed duration comes from the recording and shows
 minutes and seconds; scheduled duration remains a booked-time estimate such as
 `~50m`. Never substitute the final transcript timestamp for recording length.
 Therapist-only `to review` counts match distinct passages highlighted for pending
 evidence review in the current transcript, rather than proposal-record counts:
 one proposal may cite several passages. Hide this count when none remain and
-hide the red italic draft label independently when the latest note is finalized.
+hide the draft label independently when the latest note is finalized. Draft and
+pending-review notices remain large enough to scan in the card's upper-right but
+use quiet, regular-weight muted text rather than alert styling.
 The heading and scheduling control overlay the outer cards with a small inset
 below their top boundary; retain symmetric outer top and bottom padding.
 
@@ -303,6 +307,9 @@ session returns to its normal time the following week.
 Recurring scheduling configuration starts collapsed behind a single disclosure
 row. Its suggested options state the full date and start/end block derived from
 the selected session length; scheduling the series also persists those settings.
+Those saved recurring settings are the schedule source of truth: the application
+keeps at least three active recurring appointments ahead as completed sessions
+roll off, preserving local wall-clock time across daylight-saving changes.
 One-time and make-up creation belongs directly in available week-calendar slots,
 not in a duplicate form below the calendar.
 Recurring configuration is relationship-aware: saved preferences and the next

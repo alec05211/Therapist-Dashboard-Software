@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import unquote, urlparse
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -32,7 +33,7 @@ from database import client_assistant
 from database import synthesis_refresh
 from database import client_diagnostics
 from database.clinical_synthesis_worker import process_one as process_one_clinical_synthesis
-from database.scheduling import available_recurring_slots, recurring_occurrences
+from database.scheduling import available_recurring_slots, next_recurring_occurrence, recurring_occurrences
 from database.longitudinal_records import InsightEvidence, InsightItem, LongitudinalRecordRepository
 from ai_harness.brief_projection import project_accepted_insights, project_session_proposals
 from ai_harness.brief_service import brief_input
@@ -607,7 +608,85 @@ def appointment_payload(row):
     }
 
 
+MIN_UPCOMING_RECURRING_APPOINTMENTS = 3
+
+
+def ensure_recurring_schedule_horizon(connection, context, scope, minimum=MIN_UPCOMING_RECURRING_APPOINTMENTS):
+    """Keep configured recurring care scheduled at least `minimum` sessions ahead."""
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT cadence_weeks, duration_minutes, meeting_mode, timezone,
+                   preferred_weekday, preferred_start_local
+            FROM app.client_scheduling_preferences
+            WHERE organization_id=%s AND client_id=%s AND practitioner_id=%s
+            FOR UPDATE""", (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        preferences = cursor.fetchone()
+        if not preferences:
+            return 0
+        cursor.execute("""SELECT starts_at, series_id
+            FROM app.appointments
+            WHERE organization_id=%s AND client_id=%s AND primary_practitioner_id=%s
+              AND appointment_type='recurring'
+            ORDER BY starts_at DESC LIMIT 1""",
+            (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        latest = cursor.fetchone()
+        cursor.execute("""SELECT count(*) AS count
+            FROM app.appointments
+            WHERE organization_id=%s AND client_id=%s AND primary_practitioner_id=%s
+              AND appointment_type='recurring' AND status IN ('scheduled','confirmed')
+              AND ends_at>CURRENT_TIMESTAMP""",
+            (context["organization_id"], context["client_id"], scope["practitioner_id"]))
+        active_count = int(cursor.fetchone()["count"])
+        if active_count >= minimum:
+            return 0
+
+        zone = ZoneInfo(preferences["timezone"])
+        now = datetime.now(zone)
+        if latest:
+            candidate = latest["starts_at"]
+            series_id = latest["series_id"] or uuid4()
+        elif preferences.get("preferred_weekday") is not None and preferences.get("preferred_start_local"):
+            days_ahead = (preferences["preferred_weekday"] - now.weekday()) % 7
+            first_day = now.date() + timedelta(days=days_ahead)
+            first = datetime.combine(first_day, preferences["preferred_start_local"], zone)
+            if first <= now:
+                first += timedelta(weeks=preferences["cadence_weeks"])
+            candidate = first - timedelta(weeks=preferences["cadence_weeks"])
+            series_id = uuid4()
+        else:
+            return 0
+
+        inserted = 0
+        for _ in range(52):
+            if active_count + inserted >= minimum:
+                break
+            candidate = next_recurring_occurrence(candidate, preferences["cadence_weeks"], preferences["timezone"])
+            if candidate <= now:
+                continue
+            ends_at = candidate + timedelta(minutes=preferences["duration_minutes"])
+            cursor.execute("""SELECT 1 FROM app.appointments
+                WHERE organization_id=%s AND client_id=%s AND primary_practitioner_id=%s
+                  AND starts_at=%s LIMIT 1""",
+                (context["organization_id"], context["client_id"], scope["practitioner_id"], candidate))
+            if cursor.fetchone():
+                continue
+            cursor.execute("""SELECT 1 FROM app.appointments
+                WHERE primary_practitioner_id=%s AND status IN ('scheduled','confirmed')
+                  AND starts_at<%s AND ends_at>%s LIMIT 1""",
+                (scope["practitioner_id"], ends_at, candidate))
+            if cursor.fetchone():
+                continue
+            cursor.execute("""INSERT INTO app.appointments
+                (organization_id, client_id, primary_practitioner_id, starts_at, ends_at,
+                 status, appointment_type, series_id, meeting_mode)
+                VALUES (%s,%s,%s,%s,%s,'scheduled','recurring',%s,%s)""",
+                (context["organization_id"], context["client_id"], scope["practitioner_id"],
+                 candidate, ends_at, series_id, preferences["meeting_mode"]))
+            inserted += 1
+        return inserted
+
+
 def scheduling_data(connection, context, scope):
+    ensure_recurring_schedule_horizon(connection, context, scope)
     with connection.cursor() as cursor:
         cursor.execute("""SELECT cadence_weeks, duration_minutes, meeting_mode, timezone,
                    preferred_weekday, preferred_start_local
@@ -654,6 +733,7 @@ def scheduling_data(connection, context, scope):
     )
     return {"organization_id": str(context["organization_id"]), "client_id": str(context["client_id"]),
             "client_name": scope["client_name"], "preferences": preference_payload,
+            "minimum_upcoming_recurring_sessions": MIN_UPCOMING_RECURRING_APPOINTMENTS,
             "has_existing_schedule": bool(stored_preferences or recurring_appointments),
             "current_recurring_starts_at": recurring_appointments[0]["starts_at"].isoformat() if recurring_appointments else None,
             "appointments": [appointment_payload(row) for row in client_appointments],
@@ -718,6 +798,7 @@ def create_appointment(request: AppointmentCreateRequest, authorization: str | N
     context = {"organization_id": str(request.organization_id), "client_id": str(request.client_id)}
     with connect() as connection:
         scope = scheduling_scope(connection, authorization, **context)
+        local_recurring_start = request.starts_at.astimezone(ZoneInfo(request.timezone)) if request.appointment_type == "recurring" else None
         starts = recurring_occurrences(request.starts_at, request.cadence_weeks,
                                        request.recurrence_count if request.appointment_type == "recurring" else 1)
         series_id = uuid4() if len(starts) > 1 else None
@@ -732,14 +813,20 @@ def create_appointment(request: AppointmentCreateRequest, authorization: str | N
                     raise HTTPException(status_code=409, detail="That time overlaps another appointment.")
             cursor.execute("""INSERT INTO app.client_scheduling_preferences
                 (organization_id, client_id, practitioner_id, cadence_weeks, duration_minutes,
-                 meeting_mode, timezone, updated_by_user_id)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                 meeting_mode, timezone, preferred_weekday, preferred_start_local, updated_by_user_id)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT (client_id) DO UPDATE SET cadence_weeks=EXCLUDED.cadence_weeks,
                   duration_minutes=EXCLUDED.duration_minutes, meeting_mode=EXCLUDED.meeting_mode,
-                  timezone=EXCLUDED.timezone, updated_by_user_id=EXCLUDED.updated_by_user_id,
+                  timezone=EXCLUDED.timezone,
+                  preferred_weekday=COALESCE(EXCLUDED.preferred_weekday, app.client_scheduling_preferences.preferred_weekday),
+                  preferred_start_local=COALESCE(EXCLUDED.preferred_start_local, app.client_scheduling_preferences.preferred_start_local),
+                  updated_by_user_id=EXCLUDED.updated_by_user_id,
                   updated_at=CURRENT_TIMESTAMP""", (request.organization_id, request.client_id,
                     scope["practitioner_id"], request.cadence_weeks, request.duration_minutes,
-                    request.meeting_mode, request.timezone, scope["actor_user_id"]))
+                    request.meeting_mode, request.timezone,
+                    local_recurring_start.weekday() if local_recurring_start else None,
+                    local_recurring_start.timetz().replace(tzinfo=None) if local_recurring_start else None,
+                    scope["actor_user_id"]))
             for starts_at in starts:
                 cursor.execute("""INSERT INTO app.appointments
                     (organization_id, client_id, primary_practitioner_id, starts_at, ends_at,

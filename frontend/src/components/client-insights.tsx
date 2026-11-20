@@ -382,7 +382,7 @@ function InsightModuleBody({ items, onViewEvidence, className = "" }: { items: I
 }
 
 function InsightTopicCard({ item }: { item: InsightItem }) {
-  return <span title={insightLabel(item.content)} className="block max-w-full break-words rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold leading-5 text-stone-800 shadow-sm">
+  return <span title={insightLabel(item.content)} className="inline max-w-full break-words rounded-lg border border-stone-300 bg-white px-2 py-1 text-xs font-normal leading-5 text-stone-700 shadow-sm box-decoration-clone">
     {insightLabel(item.content)}
   </span>;
 }
@@ -393,7 +393,7 @@ function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; 
     title={`${module.title}:`}
     expanded={expanded}
     onExpandedChange={setExpanded}
-    summary={!expanded && <span className="flex flex-wrap gap-2">{module.items.map((item) => <InsightTopicCard key={item.id} item={item} />)}</span>}
+    summary={!expanded && <span className="min-w-0 leading-7">{module.items.map((item, index) => <span key={item.id}>{index ? " " : null}<InsightTopicCard item={item} /></span>)}</span>}
     preview={module.previewSummary}
     previewContent={<p className="px-4 pb-3 pr-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
     fullPreview

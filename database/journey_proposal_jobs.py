@@ -131,14 +131,24 @@ def _publish(job, claims, metadata, packet, fingerprint):
             JOIN app.transcript_segments segment ON segment.id=evidence.transcript_segment_id
             WHERE entry.session_id=%s AND entry.status <> 'proposed'""", (job['session_id'],))
         reviewed_segments = {str(row['sequence_number']) for row in cursor.fetchall()}
-        if claims:
-            cursor.execute("""DELETE FROM app.client_journey_entries
-                WHERE session_id=%s
-                  AND source_provider IN ('amazon_healthscribe', 'openai_transcript_analysis')
-                  AND status='proposed'""", (job['session_id'],))
+        cursor.execute("""SELECT DISTINCT segment.sequence_number
+            FROM app.client_journey_entries entry
+            JOIN app.client_journey_evidence evidence ON evidence.journey_entry_id=entry.id
+            JOIN app.transcript_segments segment ON segment.id=evidence.transcript_segment_id
+            WHERE entry.session_id=%s AND entry.status='proposed'""", (job['session_id'],))
+        pending_segments = {str(row['sequence_number']) for row in cursor.fetchall()}
+        cursor.execute("""DELETE FROM app.client_journey_entries
+            WHERE session_id=%s
+              AND source_provider IN ('amazon_healthscribe', 'openai_transcript_analysis')
+              AND status='proposed'""", (job['session_id'],))
         for claim in claims:
             evidence_keys = sorted(set(claim['evidence_segment_keys']), key=int)
             if reviewed_segments.intersection(evidence_keys):
+                continue
+            # Once review has begun, the full-transcript pass may refine the
+            # remaining proposal scope but must not surprise the therapist with
+            # new passages after they have already cleared the session.
+            if reviewed_segments and not pending_segments.intersection(evidence_keys):
                 continue
             source_key = 'openai:' + hashlib.sha256(json.dumps({
                 'evidence': evidence_keys, 'focus': claim['synthesis_focus'],
