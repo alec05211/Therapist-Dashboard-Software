@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./voice-profile-settings.module.css";
 
 type Profile = { available: boolean; enrolled: boolean; playable: boolean };
 const prompt = "Today I am taking a moment to record my voice. The morning was quiet, and a gentle breeze moved through the trees. I picked up a blue notebook, opened the window, and thought about the week ahead. Some days are busy, while others leave more room to pause. I am speaking naturally, at a comfortable pace, just as I would in an ordinary conversation.";
 const button = "cursor-grab px-3 py-2 text-sm transition-colors hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50";
 
 function PlayIcon({ playing }: { playing: boolean }) {
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="size-4">{playing ? <path d="M6 4h4v16H6zm8 0h4v16h-4z" /> : <path d="m7 4 14 8-14 8z" />}</svg>;
+  if (playing) return <span aria-hidden="true" className={styles.activity}><span /><span /><span /></span>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="size-4 shrink-0"><path d="m7 4 14 8-14 8z" /></svg>;
 }
 
 export function VoiceProfileSettings() {
@@ -130,16 +132,16 @@ export function VoiceProfileSettings() {
   }
 
   return <div className="mt-6">
-    <div className="inline-flex max-w-full items-stretch overflow-hidden rounded-xl border border-stone-300 bg-stone-50 text-stone-800">
+    <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-stone-300 bg-stone-50 text-stone-800">
       {profile?.enrolled ? <>
-        <button type="button" className={`${button} flex items-center gap-2`} disabled={busy || !profile.playable} onClick={() => void togglePlayback()} aria-label={playing ? "Pause voice identity sample" : "Play voice identity sample"}>
+        <button type="button" className={`${button} flex min-w-0 flex-1 items-center gap-2 text-left`} disabled={busy || !profile.playable} onClick={() => void togglePlayback()} aria-pressed={playing} aria-label={playing ? "Pause voice identity sample" : "Play voice identity sample"}>
           <PlayIcon playing={playing} /><span>Voice identity established</span>
         </button>
         <button type="button" className={`${button} border-l border-stone-300`} disabled={busy || !profile.available} onClick={open}>Re-record</button>
         <button type="button" className={`${button} border-l border-stone-300 hover:bg-red-50 hover:text-red-700`} disabled={busy} onClick={() => void save(true)} aria-label="Delete voice identity" title="Delete voice identity">
           <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" /></svg>
         </button>
-      </> : <button type="button" className={button} onClick={open} disabled={busy || !profile?.available}>{profile ? "Establish voice identity" : "Loading voice identity…"}</button>}
+      </> : <button type="button" className={`${button} w-full text-left`} onClick={open} disabled={busy || !profile?.available}>{profile ? "Establish voice identity" : "Loading voice identity…"}</button>}
     </div>
     {profile?.enrolled && !profile.playable && <p className="mt-2 text-sm text-stone-600">Re-record to add a playable sample to your existing identity.</p>}
     {profile && !profile.available && <p className="mt-2 text-sm text-stone-600">Voice enrollment is currently unavailable.</p>}

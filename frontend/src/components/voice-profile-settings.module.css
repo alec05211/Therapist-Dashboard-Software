@@ -1,0 +1,39 @@
+.activity {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--color-emerald-700, currentColor);
+}
+
+.activity span {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: voice-activity 700ms ease-in-out infinite alternate;
+}
+
+.activity span:nth-child(2) {
+  animation-delay: -420ms;
+  animation-duration: 560ms;
+}
+
+.activity span:nth-child(3) {
+  animation-delay: -180ms;
+  animation-duration: 830ms;
+}
+
+@keyframes voice-activity {
+  from { transform: scaleY(0.25); }
+  to { transform: scaleY(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity span { animation: none; transform: scaleY(0.6); }
+  .activity span:nth-child(2) { transform: scaleY(0.95); }
+}
