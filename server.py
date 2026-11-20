@@ -167,14 +167,14 @@ class ClientPortalPermissionsRequest(BaseModel):
 
 
 class ParticipantIdentificationRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
+    name: str = Field(default="", max_length=200)
     pronouns: str | None = Field(default=None, max_length=80)
 
     @field_validator("name")
     @classmethod
     def clean_identification_name(cls, value: str) -> str:
         value = value.strip()
-        if not value or any(ord(char) < 32 for char in value):
+        if any(ord(char) < 32 for char in value):
             raise ValueError("Control characters are not allowed.")
         return value
 
@@ -1208,7 +1208,7 @@ def read_client_identification(connection, context, actor_user_id):
         relationship = cursor.fetchone()
         if not relationship:
             raise HTTPException(status_code=404, detail="Client identification is unavailable.")
-        cursor.execute("""SELECT participant_role, display_name
+        cursor.execute("""SELECT participant_role, display_name, pronouns
             FROM app.client_identification_profiles
             WHERE organization_id=%s AND client_id=%s""",
             (context["organization_id"], context["client_id"]))
@@ -1217,8 +1217,8 @@ def read_client_identification(connection, context, actor_user_id):
         therapist_name = saved.get("therapist", {}).get("display_name") or relationship["therapist_name"] or "Therapist"
         speakers = speaker_identification.list_associations(cursor, context)
     return {**context,
-        "client": {"name": client_name, "pronouns": saved.get("client", {}).get("pronouns"), "sample": None},
-        "therapist": {"name": therapist_name, "pronouns": saved.get("therapist", {}).get("pronouns"), "sample": None}, "speakers": speakers}
+        "client": {"name": client_name, "preferredName": saved.get("client", {}).get("display_name") or "", "defaultName": relationship["client_name"] or "Client", "pronouns": saved.get("client", {}).get("pronouns"), "sample": None},
+        "therapist": {"name": therapist_name, "preferredName": saved.get("therapist", {}).get("display_name") or "", "defaultName": relationship["therapist_name"] or "Therapist", "pronouns": saved.get("therapist", {}).get("pronouns"), "sample": None}, "speakers": speakers}
 
 
 @app.get("/client-identification")
@@ -1251,7 +1251,7 @@ def update_client_identification(request: ClientIdentificationRequest, authoriza
                       pronouns=EXCLUDED.pronouns,
                       updated_by_user_id=EXCLUDED.updated_by_user_id,
                       updated_at=CURRENT_TIMESTAMP""",
-                    (context["organization_id"], context["client_id"], role, participant.name, participant.pronouns, actor))
+                    (context["organization_id"], context["client_id"], role, participant.name or None, participant.pronouns, actor))
         return read_client_identification(connection, context, actor)
 
 

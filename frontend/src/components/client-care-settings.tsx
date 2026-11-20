@@ -10,8 +10,8 @@ import { ClientDiagnostics } from "@/components/client-diagnostics";
 type Section = "identification" | "scheduling" | "insurance" | "permissions" | "diagnostics";
 type Permission = "transcript" | "insights" | "clinicalNote" | "recordings" | "prescriptions";
 type AudioSample = { recordingUrl: string; start: number; end: number };
-type Participant = { name: string; pronouns: string; sample: AudioSample | null };
-type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sessionLabel: string; sourceLabel: string; profileId?: string; role?: "therapist" | "client"; name: string; sample: AudioSample | null; overridden: boolean };
+type Participant = { name: string; preferredName?: string; defaultName?: string; pronouns: string; sample: AudioSample | null };
+type SpeakerAssociation = { transcriptVersionId: string; sessionId: string; sessionLabel: string; sourceLabel: string; profileId?: string; role?: "therapist" | "client"; name: string; sample: AudioSample | null; overridden: boolean; edited?: boolean };
 
 const sections: SettingsSection[] = [
   { id: "identification", title: "Identification" },
@@ -35,11 +35,11 @@ function VolumeIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5 6.8 8.5H3.5v7h3.3L11 19V5Z" /><path strokeLinecap="round" d="M15 9.25a4 4 0 0 1 0 5.5M17.75 6.75a7.5 7.5 0 0 1 0 10.5" /></svg>;
 }
 
-function IdentificationRow({ id, label, name, sample, playing, suggestions, onChange, onPlay }: { id: string; label: string; name: string; sample: AudioSample | null; playing: boolean; suggestions: string[]; onChange: (name: string) => void; onPlay: () => void }) {
+function IdentificationRow({ id, label, name, sample, playing, suggestions, placeholder, onChange, onPlay }: { id: string; label: string; name: string; sample: AudioSample | null; playing: boolean; suggestions: string[]; placeholder?: string; onChange: (name: string) => void; onPlay: () => void }) {
   return <div className="grid items-center gap-2 py-2.5 text-left sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(8rem,0.55fr)_2.5rem]">
     <div className="min-w-0 break-words text-sm font-semibold text-stone-800">{label}</div>
     <label className="sr-only" htmlFor={`${id}-name`}>{label} name</label>
-    <input id={`${id}-name`} list={`${id}-suggestions`} maxLength={200} placeholder="Choose or enter a name" value={name} onChange={(event) => onChange(event.target.value)} className={`${settingsFieldClass} mt-0 min-w-0 sm:col-span-2`} />
+    <input id={`${id}-name`} list={`${id}-suggestions`} maxLength={200} placeholder={placeholder ?? "Optional display name"} value={name} onChange={(event) => onChange(event.target.value)} className={`${settingsFieldClass} mt-0 min-w-0 sm:col-span-2`} />
     <datalist id={`${id}-suggestions`}>{suggestions.map(suggestion => <option key={suggestion} value={suggestion} />)}</datalist>
     <button type="button" onClick={onPlay} disabled={!sample} aria-label={`${playing ? "Pause" : "Play"} ${label.toLowerCase()} audio sample`} title={sample ? `${playing ? "Pause" : "Play"} a brief ${label.toLowerCase()} audio sample` : `No ${label.toLowerCase()} audio sample is available`} className={`grid size-10 place-items-center rounded-lg border border-stone-300 bg-white transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${sample ? `cursor-grab hover:border-stone-400 hover:bg-stone-100 active:cursor-grabbing ${playing ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "text-stone-600 hover:text-stone-900"}` : "cursor-not-allowed text-stone-300"}`}><VolumeIcon /></button>
   </div>;
@@ -94,8 +94,8 @@ export function ClientCareSettings({ initialSection = "identification", clientId
         const clientBody = body.client as Participant;
         const therapistBody = body.therapist as Participant;
         setContext({ organization_id: String(body.organization_id), client_id: String(body.client_id) });
-        setClient({ name: clientBody.name, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
-        setTherapist({ name: therapistBody.name, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
+        setClient({ name: clientBody.name, preferredName: clientBody.preferredName ?? "", defaultName: clientBody.defaultName, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
+        setTherapist({ name: therapistBody.name, preferredName: therapistBody.preferredName ?? "", defaultName: therapistBody.defaultName, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
         setSpeakers((body.speakers as SpeakerAssociation[] | undefined) ?? []);
       })
       .catch((reason: Error) => { if (active) setIdentificationError(reason.message); })
@@ -117,15 +117,15 @@ export function ClientCareSettings({ initialSection = "identification", clientId
     setBusy(true); setSaved(false); setError(null);
     try {
       const response = section === "identification"
-        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.name, pronouns: client.pronouns || null }, therapist: { name: therapist.name, pronouns: therapist.pronouns || null }, speakers: speakers.filter(speaker => !speaker.profileId).map(({ transcriptVersionId, sourceLabel, name }) => ({ transcript_version_id: transcriptVersionId, source_label: sourceLabel, name })) }) })
+        ? await fetch("/api/client-identification", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, client: { name: client.preferredName ?? "", pronouns: client.pronouns || null }, therapist: { name: therapist.preferredName ?? "", pronouns: therapist.pronouns || null }, speakers: speakers.filter(speaker => !speaker.profileId && speaker.edited).map(({ transcriptVersionId, sourceLabel, name }) => ({ transcript_version_id: transcriptVersionId, source_label: sourceLabel, name })) }) })
         : await fetch("/api/client-portal-permissions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...context, ...Object.fromEntries(Object.entries(permissionFields).map(([key, field]) => [field, choices[key as Permission]])) }) });
       const body = await responseBody(response, "Could not save client care settings.");
       if (section === "identification") {
         audioRef.current?.pause(); setActiveSample(null);
         const clientBody = body.client as Participant;
         const therapistBody = body.therapist as Participant;
-        setClient({ name: clientBody.name, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
-        setTherapist({ name: therapistBody.name, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
+        setClient({ name: clientBody.name, preferredName: clientBody.preferredName ?? "", defaultName: clientBody.defaultName, pronouns: clientBody.pronouns ?? "", sample: clientBody.sample ?? null });
+        setTherapist({ name: therapistBody.name, preferredName: therapistBody.preferredName ?? "", defaultName: therapistBody.defaultName, pronouns: therapistBody.pronouns ?? "", sample: therapistBody.sample ?? null });
         setSpeakers((body.speakers as SpeakerAssociation[] | undefined) ?? []);
       }
       setSaved(true);
@@ -169,13 +169,13 @@ export function ClientCareSettings({ initialSection = "identification", clientId
           const participant = speaker.role === "therapist" ? therapist : client;
           const label = speaker.role === "therapist" ? "Clinician1" : speaker.role === "client" ? "Patient1" : speaker.sourceLabel;
           return <IdentificationRow key={id} id={id} label={label}
-            name={speaker.role ? participant.name : speaker.name} sample={speaker.sample}
+            name={speaker.role ? participant.preferredName ?? "" : speaker.name} placeholder={speaker.role ? participant.defaultName ?? participant.name : undefined} sample={speaker.sample}
             suggestions={[client.name, therapist.name].filter(Boolean)}
             playing={activeSample?.id === id} onPlay={() => toggleSample(id, speaker.sample)}
             onChange={(name) => {
-              if (speaker.role === "therapist") setTherapist(current => ({ ...current, name }));
-              else if (speaker.role === "client") setClient(current => ({ ...current, name }));
-              else setSpeakers(current => current.map(item => !item.profileId && item.sourceLabel.toUpperCase() === speaker.sourceLabel.toUpperCase() ? { ...item, name } : item));
+              if (speaker.role === "therapist") setTherapist(current => ({ ...current, preferredName: name }));
+              else if (speaker.role === "client") setClient(current => ({ ...current, preferredName: name }));
+              else setSpeakers(current => current.map(item => !item.profileId && item.sourceLabel.toUpperCase() === speaker.sourceLabel.toUpperCase() ? { ...item, name, edited: true } : item));
               setSaved(false);
             }} />;
         })}
