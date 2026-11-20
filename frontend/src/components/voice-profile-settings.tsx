@@ -131,7 +131,7 @@ export function VoiceProfileSettings() {
     }
   }
 
-  return <div className="mt-6">
+  return <div>
     <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-stone-300 bg-stone-50 text-stone-800">
       {profile?.enrolled ? <>
         <button type="button" className={`${button} flex min-w-0 flex-1 items-center gap-2 text-left`} disabled={busy || !profile.playable} onClick={() => void togglePlayback()} aria-pressed={playing} aria-label={playing ? "Pause voice identity sample" : "Play voice identity sample"}>
@@ -143,7 +143,6 @@ export function VoiceProfileSettings() {
         </button>
       </> : <button type="button" className={`${button} w-full text-left`} onClick={open} disabled={busy || !profile?.available}>{profile ? "Establish voice identity" : "Loading voice identity…"}</button>}
     </div>
-    {profile?.enrolled && !profile.playable && <p className="mt-2 text-sm text-stone-600">Re-record to add a playable sample to your existing identity.</p>}
     {profile && !profile.available && <p className="mt-2 text-sm text-stone-600">Voice enrollment is currently unavailable.</p>}
     {busy && <p className="mt-2 text-sm text-stone-600" role="status">Processing voice identity…</p>}
     {error && !openDialog && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
