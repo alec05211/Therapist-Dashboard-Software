@@ -58,9 +58,22 @@ api_image="therapist-dashboard-api:$revision"
 frontend_image="therapist-dashboard-frontend:$revision"
 migration_image="therapist-dashboard-migration:$revision"
 
-docker build --file "$repository_root/api-container/Dockerfile" --tag "$api_image" "$repository_root"
+# The single-instance demo host has bounded Docker storage. Running containers
+# keep their referenced images, so removing unused images and build cache here
+# preserves the live release and rollback containers while giving Next.js enough
+# temporary space to assemble its standalone output.
+docker builder prune --all --force >/dev/null
+docker image prune --all --force >/dev/null
+
+# Build the frontend first because Next.js standalone tracing has the highest
+# transient disk requirement. Drop build cache between images; the tagged runtime
+# image remains available for the rollout.
 docker build --file "$repository_root/frontend/Dockerfile" --tag "$frontend_image" "$repository_root/frontend"
+docker builder prune --all --force >/dev/null
+docker build --file "$repository_root/api-container/Dockerfile" --tag "$api_image" "$repository_root"
+docker builder prune --all --force >/dev/null
 docker build --file "$repository_root/database/migration-container/Dockerfile" --tag "$migration_image" "$repository_root"
+docker builder prune --all --force >/dev/null
 
 docker volume create therapist_dashboard_recordings >/dev/null
 
@@ -245,5 +258,6 @@ fi
 
 discard_previous_container "$api_previous"
 discard_previous_container "$frontend_previous"
+docker image prune --all --force >/dev/null
 
 echo "Deployed hosted demo revision $revision."
