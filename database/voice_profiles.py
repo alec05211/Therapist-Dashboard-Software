@@ -81,7 +81,7 @@ def _match_session(storage, version_id, segments):
     if artifact["object_version_id"]:
         params["VersionId"] = artifact["object_version_id"]
     region = storage["region"]
-    url = boto3.client("s3", region_name=region).generate_presigned_url("get_object", Params=params, ExpiresIn=300)
+    url = boto3.client("s3", region_name=region, config=Config(signature_version="s3v4")).generate_presigned_url("get_object", Params=params, ExpiresIn=300)
     references = {str(row["id"]): row for row in profiles}
     turns = [[row["speaker"], float(row["start"]), float(row["end"])]
              for row in segments if row.get("speaker")]
