@@ -189,7 +189,7 @@ def save_associations(cursor, context, associations, actor):
                 (context['organization_id'], context['client_id'], source_label, name, actor))
             cursor.execute("""INSERT INTO app.transcript_speaker_labels
                 (transcript_version_id, source_label, display_label, updated_by_user_id)
-                SELECT DISTINCT transcript.id, segment.speaker_label, %s, %s
+                SELECT DISTINCT transcript.id, segment.speaker_label, %s, %s::uuid
                 FROM app.transcript_versions transcript
                 JOIN app.transcript_segments segment ON segment.transcript_version_id=transcript.id
                 WHERE transcript.organization_id=%s AND transcript.client_id=%s
