@@ -30,12 +30,12 @@ def invoke(event, region=None):
     return result
 
 
-def enroll(subject, audio):
+def enroll(subject, audio, mime="audio/webm"):
     embedding = invoke({"operation": "enroll", "audio": base64.b64encode(audio).decode()})["embedding"]
     with connect() as connection, connection.cursor() as cursor:
-        cursor.execute("""INSERT INTO app.account_voice_profiles(subject, embedding) VALUES (%s,%s)
-            ON CONFLICT (subject) DO UPDATE SET embedding=EXCLUDED.embedding, updated_at=CURRENT_TIMESTAMP""",
-            (subject, Json(embedding)))
+        cursor.execute("""INSERT INTO app.account_voice_profiles(subject, embedding, sample_audio, sample_mime) VALUES (%s,%s,%s,%s)
+            ON CONFLICT (subject) DO UPDATE SET embedding=EXCLUDED.embedding, sample_audio=EXCLUDED.sample_audio, sample_mime=EXCLUDED.sample_mime, updated_at=CURRENT_TIMESTAMP""",
+            (subject, Json(embedding), audio, mime))
 
 
 def match_session(storage, version_id, segments):

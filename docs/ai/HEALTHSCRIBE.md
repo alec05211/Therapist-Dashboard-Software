@@ -211,3 +211,5 @@ See [AI_ML_VISION.md](AI_ML_VISION.md) for that direction.
 ### Automatic speaker attribution
 
 Account Settings owns opt-in voice enrollment. The hosted worker decodes audio and creates a fixed embedding for the enrolled account. After transcript import it compares timestamped clips from the original recording with eligible participant profiles and saves confident mappings by transcript version. Uncertain clips keep their source label. Transcript-specific edits take precedence. Client Care Identification combines matched labels into a single row per enrolled speaker across recordings and plays an authorized session clip. Legacy label associations remain available for unresolved speakers.
+
+Account Settings presents voice identity as one compact playback control with re-record and delete actions. Enrollment uses browser microphone capture and a neutral reading passage, then saves the recording with its embedding for authenticated account-only playback. Existing embedding-only profiles can be re-recorded to enable playback. Session import records the uploading practitioner as a participant so their enrolled voice can be loaded by the matcher.

@@ -946,9 +946,10 @@ def account_profile_target(connection, authorization):
 def get_voice_profile(authorization: str | None = Header(default=None)):
     with connect() as connection, connection.cursor() as cursor:
         role, subject, _ = account_profile_target(connection, authorization)
-        cursor.execute("SELECT 1 FROM app.account_voice_profiles WHERE subject=%s", (subject,))
+        cursor.execute("SELECT sample_audio IS NOT NULL AS playable FROM app.account_voice_profiles WHERE subject=%s", (subject,))
+        profile = cursor.fetchone()
         return {"available": voice_profiles.enabled() and role in ("therapist", "client"),
-                "enrolled": cursor.fetchone() is not None}
+                "enrolled": profile is not None, "playable": bool(profile and profile["playable"])}
 
 
 @app.put("/account/voice-profile")
@@ -963,13 +964,28 @@ async def save_voice_profile(audio: UploadFile = File(...), authorization: str |
     sample = await audio.read(4 * 1024 * 1024 + 1)
     if not sample or len(sample) > 4 * 1024 * 1024:
         raise HTTPException(422, "Choose a recording smaller than 4 MB.")
+    mime = (audio.content_type or "").split(";")[0]
+    if mime not in {"audio/webm", "video/webm", "audio/ogg", "audio/mp4", "audio/wav", "audio/mpeg"}:
+        raise HTTPException(422, "Use a supported audio recording.")
     try:
-        await run_in_threadpool(voice_profiles.enroll, subject, sample)
+        await run_in_threadpool(voice_profiles.enroll, subject, sample, mime)
     except KeyError as exc:
         raise HTTPException(422, "Record at least a few seconds of clear speech.") from exc
     except (BotoCoreError, ClientError, RuntimeError) as exc:
         raise HTTPException(503, "Voice enrollment could not be processed.") from exc
     return {"enrolled": True}
+
+
+@app.get("/account/voice-profile/audio")
+def play_voice_profile(authorization: str | None = Header(default=None)):
+    subject = validate_access_token(authorization)["sub"]
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT sample_audio, sample_mime FROM app.account_voice_profiles WHERE subject=%s", (subject,))
+        row = cursor.fetchone()
+    if not row or not row["sample_audio"]:
+        raise HTTPException(404, "No voice recording is available.")
+    return Response(content=bytes(row["sample_audio"]), media_type=row["sample_mime"],
+                    headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
 
 @app.delete("/account/voice-profile")

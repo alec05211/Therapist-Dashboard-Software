@@ -80,6 +80,21 @@ def create_upload(context, suffix, actor_subject, appointment_id=None):
             (session_id, context['organization_id'], context['client_id'],
              appointment['id'] if appointment else None,
              appointment['starts_at'] if appointment else None, actor_subject))
+        cursor.execute("""INSERT INTO app.session_practitioner_participants
+            (session_id, practitioner_id, client_therapist_access_id, participation_role)
+            SELECT %s, practitioner.id, access.id, 'therapist'
+            FROM app.organization_practitioners practitioner
+            JOIN app.organization_memberships membership ON membership.id=practitioner.membership_id
+            JOIN app.application_users actor ON actor.id=membership.user_id
+            JOIN app.client_therapist_access access ON access.practitioner_id=practitioner.id
+              AND access.organization_id=practitioner.organization_id
+            WHERE actor.auth0_subject=%s AND actor.status='active' AND membership.status='active'
+              AND practitioner.organization_id=%s AND practitioner.status='active'
+              AND access.client_id=%s AND access.revoked_at IS NULL AND access.can_write_clinical
+              AND access.effective_from<=CURRENT_TIMESTAMP
+              AND (access.effective_until IS NULL OR access.effective_until>CURRENT_TIMESTAMP)
+            ON CONFLICT (session_id, practitioner_id) DO NOTHING""",
+            (session_id, actor_subject, context['organization_id'], context['client_id']))
         cursor.execute("""INSERT INTO app.session_storage_jobs
             (runtime_id, session_id, organization_id, client_id, job_name, storage, status)
             VALUES (%s, %s, %s, %s, %s, %s, 'UPLOADING')""",
