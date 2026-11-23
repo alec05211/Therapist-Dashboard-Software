@@ -413,18 +413,11 @@ revealed.
   break only when length requires it; do not render the context as a list,
   nested panel, callout, or separately bordered block. Contextual prose should
   use sentence structures chosen for the specific evidence rather than repeated
-  lead-ins such as “This appeared when.” Evidence belongs only in
-  the contextual layer:
-  one or more model-provided claim anchors bold and link each supported phrase to its exact
-  transcript slices. Linked claims use bold text without colored underlines and
-  remain true inline prose links, wrapping word-by-word like the surrounding text
-  rather than moving the entire claim to a new line as an atomic control. Render
-  the first letter in sentence case for its displayed position—capitalized at a
-  sentence start and lowercase mid-sentence—without changing the stored anchor
-  used to resolve evidence.
-  Do not infer anchors from similar wording or quotations.
-  Older items without valid claim anchors keep their analysis intact and place
-  one quiet statement-level source link in a separate contextual block.
+  lead-ins such as “This appeared when.” After the writeup is complete, the
+  annotation pass can select short evidence anchors in the analysis or context.
+  Linked phrases are bold without colored underlines and wrap like the
+  surrounding prose. Preserve the prose's capitalization and punctuation.
+  Statements without a valid short anchor remain plain.
 
 - Session review uses the same `SessionCardCarousel`, `CompletedSessionLayout`,
   `TranscriptViewer`, and `ClinicalNote` in both roles. The viewer owns playback

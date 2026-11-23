@@ -75,7 +75,7 @@ missing topics, cross-section coverage, duplicate coverage, absent phrases, and
 copied prose. This structural check does not prove semantic faithfulness; clinician
 review remains necessary. Summaries must not introduce new interpretations. Older snapshots display the topic cards until a refresh provides a summary. Viewing never generates.
 
-The expanded view keeps the summary at the top and places each topic card above its individual writeup. Links use short exact phrases in the finished prose. Finalized-note links open a verified passage from the cited version when one was saved. Each theme has a singular, easily identifiable label, its own
+The expanded view keeps the summary at the top and places each topic card above its individual writeup. A separate annotation pass selects short exact phrases in the finished prose. Statements without a valid short phrase remain plain, with no substitute link. Finalized-note links open a verified passage from the cited version when one was saved. Each theme has a singular, easily identifiable label, its own
 evidence-linked prose, and a matching matrix row. Expanded cards use
 compact padding and paragraph gaps while preserving readable line spacing and
 all existing evidence links.

@@ -93,6 +93,10 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         errors = validate_response(document, evidence, set(), require_short_anchors=True)
         self.assertTrue(any("short whole-word phrase" in error for error in errors))
         self.assertTrue(any("invalid finalized-note excerpt" in error for error in errors))
+        self.assertEqual(errors.counts, {"anchor_too_broad": 1, "note_excerpt_invalid": 1})
+        claim["note_passages"] = []
+        errors = validate_response(document, evidence, set(), require_short_anchors=True)
+        self.assertEqual(errors.counts, {"anchor_too_broad": 1, "note_excerpt_missing": 1})
 
     def test_evidence_roles_must_cover_citations_exactly_once(self):
         document = self.analytical_document()
@@ -170,12 +174,36 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         document['items'].append({**document['items'][0], 'kind': 'theme'})
         self.assertIn('consolidate across sections', '; '.join(validate_response(document, self.evidence, set())))
 
-    def test_generation_coordinates_sections_in_one_request_without_filling_quotas(self):
+    def writing_document(self):
+        document = self.analytical_document()
+        document["items"][0]["analysis_claims"] = [{
+            "sentence_index": 0, "evidence_ids": ["e-1", "e-2"], "note_passages": [],
+        }]
+        return document
+
+    def test_generation_coordinates_sections_before_separate_annotation(self):
+        document = self.writing_document()
+        prose = document["items"][0]["analysis"]
+        evidence = [self.evidence[0], {**self.evidence[1], "source_type": "finalized_clinical_note",
+                    "content": {"plain_text": "The concern persisted. Client waited before checking."}}]
+        document["items"][0]["analysis_claims"][0]["note_passages"] = [{"evidence_id": "e-2", "passage_id": 2}]
+        annotations = {"annotations": [{"claim_index": 0, "phrase": "greater tolerance of uncertainty"}]}
         with patch('ai_harness.longitudinal_insights._request_structured_response',
-                   return_value=(self.analytical_document(), {})) as request:
-            generate_openai_longitudinal_insights(evidence=self.evidence, api_key='test', model='test')
-        request.assert_called_once()
-        payload = request.call_args.args[0]
+                   side_effect=[(document, {}), (annotations, {"usage": {"input_tokens": 50}})]) as request:
+            generated, metadata = generate_openai_longitudinal_insights(evidence=evidence, api_key='test', model='test')
+        self.assertEqual(request.call_count, 2)
+        payload = request.call_args_list[0].args[0]
+        import json
+        note = json.loads(payload["input"])["evidence"][1]["content"]
+        self.assertEqual(note["passages"][1], {"passage_id": 2, "text": "Client waited before checking."})
+        self.assertEqual(json.loads(request.call_args_list[1].args[0]["input"]), {
+            "claims": [{"claim_index": 0, "sentence": prose}],
+        })
+        item = to_snapshot_content(generated)[1][0]["content"]
+        self.assertEqual(item["analysis"], prose)
+        self.assertTrue(item["analysis_claims"][0]["inline"])
+        self.assertEqual(item["analysis_claims"][0]["note_passages"][0]["excerpt"], "Client waited before checking.")
+        self.assertEqual(metadata["usage"]["input_tokens"], 50)
         self.assertIn('Plan trajectory, theme, open_thread, and relevant_history together', payload['instructions'])
         self.assertIn('Do not repeat an interpretation', payload['instructions'])
         self.assertIn('Classify roles relative to the direction', payload['instructions'])
@@ -280,19 +308,50 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
         self.assertIn('each of its topics', '; '.join(validate_response(
             document, self.evidence, set(), require_summary_coverage=True)))
 
+    def test_bad_annotation_keeps_supported_prose_and_hides_the_link(self):
+        document = self.writing_document()
+        annotations = {"annotations": [{"claim_index": 0, "phrase": "words missing from prose"}]}
+        with patch('ai_harness.longitudinal_insights._request_structured_response',
+                   side_effect=[(document, {}), (annotations, {})]):
+            generated, _ = generate_openai_longitudinal_insights(evidence=self.evidence, api_key='test', model='test')
+        item = to_snapshot_content(generated)[1][0]
+        self.assertFalse(item["content"]["analysis_claims"][0]["inline"])
+        self.assertEqual(item["evidence_ids"], ["e-1", "e-2"])
+
+    def test_invalid_note_passage_is_repaired_before_annotations(self):
+        bad = self.writing_document()
+        good = self.writing_document()
+        evidence = [self.evidence[0], {**self.evidence[1], "source_type": "finalized_clinical_note",
+                    "content": {"plain_text": "Client waited before checking."}}]
+        for document, passage_id in ((bad, 9), (good, 1)):
+            document["items"][0]["analysis_claims"][0]["note_passages"] = [
+                {"evidence_id": "e-2", "passage_id": passage_id},
+            ]
+        repairs = []
+        with patch('ai_harness.longitudinal_insights._request_structured_response',
+                   side_effect=[(bad, {}), (good, {}), RuntimeError("Annotation unavailable")]):
+            generated, _ = generate_openai_longitudinal_insights(
+                evidence=evidence, api_key='test', model='test',
+                on_repair=lambda attempt, count, codes: repairs.append((attempt, count, codes)),
+            )
+        self.assertEqual(repairs, [(1, 1, {"note_excerpt_invalid": 1})])
+        claim = to_snapshot_content(generated)[1][0]["content"]["analysis_claims"][0]
+        self.assertFalse(claim["inline"])
+        self.assertEqual(claim["note_passages"][0]["excerpt"], "Client waited before checking.")
+
     def test_duplicate_document_is_repaired_with_all_sections_in_context(self):
-        document = self.analytical_document()
+        document = self.writing_document()
         duplicate = {**document, 'items': [document['items'][0], {**document['items'][0], 'kind': 'theme'}]}
         repair_events = []
         with patch('ai_harness.longitudinal_insights._request_structured_response',
-                   side_effect=[(duplicate, {}), (document, {})]) as request:
+                   side_effect=[(duplicate, {}), (document, {}), ({"annotations": []}, {})]) as request:
             generate_openai_longitudinal_insights(
                 evidence=self.evidence, api_key='test', model='test',
                 on_repair=lambda attempt, count, codes: repair_events.append((attempt, count, codes)),
             )
         self.assertEqual(repair_events, [(1, 2, {'duplicate_insight': 1, 'summary_structure': 1})])
         import json
-        repair = json.loads(request.call_args.args[0]['input'])
+        repair = json.loads(request.call_args_list[1].args[0]['input'])
         self.assertEqual(len(repair['rejected_draft']['items']), 2)
         self.assertEqual(repair['evidence'], self.evidence)
 

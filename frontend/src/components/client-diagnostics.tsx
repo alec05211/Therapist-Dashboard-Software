@@ -35,6 +35,7 @@ function DiagnosticRow({ event }: { event: Event }) {
     anchor_too_broad: "Evidence link is too broad or splits a word",
     anchor_overlap: "Overlapping evidence links",
     source_invalid: "Invalid or unavailable evidence IDs",
+    sentence_source_missing: "Insight sentence missing a source mapping",
     source_roles_invalid: "Missing, duplicate, or invalid source roles",
     note_excerpt_missing: "Missing finalized-note passage",
     note_excerpt_invalid: "Invalid finalized-note passage",
