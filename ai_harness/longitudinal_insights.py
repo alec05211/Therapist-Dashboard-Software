@@ -264,8 +264,49 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     }
 
 
-def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False, require_evidence_roles: bool = False, require_short_anchors: bool = False) -> list[str]:
-    violations: list[str] = []
+INSIGHT_VALIDATION_CODES = frozenset({
+    "anchor_invalid",
+    "anchor_missing",
+    "anchor_not_found",
+    "anchor_overlap",
+    "anchor_too_broad",
+    "duplicate_insight",
+    "insight_structure",
+    "note_excerpt_invalid",
+    "note_excerpt_missing",
+    "source_invalid",
+    "source_roles_invalid",
+    "summary_anchor_not_found",
+    "summary_copies_prose",
+    "summary_coverage_invalid",
+    "summary_structure",
+})
+
+
+class ValidationIssues(list[str]):
+    """Repair feedback with separate, fixed diagnostic counters."""
+
+    def __init__(self):
+        super().__init__()
+        self.counts: dict[str, int] = {}
+
+    def add(self, code: str, message: str) -> None:
+        self.append(message)
+        self.counts[code] = self.counts.get(code, 0) + 1
+
+
+class InsightValidationError(RuntimeError):
+    def __init__(self, issues: ValidationIssues, *, draft, usage, repair_attempts):
+        super().__init__("OpenAI output did not satisfy the longitudinal evidence contract")
+        self.generated_response = draft
+        self.violations = tuple(issues)
+        self.validation_counts = issues.counts
+        self.usage = usage
+        self.repair_attempts = repair_attempts
+
+
+def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False, require_evidence_roles: bool = False, require_short_anchors: bool = False) -> ValidationIssues:
+    violations = ValidationIssues()
     note_text_by_id = {
         source["evidence_id"]: source["content"]["plain_text"]
         for source in evidence
@@ -278,71 +319,72 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
     kinds: set[str] = set()
     items = generated.get("items")
     if not isinstance(generated.get("overview"), str) or not generated["overview"].strip():
-        violations.append("overview is missing")
+        violations.add("insight_structure", "overview is missing")
     if not isinstance(items, list):
-        return violations + ["items must be a list"]
+        violations.add("insight_structure", "items must be a list")
+        return violations
     seen_analysis: set[str] = set()
     seen_theme_labels: set[str] = set()
     if not items:
-        violations.append("return at least one distinct insight item")
+        violations.add("insight_structure", "return at least one distinct insight item")
     for item_index, item in enumerate(items):
         if not isinstance(item, dict):
-            violations.append(f"item {item_index} is not an object")
+            violations.add("insight_structure", f"item {item_index} is not an object")
             continue
         kind, label, analysis = item.get("kind"), item.get("label"), item.get("analysis")
         if kind not in INSIGHT_KINDS:
-            violations.append(f"item {item_index} has unsupported kind")
+            violations.add("insight_structure", f"item {item_index} has unsupported kind")
         else:
             kinds.add(kind)
         if not isinstance(analysis, str) or not analysis.strip():
-            violations.append(f"item {item_index} analysis is missing")
+            violations.add("insight_structure", f"item {item_index} analysis is missing")
         if not isinstance(label, str) or not label.strip():
-            violations.append(f"item {item_index} label is missing")
+            violations.add("insight_structure", f"item {item_index} label is missing")
         if kind == "theme" and isinstance(label, str) and label.strip():
             normalized_label = ' '.join(re.findall(r"\w+", label.casefold()))
             if normalized_label in seen_theme_labels:
-                violations.append(f"item {item_index} duplicates another theme's label; keep one distinct theme per pattern")
+                violations.add("duplicate_insight", f"item {item_index} duplicates another theme's label; keep one distinct theme per pattern")
             seen_theme_labels.add(normalized_label)
         if isinstance(analysis, str) and ("**" in analysis or "[" in analysis or "]" in analysis):
-            violations.append(f"item {item_index} analysis contains evidence-link markup")
+            violations.add("insight_structure", f"item {item_index} analysis contains evidence-link markup")
         if isinstance(analysis, str):
             normalized = ' '.join(analysis.casefold().split())
             if normalized in seen_analysis:
-                violations.append(f"item {item_index} duplicates another item's analysis; consolidate across sections")
+                violations.add("duplicate_insight", f"item {item_index} duplicates another item's analysis; consolidate across sections")
             seen_analysis.add(normalized)
         contexts = item.get("context_statements")
         analysis_claims = item.get("analysis_claims")
         if require_analysis_claims and analysis_claims is None:
-            violations.append(f"item {item_index} needs analytical evidence anchors")
+            violations.add("anchor_missing", f"item {item_index} needs analytical evidence anchors")
         if analysis_claims is not None and (not isinstance(analysis_claims, list) or not analysis_claims):
-            violations.append(f"item {item_index} needs analytical evidence anchors")
+            violations.add("anchor_missing", f"item {item_index} needs analytical evidence anchors")
         if not isinstance(contexts, list) or (not contexts and analysis_claims is None):
-            violations.append(f"item {item_index} needs contextual evidence")
+            violations.add("anchor_missing", f"item {item_index} needs contextual evidence")
             continue
         prose_blocks = ([{"text": analysis, "claims": analysis_claims}] if analysis_claims is not None else []) + contexts
         cited_ids: set[str] = set()
         for context_index, context in enumerate(prose_blocks):
             if not isinstance(context, dict):
-                violations.append(f"item {item_index} context {context_index} is not an object")
+                violations.add("insight_structure", f"item {item_index} context {context_index} is not an object")
                 continue
             text = context.get("text")
             claims = context.get("claims")
             if not isinstance(text, str) or not text.strip():
-                violations.append(f"item {item_index} context {context_index} has no prose")
+                violations.add("insight_structure", f"item {item_index} context {context_index} has no prose")
                 continue
             if not isinstance(claims, list) or not claims:
-                violations.append(f"item {item_index} context {context_index} has no evidence anchors")
+                violations.add("anchor_missing", f"item {item_index} context {context_index} has no evidence anchors")
                 continue
             occupied: list[tuple[int, int]] = []
             for claim_index, anchored_claim in enumerate(claims):
                 if not isinstance(anchored_claim, dict):
-                    violations.append(f"item {item_index} context {context_index} claim {claim_index} is not an object")
+                    violations.add("insight_structure", f"item {item_index} context {context_index} claim {claim_index} is not an object")
                     continue
                 phrase = anchored_claim.get("phrase")
                 occurrence = anchored_claim.get("occurrence")
                 ids = anchored_claim.get("evidence_ids")
                 if not isinstance(phrase, str) or not phrase.strip() or isinstance(occurrence, bool) or not isinstance(occurrence, int) or occurrence < 0:
-                    violations.append(f"item {item_index} context {context_index} claim {claim_index} is invalid")
+                    violations.add("anchor_invalid", f"item {item_index} context {context_index} claim {claim_index} is invalid")
                     continue
                 start = -1
                 for _ in range(occurrence + 1):
@@ -350,28 +392,28 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     if start < 0:
                         break
                 if start < 0:
-                    violations.append(f"item {item_index} context {context_index} claim {claim_index} phrase is absent")
+                    violations.add("anchor_not_found", f"item {item_index} context {context_index} claim {claim_index} phrase is absent")
                 elif require_short_anchors and (
                     len(phrase.split()) > 4
                     or phrase.rstrip(".!?") == text.strip().rstrip(".!?")
                     or (start > 0 and text[start - 1].isalnum() and phrase[0].isalnum())
                     or (start + len(phrase) < len(text) and text[start + len(phrase)].isalnum() and phrase[-1].isalnum())
                 ):
-                    violations.append(f"item {item_index} context {context_index} needs a short whole-word phrase")
+                    violations.add("anchor_too_broad", f"item {item_index} context {context_index} needs a short whole-word phrase")
                 elif any(start < end and start + len(phrase) > prior_start for prior_start, end in occupied):
-                    violations.append(f"item {item_index} context {context_index} has overlapping evidence anchors")
+                    violations.add("anchor_overlap", f"item {item_index} context {context_index} has overlapping evidence anchors")
                 else:
                     occupied.append((start, start + len(phrase)))
                 if (not isinstance(ids, list) or not 1 <= len(ids) <= 4
                         or any(not isinstance(value, str) or value not in allowed_ids for value in ids)):
-                    violations.append(f"item {item_index} context {context_index} claim {claim_index} cites unavailable evidence {ids!r}")
+                    violations.add("source_invalid", f"item {item_index} context {context_index} claim {claim_index} cites unavailable evidence {ids!r}")
                 else:
                     cited_ids.update(ids)
                     passages = anchored_claim.get("note_passages", [])
                     expected = set(ids).intersection(note_text_by_id)
                     actual = set()
                     if not isinstance(passages, list):
-                        violations.append(f"item {item_index} context {context_index} has invalid note passages")
+                        violations.add("note_excerpt_invalid", f"item {item_index} context {context_index} has invalid note passages")
                         continue
                     for passage in passages:
                         note_id = passage.get("evidence_id") if isinstance(passage, dict) else None
@@ -379,18 +421,18 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                         if (not isinstance(note_id, str) or note_id not in expected or note_id in actual
                                 or not isinstance(excerpt, str) or not excerpt.strip()
                                 or len(excerpt) > 280 or excerpt not in note_text_by_id[note_id]):
-                            violations.append(f"item {item_index} context {context_index} has an invalid finalized-note excerpt")
+                            violations.add("note_excerpt_invalid", f"item {item_index} context {context_index} has an invalid finalized-note excerpt")
                         else:
                             actual.add(note_id)
                     if require_short_anchors and actual != expected:
-                        violations.append(f"item {item_index} context {context_index} needs an exact passage for each cited finalized note")
+                        violations.add("note_excerpt_missing", f"item {item_index} context {context_index} needs an exact passage for each cited finalized note")
         roles = item.get("evidence_roles")
         if require_evidence_roles and roles is None:
-            violations.append(f"item {item_index} needs an evidence role for every cited source")
+            violations.add("source_roles_invalid", f"item {item_index} needs an evidence role for every cited source")
         if roles is not None:
             role_ids: set[str] = set()
             if not isinstance(roles, list) or not roles:
-                violations.append(f"item {item_index} needs an evidence role for every cited source")
+                violations.add("source_roles_invalid", f"item {item_index} needs an evidence role for every cited source")
             else:
                 for link in roles:
                     evidence_id = link.get("evidence_id") if isinstance(link, dict) else None
@@ -398,28 +440,28 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     if (not isinstance(evidence_id, str) or evidence_id not in allowed_ids
                             or role not in {"supporting", "contrasting", "context"}
                             or evidence_id in role_ids):
-                        violations.append(f"item {item_index} has an invalid or duplicate evidence role")
+                        violations.add("source_roles_invalid", f"item {item_index} has an invalid or duplicate evidence role")
                     else:
                         role_ids.add(evidence_id)
                 if role_ids != cited_ids:
-                    violations.append(f"item {item_index} evidence roles must cover every cited source exactly once")
+                    violations.add("source_roles_invalid", f"item {item_index} evidence roles must cover every cited source exactly once")
     summaries = generated.get("section_summaries")
     if require_section_summaries or summaries is not None:
         if not isinstance(summaries, list):
-            violations.append("section_summaries must be a list")
+            violations.add("summary_structure", "section_summaries must be a list")
         else:
             summary_kinds: set[str] = set()
             for section in summaries:
                 if not isinstance(section, dict):
-                    violations.append("section summary must be an object")
+                    violations.add("summary_structure", "section summary must be an object")
                     continue
                 kind, summary = section.get("kind"), section.get("summary")
                 if not isinstance(kind, str) or kind not in kinds or kind in summary_kinds:
-                    violations.append("section summaries must cover each populated kind exactly once")
+                    violations.add("summary_structure", "section summaries must cover each populated kind exactly once")
                     continue
                 summary_kinds.add(kind)
                 if not isinstance(summary, str) or not summary.strip() or len(summary) > 600:
-                    violations.append(f"section {kind} summary must contain 1 to 600 characters")
+                    violations.add("summary_structure", f"section {kind} summary must contain 1 to 600 characters")
                     continue
                 coverage = section.get("topic_coverage")
                 if require_summary_coverage or coverage is not None:
@@ -428,24 +470,24 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     covered: set[int] = set()
                     coverage_phrases: set[str] = set()
                     if not isinstance(coverage, list):
-                        violations.append(f"section {kind} summary needs explicit coverage of every topic")
+                        violations.add("summary_coverage_invalid", f"section {kind} summary needs explicit coverage of every topic")
                     else:
                         for link in coverage:
                             if not isinstance(link, dict):
-                                violations.append(f"section {kind} summary coverage is invalid")
+                                violations.add("summary_coverage_invalid", f"section {kind} summary coverage is invalid")
                                 continue
                             index, phrase = link.get("topic_index"), link.get("phrase")
                             if type(index) is not int or index not in expected_topics or index in covered:
-                                violations.append(f"section {kind} summary must cover each of its topics exactly once")
+                                violations.add("summary_coverage_invalid", f"section {kind} summary must cover each of its topics exactly once")
                             elif not isinstance(phrase, str) or not phrase.strip() or phrase not in summary:
-                                violations.append(f"section {kind} summary coverage phrase is absent")
+                                violations.add("summary_anchor_not_found", f"section {kind} summary coverage phrase is absent")
                             elif " ".join(phrase.casefold().split()) in coverage_phrases:
-                                violations.append(f"section {kind} summary reuses the same explanation for different topics")
+                                violations.add("summary_coverage_invalid", f"section {kind} summary reuses the same explanation for different topics")
                             else:
                                 covered.add(index)
                                 coverage_phrases.add(" ".join(phrase.casefold().split()))
                         if covered != expected_topics:
-                            violations.append(f"section {kind} summary must cover each of its topics exactly once")
+                            violations.add("summary_coverage_invalid", f"section {kind} summary must cover each of its topics exactly once")
                 normalized = " ".join(summary.casefold().split())
                 for item in items:
                     if not isinstance(item, dict) or item.get("kind") != kind:
@@ -453,13 +495,13 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     prose = " ".join(str(item.get("analysis", "")).casefold().split())
                     sentences = re.split(r"(?<=[.!?])\s+", prose)
                     if normalized in prose or any(len(sentence) > 30 and sentence in normalized for sentence in sentences):
-                        violations.append(f"section {kind} summary copies topic prose; write a distinct brief synthesis")
+                        violations.add("summary_copies_prose", f"section {kind} summary copies topic prose; write a distinct brief synthesis")
                         break
             if summary_kinds != kinds:
-                violations.append("section summaries must cover each populated kind exactly once")
+                violations.add("summary_structure", "section summaries must cover each populated kind exactly once")
     missing = required_kinds - kinds
     if missing:
-        violations.append("missing insight kinds: " + ", ".join(sorted(missing)))
+        violations.add("insight_structure", "missing insight kinds: " + ", ".join(sorted(missing)))
     return violations
 
 
@@ -596,7 +638,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     while violations and repair_attempt < 3:
         repair_attempt += 1
         if on_repair:
-            on_repair(repair_attempt, len(violations))
+            on_repair(repair_attempt, len(violations), violations.counts)
         repair_payload = {
             **payload,
             "instructions": payload["instructions"] + (
@@ -622,9 +664,8 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         canonicalize_response_anchors(generated)
         violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True, require_short_anchors=True)
     if violations:
-        error = RuntimeError("OpenAI output did not satisfy the longitudinal evidence contract after three repairs: " + "; ".join(violations))
-        error.generated_response = generated
-        error.violations = tuple(violations)
-        error.usage = response_data.get("usage", {})
-        raise error
+        raise InsightValidationError(
+            violations, draft=generated, usage=response_data.get("usage", {}),
+            repair_attempts=repair_attempt,
+        )
     return generated, {"generator_version": INSIGHTS_GENERATOR_VERSION, "model": response_data.get("model", model), "response_id": response_data.get("id"), "usage": response_data.get("usage", {})}

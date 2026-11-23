@@ -56,8 +56,9 @@ def _generate_bundle(
         for alias, source in zip(aliases, evidence, strict=True)
     ]
     emit('insights_requested', stage='insights')
-    repair_options = {'on_repair': lambda attempt, count: emit('insights_repair_requested',
-        stage='insights', repair_attempt=attempt, violation_count=count)} if on_event and insight_generator is generate_openai_longitudinal_insights else {}
+    repair_options = {'on_repair': lambda attempt, count, rules: emit('insights_repair_requested',
+        stage='insights', repair_attempt=attempt, violation_count=count,
+        validation_counts=rules)} if on_event and insight_generator is generate_openai_longitudinal_insights else {}
     generated, insight_metadata = insight_generator(
         evidence=model_evidence,
         clinical_context=alias_context_sources(clinical_context, {value: key for key, value in aliases.items()}),

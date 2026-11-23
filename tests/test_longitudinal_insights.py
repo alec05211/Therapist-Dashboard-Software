@@ -283,9 +283,14 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
     def test_duplicate_document_is_repaired_with_all_sections_in_context(self):
         document = self.analytical_document()
         duplicate = {**document, 'items': [document['items'][0], {**document['items'][0], 'kind': 'theme'}]}
+        repair_events = []
         with patch('ai_harness.longitudinal_insights._request_structured_response',
                    side_effect=[(duplicate, {}), (document, {})]) as request:
-            generate_openai_longitudinal_insights(evidence=self.evidence, api_key='test', model='test')
+            generate_openai_longitudinal_insights(
+                evidence=self.evidence, api_key='test', model='test',
+                on_repair=lambda attempt, count, codes: repair_events.append((attempt, count, codes)),
+            )
+        self.assertEqual(repair_events, [(1, 2, {'duplicate_insight': 1, 'summary_structure': 1})])
         import json
         repair = json.loads(request.call_args.args[0]['input'])
         self.assertEqual(len(repair['rejected_draft']['items']), 2)

@@ -11,6 +11,26 @@ from ai_harness.provider_errors import ProviderRequestError
 
 
 class ClientDiagnosticsTests(unittest.TestCase):
+    def test_insights_validation_failure_keeps_only_allowed_rule_counts(self):
+        from ai_harness.longitudinal_insights import InsightValidationError, ValidationIssues
+
+        issues = ValidationIssues()
+        issues.add('note_excerpt_invalid', 'Private note text')
+        issues.add('note_excerpt_invalid', 'Another private excerpt')
+        issues.add('anchor_not_found', 'Private prose')
+        error = InsightValidationError(issues, draft={'text': 'private'}, usage={}, repair_attempts=3)
+        self.assertNotIn('private', str(error).lower())
+        self.assertEqual(diagnostics.failure_details(error, 'insights'), {
+            'error_code': 'insights_validation_failed',
+            'repair_attempt': 3,
+            'violation_count': 3,
+            'validation_counts': {'note_excerpt_invalid': 2, 'anchor_not_found': 1},
+        })
+        self.assertEqual(diagnostics.safe_details({'validation_counts': {
+            'anchor_not_found': 2, 'note_excerpt_invalid': 'private',
+            'source_invalid': True, 'unrecognized': 3,
+        }}), {'validation_counts': {'anchor_not_found': 2}})
+
     def test_rerun_requires_write_access_and_queues_for_resolved_client(self):
         request = server.InsightsRerunRequest(client_id=uuid4())
         context = {"organization_id": "org", "client_id": str(request.client_id), "actor_user_id": "therapist"}

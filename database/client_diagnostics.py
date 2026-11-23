@@ -8,6 +8,7 @@ from typing import Any
 from psycopg.types.json import Json
 
 from ai_harness.provider_errors import ProviderRequestError
+from ai_harness.longitudinal_insights import INSIGHT_VALIDATION_CODES, InsightValidationError
 
 EVENTS = {
     'synthesis_claimed': 'Worker started an Insights refresh',
@@ -72,6 +73,13 @@ def safe_details(details: dict[str, Any] | None) -> dict[str, Any]:
             result[key] = value
         elif key == 'error_code' and isinstance(value, str) and value in ERRORS:
             result[key] = value
+        elif key == 'validation_counts' and isinstance(value, dict):
+            counts = {
+                code: count for code, count in value.items()
+                if code in INSIGHT_VALIDATION_CODES and type(count) is int and 0 < count <= 10**12
+            }
+            if counts:
+                result[key] = counts
         elif key in STRING_FIELDS and isinstance(value, str) and (
             SAFE_RESET.fullmatch(value) if key.startswith('rate_limit_reset_')
             else SAFE_VALUE.fullmatch(value)
@@ -82,6 +90,8 @@ def safe_details(details: dict[str, Any] | None) -> dict[str, Any]:
 
 def failure_code(exc: Exception, stage: str) -> str:
     """Inspect known internal prefixes; never return provider bodies or clinical prose."""
+    if isinstance(exc, InsightValidationError):
+        return 'insights_validation_failed'
     if isinstance(exc, ProviderRequestError):
         code = exc.error_code
         if code == 'slow_down':
@@ -135,6 +145,9 @@ def failure_details(exc: Exception, stage: str) -> dict[str, Any]:
     details = {'error_code': failure_code(exc, stage)}
     if isinstance(exc, ProviderRequestError):
         details.update(exc.diagnostic_details())
+    elif isinstance(exc, InsightValidationError):
+        details.update(validation_counts=exc.validation_counts, violation_count=len(exc.violations),
+                       repair_attempt=exc.repair_attempts)
     return safe_details(details)
 
 

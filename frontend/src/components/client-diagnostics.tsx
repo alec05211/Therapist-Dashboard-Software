@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Event = { id: string; timestamp: string; message: string; level: "info" | "warning" | "error"; details: Record<string, number | string> };
+type Event = { id: string; timestamp: string; message: string; level: "info" | "warning" | "error"; details: Record<string, number | string | Record<string, number>> };
 type Timeline = { events: Event[]; checked_at: string; received_at_ms: number; retention_days: number; summary: { status: string; desired_revision: number; published_revision: number; queued_event_count: number; attempt_count: number; error: string | null; debounce_until: string | null } };
 
 function timestamp(value: string) {
@@ -24,7 +24,30 @@ function countdown(seconds: number) {
 }
 
 function DiagnosticRow({ event }: { event: Event }) {
-  const details = Object.entries(event.details);
+  const { validation_counts, ...otherDetails } = event.details;
+  const details = Object.entries(otherDetails);
+  const validationLabels: Record<string, string> = {
+    insight_structure: "Invalid Insights structure",
+    duplicate_insight: "Duplicate Insights item",
+    anchor_missing: "Missing evidence link",
+    anchor_invalid: "Invalid evidence phrase or occurrence",
+    anchor_not_found: "Evidence phrase missing from the prose",
+    anchor_too_broad: "Evidence link is too broad or splits a word",
+    anchor_overlap: "Overlapping evidence links",
+    source_invalid: "Invalid or unavailable evidence IDs",
+    source_roles_invalid: "Missing, duplicate, or invalid source roles",
+    note_excerpt_missing: "Missing finalized-note passage",
+    note_excerpt_invalid: "Invalid finalized-note passage",
+    summary_structure: "Invalid section summary structure",
+    summary_coverage_invalid: "Missing or invalid summary topic coverage",
+    summary_anchor_not_found: "Coverage phrase missing from the summary",
+    summary_copies_prose: "Section summary repeats topic prose",
+  };
+  const validations = validation_counts && typeof validation_counts === "object"
+    ? Object.entries(validation_counts).map(([code, count]) => ({
+      code, count, label: validationLabels[code] ?? code,
+    }))
+    : [];
   const detailLabels: Record<string, string> = {
     revision: "Insights revision", attempt: "Worker attempt", stage: "Processing stage",
     source_count: "Source records", context_bytes: "Context size (bytes)",
@@ -43,12 +66,16 @@ function DiagnosticRow({ event }: { event: Event }) {
     `${event.level.toUpperCase()}: ${event.message}`,
     fullTimestamp(event.timestamp),
     ...details.map(([key, value]) => `${detailLabels[key] ?? key.replaceAll("_", " ")}: ${value}`),
+    ...validations.map(({ label, code, count }) => `${label} (${code}): ${count}`),
   ].join("\n");
 
   return <div role="group" tabIndex={0} title={description} aria-label={description} className="block w-full cursor-text rounded-sm py-0.5 text-left hover:bg-[#223029] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400">
     <time dateTime={event.timestamp} className="mr-2 whitespace-nowrap text-[#94aa9b]">{timestamp(event.timestamp)}</time>
     <span className={`break-words ${event.level === "error" ? "text-[#ffb3a7]" : event.level === "warning" ? "text-[#efd39a]" : "text-[#d6e4dc]"}`}>[{event.level.toUpperCase()}] {event.message}</span>
     {details.length > 0 && <span className="ml-2 break-words text-[#94aa9b]">{details.map(([key, value]) => `${key}=${value}`).join(" ")}</span>}
+    {validations.length > 0 && <ul className="ml-4 text-[#d6e4dc]">
+      {validations.map(({ code, count, label }) => <li key={code}>{label} ×{count} <span className="text-[#94aa9b]">({code})</span></li>)}
+    </ul>}
   </div>;
 }
 
@@ -119,7 +146,7 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
     !timeline || timeline.summary.desired_revision < rerunRevision
   );
   const rerunDisabled = !timeline || submittingRerun || awaitingRerun ||
-    status === "running" || timeline.summary.desired_revision > timeline.summary.published_revision;
+    status === "pending" || status === "running";
 
   async function rerunInsights() {
     setSubmittingRerun(true);
