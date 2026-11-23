@@ -19,6 +19,7 @@ type InsightClaim = {
   phrase: string;
   occurrence: number;
   evidenceIds: string[];
+  notePassages: Record<string, string>;
 };
 
 type InsightModuleKind = "current_focus" | "change" | "recurring_themes" | "context_history";
@@ -95,19 +96,6 @@ function moduleMaturity(sessionCount: number): InsightMaturity {
   return "longitudinal";
 }
 
-function truncateAtWord(text: string, maximumLength: number) {
-  if (text.length <= maximumLength) return text;
-  const candidate = text.slice(0, Math.max(0, maximumLength - 1));
-  const lastSpace = candidate.lastIndexOf(" ");
-  return `${candidate.slice(0, lastSpace > maximumLength * 0.6 ? lastSpace : candidate.length).trimEnd()}…`;
-}
-
-function modulePreviewSummary(items: InsightItem[], summary?: unknown) {
-  if (typeof summary === "string" && summary.trim()) return summary;
-  // Older snapshots have no section synthesis; use topic labels, never stitched prose.
-  return `Topics for review: ${items.map((item) => insightLabel(item.content)).join("; ")}.`;
-}
-
 function buildInsightModules(items: InsightItem[], summaries: Record<string, unknown> = {}): InsightModule[] {
   return moduleDefinitions.flatMap((definition) => {
     const moduleItems = items
@@ -118,9 +106,10 @@ function buildInsightModules(items: InsightItem[], summaries: Record<string, unk
       });
     if (!moduleItems.length) return [];
     const sessions = sourceSessionCount(moduleItems);
+    const summary = summaries[definition.kinds[0]];
     return [{
       ...definition,
-      previewSummary: modulePreviewSummary(moduleItems, summaries[definition.kinds[0]]),
+      previewSummary: typeof summary === "string" ? summary.trim() : "",
       maturity: moduleMaturity(sessions),
       sourceSessionCount: sessions,
       items: moduleItems,
@@ -180,25 +169,16 @@ function contentClaims(content: Record<string, unknown>): InsightClaim[] {
     if (typeof claim.phrase !== "string" || !claim.phrase.trim()) return [];
     if (claim.occurrence !== undefined && (!Number.isInteger(claim.occurrence) || Number(claim.occurrence) < 0)) return [];
     if (!Array.isArray(claim.evidence_ids) || !claim.evidence_ids.length || !claim.evidence_ids.every((id) => typeof id === "string" && id)) return [];
-    return [{ phrase: claim.phrase, occurrence: Number(claim.occurrence ?? 0), evidenceIds: claim.evidence_ids as string[] }];
+    const notePassages = Object.fromEntries((Array.isArray(claim.note_passages) ? claim.note_passages : []).flatMap((passage: unknown) => {
+      if (!passage || typeof passage !== "object") return [];
+      const { evidence_id, excerpt } = passage as Record<string, unknown>;
+      return typeof evidence_id === "string" && typeof excerpt === "string" ? [[evidence_id, excerpt]] : [];
+    }));
+    return [{ phrase: claim.phrase, occurrence: Number(claim.occurrence ?? 0), evidenceIds: claim.evidence_ids as string[], notePassages }];
   });
 }
 
-// Select verbatim note sentences locally; never invent a supporting quotation.
-function relevantNoteExcerpt(note: string | undefined, phrase: string) {
-  if (!note?.trim()) return null;
-  const words = (text: string) => text.toLocaleLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? [];
-  const terms = new Set(words(phrase));
-  const sentences = note.match(/[^.!?\n]+(?:[.!?]+|$)/gu) ?? [];
-  const ranked = sentences.map((text, index) => ({
-    text: text.trim(), index,
-    score: new Set(words(text).filter((word) => terms.has(word))).size,
-  })).filter((sentence) => sentence.score > 0).sort((a, b) => b.score - a.score || a.index - b.index);
-  const excerpt = ranked.slice(0, 2).sort((a, b) => a.index - b.index).map(({ text }) => text).join(" … ");
-  return excerpt ? truncateAtWord(excerpt, 700) : null;
-}
-
-function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false, children }: { children?: ReactNode; phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean }) {
+function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false, interpretation = false, notePassages, children }: { children?: ReactNode; phrase: string; sources: BriefEvidence[]; onViewEvidence: Props["onViewEvidence"]; fallback?: boolean; interpretation?: boolean; notePassages?: Record<string, string> }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const titleId = useId();
@@ -216,8 +196,12 @@ function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false,
       <div className="grid gap-3">
         {sources.slice(sourceIndex, sourceIndex + 1).map((source) => <article key={source.evidence_id} className="rounded-xl border border-stone-300 bg-stone-50 p-4 text-sm leading-6">
           <p className="font-semibold text-stone-800">{evidenceLabel(source.session_label)}</p>
-          {source.clinical_note_version_id ? <p className="mt-2 whitespace-pre-wrap text-stone-700">Finalized clinical note — relevant excerpt: {relevantNoteExcerpt(source.note_text, phrase) ?? "No specific matching passage is available for this claim. Review the finalized note in the session record."}</p> : source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
-          {!source.clinical_note_version_id && <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Open transcript evidence</button>}
+          {source.clinical_note_version_id ? <p className="mt-2 whitespace-pre-wrap text-stone-700">
+            {notePassages?.[source.evidence_id] && source.note_text?.includes(notePassages[source.evidence_id])
+              ? <>Finalized clinical note excerpt: “{notePassages[source.evidence_id]}”</>
+              : "Finalized clinical note citation. No passage was saved for this link."}
+          </p> : source.quote ? <p className="mt-2 text-stone-700">“{source.quote}”</p> : <p className="mt-2 text-stone-500">This source is linked to the transcript segment.</p>}
+          <button type="button" onClick={() => { dialog.current?.close(); onViewEvidence(source); }} className="mt-3 cursor-grab rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-emerald-800 transition-colors hover:bg-stone-100 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">{source.clinical_note_version_id ? "Open session record" : "Open transcript evidence"}</button>
         </article>)}
       </div>
       {sources.length > 1 && <nav aria-label="Evidence sources" className="mt-4 flex items-center justify-between gap-3 text-sm">
@@ -227,24 +211,6 @@ function EvidenceDialogLink({ phrase, sources, onViewEvidence, fallback = false,
       </nav>}
     </dialog>, document.body)}
   </>;
-}
-
-function needsInlineSpace(left: string, right: string) {
-  return Boolean(left && right && !/\s$/u.test(left) && !/^\s/u.test(right) && /[\p{L}\p{N}]$/u.test(left) && /^[\p{L}\p{N}]/u.test(right));
-}
-
-function phraseForSentencePosition(phrase: string, precedingText: string) {
-  const trimmedPrefix = precedingText.trimEnd();
-  const startsSentence = !trimmedPrefix || /[.!?]["'’”\])}]*$/u.test(trimmedPrefix);
-  const firstLetter = phrase.search(/\p{L}/u);
-  if (firstLetter < 0) return phrase;
-
-  const word = phrase.slice(firstLetter).match(/^\p{L}+/u)?.[0] ?? "";
-  if (!startsSentence && (word === "I" || (word.length > 1 && word === word.toLocaleUpperCase()))) return phrase;
-
-  const letter = phrase[firstLetter];
-  const casedLetter = startsSentence ? letter.toLocaleUpperCase() : letter.toLocaleLowerCase();
-  return phrase.slice(0, firstLetter) + casedLetter + phrase.slice(firstLetter + letter.length);
 }
 
 function EvidenceLinkedText({ content, item, onViewEvidence, interpretation = false }: { interpretation?: boolean; content: Record<string, unknown>; item: InsightItem; onViewEvidence: Props["onViewEvidence"] }) {
@@ -267,12 +233,11 @@ function EvidenceLinkedText({ content, item, onViewEvidence, interpretation = fa
   return <>
     {spans.map((span, index) => {
       const before = text.slice(index ? spans[index - 1].end : 0, span.start);
-      const after = text.slice(span.end);
-      const displayPhrase = phraseForSentencePosition(span.phrase, text.slice(0, span.start));
+      const broad = span.phrase.trim().split(/\s+/u).length > 4 || /[.!?]$/u.test(span.phrase.trim());
       return <span key={`${span.start}-${span.end}`}>
-        {before}{needsInlineSpace(before, displayPhrase) ? " " : null}
-        <EvidenceDialogLink phrase={displayPhrase} sources={span.sources} onViewEvidence={onViewEvidence} interpretation={interpretation} />
-        {needsInlineSpace(displayPhrase, after) ? " " : null}
+        {before}{broad ? span.phrase : null}
+        <EvidenceDialogLink phrase={span.phrase} sources={span.sources} onViewEvidence={onViewEvidence}
+          interpretation={interpretation} fallback={broad} notePassages={span.notePassages} />
       </span>;
     })}
     {text.slice(spans[spans.length - 1].end)}
@@ -393,9 +358,10 @@ function InsightProsePanel({ module, onViewEvidence }: { module: InsightModule; 
     title={`${module.title}:`}
     expanded={expanded}
     onExpandedChange={setExpanded}
-    summary={!expanded && <span className="min-w-0 leading-7">{module.items.map((item, index) => <span key={item.id}>{index ? " " : null}<InsightTopicCard item={item} /></span>)}</span>}
+    inlineSummary
+    summary={!expanded && <span className="leading-7">{module.items.map((item, index) => <span key={item.id}>{index ? " " : null}<InsightTopicCard item={item} /></span>)}</span>}
     preview={module.previewSummary}
-    previewContent={<p className="px-4 pb-3 pr-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p>}
+    previewContent={module.previewSummary ? <p className="px-4 pb-3 pr-12 text-sm leading-6 text-stone-700 [text-wrap:pretty]">{module.previewSummary}</p> : undefined}
     fullPreview
     className="rounded-2xl border-stone-300 bg-white shadow-sm"
     ariaLabel={`${module.title}, ${module.sourceSessionCount} source ${module.sourceSessionCount === 1 ? "session" : "sessions"}`}
@@ -468,9 +434,13 @@ function InsightsWorkspace({ snapshot, entries, refreshStatus, onViewEvidence, s
   const acceptedEvidenceDetail = acceptedSessions.length > 1
     ? `${acceptedSincePreviousSession} added since previous session.`
     : `${acceptedSincePreviousSession} captured in the current record.`;
-  // Do not keep a generated section summary after any of its topics is withheld.
-  const sectionSummaries = snapshot && currentItems.length === snapshot.items.length ? snapshot.content.section_summaries : undefined;
-  const insightModules = buildInsightModules(currentItems, sectionSummaries && typeof sectionSummaries === "object" && !Array.isArray(sectionSummaries) ? sectionSummaries as Record<string, unknown> : {});
+  const sectionSummaries = snapshot?.content.section_summaries;
+  // A summary cannot reveal a topic that the current view withholds.
+  const visibleSummaries = sectionSummaries && typeof sectionSummaries === "object" && !Array.isArray(sectionSummaries)
+    ? Object.fromEntries(Object.entries(sectionSummaries).filter(([kind]) =>
+      !snapshot?.items.some(item => item.kind === kind && !currentItems.includes(item))))
+    : {};
+  const insightModules = buildInsightModules(currentItems, visibleSummaries);
   const hasMetrics = themeCount > 0 || openThreadCount > 0 || awaitingReview > 0 || acceptedJourney.length > 0;
   const overview = snapshot ? savedContentText(snapshot.content) : acceptedJourney.length ? "Therapist-accepted evidence is available for future synthesis. Cross-session trajectory and recurring-theme cards will appear only when they have evidence from at least two sessions." : "No source-linked session material is available yet.";
   const overviewDetails = <p className="text-[15px] leading-7 text-stone-700">{overview}</p>;

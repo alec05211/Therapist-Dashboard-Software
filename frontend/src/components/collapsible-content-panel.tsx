@@ -9,6 +9,7 @@ type Props = {
   previewContent?: ReactNode;
   children: ReactNode;
   summary?: ReactNode;
+  inlineSummary?: boolean;
   ariaLabel?: string;
   className?: string;
   expanded?: boolean;
@@ -21,7 +22,7 @@ type Props = {
 };
 
 /** Shared compact text preview and disclosure shell; expanded content owns its controls. */
-export function CollapsibleContentPanel({ title, hideTitle = false, preview, previewContent, children, summary, ariaLabel, className = "", expanded: controlledExpanded, onExpandedChange, headerCenter, headerActions, keepMounted = false, collapsedPreviewHeight = 96, fullPreview = false }: Props) {
+export function CollapsibleContentPanel({ title, hideTitle = false, preview, previewContent, children, summary, inlineSummary = false, ariaLabel, className = "", expanded: controlledExpanded, onExpandedChange, headerCenter, headerActions, keepMounted = false, collapsedPreviewHeight = 96, fullPreview = false }: Props) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const expanded = controlledExpanded ?? internalExpanded;
   const contentId = useId();
@@ -32,8 +33,8 @@ export function CollapsibleContentPanel({ title, hideTitle = false, preview, pre
   return <section className={`relative overflow-hidden rounded-xl border border-stone-200 bg-stone-100 text-stone-900 ${className}`} aria-label={ariaLabel ?? title}>
     <div className="relative">
       <div className={hideTitle ? (expanded ? "min-h-12" : "pt-4") : "p-4"}>
-        <span className={hideTitle ? "sr-only" : "flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-6"}><span className="text-base font-semibold">{title}</span>{summary && <span className="min-w-0 text-sm text-stone-600">{summary}</span>}</span>
-        {!expanded && !previewContent && <span className="collapsed-content-preview mt-3 block overflow-hidden text-sm leading-6 text-stone-600" style={{ height: collapsedPreviewHeight }}>{preview}</span>}
+        <span className={hideTitle ? "sr-only" : inlineSummary ? "block pr-6 [overflow-wrap:anywhere]" : "flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-6"}><span className="text-base font-semibold">{title}</span>{summary && <span className={inlineSummary ? "ml-2 text-sm text-stone-600" : "min-w-0 text-sm text-stone-600"}>{summary}</span>}</span>
+        {!expanded && !previewContent && preview && <span className="collapsed-content-preview mt-3 block overflow-hidden text-sm leading-6 text-stone-600" style={{ height: collapsedPreviewHeight }}>{preview}</span>}
       </div>
       {(!expanded || fullPreview) && previewContent && <>
         <span className="sr-only">{preview}</span>

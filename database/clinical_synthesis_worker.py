@@ -73,11 +73,15 @@ def _generate_bundle(
         item["evidence_roles"] = {
             aliases[value]: role for value, role in item["evidence_roles"].items()
         }
-        for claim in item["content"].get("analysis_claims", []):
+        claims = item["content"].get("analysis_claims", []) + [
+            claim for context in item["content"]["contexts"] for claim in context["claims"]
+        ]
+        for claim in claims:
             claim["evidence_ids"] = [aliases[value] for value in claim["evidence_ids"]]
-        for context in item["content"]["contexts"]:
-            for claim in context["claims"]:
-                claim["evidence_ids"] = [aliases[value] for value in claim["evidence_ids"]]
+            claim["note_passages"] = [
+                {**passage, "evidence_id": aliases[passage["evidence_id"]]}
+                for passage in claim.get("note_passages", [])
+            ]
 
     evidence_by_id = {source["evidence_id"]: source for source in evidence}
     packet = {

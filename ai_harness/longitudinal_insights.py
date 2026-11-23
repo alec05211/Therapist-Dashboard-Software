@@ -14,7 +14,7 @@ from ai_harness.provider_errors import provider_error_from_http_error
 from ai_harness.clinical_context import CONTEXT_INSTRUCTIONS, MAX_INSIGHTS_REQUEST_BYTES, synthesis_context
 
 
-INSIGHTS_GENERATOR_VERSION = "distinct-insights-v9"
+INSIGHTS_GENERATOR_VERSION = "distinct-insights-v10"
 INSIGHT_KINDS = {"trajectory", "theme", "open_thread", "relevant_history"}
 ANCHOR_TRANSLATION = str.maketrans({
     "‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-",
@@ -166,11 +166,20 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     claim = {
         "type": "object",
         "additionalProperties": False,
-        "required": ["sentence_index", "evidence_ids"],
+        "required": ["phrase", "occurrence", "evidence_ids", "note_passages"],
         "properties": {
-            "sentence_index": {
-                "type": "integer", "minimum": 0, "maximum": 7,
-                "description": "Zero-based sentence in the sibling analysis or context text to anchor to this evidence.",
+            "phrase": {"type": "string", "pattern": r"^\S+(?:\s+\S+){0,3}$"},
+            "occurrence": {"type": "integer", "minimum": 0},
+            "note_passages": {
+                "type": "array", "maxItems": 4,
+                "items": {
+                    "type": "object", "additionalProperties": False,
+                    "required": ["evidence_id", "excerpt"],
+                    "properties": {
+                        "evidence_id": {"type": "string"},
+                        "excerpt": {"type": "string", "minLength": 1, "maxLength": 280},
+                    },
+                },
             },
             "evidence_ids": {
                 "type": "array", "minItems": 1, "maxItems": 4,
@@ -255,8 +264,16 @@ def response_schema(kinds: set[str] = INSIGHT_KINDS, evidence_ids: list[str] | N
     }
 
 
-def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False, require_evidence_roles: bool = False) -> list[str]:
+def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]], required_kinds: set[str] = INSIGHT_KINDS, *, require_analysis_claims: bool = False, require_section_summaries: bool = False, require_summary_coverage: bool = False, require_evidence_roles: bool = False, require_short_anchors: bool = False) -> list[str]:
     violations: list[str] = []
+    note_text_by_id = {
+        source["evidence_id"]: source["content"]["plain_text"]
+        for source in evidence
+        if source.get("source_type") == "finalized_clinical_note"
+        and isinstance(source.get("content"), dict)
+        and isinstance(source["content"].get("plain_text"), str)
+        and source["content"]["plain_text"].strip()
+    }
     allowed_ids = {source["evidence_id"] for source in evidence}
     kinds: set[str] = set()
     items = generated.get("items")
@@ -334,6 +351,13 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                         break
                 if start < 0:
                     violations.append(f"item {item_index} context {context_index} claim {claim_index} phrase is absent")
+                elif require_short_anchors and (
+                    len(phrase.split()) > 4
+                    or phrase.rstrip(".!?") == text.strip().rstrip(".!?")
+                    or (start > 0 and text[start - 1].isalnum() and phrase[0].isalnum())
+                    or (start + len(phrase) < len(text) and text[start + len(phrase)].isalnum() and phrase[-1].isalnum())
+                ):
+                    violations.append(f"item {item_index} context {context_index} needs a short whole-word phrase")
                 elif any(start < end and start + len(phrase) > prior_start for prior_start, end in occupied):
                     violations.append(f"item {item_index} context {context_index} has overlapping evidence anchors")
                 else:
@@ -343,6 +367,23 @@ def validate_response(generated: dict[str, Any], evidence: list[dict[str, Any]],
                     violations.append(f"item {item_index} context {context_index} claim {claim_index} cites unavailable evidence {ids!r}")
                 else:
                     cited_ids.update(ids)
+                    passages = anchored_claim.get("note_passages", [])
+                    expected = set(ids).intersection(note_text_by_id)
+                    actual = set()
+                    if not isinstance(passages, list):
+                        violations.append(f"item {item_index} context {context_index} has invalid note passages")
+                        continue
+                    for passage in passages:
+                        note_id = passage.get("evidence_id") if isinstance(passage, dict) else None
+                        excerpt = passage.get("excerpt") if isinstance(passage, dict) else None
+                        if (not isinstance(note_id, str) or note_id not in expected or note_id in actual
+                                or not isinstance(excerpt, str) or not excerpt.strip()
+                                or len(excerpt) > 280 or excerpt not in note_text_by_id[note_id]):
+                            violations.append(f"item {item_index} context {context_index} has an invalid finalized-note excerpt")
+                        else:
+                            actual.add(note_id)
+                    if require_short_anchors and actual != expected:
+                        violations.append(f"item {item_index} context {context_index} needs an exact passage for each cited finalized note")
         roles = item.get("evidence_roles")
         if require_evidence_roles and roles is None:
             violations.append(f"item {item_index} needs an evidence role for every cited source")
@@ -433,6 +474,7 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
             "phrase": claim["phrase"],
             "occurrence": claim["occurrence"],
             "evidence_ids": list(dict.fromkeys(claim["evidence_ids"])),
+            **({"note_passages": claim["note_passages"]} if claim.get("note_passages") else {}),
         } for claim in item.get("analysis_claims", [])]
         evidence_ids: list[str] = [value for claim in analysis_claims for value in claim['evidence_ids']]
         for statement in item["context_statements"]:
@@ -444,6 +486,7 @@ def to_snapshot_content(generated: dict[str, Any]) -> tuple[dict[str, Any], list
                     "phrase": anchored_claim["phrase"],
                     "occurrence": anchored_claim["occurrence"],
                     "evidence_ids": ids,
+                    **({"note_passages": anchored_claim["note_passages"]} if anchored_claim.get("note_passages") else {}),
                 })
             contexts.append({
                 "text": statement["text"],
@@ -515,17 +558,20 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
             "statement that progress was uneven. Do not manufacture contrasting evidence or fill a role quota. Sources "
             "from the same session may have different roles, which should be preserved as mixed activity. Optional "
             "context_statements add only necessary detail, "
-            "never a repetitive retelling of the analysis. For each claim, select the zero-based sentence_index "
-            "of the sibling analysis or context text that the cited evidence supports. Use a different sentence "
-            "for each claim in the same prose block, and cite only supplied evidence IDs. The application will "
-            "derive the exact contiguous phrase anchor from that sentence without changing your prose or sources. "
+            "never a repetitive retelling of the analysis. Write and proofread each complete prose block first. "
+            "Then annotate important statements using the shortest meaningful exact phrase of one to four words "
+            "in the finished prose, its zero-based occurrence, and the IDs that support its surrounding statement. "
+            "Preserve the wording and capitalization, avoid overlapping links and full-sentence anchors. "
+            "For each cited finalized note with plain_text, include one exact contiguous excerpt of at most "
+            "280 characters in note_passages, keyed by the cited evidence ID. Select the specific passage "
+            "supporting the statement. Use an empty note_passages list when there is no cited note with plain_text. "
             "Keep prose free of Markdown and manually inserted links. Prefer multiple sessions for trajectories "
             "and recurring themes. Open threads are unresolved questions, not treatment instructions. "
             "Write section_summaries after planning the topic paragraphs: exactly one summary for each populated kind. "
             "Write a compact high-level explanation, not a generic teaser or list of labels: name what EVERY topic "
             "is about, why it belongs in this section, and how the topics connect or differ where supported. "
-            "For multiple topics, normally use two or three sentences (about 45-80 words, at most 600 characters); "
-            "for one topic use a shorter explanation without padding. Do not let a shared theme erase a distinct "
+            "Use two or three concise sentences, up to 600 characters. For a single topic keep the sentences short and "
+            "avoid padding or repetition. Do not let a shared theme erase a distinct "
             "topic. Retain clinically meaningful uncertainty, contrasts, and open questions. Explain in fresh "
             "language rather than quoting or stitching together topic paragraphs; do not introduce new clinical "
             "claims, diagnoses, recommendations, or unsupported causal connections. Leave examples and evidence "
@@ -545,7 +591,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
     generated, response_data = _request_structured_response(payload, api_key)
     materialize_response_anchors(generated)
     canonicalize_response_anchors(generated)
-    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True)
+    violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True, require_short_anchors=True)
     repair_attempt = 0
     while violations and repair_attempt < 3:
         repair_attempt += 1
@@ -557,7 +603,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
                 " You are repairing a rejected structured draft. Return the complete document, changing only what is "
                 "needed to satisfy every listed validation error. This is bounded repair attempt "
                 f"{repair_attempt} of 3. Never remove evidence merely to silence an error, and "
-                "never invent a source. Recheck every sentence_index against its sibling prose and every "
+                "never invent a source. Recheck every phrase against its sibling prose, every note excerpt against its cited note, and every "
                 "summary coverage phrase against its section summary before returning."
             ),
             "input": json.dumps({
@@ -574,7 +620,7 @@ def generate_openai_longitudinal_insights(*, evidence: list[dict[str, Any]], api
         generated, response_data = _request_structured_response(repair_payload, api_key)
         materialize_response_anchors(generated)
         canonicalize_response_anchors(generated)
-        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True)
+        violations = validate_response(generated, evidence, {kind} if kind else set(), require_analysis_claims=True, require_section_summaries=True, require_summary_coverage=True, require_evidence_roles=True, require_short_anchors=True)
     if violations:
         error = RuntimeError("OpenAI output did not satisfy the longitudinal evidence contract after three repairs: " + "; ".join(violations))
         error.generated_response = generated

@@ -81,11 +81,13 @@ def main() -> None:
         raise RuntimeError("No Owen Insights draft passed validation in three bounded attempts.")
 
     for item in generated["items"]:
-        for claim in item.get("analysis_claims") or []:
+        claims = (item.get("analysis_claims") or []) + [
+            claim for statement in item.get("context_statements") or [] for claim in statement.get("claims") or []
+        ]
+        for claim in claims:
             claim["evidence_ids"] = [source_to_alias[value] for value in claim["evidence_ids"]]
-        for statement in item.get("context_statements") or []:
-            for claim in statement.get("claims") or []:
-                claim["evidence_ids"] = [source_to_alias[value] for value in claim["evidence_ids"]]
+            for passage in claim.get("note_passages", []):
+                passage["evidence_id"] = source_to_alias[passage["evidence_id"]]
         for link in item.get("evidence_roles") or []:
             link["evidence_id"] = source_to_alias[link["evidence_id"]]
 

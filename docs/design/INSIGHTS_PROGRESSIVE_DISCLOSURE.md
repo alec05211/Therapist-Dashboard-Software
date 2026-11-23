@@ -62,22 +62,20 @@ not be phrased as longitudinal patterns.
 ### Section orientation and topic transitions
 
 The clinical overview is always fully readable. Each synthesis section starts with
-its identifier and colon, followed by single-line white topic cards. A short,
+its identifier and colon. White topic cards start beside the identifier and wrap inline as space runs out. A short,
 newly worded section summary stays visible below without a fade or height clamp.
 Summaries are generated with the topic analyses in the same coordinated request,
-limited to 600 characters per populated kind. With multiple topics, use a compact
-high-level explanation (normally two or three sentences) that explains every
+limited to 600 characters per populated kind. Use a compact
+two- or three-sentence explanation that explains every
 topic and their supported connections or differences. Preserve uncertainty and
 open questions without turning the summary into a list of labels, a generic
 teaser, or a repetition of topic sentences. The coordinated response includes an
 explicit index and exact summary phrase for each topic; validation rejects
 missing topics, cross-section coverage, duplicate coverage, absent phrases, and
 copied prose. This structural check does not prove semantic faithfulness; clinician
-review remains necessary. Summaries must not introduce new interpretations. Older snapshots use a label-based
-orientation until the next ordinary background refresh; viewing never generates.
+review remains necessary. Summaries must not introduce new interpretations. Older snapshots display the topic cards until a refresh provides a summary. Viewing never generates.
 
-Expanding and collapsing reveal the topic prose without moving or cloning topic
-cards along a vector. Each theme has a singular, easily identifiable label, its own
+The expanded view keeps the summary at the top and places each topic card above its individual writeup. Links use short exact phrases in the finished prose. Finalized-note links open a verified passage from the cited version when one was saved. Each theme has a singular, easily identifiable label, its own
 evidence-linked prose, and a matching matrix row. Expanded cards use
 compact padding and paragraph gaps while preserving readable line spacing and
 all existing evidence links.

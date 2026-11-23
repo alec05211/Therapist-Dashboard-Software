@@ -119,7 +119,7 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
     !timeline || timeline.summary.desired_revision < rerunRevision
   );
   const rerunDisabled = !timeline || submittingRerun || awaitingRerun ||
-    status === "running" || (status === "pending" && !debounceSeconds);
+    status === "running" || timeline.summary.desired_revision > timeline.summary.published_revision;
 
   async function rerunInsights() {
     setSubmittingRerun(true);
@@ -153,8 +153,12 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
         {debounceSeconds !== null ? <span>Debounce: <span className="font-mono font-semibold tabular-nums text-stone-900">{countdown(debounceSeconds)}</span></span> : null}
       </div> : <p className="text-sm text-stone-600">Connecting to event log…</p>}
       <button type="button" disabled={rerunDisabled} onClick={() => void rerunInsights()}
+        title="Re-run Insights synthesis" aria-label={submittingRerun ? "Queuing Insights synthesis" : "Re-run Insights synthesis"}
         className="ml-auto inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-stone-800 enabled:cursor-grab enabled:hover:bg-[var(--accent-surface)] enabled:active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)]">
-        <span aria-hidden="true">🔄</span>{submittingRerun ? "Queuing…" : "Re-run Insights synthesis"}
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4 shrink-0">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15" />
+        </svg>
+        {submittingRerun ? "Queuing…" : "Re-run"}
       </button>
     </div>
     {awaitingRerun ? <p role="status" className="mb-3 text-sm text-stone-600">Insights refresh requested.</p> : null}

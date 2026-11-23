@@ -78,6 +78,22 @@ class LongitudinalInsightHarnessTests(unittest.TestCase):
             InsightEvidence(clinical_note_version_id='e-2'),
         )).validate()
 
+    def test_short_anchor_and_exact_finalized_note_passage_are_validated_and_saved(self):
+        document = self.analytical_document()
+        claim = document["items"][0]["analysis_claims"][0]
+        evidence = [self.evidence[0], {**self.evidence[1], "source_type": "finalized_clinical_note",
+                    "content": {"plain_text": "Client waited before checking. The concern persisted."}}]
+        excerpt = {"evidence_id": "e-2", "excerpt": "Client waited before checking."}
+        claim["note_passages"] = [excerpt]
+        self.assertEqual(validate_response(document, evidence, set(), require_short_anchors=True), [])
+        self.assertEqual(to_snapshot_content(document)[1][0]["content"]["analysis_claims"][0]["note_passages"],
+                         [excerpt])
+        claim["phrase"] = document["items"][0]["analysis"]
+        excerpt["excerpt"] = "Client no longer checked."
+        errors = validate_response(document, evidence, set(), require_short_anchors=True)
+        self.assertTrue(any("short whole-word phrase" in error for error in errors))
+        self.assertTrue(any("invalid finalized-note excerpt" in error for error in errors))
+
     def test_evidence_roles_must_cover_citations_exactly_once(self):
         document = self.analytical_document()
         self.assertEqual(validate_response(
