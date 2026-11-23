@@ -34,7 +34,7 @@ Every durable change that can alter the current Insights environment appends an 
 - accepting, editing, dismissing, hiding, disputing, pinning, or marking an evidence claim or insight outdated;
 - adding or changing clinician-curated longitudinal context;
 - changing evidence links or the source status of material represented in Insights; and
-- an administrative reprocessing request after a model, prompt, retrieval-policy, or verifier version change.
+- an explicit reprocessing request from Client Care Settings Diagnostics or administrative tooling.
 
 Transient UI activity does not enqueue refresh work. Keystrokes in an unfinalized draft, navigation, opening evidence, and viewing Insights are not generation triggers. Saving an ordinary draft may be versioned for recovery, but it does not become eligible source material until the therapist finalizes it.
 
@@ -62,7 +62,7 @@ The page's presentation and progressive-disclosure contract is defined in [Insig
 
 - While work is queued or running, keep the last valid snapshot readable and show a quiet status such as **Updating insights**.
 - Diagnostics shows a live minute-and-second countdown to the queue's `not_before` time only while Insights is pending. Running, idle, and failed states do not show the debounce countdown.
-- Do not expose a manual Insights regeneration control. Crossing a threshold should make the background worker run without transferring maintenance responsibility to the therapist.
+- Routine updates run automatically. The Diagnostics panel offers a client-scoped rerun action for therapists with clinical-write access. It makes a revision due immediately and reuses due or running work.
 - Avoid an interruptive popup that says the therapist must refresh. Delayed or failed work may surface a quiet operational status and recover through the background retry and reconciliation paths.
 - Display the snapshot's source-through time or equivalent freshness information when useful.
 - Review actions should acknowledge immediately that the change was saved and Insights will update in the background.
@@ -114,7 +114,7 @@ The brief generator is an editorial selector and compressor. It may:
 
 It may not introduce a new clinical interpretation, trend, diagnosis, risk assessment, or treatment recommendation. Reliability evaluation and future clinical fine-tuning should concentrate on Insights; the brief is evaluated for faithful selection, compression, freshness, and citation preservation.
 
-Brief output that fails deterministic evidence validation receives at most two whole-brief repair requests. If those repairs fail, or the brief provider is temporarily unavailable, publication uses the existing deterministic, source-preserving projection of the newly validated Insights snapshot. A downstream editorial failure must not discard a valid Insights document or force the expensive Insights request to run again. When no upcoming appointment exists, the Insights worker does not request a brief.
+The first request writes and proofreads complete prose and selects item-level source IDs. The second request annotates that prose with short exact phrases using only those selected sources. Invalid annotations receive at most two annotation-only repair requests. If the prose is invalid, annotation repair fails, or the brief provider is temporarily unavailable, publication uses the existing deterministic, source-preserving projection of the newly validated Insights snapshot. A downstream editorial failure must not discard a valid Insights document or force the expensive Insights request to run again. When no upcoming appointment exists, the Insights worker does not request a brief.
 
 The pre-session brief is a downstream materialized view of Insights, presented in the scheduled-session workflow. Publishing a new current Insights snapshot automatically invalidates any brief based on an older snapshot and requests its background replacement when an upcoming appointment exists.
 
@@ -128,7 +128,7 @@ Each brief is tied to the appointment and exact Insights snapshot version that i
 
 ## 7. State and audit requirements
 
-Client Care Settings exposes a read-only Diagnostics timeline to users with existing client-care access, without a developer-role gate. The worker records allowlisted stage events, repair counts, token usage when supplied, publication, and stage-specific failure codes in `app.client_diagnostic_events`. Raw exceptions, provider bodies, and clinical prompts are never persisted there. Stage traces have a 30-day operational retention window; refresh-event audit history remains separate. Timeline reads never trigger generation or retries, and historical attempts without stage traces are labeled using only recorded state watermarks.
+Client Care Settings exposes an operational Diagnostics timeline to users with existing client-care access, without a developer-role gate. The worker records allowlisted stage events, repair counts, token usage when supplied, publication, and stage-specific failure codes in `app.client_diagnostic_events`. Raw exceptions, provider bodies, and clinical prompts are never persisted there. Stage traces have a 30-day operational retention window; refresh-event audit history remains separate. Timeline reads never trigger generation or retries, and historical attempts without stage traces are labeled using only recorded state watermarks.
 
 Provider request failures retain only allowlisted operational metadata needed to identify capacity bottlenecks: HTTP status, provider error code and type, request ID, retry delay, and available request/token limit and reset headers. The Diagnostics timeline exposes those fields. It never stores the provider's error message or response body, since either may contain sensitive request detail.
 
@@ -149,6 +149,6 @@ The queue is operational state, not the clinical record. Consuming a queue event
 2. Add the client-scoped synthesis refresh event ledger and revision watermark.
 3. Run validated Insights refreshes from eligible finalized sources and review controls.
 4. Add debounce, idempotency, bounded retries, and daily reconciliation.
-5. Expose quiet freshness and failure states without a manual regeneration control.
+5. Expose quiet freshness and failure states and the Diagnostics rerun action.
 6. Trigger appointment-scoped pre-session brief generation exclusively from published Insights snapshots.
 7. Evaluate grounding, rejected-item removal, stale-source behavior, freshness, and harmful-overreach regressions before production use.

@@ -193,6 +193,46 @@ def enqueue_insights_refresh(
     return revision
 
 
+def request_insights_rerun(
+    connection: Any, *, organization_id: str, client_id: str, actor_user_id: str
+) -> int:
+    """Make a revision due now, reusing work that is already due or running."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s))",
+            (f"clinical-synthesis:{organization_id}:{client_id}",),
+        )
+        cursor.execute(
+            """
+            SELECT desired_insights_revision,
+                   status = 'running' OR
+                     (status = 'pending' AND not_before <= clock_timestamp()) AS already_due
+            FROM app.clinical_synthesis_refresh_state
+            WHERE organization_id = %s AND client_id = %s
+            FOR UPDATE
+            """,
+            (organization_id, client_id),
+        )
+        state = cursor.fetchone()
+        if state and state["already_due"]:
+            return int(state["desired_insights_revision"])
+        revision = enqueue_insights_refresh(
+            connection, organization_id=organization_id, client_id=client_id,
+            event_type="reprocess_requested", actor_user_id=actor_user_id,
+            target_type="client", target_id=client_id,
+            metadata={"reason": "diagnostics_rerun"}, debounce_seconds=0,
+        )
+        cursor.execute(
+            """
+            UPDATE app.clinical_synthesis_refresh_state
+            SET attempt_count = 0
+            WHERE organization_id = %s AND client_id = %s
+            """,
+            (organization_id, client_id),
+        )
+        return revision
+
+
 def claim_due_insights_refresh(
     connection: Any,
     *,

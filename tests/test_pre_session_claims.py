@@ -2,7 +2,7 @@ import copy
 import json
 from unittest.mock import MagicMock, patch
 import unittest
-from ai_harness.pre_session import (MAX_BRIEF_REQUEST_BYTES, assemble_brief_parts,
+from ai_harness.pre_session import (MAX_BRIEF_REQUEST_BYTES,
     generate_openai_pre_session_brief, resolve_brief, validate_pre_session_response)
 from ai_harness.brief_service import brief_input
 
@@ -42,77 +42,85 @@ class ClaimTests(unittest.TestCase):
         _, request = brief_input({'sections': [{'items': [
             {'text': 'The record describes staying late in two sessions.', 'sources': sources},
         ]}]})
-        output = {'sections': [{'title': 'Important trajectory', 'items': [{
-            'opening': 'The record describes ',
-            'claims': [{'text': 'staying late', 'following_text': ' in two sessions.',
-                        'scope': 'cross_session', 'evidence_ids': ['a', 'b']}],
+        prose = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'text': 'The record describes staying late in two sessions.',
+            'evidence_ids': ['a', 'b'],
         }]}]}
-        with patch('ai_harness.pre_session.urlopen') as urlopen:
-            urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(
-                {'output_text': json.dumps(output)}).encode()
+        annotations = {'annotations': [{
+            'item_index': 0, 'phrase': 'staying late', 'occurrence': 0,
+            'scope': 'cross_session', 'evidence_ids': ['a', 'b'],
+        }]}
+        with patch('ai_harness.pre_session.urlopen', side_effect=[
+            self.provider_response(prose), self.provider_response(annotations),
+        ]) as urlopen:
             generated, _ = generate_openai_pre_session_brief(
                 synthesis_request=request, api_key='test', model='test')
-        data = urlopen.call_args.args[0].data
-        self.assertLessEqual(len(data), MAX_BRIEF_REQUEST_BYTES)
-        model_input = json.loads(json.loads(data)['input'])
-        self.assertEqual([source['evidence_id'] for source in model_input['evidence']], ['a', 'b'])
-        self.assertTrue(all('note_text' not in source for source in model_input['evidence']))
+        for call in urlopen.call_args_list:
+            data = call.args[0].data
+            self.assertLessEqual(len(data), MAX_BRIEF_REQUEST_BYTES)
+            model_input = json.loads(json.loads(data)['input'])
+            self.assertEqual([source['evidence_id'] for source in model_input['evidence']], ['a', 'b'])
+            self.assertTrue(all('note_text' not in source for source in model_input['evidence']))
         item = resolve_brief(generated, request['evidence'])['sections'][0]['items'][0]
         self.assertEqual(item['claims'][0]['sources'], sources)
 
-    def test_parts_build_exact_repeated_phrase_locations(self):
-        response = {'sections': [{'title': 'Active focus', 'items': [{'parts': [
-            {'text': 'Work then ', 'evidence_ids': [], 'scope': 'single_exchange'},
-            {'text': 'Work', 'evidence_ids': ['a'], 'scope': 'single_exchange'},
-            {'text': ' again.', 'evidence_ids': [], 'scope': 'single_exchange'}]}]}]}
-        assembled = assemble_brief_parts(response)
-        item = assembled['sections'][0]['items'][0]
-        self.assertEqual(item['text'], 'Work then Work again.')
-        self.assertEqual(item['claims'][0]['occurrence'], 1)
-        self.assertFalse(validate_pre_session_response(assembled, self.evidence))
+    @staticmethod
+    def provider_response(output):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({
+            'output_text': json.dumps(output), 'usage': {'input_tokens': 100, 'output_tokens': 50},
+        }).encode()
+        return response
 
-    def test_parts_cannot_merge_claim_with_neighboring_words(self):
-        response = {'sections': [{'title': 'Active focus', 'items': [{'parts': [
-            {'text': 'Reports', 'evidence_ids': [], 'scope': 'single_exchange'},
-            {'text': 'overwork', 'evidence_ids': ['a'], 'scope': 'single_exchange'},
-            {'text': 'again.', 'evidence_ids': [], 'scope': 'single_exchange'}]}]}]}
-        assembled = assemble_brief_parts(response)
-        self.assertEqual(assembled['sections'][0]['items'][0]['text'], 'Reports overwork again.')
-        self.assertFalse(validate_pre_session_response(assembled, self.evidence))
-
-    def test_invalid_brief_receives_bounded_evidence_repair(self):
-        _, request = brief_input({'sections': [{'items': [{
-            'text': 'Work pressure remained important.',
-            'sources': [self.evidence[0]],
-        }]}]})
-        invalid = {'sections': [{'title': 'Important trajectory', 'items': [{
-            'opening': 'Work pressure ',
-            'claims': [{'text': 'remained important', 'following_text': '.',
-                        'scope': 'single_exchange', 'evidence_ids': ['missing']}],
+    def test_annotation_repair_preserves_prose_and_limits_evidence_to_selected_items(self):
+        _, request = brief_input({'sections': [{'items': [
+            {'text': 'Work pressure remained important.', 'sources': [source]}
+            for source in self.evidence
+        ]}]})
+        text = 'Work pressure eased, though Work pressure still came up.'
+        prose = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'text': text, 'evidence_ids': ['a'],
         }]}]}
-        valid = {'sections': [{'title': 'Important trajectory', 'items': [{
-            'opening': 'Work pressure ',
-            'claims': [{'text': 'remained important', 'following_text': '.',
-                        'scope': 'single_exchange', 'evidence_ids': ['a']}],
-        }]}]}
-        responses = []
-        for output in (invalid, valid):
-            response = MagicMock()
-            response.__enter__.return_value.read.return_value = json.dumps({
-                'output_text': json.dumps(output), 'usage': {},
-            }).encode()
-            responses.append(response)
+        annotation = {
+            'item_index': 0, 'phrase': 'Work pressure', 'occurrence': 1,
+            'scope': 'single_exchange', 'evidence_ids': ['a'],
+        }
+        invalid = {'annotations': [{**annotation, 'evidence_ids': ['b']}]}
+        too_long = {'annotations': [{**annotation, 'phrase': 'Work pressure eased, though Work',
+                                     'occurrence': 0}]}
+        valid = {'annotations': [annotation]}
         repairs = []
-        with patch('ai_harness.pre_session.urlopen', side_effect=responses) as urlopen:
-            generated, _ = generate_openai_pre_session_brief(
+        with patch('ai_harness.pre_session.urlopen', side_effect=[
+            self.provider_response(output) for output in (prose, invalid, too_long, valid)
+        ]) as urlopen:
+            generated, metadata = generate_openai_pre_session_brief(
                 synthesis_request=request, api_key='test', model='test',
                 on_repair=lambda attempt, count: repairs.append((attempt, count)),
             )
-        self.assertEqual(urlopen.call_count, 2)
-        self.assertEqual(repairs, [(1, 2)])
-        self.assertFalse(validate_pre_session_response(generated, request['evidence']))
-        repair_payload = json.loads(urlopen.call_args.args[0].data)
-        repair_input = json.loads(repair_payload['input'])
-        self.assertEqual(repair_input['task'], 'repair_pre_session_brief')
-        self.assertEqual(repair_input['rejected_draft']['sections'][0]['items'][0]
-                         ['evidence_ids'], ['missing'])
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual(repairs, [(1, 1), (2, 1)])
+        item = generated['sections'][0]['items'][0]
+        self.assertEqual(item['text'], text)
+        self.assertEqual(item['claims'][0]['occurrence'], 1)
+        self.assertEqual(metadata['usage'], {'input_tokens': 400, 'output_tokens': 200})
+        for call in urlopen.call_args_list[1:]:
+            annotation_input = json.loads(json.loads(call.args[0].data)['input'])
+            self.assertEqual(annotation_input['task'], 'annotate_pre_session_brief')
+            self.assertEqual(annotation_input['items'][0]['text'], text)
+            self.assertEqual(annotation_input['evidence'], [self.evidence[0]])
+
+    def test_item_without_short_anchor_preserves_statement_evidence(self):
+        _, request = brief_input({'sections': [{'items': [
+            {'text': 'Work pressure remained important.', 'sources': [self.evidence[0]]},
+        ]}]})
+        prose = {'sections': [{'title': 'Important trajectory', 'items': [{
+            'text': 'Work pressure remained important.', 'evidence_ids': ['a'],
+        }]}]}
+        with patch('ai_harness.pre_session.urlopen', side_effect=[
+            self.provider_response(prose), self.provider_response({'annotations': []}),
+        ]):
+            generated, _ = generate_openai_pre_session_brief(
+                synthesis_request=request, api_key='test', model='test')
+        item = resolve_brief(generated, request['evidence'])['sections'][0]['items'][0]
+        self.assertEqual(item['claims'], [])
+        self.assertEqual(item['sources'], [self.evidence[0]])

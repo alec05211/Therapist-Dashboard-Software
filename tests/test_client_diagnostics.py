@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 from fastapi import HTTPException
 from database import client_diagnostics as diagnostics
@@ -10,6 +11,24 @@ from ai_harness.provider_errors import ProviderRequestError
 
 
 class ClientDiagnosticsTests(unittest.TestCase):
+    def test_rerun_requires_write_access_and_queues_for_resolved_client(self):
+        request = server.InsightsRerunRequest(client_id=uuid4())
+        context = {"organization_id": "org", "client_id": str(request.client_id), "actor_user_id": "therapist"}
+        with patch("server.connect") as connect, \
+                patch("server.resolve_therapist_client_context", return_value=context) as resolve, \
+                patch("server.synthesis_refresh.request_insights_rerun", return_value=7) as queue:
+            connection = connect.return_value.__enter__.return_value
+            self.assertEqual(server.rerun_client_insights(request, "Bearer therapist"), {"revision": 7})
+            resolve.assert_called_once_with(connection, "Bearer therapist", str(request.client_id),
+                                            write=True, include_actor=True)
+            queue.assert_called_once_with(connection, **context)
+            queue.reset_mock()
+            resolve.side_effect = HTTPException(status_code=403)
+            with self.assertRaises(HTTPException) as rejected:
+                server.rerun_client_insights(request, "Bearer therapist")
+            self.assertEqual(rejected.exception.status_code, 403)
+            queue.assert_not_called()
+
     def test_details_drop_clinical_text_credentials_unknown_codes_and_invalid_types(self):
         self.assertEqual(diagnostics.safe_details({
             'revision': 4, 'stage': 'brief', 'error_code': 'brief_request_too_large',

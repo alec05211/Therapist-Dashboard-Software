@@ -106,12 +106,11 @@ def _generate_bundle(
             for item in generated_items
         ],
     }
-    projected = project_accepted_insights(packet, [])
     resolved_brief = None
     brief_metadata = {'model': None}
     if generate_brief:
         emit('brief_requested', stage='brief')
-        _, request = brief_input(projected)
+        _, request = brief_input(project_accepted_insights(packet, limit=None))
         repair_options = {'on_repair': lambda attempt, count: emit(
             'brief_repair_requested', stage='brief', repair_attempt=attempt,
             violation_count=count)} if on_event and brief_generator is generate_openai_pre_session_brief else {}
@@ -131,7 +130,7 @@ def _generate_bundle(
             violations = getattr(exc, 'violations', ())
             emit('brief_fallback_used', stage='brief', **failure,
                  **({'violation_count': len(violations)} if violations else {}))
-            resolved_brief = projected
+            resolved_brief = project_accepted_insights(packet)
             brief_metadata = {'model': 'deterministic-projection-v1', 'usage': {}}
     return {
         "snapshot_content": {

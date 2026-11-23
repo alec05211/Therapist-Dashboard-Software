@@ -84,15 +84,16 @@ Token volumes are explicit planning assumptions, not measured application averag
 | --- | ---: | ---: | ---: | ---: |
 | Transcript proposal analysis | 1 | 30,000 | 4,000 | $0.50 |
 | Coordinated Insights synthesis | 1 | 40,600 | 7,000 | $0.76 |
-| Downstream pre-session brief | 1 | 8,000 | 2,000 | $0.18 |
-| **Normal cycle** | **3** | **78,600 total** | **13,000 total** | **$1.44** |
-| Additional Insights + brief refresh | 2 | 48,600 total | 9,000 total | $0.94 |
+| Pre-session brief prose | 1 | 8,000 | 2,000 | $0.18 |
+| Pre-session evidence annotation | 1 | 4,000 | 1,000 | $0.09 |
+| **Normal cycle** | **4** | **82,600 total** | **14,000 total** | **$1.53** |
+| Additional Insights + brief refresh | 3 | 52,600 total | 10,000 total | $1.03 |
 
-Section-summary planning update (2026-10-27): the same coordinated Insights request now emits up to four distinct summaries of at most 600 characters each, plus explicit topic-to-summary coverage phrases for validation. Allow 600 input tokens beyond the original 40,000-token baseline for instructions/schema and 1,000 output tokens beyond its 6,000-token baseline for summaries and coverage (unmeasured planning estimates, not token ceilings). This adds $0.056 per Insights call at the published standard short-context Astra rates ($10/M input, $50/M output), or $0.224 over four normal cycles. Compared with the earlier 280-character-summary estimate, the incremental change is $0.038 per Insights call. Tables round only final dollar amounts; the unrounded normal-cycle estimate is $1.436. No extra request, refresh trigger, retry allowance, or output cap is added. Actual usage, summary-validation repair frequency, and any downstream brief-context growth must be measured; the existing 8,000-token brief-input estimate is assumed to include the metadata addition. Rates verified 2026-10-27 against [official OpenAI pricing](https://developers.openai.com/api/docs/pricing).
+Section-summary planning update (2026-10-27): the same coordinated Insights request now emits up to four distinct summaries of at most 600 characters each, plus explicit topic-to-summary coverage phrases for validation. Allow 600 input tokens beyond the original 40,000-token baseline for instructions/schema and 1,000 output tokens beyond its 6,000-token baseline for summaries and coverage (unmeasured planning estimates, not token ceilings). This adds $0.056 per Insights call at the published standard short-context Astra rates ($10/M input, $50/M output), or $0.224 over four normal cycles. Compared with the earlier 280-character-summary estimate, the incremental change is $0.038 per Insights call. Tables round only final dollar amounts; the unrounded normal-cycle estimate at the time was $1.436. No extra request, refresh trigger, retry allowance, or output cap is added. Actual usage, summary-validation repair frequency, and any downstream brief-context growth must be measured; the existing 8,000-token brief-input estimate is assumed to include the metadata addition. Rates verified 2026-10-27 against [official OpenAI pricing](https://developers.openai.com/api/docs/pricing).
 
 Formula: `call cost = input tokens / 1,000,000 × input rate + billed output tokens / 1,000,000 × output rate`.
 
-At four normal cycles, this is **$5.74 per client/month** with Astra. The same assumed token volumes would cost **$1.1488** with Sol or **$0.05744** with Luna; equal token volumes do not imply equal clinical quality or equivalent behavior.
+At four normal cycles, this is **$6.10 per client/month** with Astra. The same assumed token volumes would cost **$1.2208** with Sol or **$0.06104** with Luna; equal token volumes do not imply equal clinical quality or equivalent behavior.
 
 ### Singular-theme generation cost driver (2026-11-10)
 
@@ -119,9 +120,8 @@ The brief adapter measures the serialized request against its existing 60,000-by
 limit. When the full request exceeds it, the adapter sends complete Insights
 statements with source IDs and short transcript excerpts, leaving full source
 records available to resolve citations. This can turn a previously rejected
-request into one billable brief call and avoid repeating Insights generation on
-a worker retry. The normal-cycle tables already include one successful brief
-call. The net impact on failed or retried cycles is unmeasured. Quantify it from
+prose request into a successful writing pass under the byte limit. The current
+normal-cycle tables include both a writing request and an annotation request. The net impact on failed or retried cycles is unmeasured. Quantify it from
 oversize frequency, billed brief input/output tokens, and avoided Insights
 retries using the configured model's [published rates](https://developers.openai.com/api/docs/pricing).
 
@@ -129,9 +129,11 @@ retries using the configured model's [published rates](https://developers.openai
 
 Insights permits up to three additional whole-document repair calls. Its output cap is 30,000 tokens per request; proposal analysis caps output at 16,000 and the brief at 6,000. Caps are limits, not expected usage. See [Insights implementation](../../ai_harness/longitudinal_insights.py), [proposal analysis](../../ai_harness/journey_proposals.py), and [brief generation](../../ai_harness/pre_session.py).
 
-Brief-validation recovery update (verified 2026-11-19): a brief that fails application-level citation validation may make up to two additional whole-brief repair calls. If validation still fails, the worker publishes the validated Insights revision with a deterministic source-preserving brief projection instead of repeating the full Insights generation. No brief request is made without an upcoming appointment. The normal-cycle tables still assume one successful brief call; repair calls are exceptional usage and must be measured separately. This can add up to two brief request charges to an affected cycle, while avoiding an otherwise repeated Insights request and its possible repairs.
+Two-pass brief update (verified 2026-11-23): an upcoming appointment adds one prose request and one annotation request after Insights validation. The annotation call sends only the evidence selected by the writer and its associated Insights context. Planning assumes 4,000 input and 1,000 billed output tokens for annotation, adding $0.09 per brief and $0.36 per four-cycle month at the published Astra standard short-context rates. These are unmeasured planning estimates. The writing pass uses the existing 6,000-token output cap, and annotation uses a 3,000-token cap. Each request has a 60,000-byte input limit. Exposing more of validated Insights to the writer can increase its input token use, so the retained 8,000-token prose assumption and the annotation budget both need verification from representative usage. Up to two additional annotation-only repairs are exceptional usage and include validation feedback. If the brief fails, the worker can still publish the validated Insights with its deterministic brief projection. No brief requests are made without an upcoming appointment. [Official OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
 
-At the assumed 40,600 input and 7,000 output tokens, three extra Insights repairs add **$2.27** to a cycle. Actual repair inputs include the invalid document and errors, so this is a sensitivity example rather than a ceiling. Queue retries, edits after finalization, changed transcripts, and administrative reprocessing can add calls even if no usable result is published. An absent upcoming appointment can remove the brief call.
+Diagnostics rerun (verified 2026-11-23): therapists with clinical-write access can make a client Insights revision due immediately. Due or running work is reused. A separately processed rerun has the same planning cost as the additional refresh in the table ($1.03 with an upcoming appointment or $0.76 for Insights alone at standard short-context Astra rates, before repairs). Manual rerun frequency is unmeasured and excluded from the four-cycle monthly scenario. [Official OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
+
+At the assumed 40,600 input and 7,000 output tokens, three extra Insights repairs add **$2.27** to a cycle. Actual repair inputs include the invalid document and errors, so this is a sensitivity example rather than a ceiling. Queue retries, edits after finalization, changed transcripts, and administrative reprocessing can add calls even if no usable result is published. An absent upcoming appointment removes both brief requests.
 
 Replace these assumptions with observed calls and input/cached/output usage by task and model. Track normal generations separately from repairs and retries; reprice larger context packets as the client's history grows. The application currently sends ordinary model requests; background execution alone does not obtain OpenAI Batch pricing.
 
@@ -141,7 +143,7 @@ The shared context cap increases from 110,000 to 250,000 UTF-8 bytes; the comple
 
 The hosted demo was verified to use `gpt-5` for Insights and briefs. Published standard GPT-5 rates are $1.25/million input tokens, $0.125/million cached input tokens, and $10/million output tokens, verified October 26, 2026. [Official GPT-5 pricing](https://developers.openai.com/api/docs/models/gpt-5). Each additional 10,000 uncached input tokens therefore costs $0.0125 per request with GPT-5, or $0.10 at the Astra scenario rate above. Conversely, removing that many duplicate input tokens saves those amounts per request; repairs resubmit context and repeat the input cost.
 
-At the same illustrative 78,000 input/12,000 output token normal-cycle budget, GPT-5 costs $0.2175 per cycle and $0.87 per client/month for four cycles. An additional Insights/brief refresh at 48,000 input/8,000 output costs $0.14, and three Insights repairs at 40,000 input/6,000 output each add $0.33. These are planning scenarios, not measured usage. The existing Astra tables and totals retain their stated token assumptions and are unchanged. Actual net savings or increased spend from compaction and newly successful larger requests remain unquantified until per-request token usage is measured; byte limits cannot be converted into a fixed token count or dollar ceiling.
+At the earlier illustrative 78,000 input/12,000 output token normal-cycle budget, GPT-5 costs $0.2175 per cycle and $0.87 per client/month for four cycles. An additional Insights/brief refresh at 48,000 input/8,000 output costs $0.14, and three Insights repairs at 40,000 input/6,000 output each add $0.33. These are planning scenarios, not measured usage. The existing Astra tables and totals retain their stated token assumptions and are unchanged. Actual net savings or increased spend from compaction and newly successful larger requests remain unquantified until per-request token usage is measured; byte limits cannot be converted into a fixed token count or dollar ceiling.
 
 ## Costs still to price
 

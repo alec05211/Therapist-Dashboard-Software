@@ -45,6 +45,33 @@ class SynthesisRefreshQueueTests(unittest.TestCase):
                 event_type="page_viewed",
             )
 
+    def test_rerun_reuses_due_or_running_revision(self):
+        connection, cursor = self.connection({"desired_insights_revision": 4, "already_due": True})
+        revision = synthesis_refresh.request_insights_rerun(
+            connection, organization_id="org", client_id="client", actor_user_id="therapist",
+        )
+        self.assertEqual(revision, 4)
+        self.assertEqual(cursor.execute.call_count, 2)
+
+    def test_rerun_queues_audited_event_immediately_with_fresh_attempts(self):
+        connection, cursor = self.connection()
+        cursor.fetchone.side_effect = [
+            {"desired_insights_revision": 4, "already_due": False},
+            {"desired_insights_revision": 5},
+        ]
+        revision = synthesis_refresh.request_insights_rerun(
+            connection, organization_id="org", client_id="client", actor_user_id="therapist",
+        )
+        self.assertEqual(revision, 5)
+        state_call = next(call for call in cursor.execute.call_args_list
+                          if "INSERT INTO app.clinical_synthesis_refresh_state" in call.args[0])
+        self.assertEqual(state_call.args[1][:3], ("org", "client", 0))
+        event_call = next(call for call in cursor.execute.call_args_list
+                          if "INSERT INTO app.clinical_synthesis_refresh_events" in call.args[0])
+        self.assertEqual(event_call.args[1][:7],
+                         ("org", "client", 5, "reprocess_requested", "therapist", "client", "client"))
+        self.assertIn("SET attempt_count = 0", cursor.execute.call_args.args[0])
+
     def test_claim_uses_skip_locked_worker_lease(self):
         work = {
             "organization_id": uuid4(),

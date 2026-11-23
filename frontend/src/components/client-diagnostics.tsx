@@ -55,6 +55,9 @@ function DiagnosticRow({ event }: { event: Event }) {
 export function ClientDiagnostics({ clientId }: { clientId?: string }) {
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rerunError, setRerunError] = useState<string | null>(null);
+  const [rerunRevision, setRerunRevision] = useState<number | null>(null);
+  const [submittingRerun, setSubmittingRerun] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
   const viewport = useRef<HTMLDivElement>(null);
   const followLatest = useRef(true);
@@ -92,7 +95,7 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
     const onVisible = () => void load();
     document.addEventListener("visibilitychange", onVisible);
     return () => { active = false; controller?.abort(); window.clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
-  }, [clientId]);
+  }, [clientId, rerunRevision]);
 
   const debounceActive = timeline?.summary.status === "pending" && Boolean(timeline.summary.debounce_until);
   useEffect(() => {
@@ -112,6 +115,32 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
       - (clock - timeline.received_at_ms)
     ) / 1_000))
     : null;
+  const awaitingRerun = rerunRevision !== null && (
+    !timeline || timeline.summary.desired_revision < rerunRevision
+  );
+  const rerunDisabled = !timeline || submittingRerun || awaitingRerun ||
+    status === "running" || (status === "pending" && !debounceSeconds);
+
+  async function rerunInsights() {
+    setSubmittingRerun(true);
+    setRerunError(null);
+    try {
+      const response = await fetch("/api/client-diagnostics/insights-rerun", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: clientId }),
+      });
+      const body = await response.json();
+      if (!response.ok || typeof body.revision !== "number") {
+        throw new Error(typeof body.detail === "string" ? body.detail : "Could not queue the Insights rerun.");
+      }
+      setRerunRevision(body.revision);
+    } catch (reason) {
+      setRerunError(reason instanceof Error ? reason.message : "Could not queue the Insights rerun.");
+    } finally {
+      setSubmittingRerun(false);
+    }
+  }
 
   return <section className="text-left" aria-label="Client diagnostics">
     <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -123,7 +152,13 @@ export function ClientDiagnostics({ clientId }: { clientId?: string }) {
         </span></span>
         {debounceSeconds !== null ? <span>Debounce: <span className="font-mono font-semibold tabular-nums text-stone-900">{countdown(debounceSeconds)}</span></span> : null}
       </div> : <p className="text-sm text-stone-600">Connecting to event log…</p>}
+      <button type="button" disabled={rerunDisabled} onClick={() => void rerunInsights()}
+        className="ml-auto inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-stone-800 enabled:cursor-grab enabled:hover:bg-[var(--accent-surface)] enabled:active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-strong)]">
+        <span aria-hidden="true">🔄</span>{submittingRerun ? "Queuing…" : "Re-run Insights synthesis"}
+      </button>
     </div>
+    {awaitingRerun ? <p role="status" className="mb-3 text-sm text-stone-600">Insights refresh requested.</p> : null}
+    {rerunError ? <p role="alert" className="mb-3 text-sm text-red-700">{rerunError}</p> : null}
     {error ? <p role="alert" className="mb-3 text-sm text-red-700">{error}</p> : null}
     <div className="overflow-hidden rounded-xl border border-[#44403c] bg-[#171b19] text-[#d6e4dc] shadow-inner">
       <div className="flex items-center justify-between gap-3 border-b border-[#37433c] px-4 py-3 font-mono text-xs text-[#a4b9ac]"><span><span aria-hidden="true" className="mr-2 text-emerald-300">&gt;_</span>Client event stream</span><span>LIVE · 10s</span></div>

@@ -556,7 +556,7 @@ def resolve_sharing_context(connection, authorization, *, therapist=False, write
     return {key: str(value) for key, value in rows[0].items()}
 
 
-def resolve_therapist_client_context(connection, authorization, client_id, *, write=False):
+def resolve_therapist_client_context(connection, authorization, client_id, *, write=False, include_actor=False):
     principal = therapist_principal(connection, authorization)
     with connection.cursor() as cursor:
         cursor.execute("""SELECT client.id AS client_id, client.organization_id
@@ -571,6 +571,8 @@ def resolve_therapist_client_context(connection, authorization, client_id, *, wr
         row = cursor.fetchone()
     if not row:
         raise HTTPException(status_code=403, detail="This client workspace is not available for your account.")
+    if include_actor:
+        row = {**row, "actor_user_id": principal["actor_user_id"]}
     return {key: str(value) for key, value in row.items()}
 
 
@@ -2109,6 +2111,24 @@ def get_client_diagnostics(client_id: str, authorization: str | None = Header(de
             return client_diagnostics.read_timeline(connection, **context)
     except (RuntimeError, PsycopgError) as exc:
         raise HTTPException(status_code=503, detail="Client diagnostics are temporarily unavailable.") from exc
+
+
+class InsightsRerunRequest(BaseModel):
+    client_id: UUID
+
+
+@app.post("/client-diagnostics/insights-rerun", status_code=202)
+def rerun_client_insights(request: InsightsRerunRequest, authorization: str | None = Header(default=None)):
+    """Queue a client-scoped reprocess using the existing synthesis worker."""
+    try:
+        with connect() as connection:
+            context = resolve_therapist_client_context(
+                connection, authorization, str(request.client_id), write=True, include_actor=True,
+            )
+            revision = synthesis_refresh.request_insights_rerun(connection, **context)
+        return {"revision": revision}
+    except (RuntimeError, PsycopgError) as exc:
+        raise HTTPException(status_code=503, detail="Could not queue the Insights rerun.") from exc
 
 
 @app.get("/clinical-records/clients/{client_id}/insights-refresh-status")

@@ -3,7 +3,8 @@
 from typing import Any
 
 
-def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: list[dict[str, Any]] | None = None,
+                              *, limit: int | None = 8) -> dict[str, Any]:
     """Present clinician-approved items without inventing new clinical claims."""
     sections = {title: [] for title in ('Important trajectory', 'Open loops', 'Relevant history')}
     titles = {
@@ -17,7 +18,7 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
     }
     selected = 0
     for entry in journey_entries or []:
-        if selected >= 8:
+        if limit is not None and selected >= limit:
             break
         if entry['status'] != 'accepted' or not entry['evidence']:
             continue
@@ -30,7 +31,7 @@ def project_accepted_insights(packet: dict[str, Any] | None, journey_entries: li
         })
         selected += 1
     for item in packet['items'] if packet else []:
-        if selected >= 8:
+        if limit is not None and selected >= limit:
             break
         content = item['content']
         text = next((content[key].strip() for key in ('text', 'summary', 'narrative', 'analysis', 'title', 'label')

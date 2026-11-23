@@ -108,11 +108,13 @@ def failure_code(exc: Exception, stage: str) -> str:
         return 'context_too_large'
     if message.startswith(('Insight request exceeds', 'Insight repair request exceeds')):
         return 'insights_request_too_large'
-    if message.startswith('Brief request exceeds'):
+    if message.startswith(('Brief request exceeds', 'Brief annotation request exceeds')):
         return 'brief_request_too_large'
     if message.startswith('OpenAI output did not satisfy the longitudinal'):
         return 'insights_validation_failed'
-    if message.startswith('OpenAI output did not satisfy the evidence contract'):
+    if message.startswith(('OpenAI output did not satisfy the evidence contract',
+                           'Brief prose did not satisfy the evidence contract',
+                           'OpenAI annotations did not satisfy the evidence contract')):
         return 'brief_validation_failed'
     if isinstance(exc, TimeoutError) or 'generation timed out' in message:
         return 'provider_timeout'
